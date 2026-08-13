@@ -97,6 +97,16 @@ is the same class of packaging problem as the tensoriality one, one level up:
 theorem is inherently a statement about *two different* metrics on one
 manifold.
 
+BOTH ESCAPE ROUTES TESTED AND CLOSED (2026-08-13):
+
+* ascribing `cov : CovariantDerivative I E (fun x ↦ TangentSpace I x)` under the
+  `letI` -> `IsMetricCompatible` application type mismatch (instance paths differ:
+  `instAddCommGroupTangentSpace` vs `NormedAddCommGroup.toAddCommGroup`);
+* leaving `cov` unascribed so unification drives it -> `cov`'s type stays a
+  metavariable, "Invalid field notation" / "typeclass instance problem is stuck".
+  This fails for `cov.IsMetricCompatible` and for `HasPositiveRicci cov`
+  independently, so it is the `letI` binding, not either predicate.
+
 Dropping `IsMetricCompatible` would make it compile but would no longer be
 Hamilton's theorem -- a torsion-free connection unrelated to the metric says
 nothing. A statement that compiles and is wrong is worse than none, so it is
