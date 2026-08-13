@@ -198,6 +198,77 @@ theorem bianchi_first [ContMDiffCovariantDerivative cov 1] (hcov : cov.torsion =
 -- `leibniz_identity_mlieBracket_apply` combined with `mlieBracket_swap_apply`.
 -- That is bookkeeping, not mathematics: the content is `bianchi_first_of_mdiff`.
 
+omit [FiniteDimensional ℝ E] in
+/-- `R(fX, Y)Z = f · R(X, Y)Z`: the curvature operator is `C^∞(M)`-linear in its
+first slot. This is the content of first-slot tensoriality — the obstruction to
+defining Ricci curvature. -/
+theorem curvature_smul_left (f : M → ℝ) (X Y Z : Π y : M, TangentSpace I y) {x : M}
+    (hf : MDiffAt f x)
+    (hX : MDiffAt (T% X) x)
+    (hXZ : MDiffAt (T% (fun y ↦ cov Z y (X y))) x) :
+    cov.curvature (f • X) Y Z x = f x • cov.curvature X Y Z x := by
+  -- `∇_{f•X} Z = f • ∇_X Z`, pointwise by linearity of the direction slot.
+  have hpi : ∀ y, (f • X) y = f y • X y := fun _ ↦ rfl
+  have hsec : (fun y ↦ cov Z y ((f • X) y)) = f • (fun y ↦ cov Z y (X y)) := by
+    funext y; simp [hpi]
+  simp only [curvature]
+  -- reshape the middle term into `cov (f • σ)` so Leibniz applies, then expand
+  rw [hsec, cov.isCovariantDerivativeOn.leibniz hXZ hf, mlieBracket_smul_left hf hX]
+  simp only [hpi, map_smul, map_add, add_apply, smul_apply,
+    ContinuousLinearMap.smulRight_apply]
+  module
+
+omit [FiniteDimensional ℝ E] in
+/-- `R(X, fY)Z = f · R(X, Y)Z`, immediately from antisymmetry and the first slot. -/
+theorem curvature_smul_middle (f : M → ℝ) (X Y Z : Π y : M, TangentSpace I y) {x : M}
+    (hf : MDiffAt f x)
+    (hY : MDiffAt (T% Y) x)
+    (hYZ : MDiffAt (T% (fun y ↦ cov Z y (Y y))) x) :
+    cov.curvature X (f • Y) Z x = f x • cov.curvature X Y Z x := by
+  rw [cov.curvature_antisymm X (f • Y) Z x,
+    cov.curvature_smul_left f Y X Z hf hY hYZ,
+    cov.curvature_antisymm Y X Z x]
+  module
+
+omit [FiniteDimensional ℝ E] in
+/-- `R(X, Y)(fZ) = f · R(X, Y)Z`, assuming the bracket acts as a derivation on
+functions. That identity — `[X,Y]f = X(Yf) - Y(Xf)` — is not in Mathlib; it
+needs symmetry of the second derivative transported to manifolds. Everything
+else in slot-3 tensoriality is discharged here. -/
+theorem curvature_smul_right_of_derivation
+    (f : M → ℝ) (X Y Z : Π y : M, TangentSpace I y) {x : M}
+    (hf : MDiff f) (hZ : MDiff (T% Z))
+    (hYZ : MDiffAt (T% (fun y ↦ cov Z y (Y y))) x)
+    (hXZ : MDiffAt (T% (fun y ↦ cov Z y (X y))) x)
+    (hYf : MDiffAt (fun y ↦ d% f y (Y y)) x)
+    (hXf : MDiffAt (fun y ↦ d% f y (X y)) x)
+    (hfYZ : MDiffAt (T% (f • fun y ↦ cov Z y (Y y))) x)
+    (hfXZ : MDiffAt (T% (f • fun y ↦ cov Z y (X y))) x)
+    (hgYZ : MDiffAt (T% ((fun y ↦ d% f y (Y y)) • Z)) x)
+    (hgXZ : MDiffAt (T% ((fun y ↦ d% f y (X y)) • Z)) x)
+    -- the missing identity: the Lie bracket is a derivation on functions
+    (hder : d% (fun y ↦ d% f y (Y y)) x (X x) - d% (fun y ↦ d% f y (X y)) x (Y x)
+              = d% f x (mlieBracket I X Y x)) :
+    cov.curvature X Y (f • Z) x = f x • cov.curvature X Y Z x := by
+  have hsecY : (fun y ↦ cov (f • Z) y (Y y))
+      = (f • fun y ↦ cov Z y (Y y)) + ((fun y ↦ d% f y (Y y)) • Z) := by
+    funext y; simp [cov.isCovariantDerivativeOn.leibniz (hZ y) (hf y)]
+  have hsecX : (fun y ↦ cov (f • Z) y (X y))
+      = (f • fun y ↦ cov Z y (X y)) + ((fun y ↦ d% f y (X y)) • Z) := by
+    funext y; simp [cov.isCovariantDerivativeOn.leibniz (hZ y) (hf y)]
+  simp only [curvature, hsecY, hsecX,
+    cov.isCovariantDerivativeOn.add hfYZ hgYZ,
+    cov.isCovariantDerivativeOn.add hfXZ hgXZ,
+    cov.isCovariantDerivativeOn.leibniz hYZ (hf x),
+    cov.isCovariantDerivativeOn.leibniz hXZ (hf x),
+    cov.isCovariantDerivativeOn.leibniz (hZ x) hYf,
+    cov.isCovariantDerivativeOn.leibniz (hZ x) hXf,
+    cov.isCovariantDerivativeOn.leibniz (hZ x) (hf x)]
+  simp only [add_apply, smul_apply, ContinuousLinearMap.smulRight_apply]
+  have key : (d% (fun y ↦ d% f y (Y y)) x (X x) - d% (fun y ↦ d% f y (X y)) x (Y x)) • Z x
+      = (d% f x (mlieBracket I X Y x)) • Z x := by rw [hder]
+  linear_combination (norm := module) key
+
 -- Sectional curvature needs the metric, so it is stated alongside the
 -- Levi-Civita connection once `sectionalCurvature` is ported from the
 -- `riemann-curvature` branch.
