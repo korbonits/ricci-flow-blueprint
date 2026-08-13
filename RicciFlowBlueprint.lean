@@ -4,3 +4,4 @@ import RicciFlowBlueprint.Ricci
 import RicciFlowBlueprint.Homogeneous
 import RicciFlowBlueprint.RicciFlow
 import RicciFlowBlueprint.LieBracketDerivation
+import RicciFlowBlueprint.Sectional
