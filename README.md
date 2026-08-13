@@ -28,7 +28,12 @@ and close one branch end to end.
 | `curvature_smul_left/middle/right` | **proved** — tensoriality, all three slots, unconditional |
 | `VectorField.lieBracket_apply_fun` | **proved** — `[V,W]f = V(Wf) − W(Vf)`, vector spaces |
 | `VectorField.mlieBracket_apply_fun` | **proved** — the same on any manifold, corners allowed |
-| Ricci and scalar curvature | mathematics done; needs tensor packaging (`TensorialAt`/`mkHom₃`) |
+| `curvature_add_left/middle/right` | **proved** — additivity, the other half of tensoriality |
+| `tensorialAt_curvature_fst/snd` | **proved** — curvature descends to a pointwise tensor |
+| `CovariantDerivative.ricci` | **defined** — trace of `Z ↦ R(Z,X)Y`, via one-slot `mkHom` |
+| `ricci_sub_ricci_swap` | **proved** — `Ric(X,Y) − Ric(Y,X) = −tr R(X,Y)`, the trace of first Bianchi |
+| Sectional curvature | undefined — absent from mathlib entirely (zero occurrences of `sectional`) |
+| Scalar curvature | needs the metric trace; not attempted |
 | `exists_unique_leviCivita` | upstream: mathlib4 [#36845](https://github.com/leanprover-community/mathlib4/pull/36845) |
 | Ricci flow on left-invariant metrics (an ODE) | prose — the beachhead, no PDE required |
 | Short-time existence on a closed manifold | blocked: parabolic PDE |

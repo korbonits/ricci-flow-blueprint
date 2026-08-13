@@ -276,4 +276,148 @@ theorem curvature_smul_right
 -- Levi-Civita connection once `sectionalCurvature` is ported from the
 -- `riemann-curvature` branch.
 
+/-! ### Additivity of the curvature operator
+
+Together with the `curvature_smul_*` lemmas above, these make the curvature operator
+tensorial in the sense of `TensorialAt` — the missing half that blocked Ricci curvature.
+Additivity in the first two slots needs only pointwise differentiability of the varying
+sections (plus `C^2` of the differentiated field `Z`, so that `∇Z` is differentiable);
+additivity in the third slot needs global smoothness of the varying sections because `∇`
+is a differential operator in that slot.
+-/
+
+omit [FiniteDimensional ℝ E] in
+/-- The curvature operator is additive in its first slot. -/
+theorem curvature_add_left [ContMDiffCovariantDerivative cov 1]
+    {X X' Y Z : Π y : M, TangentSpace I y} {x : M}
+    (hZ : CMDiff 2 (T% Z)) (hX : MDiffAt (T% X) x) (hX' : MDiffAt (T% X') x) :
+    cov.curvature (X + X') Y Z x = cov.curvature X Y Z x + cov.curvature X' Y Z x := by
+  have hsec : (fun y ↦ cov Z y ((X + X') y))
+      = (fun y ↦ cov Z y (X y)) + (fun y ↦ cov Z y (X' y)) := by
+    funext y; simp
+  simp only [curvature, hsec,
+    cov.isCovariantDerivativeOn.add (cov.mdiffAt_cov_apply hZ hX) (cov.mdiffAt_cov_apply hZ hX'),
+    mlieBracket_add_left hX hX']
+  simp only [Pi.add_apply, map_add, add_apply]
+  abel
+
+omit [FiniteDimensional ℝ E] in
+/-- The curvature operator is additive in its middle slot. -/
+theorem curvature_add_middle [ContMDiffCovariantDerivative cov 1]
+    {X Y Y' Z : Π y : M, TangentSpace I y} {x : M}
+    (hZ : CMDiff 2 (T% Z)) (hY : MDiffAt (T% Y) x) (hY' : MDiffAt (T% Y') x) :
+    cov.curvature X (Y + Y') Z x = cov.curvature X Y Z x + cov.curvature X Y' Z x := by
+  rw [cov.curvature_antisymm X (Y + Y') Z x, cov.curvature_add_left hZ hY hY',
+    cov.curvature_antisymm Y X Z x, cov.curvature_antisymm Y' X Z x]
+  module
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E] in
+/-- The curvature operator is additive in its third slot. -/
+theorem curvature_add_right [ContMDiffCovariantDerivative cov 1]
+    {X Y Z Z' : Π y : M, TangentSpace I y} {x : M}
+    (hZ : CMDiff 2 (T% Z)) (hZ' : CMDiff 2 (T% Z'))
+    (hX : MDiffAt (T% X) x) (hY : MDiffAt (T% Y) x) :
+    cov.curvature X Y (Z + Z') x = cov.curvature X Y Z x + cov.curvature X Y Z' x := by
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  have hZm : MDiff (T% Z) := hZ.mdifferentiable h2
+  have hZ'm : MDiff (T% Z') := hZ'.mdifferentiable h2
+  have hsY : (fun y ↦ cov (Z + Z') y (Y y))
+      = (fun y ↦ cov Z y (Y y)) + (fun y ↦ cov Z' y (Y y)) := by
+    funext y
+    rw [cov.isCovariantDerivativeOn.add (hZm y) (hZ'm y)]
+    simp
+  have hsX : (fun y ↦ cov (Z + Z') y (X y))
+      = (fun y ↦ cov Z y (X y)) + (fun y ↦ cov Z' y (X y)) := by
+    funext y
+    rw [cov.isCovariantDerivativeOn.add (hZm y) (hZ'm y)]
+    simp
+  simp only [curvature, hsY, hsX,
+    cov.isCovariantDerivativeOn.add (cov.mdiffAt_cov_apply hZ hY) (cov.mdiffAt_cov_apply hZ' hY),
+    cov.isCovariantDerivativeOn.add (cov.mdiffAt_cov_apply hZ hX) (cov.mdiffAt_cov_apply hZ' hX),
+    cov.isCovariantDerivativeOn.add (hZm x) (hZ'm x)]
+  simp only [add_apply]
+  abel
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E] in
+/-- The curvature operator commutes with constant scalars in its third slot. -/
+theorem curvature_smul_const_right [ContMDiffCovariantDerivative cov 1]
+    (c : ℝ) {X Y Z : Π y : M, TangentSpace I y} {x : M}
+    (hZ : CMDiff 2 (T% Z)) (hX : MDiffAt (T% X) x) (hY : MDiffAt (T% Y) x) :
+    cov.curvature X Y (c • Z) x = c • cov.curvature X Y Z x := by
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  have hZm : MDiff (T% Z) := hZ.mdifferentiable h2
+  have hsY : (fun y ↦ cov (c • Z) y (Y y)) = c • (fun y ↦ cov Z y (Y y)) := by
+    funext y
+    rw [cov.isCovariantDerivativeOn.smul_const c (hZm y)]
+    simp
+  have hsX : (fun y ↦ cov (c • Z) y (X y)) = c • (fun y ↦ cov Z y (X y)) := by
+    funext y
+    rw [cov.isCovariantDerivativeOn.smul_const c (hZm y)]
+    simp
+  simp only [curvature, hsY, hsX,
+    cov.isCovariantDerivativeOn.smul_const c (cov.mdiffAt_cov_apply hZ hY),
+    cov.isCovariantDerivativeOn.smul_const c (cov.mdiffAt_cov_apply hZ hX),
+    cov.isCovariantDerivativeOn.smul_const c (hZm x)]
+  simp only [smul_apply]
+  module
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E] in
+/-- The curvature operator kills the zero section in its third slot. -/
+theorem curvature_zero_right {X Y : Π y : M, TangentSpace I y} {x : M} :
+    cov.curvature X Y 0 x = 0 := by
+  have h0 : cov (0 : Π y : M, TangentSpace I y) = 0 := cov.zero
+  have hzY : (fun y ↦ cov (0 : Π y : M, TangentSpace I y) y (Y y))
+      = (0 : Π y : M, TangentSpace I y) := by
+    funext y; rw [h0]; simp
+  have hzX : (fun y ↦ cov (0 : Π y : M, TangentSpace I y) y (X y))
+      = (0 : Π y : M, TangentSpace I y) := by
+    funext y; rw [h0]; simp
+  simp only [curvature]
+  rw [hzY, hzX, h0]
+  simp
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E] in
+/-- The curvature operator commutes with finite sums in its third slot. -/
+theorem curvature_sum_right [ContMDiffCovariantDerivative cov 1]
+    {ι : Type*} {s : Finset ι} {X Y : Π y : M, TangentSpace I y}
+    {Z : ι → Π y : M, TangentSpace I y} {x : M}
+    (hZ : ∀ i ∈ s, CMDiff 2 (T% (Z i)))
+    (hX : MDiffAt (T% X) x) (hY : MDiffAt (T% Y) x) :
+    cov.curvature X Y (fun y ↦ ∑ i ∈ s, Z i y) x = ∑ i ∈ s, cov.curvature X Y (Z i) x := by
+  classical
+  induction s using Finset.induction_on with
+  | empty =>
+      rw [Finset.sum_empty]
+      have : (fun y : M ↦ ∑ i ∈ (∅ : Finset ι), Z i y) = (0 : Π y : M, TangentSpace I y) := by
+        funext y; simp
+      rw [this, cov.curvature_zero_right]
+  | insert a s ha h =>
+      simp only [Finset.mem_insert, forall_eq_or_imp] at hZ
+      have hsum : (fun y : M ↦ ∑ i ∈ insert a s, Z i y)
+          = Z a + fun y ↦ ∑ i ∈ s, Z i y := by
+        funext y; simp [Finset.sum_insert ha]
+      rw [hsum, Finset.sum_insert ha, ← h hZ.2,
+        cov.curvature_add_right hZ.1 (.sum_section hZ.2) hX hY]
+
+omit [FiniteDimensional ℝ E] in
+/-- First-slot tensoriality of the curvature operator in the sense of `TensorialAt`:
+`W ↦ R(W, V) Z` at `x` respects addition and multiplication by germs of differentiable
+functions. This is the criterion that lets the curvature descend from vector fields to
+tangent vectors in its first slot, and hence lets its trace — the Ricci curvature — be
+defined. -/
+theorem tensorialAt_curvature_fst [ContMDiffCovariantDerivative cov 1]
+    {V Z : Π y : M, TangentSpace I y} (hZ : CMDiff 2 (T% Z)) (x : M) :
+    TensorialAt I E (fun W ↦ cov.curvature W V Z x) x where
+  smul hf hσ := cov.curvature_smul_left _ _ _ _ hf hσ (cov.mdiffAt_cov_apply hZ hσ)
+  add hσ hσ' := cov.curvature_add_left hZ hσ hσ'
+
+omit [FiniteDimensional ℝ E] in
+/-- Middle-slot tensoriality of the curvature operator, from `tensorialAt_curvature_fst`
+via antisymmetry. -/
+theorem tensorialAt_curvature_snd [ContMDiffCovariantDerivative cov 1]
+    {V Z : Π y : M, TangentSpace I y} (hZ : CMDiff 2 (T% Z)) (x : M) :
+    TensorialAt I E (fun W ↦ cov.curvature V W Z x) x where
+  smul hf hσ := cov.curvature_smul_middle _ _ _ _ hf hσ (cov.mdiffAt_cov_apply hZ hσ)
+  add hσ hσ' := cov.curvature_add_middle hZ hσ hσ'
+
 end CovariantDerivative
