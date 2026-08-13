@@ -12,3 +12,4 @@ blueprint/src/*.pdf.log
 .venv/
 __pycache__/
 scratch/
+blueprint/lean_decls

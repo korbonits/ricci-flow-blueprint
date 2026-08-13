@@ -8,3 +8,7 @@ rev = "master"
 
 [[lean_lib]]
 name = "RicciFlowBlueprint"
+
+[[require]]
+name = "checkdecls"
+git = "https://github.com/PatrickMassot/checkdecls.git"
