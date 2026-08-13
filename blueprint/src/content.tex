@@ -163,6 +163,23 @@ branch that can be closed today: on a Lie group the flow is an ODE.
   wrong, and the error mattered: it put the wall two levels above where it is.
 \end{definition}
 
+\begin{definition}[Sectional curvature]
+  \label{def:sectional}
+  \uses{def:curvature, lem:tensoriality, thm:levi-civita}
+  For a $2$-plane spanned by tangent vectors $X, Y$ at a point,
+  \[ \Sect(X,Y) = \frac{\langle \Riem(X,Y)Y, X\rangle}
+       {|X|^2|Y|^2 - \langle X,Y\rangle^2}, \]
+  and the metric has \emph{constant} sectional curvature $k$ if $\Sect \equiv k$
+  on every $2$-plane at every point.
+
+  \textbf{Absent from Mathlib entirely} --- the string \texttt{sectional} does
+  not occur anywhere in the library. This is the \emph{conclusion} side of
+  Hamilton's theorem, and it is undefined for the same reason the hypothesis
+  was: well-definedness on $2$-planes rather than on pairs of vector fields is
+  exactly Lemma~\ref{lem:tensoriality}. Unlike $\Ric$ it needs no trace, so it
+  requires the pointwise tensor but not \texttt{mkHom}$_3$.
+\end{definition}
+
 \chapter{Ricci flow on left-invariant metrics}
 \label{chap:homog}
 
@@ -289,7 +306,7 @@ shrinks to a round point.
 
 \begin{theorem}[Convergence of the normalized flow]
   \label{thm:normalized-convergence}
-  \uses{lem:pinching, lem:gradient-scal, thm:long-time}
+  \uses{lem:pinching, lem:gradient-scal, thm:long-time, def:sectional}
   Rescaling to fixed volume, the normalized flow exists for all time and
   converges exponentially in every $C^k$ to a metric of constant positive
   sectional curvature.
@@ -297,7 +314,7 @@ shrinks to a round point.
 
 \begin{theorem}[Hamilton 1982]
   \label{thm:hamilton}
-  \uses{thm:normalized-convergence, lem:bianchi-first}
+  \uses{thm:normalized-convergence, lem:bianchi-first, def:sectional}
   A closed $3$-manifold admitting a metric of strictly positive Ricci curvature
   admits a metric of constant positive sectional curvature, and is therefore
   diffeomorphic to a spherical space form $S^3/\Gamma$.
