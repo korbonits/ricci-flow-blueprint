@@ -52,9 +52,9 @@ Mathlib already carries the terminal statement of the road this is on:
 
 ## Contributing
 
-Statements marked `-- BENCH: <id>` are also benchmark tasks for the companion
-MATH-AI paper; keep the marker when you fill in a proof. Only real statements
-carry the marker — a placeholder `True` would silently inflate pass rates.
+Statements marked `-- BENCH: <id>` are the headline results — the ones worth
+citing from the blueprint. Keep the marker when you fill in a proof. Only real
+statements carry one; a placeholder `True` does not.
 
     lake exe cache get
     lake build

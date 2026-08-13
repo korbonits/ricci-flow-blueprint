@@ -3,10 +3,6 @@
 A `leanblueprint` for Hamilton's 1982 theorem. Live:
 https://korbonits.github.io/ricci-flow-blueprint/
 
-Companion (private): `~/code/mathai-2026-paper` — the MATH-AI submission whose
-benchmark tasks are the `-- BENCH:` statements here. **Deadline 2026-09-25.**
-Read its `CLAUDE.md` for the overall plan; this file is the Lean side.
-
 ## State (2026-08-13)
 
 `lake build` clean. Only `sorry` is `exists_unique_leviCivita` (superseded by

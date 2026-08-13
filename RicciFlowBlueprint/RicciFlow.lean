@@ -5,7 +5,7 @@ Everything here is blocked on analysis Mathlib does not have: quasilinear
 parabolic systems on sections of vector bundles, elliptic regularity, and
 Sobolev spaces of bundle sections. These are recorded in prose so the
 dependency graph is honest about where the frontier is, not because they are
-close. None are benchmark tasks.
+close.
 
 * `IsRicciFlow` — a smooth family of metrics with `∂g/∂t = -2 Ric(g)`.
   Needs `Ricci.lean` unblocked first.

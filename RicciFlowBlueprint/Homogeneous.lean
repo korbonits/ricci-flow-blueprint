@@ -8,7 +8,7 @@ space. Mathlib already has ODE existence and uniqueness
 so this branch needs no PDE theory at all — it is the part of the blueprint
 that can actually be closed.
 
-Nothing here is a benchmark task yet: a task must be a real statement with a
+Nothing here is a headline result yet: that needs a real statement with a
 real proof, and these are still prose. The plan is to phrase them over an
 abstract `ric : InnerProductSpace ℝ 𝔤 → (𝔤 →L[ℝ] 𝔤)` so the branch can be
 developed *before* `Ricci.lean` is unblocked, then instantiate `ric` with the

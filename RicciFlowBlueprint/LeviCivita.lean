@@ -10,10 +10,8 @@ build on it.
 
   https://github.com/leanprover-community/mathlib4/pull/36845
 
-Consequently the statement below is NOT a benchmark task: its proof has been
-public since March 2026, so it fails the contamination bar the benchmark exists
-to enforce. It stays here as a blueprint node so the dependency graph is
-complete.
+The statement below stays as a blueprint node so the dependency graph is
+complete, but do not spend time on it — adopt or wait for the PR.
 -/
 import Mathlib.Geometry.Manifold.VectorBundle.CovariantDerivative.Metric
 import Mathlib.Geometry.Manifold.VectorBundle.CovariantDerivative.Torsion
@@ -36,7 +34,6 @@ variable
   [IsContMDiffRiemannianBundle I 1 E (fun (x : M) ↦ TangentSpace I x)]
   [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
 
--- Not a benchmark task: see the contamination note above.
 -- The fundamental theorem of Riemannian geometry: there is exactly one
 -- torsion-free covariant derivative on `TM` compatible with the metric.
 -- Uniqueness is the Koszul formula; existence constructs the connection from it.
