@@ -14,6 +14,11 @@ transporting this through `extChartAt`, which is the remaining work.
 import Mathlib.Analysis.Calculus.VectorField
 import Mathlib.Analysis.Calculus.FDeriv.Symmetric
 import Mathlib.Analysis.Calculus.FDeriv.CompCLM
+import Mathlib.Geometry.Manifold.VectorField.LieBracket
+import Mathlib.Geometry.Manifold.MFDeriv.FDeriv
+import Mathlib.Geometry.Manifold.MFDeriv.NormedSpace
+
+open scoped Manifold
 
 namespace VectorField
 
@@ -44,5 +49,36 @@ theorem lieBracket_apply_fun
     ContinuousLinearMap.flip_apply, map_sub]
   rw [hsymm]
   abel
+
+section ModelSpace
+
+/-- On the model space, `mvfderiv` (the derivative of a map into a normed space,
+which `d%` denotes) is just `fderiv`. The `fromTangentSpace` identification is
+the identity. -/
+theorem mvfderiv_eq_fderiv (g : E → F) (y : E) :
+    mvfderiv 𝓘(𝕜, E) g y = fderiv 𝕜 g y := by
+  simp [mvfderiv, mfderiv_eq_fderiv]; rfl
+
+set_option backward.isDefEq.respectTransparency false in
+/-- On the model space the manifold bracket is the vector-space bracket. The
+transparency option is needed because `TangentSpace 𝓘(𝕜,E) x` is defeq to `E`
+for elaboration but not for instance search. -/
+theorem mlieBracket_eq_lieBracket
+    {V W : Π x : E, TangentSpace 𝓘(𝕜, E) x} {x : E} :
+    mlieBracket 𝓘(𝕜, E) V W x = lieBracket 𝕜 V W x := by
+  rw [← mlieBracketWithin_univ, mlieBracketWithin_eq_lieBracketWithin,
+    lieBracketWithin_univ]
+
+/- ASSEMBLY BLOCKED. Combining the two collapse lemmas above into the
+model-space derivation identity runs into a type-synonym conflict:
+`HasFDerivAt V V' x` requires `V : E → E` (non-dependent codomain), while
+`mlieBracketWithin` requires `V : Π x, TangentSpace 𝓘(𝕜,E) x`. The two are
+defeq for elaboration but not for instance synthesis, and
+`backward.isDefEq.respectTransparency false` does not help since it governs
+defeq checking rather than instance search. Resolving this needs either a
+non-dependent restatement of the bracket API on the model space, or an explicit
+transport across the synonym. -/
+
+end ModelSpace
 
 end VectorField
