@@ -7,16 +7,50 @@ Companion (private): `~/code/mathai-2026-paper` — the MATH-AI submission whose
 benchmark tasks are the `-- BENCH:` statements here. **Deadline 2026-09-25.**
 Read its `CLAUDE.md` for the overall plan; this file is the Lean side.
 
-## State
+## State (2026-08-13)
 
-`lake build` is clean. Only remaining `sorry` is `exists_unique_leviCivita`,
-superseded upstream. Proved here, all axiom-free:
+`lake build` clean. Only `sorry` is `exists_unique_leviCivita` (superseded by
+upstream PR #36845). Everything below is axiom-free — `#print axioms` shows only
+`[propext, Classical.choice, Quot.sound]` — and none of it exists in Mathlib.
 
+**Curvature.lean**
 - `CovariantDerivative.curvature`, `curvature_antisymm`
-- `CovariantDerivative.bianchi_first` — first Bianchi identity, clean form
-  (`C^1` connection, `C^2` fields, all side conditions discharged), and
-  `bianchi_first_of_mdiff` with explicit hypotheses
-- `neg_apply`, `sub_apply`, `mdiffAt_cov_apply`, `VectorField.jacobi_mlieBracket_apply`
+- `bianchi_first_of_mdiff`, `bianchi_first` — first Bianchi identity, clean form
+- `neg_apply`, `sub_apply` — subtraction for covariant derivatives
+- `mdiffAt_cov_apply` — first consumer of `ContMDiffCovariantDerivative` anywhere
+- `curvature_smul_left`, `curvature_smul_middle` — tensoriality slots 1, 2
+- `curvature_smul_right_of_derivation` — slot 3, modulo hypothesis `hder`
+
+**LieBracketDerivation.lean**
+- `lieBracket_apply_fun` — `[V,W]f = V(Wf) − W(Vf)`, vector spaces
+- `mvfderiv_eq_fderiv`, `mlieBracket_eq_lieBracket(')` — model-space collapses
+- `mlieBracket_apply_fun_model` — derivation identity, manifold notation on `E`
+
+## Where the blocker actually is
+
+The README's old "blocked on parabolic PDE" is true but is the **second**
+obstruction. Ricci curvature cannot be *defined*:
+
+    Ricci definable
+      ← curvature tensoriality slots 1–3   1,2 proved; 3 modulo `hder`
+      ← [X,Y]f = X(Yf) − Y(Xf) on manifolds
+           ├ vector-space case              proved
+           ├ model-space case               proved
+           └ chart transport to general M   ← the only remaining gap
+
+Discharging `hder` in `curvature_smul_right_of_derivation` completes slot 3 and
+unblocks defining Ricci.
+
+## IN FLIGHT
+
+A Fable subagent is attempting the chart transport (model space → general
+manifold) and, if it succeeds, discharging `hder`. It may edit
+`LieBracketDerivation.lean` and `Curvature.lean`. **Do not edit those two files
+until it reports.** Template it was pointed at: mathlib's
+`leibniz_identity_mlieBracketWithin_apply` (~127 lines) and
+`mpullbackWithin_mlieBracketWithin_of_isSymmSndFDerivWithinAt`. Note there is no
+manifold-level second-derivative symmetry in mathlib — that may be the real
+deliverable.
 
 ## Next: upstream the four lemmas
 
