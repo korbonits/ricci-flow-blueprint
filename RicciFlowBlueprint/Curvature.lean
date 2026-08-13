@@ -14,6 +14,42 @@ import Mathlib.Geometry.Manifold.VectorField.LieBracket
 open Bundle VectorField
 open scoped Manifold ContDiff
 
+namespace VectorField
+
+variable
+  {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
+  [IsManifold I (minSmoothness ℝ 3) M]
+  {X Y Z : Π x : M, TangentSpace I x} {x : M}
+
+/-- The cyclic (Jacobi) form of the Leibniz identity for the Lie bracket of vector fields:
+`[X,[Y,Z]] + [Y,[Z,X]] + [Z,[X,Y]] = 0`.
+
+Mathlib supplies only the Leibniz form `[U,[V,W]] = [[U,V],W] + [V,[U,W]]`; converting needs
+antisymmetry in both slots. -/
+lemma jacobi_mlieBracket_apply
+    (hX : CMDiffAt (minSmoothness ℝ 2) (T% X) x)
+    (hY : CMDiffAt (minSmoothness ℝ 2) (T% Y) x)
+    (hZ : CMDiffAt (minSmoothness ℝ 2) (T% Z) x)
+    (hZX : MDiffAt (T% (mlieBracket I Z X)) x) :
+    mlieBracket I X (mlieBracket I Y Z) x + mlieBracket I Y (mlieBracket I Z X) x
+      + mlieBracket I Z (mlieBracket I X Y) x = 0 := by
+  have L := leibniz_identity_mlieBracket_apply (I := I) (U := X) (V := Y) (W := Z) hX hY hZ
+  -- `[[X,Y],Z] = -[Z,[X,Y]]`
+  have e₁ : mlieBracket I (mlieBracket I X Y) Z x = - mlieBracket I Z (mlieBracket I X Y) x :=
+    mlieBracket_swap_apply ..
+  -- `[Y,[X,Z]] = -[Y,[Z,X]]`, via `[X,Z] = -[Z,X]` as sections
+  have e₂ : mlieBracket I Y (mlieBracket I X Z) x = - mlieBracket I Y (mlieBracket I Z X) x := by
+    have hswap : mlieBracket I X Z = (-1 : ℝ) • mlieBracket I Z X := by
+      rw [mlieBracket_swap]; funext w; simp
+    rw [hswap, mlieBracket_const_smul_right hZX]
+    module
+  rw [L, e₁, e₂]
+  abel
+
+end VectorField
+
 namespace CovariantDerivative
 
 variable
@@ -21,6 +57,7 @@ variable
     [FiniteDimensional ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I 2 M]
+  [IsManifold I (minSmoothness ℝ 3) M]
 
 variable (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
 
@@ -67,7 +104,8 @@ theorem curvature_antisymm (X Y Z : Π x : M, TangentSpace I x) (x : M) :
 hypotheses. -/
 theorem bianchi_first_of_mdiff (hcov : cov.torsion = 0)
     {X Y Z : Π y : M, TangentSpace I y} {x : M}
-    (hX : MDiff (T% X)) (hY : MDiff (T% Y)) (hZ : MDiff (T% Z))
+    (hX : CMDiff (minSmoothness ℝ 2) (T% X)) (hY : CMDiff (minSmoothness ℝ 2) (T% Y))
+    (hZ : CMDiff (minSmoothness ℝ 2) (T% Z))
     (hYZ : MDiffAt (T% (fun y ↦ cov Z y (Y y))) x)
     (hZY : MDiffAt (T% (fun y ↦ cov Y y (Z y))) x)
     (hZX : MDiffAt (T% (fun y ↦ cov X y (Z y))) x)
@@ -77,20 +115,25 @@ theorem bianchi_first_of_mdiff (hcov : cov.torsion = 0)
     (hbYZ : MDiffAt (T% (mlieBracket I Y Z)) x)
     (hbZX : MDiffAt (T% (mlieBracket I Z X)) x)
     (hbXY : MDiffAt (T% (mlieBracket I X Y)) x)
-    (hjac : mlieBracket I X (mlieBracket I Y Z) x + mlieBracket I Y (mlieBracket I Z X) x
-      + mlieBracket I Z (mlieBracket I X Y) x = 0) :
+    :
     cov.curvature X Y Z x + cov.curvature Y Z X x + cov.curvature Z X Y x = 0 := by
+  have h1 : minSmoothness ℝ 2 ≠ 0 :=
+    (lt_of_lt_of_le (by norm_num : (0 : ℕ∞ω) < 2) le_minSmoothness).ne'
+  have hX' : MDiff (T% X) := hX.mdifferentiable h1
+  have hY' : MDiff (T% Y) := hY.mdifferentiable h1
+  have hZ' : MDiff (T% Z) := hZ.mdifferentiable h1
+  have hjac := VectorField.jacobi_mlieBracket_apply (hX x) (hY x) (hZ x) hbZX
   have htf : ∀ {A B : Π y : M, TangentSpace I y} {y : M},
       MDiffAt (T% A) y → MDiffAt (T% B) y →
       cov B y (A y) - cov A y (B y) = mlieBracket I A B y :=
     (torsion_eq_zero_iff cov).mp hcov
   -- Torsion-freeness as an identity of sections.
   have eYZ : (fun y ↦ cov Z y (Y y)) - (fun y ↦ cov Y y (Z y)) = mlieBracket I Y Z := by
-    funext y; exact htf (hY y) (hZ y)
+    funext y; exact htf (hY' y) (hZ' y)
   have eZX : (fun y ↦ cov X y (Z y)) - (fun y ↦ cov Z y (X y)) = mlieBracket I Z X := by
-    funext y; exact htf (hZ y) (hX y)
+    funext y; exact htf (hZ' y) (hX' y)
   have eXY : (fun y ↦ cov Y y (X y)) - (fun y ↦ cov X y (Y y)) = mlieBracket I X Y := by
-    funext y; exact htf (hX y) (hY y)
+    funext y; exact htf (hX' y) (hY' y)
   -- Group the cyclic sum by the direction slot.
   have gX : cov (fun y ↦ cov Z y (Y y)) x (X x) - cov (fun y ↦ cov Y y (Z y)) x (X x)
       = cov (mlieBracket I Y Z) x (X x) := by
@@ -102,9 +145,9 @@ theorem bianchi_first_of_mdiff (hcov : cov.torsion = 0)
       = cov (mlieBracket I X Y) x (Z x) := by
     rw [← _root_.sub_apply, ← cov.sub_apply hXY hYX, eXY]
   -- Torsion-freeness again, now on the pairs (X, [Y,Z]) and cyclic.
-  have tX := htf (hX x) hbYZ
-  have tY := htf (hY x) hbZX
-  have tZ := htf (hZ x) hbXY
+  have tX := htf (hX' x) hbYZ
+  have tY := htf (hY' x) hbZX
+  have tZ := htf (hZ' x) hbXY
   simp only [curvature]
   linear_combination (norm := module) gX + gY + gZ + tX + tY + tZ + hjac
 
