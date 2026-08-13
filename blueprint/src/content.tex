@@ -39,14 +39,23 @@ branch that can be closed today: on a Lie group the flow is an ODE.
 
 \begin{lemma}[First Bianchi identity]
   \label{lem:bianchi-first}
-  \lean{CovariantDerivative.bianchi_first}
+  \lean{CovariantDerivative.bianchi_first_of_mdiff}
+  \leanok
   \uses{def:curvature, thm:levi-civita}
   For a torsion-free connection,
   $\Riem(X,Y)Z + \Riem(Y,Z)X + \Riem(Z,X)Y = 0$.
 \end{lemma}
 
 \begin{proof}
-  \textbf{Not blocked --- this is the next thing to do.} Regroup the cyclic sum
+  \leanok
+  \textbf{Proved} as \texttt{bianchi\_first\_of\_mdiff}, which takes the
+  differentiability side conditions as explicit hypotheses. Deriving those from
+  smoothness of $X, Y, Z$ additionally needs
+  \texttt{[ContMDiffCovariantDerivative cov k]} --- smoothness of $\nab$ is a
+  typeclass, not part of \texttt{CovariantDerivative} --- and is bookkeeping
+  rather than mathematics.
+
+  Regroup the cyclic sum
   using torsion-freeness on each pair,
   \[ \textstyle\sum \Riem(X,Y)Z = \nab_X [Y,Z] - \nab_{[Y,Z]} X
      + \nab_Y [Z,X] - \nab_{[Z,X]} Y + \nab_Z [X,Y] - \nab_{[X,Y]} Z, \]

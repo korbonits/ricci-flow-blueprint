@@ -11,3 +11,4 @@ blueprint/src/*.paux
 blueprint/src/*.pdf.log
 .venv/
 __pycache__/
+scratch/
