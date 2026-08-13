@@ -1,9 +1,18 @@
 \chapter{Overview}
 
-The goal is Hamilton's 1982 theorem: a closed $3$-manifold admitting a metric of
-positive Ricci curvature admits a metric of constant positive sectional
-curvature. Mathlib carries the terminal statement of the road this sits on, in
-\texttt{Mathlib/Geometry/Manifold/PoincareConjecture.lean}.
+The first milestone is Hamilton's 1982 theorem: a closed $3$-manifold admitting
+a metric of strictly positive Ricci curvature admits a metric of constant
+positive sectional curvature. The terminal node is the spherical space form
+theorem --- a closed $3$-manifold with finite fundamental group is
+$S^3/\Gamma$ --- which Perelman proved in 2003 and which contains the
+Poincar\'e conjecture as the case $\Gamma = 1$. Mathlib states that corollary,
+unproved, in \texttt{Mathlib/Geometry/Manifold/PoincareConjecture.lean}.
+
+The road is charted to the space form theorem rather than to geometrization on
+purpose. Finite extinction time makes the long-time behaviour of the flow
+irrelevant, which removes collapsing theory, graph manifolds, and the JSJ
+decomposition from the dependency graph entirely --- see the end of Chapter
+\ref{chap:spaceform}.
 
 The obstacle is usually said to be analysis, and eventually it is --- but not
 first. Ricci curvature cannot presently be \emph{defined}, for reasons two levels
@@ -180,8 +189,10 @@ Mathlib's Picard--Lindel\"of suffices.
 \chapter{Ricci flow on a closed manifold}
 \label{chap:flow}
 
-Everything below is blocked on analysis Mathlib does not have. It is stated so
-the dependency graph is honest, not because it is close.
+Everything from here on is blocked on analysis Mathlib does not have. It is
+stated so the dependency graph is honest, not because it is close. The point of
+writing it out is to see where the road forks and how much of it a given
+target actually requires.
 
 \begin{definition}[Ricci flow]
   \label{def:ricci-flow}
@@ -198,16 +209,327 @@ the dependency graph is honest, not because it is close.
   \textbf{Blocked.} Requires quasilinear parabolic systems on sections of
   vector bundles (via DeTurck's trick, or Nash--Moser in Hamilton's original),
   and hence Sobolev spaces of bundle sections and elliptic regularity. None of
-  this exists in Mathlib.
+  this exists in Mathlib. This is the single largest missing prerequisite on
+  the whole road, and it is shared by every node below.
+\end{theorem}
+
+\begin{lemma}[Evolution of the curvature tensor]
+  \label{lem:evolution-rm}
+  \uses{def:ricci-flow, def:curvature}
+  Under the flow, $\partial_t \Rm = \Delta \Rm + Q(\Rm)$, where $Q$ is
+  quadratic in the curvature operator.
+
+  Obtained cleanly in an evolving orthonormal frame (Uhlenbeck's trick), which
+  removes the terms coming from the time-dependence of the metric on the
+  bundle. Formally this is a computation, not an estimate, but it is a long one
+  and it is what every subsequent estimate is applied to.
+\end{lemma}
+
+\begin{theorem}[Scalar maximum principle]
+  \label{thm:max-scalar}
+  \uses{def:ricci-flow}
+  A solution of $\partial_t u = \Delta u + \langle X, \nab u\rangle + F(u)$ on
+  a closed manifold is bounded below by the solution of the associated ODE
+  $\dot\phi = F(\phi)$ with the same initial datum.
+\end{theorem}
+
+\begin{theorem}[Tensor maximum principle]
+  \label{thm:max-tensor}
+  \uses{thm:max-scalar, lem:evolution-rm}
+  Hamilton's maximum principle for symmetric tensors: a closed convex subset of
+  the bundle preserved by the ODE $\dot{\Rm} = Q(\Rm)$ is preserved by the PDE.
+
+  This is the workhorse. Every curvature-positivity statement in the subject is
+  an instance of it, including the one Hamilton needs in dimension three.
+\end{theorem}
+
+\begin{theorem}[Shi's local derivative estimates]
+  \label{thm:shi}
+  \uses{lem:evolution-rm}
+  A bound on $|\Rm|$ on a parabolic cylinder gives interior bounds on every
+  covariant derivative $|\nab^k \Rm|$, with constants depending only on $k$,
+  the dimension, and the geometry of the cylinder.
+\end{theorem}
+
+\begin{theorem}[Long-time existence criterion]
+  \label{thm:long-time}
+  \uses{thm:short-time, thm:shi}
+  The flow extends past $T$ if and only if $|\Rm|$ stays bounded on $[0,T)$.
+  Singularities are exactly curvature blow-ups.
+\end{theorem}
+
+\chapter{Hamilton's theorem}
+\label{chap:hamilton}
+
+This is the first genuine milestone, and the last one reachable by
+maximum-principle estimates alone. Positive Ricci curvature is a strong enough
+hypothesis that the flow never forms a singularity in an interesting way: it
+shrinks to a round point.
+
+\begin{lemma}[Pinching in dimension three]
+  \label{lem:pinching}
+  \uses{thm:max-tensor}
+  In dimension three the curvature operator has three eigenvalues, and positive
+  Ricci curvature is preserved by the flow. Moreover the eigenvalues pinch
+  together relative to their size: the traceless part of $\Ric$ is dominated by
+  $\scal^{1-\delta}$ for some $\delta > 0$.
+
+  Special to dimension three, where the Weyl tensor vanishes and $\Rm$ is
+  determined by $\Ric$. The higher-dimensional analogues (Hamilton 1986 in
+  dimension four, then B\"ohm--Wilking) are substantially harder and are not on
+  this road.
+\end{lemma}
+
+\begin{lemma}[Gradient estimate for the scalar curvature]
+  \label{lem:gradient-scal}
+  \uses{thm:max-tensor, lem:pinching}
+  $|\nab \scal| \le \eta\, \scal^{3/2}$ up to lower-order terms, so the scalar
+  curvature is comparable at every pair of points as the flow shrinks.
+\end{lemma}
+
+\begin{theorem}[Convergence of the normalized flow]
+  \label{thm:normalized-convergence}
+  \uses{lem:pinching, lem:gradient-scal, thm:long-time}
+  Rescaling to fixed volume, the normalized flow exists for all time and
+  converges exponentially in every $C^k$ to a metric of constant positive
+  sectional curvature.
 \end{theorem}
 
 \begin{theorem}[Hamilton 1982]
   \label{thm:hamilton}
-  \uses{thm:short-time, lem:bianchi-first}
-  A closed $3$-manifold admitting a metric of positive Ricci curvature admits a
-  metric of constant positive sectional curvature.
+  \uses{thm:normalized-convergence, lem:bianchi-first}
+  A closed $3$-manifold admitting a metric of strictly positive Ricci curvature
+  admits a metric of constant positive sectional curvature, and is therefore
+  diffeomorphic to a spherical space form $S^3/\Gamma$.
 
-  \textbf{Blocked.} Additionally requires the tensor maximum principle,
-  the pinching estimates, Shi's derivative estimates, and convergence of the
-  normalized flow.
+  \emph{J. Differential Geometry} \textbf{17} (1982), 255--306.
 \end{theorem}
+
+\chapter{Perelman's monotone quantities}
+\label{chap:entropy}
+
+Hamilton's hypothesis, positive Ricci curvature, is exactly what makes the
+argument above work and exactly what a general $3$-manifold does not satisfy.
+Without it the flow forms singularities that must be understood rather than
+avoided, and understanding them requires ruling out one pathology above all:
+the metric collapsing along a sequence of rescalings, so that no limiting model
+exists. Perelman's monotone functionals are what rule it out.
+
+\begin{definition}[The $\mathcal{F}$-functional]
+  \label{def:f-functional}
+  \uses{def:ricci}
+  $\mathcal{F}(\g,f) = \int_\M (\scal + |\nab f|^2)\, e^{-f}\, d\vol_\g$.
+\end{definition}
+
+\begin{theorem}[Ricci flow is a gradient flow]
+  \label{thm:f-monotone}
+  \uses{def:f-functional, def:ricci-flow}
+  Coupled to the backward heat equation for $f$, the flow is the gradient flow
+  of $\mathcal{F}$, and $\mathcal{F}$ is nondecreasing with
+  $\partial_t \mathcal{F} = 2\int |\Ric + \nab^2 f|^2 e^{-f}$.
+
+  This retired a long-standing belief that Ricci flow admitted no Lyapunov
+  functional, and it is the conceptual heart of Perelman's first preprint.
+\end{theorem}
+
+\begin{definition}[The $\mathcal{W}$-entropy]
+  \label{def:w-entropy}
+  \uses{def:f-functional}
+  A scale-invariant modification of $\mathcal{F}$, incorporating a parameter
+  $\tau$ with $\dot\tau = -1$ and normalized by
+  $\int (4\pi\tau)^{-n/2} e^{-f} d\vol = 1$.
+\end{definition}
+
+\begin{theorem}[Monotonicity of $\mathcal{W}$]
+  \label{thm:w-monotone}
+  \uses{def:w-entropy, thm:f-monotone}
+  $\mathcal{W}$ is nondecreasing along the coupled flow.
+\end{theorem}
+
+\begin{definition}[Reduced length and reduced volume]
+  \label{def:reduced-volume}
+  \uses{def:ricci-flow}
+  The $\mathcal{L}$-length of a path in spacetime, its associated
+  $\mathcal{L}$-geodesics and reduced length $\ell$, and the reduced volume
+  $\tilde V(\tau) = \int \tau^{-n/2} e^{-\ell} d\vol$.
+\end{definition}
+
+\begin{theorem}[Monotonicity of the reduced volume]
+  \label{thm:reduced-volume-monotone}
+  \uses{def:reduced-volume}
+  $\tilde V$ is nonincreasing in $\tau$, with equality only on gradient
+  shrinking solitons.
+
+  A second, independent monotone quantity. It is the one that does the work in
+  the classification of ancient solutions, where $\mathcal{W}$ is not sharp
+  enough.
+\end{theorem}
+
+\begin{theorem}[No local collapsing]
+  \label{thm:no-local-collapsing}
+  \uses{thm:w-monotone}
+  A flow on a closed manifold on a finite time interval is $\kappa$-noncollapsed
+  at every scale below a fixed one: wherever $|\Rm| \le r^{-2}$ on a ball of
+  radius $r$, that ball has volume at least $\kappa r^n$.
+
+  This is what makes rescaling limits exist. Every compactness argument below
+  consumes it.
+\end{theorem}
+
+\chapter{Singularity models}
+\label{chap:kappa}
+
+\begin{theorem}[Cheeger--Gromov--Hamilton compactness]
+  \label{thm:compactness}
+  \uses{thm:shi, thm:no-local-collapsing}
+  A sequence of pointed Ricci flows with uniformly bounded curvature and a
+  uniform injectivity-radius lower bound at the basepoints subconverges, in
+  $C^\infty$ on compact sets, to a limiting pointed flow.
+
+  \textbf{Blocked, separately from the PDE gap.} This needs pointed
+  Gromov--Hausdorff and smooth Cheeger--Gromov convergence of Riemannian
+  manifolds. Mathlib has the Gromov--Hausdorff distance between compact metric
+  spaces; the pointed, smooth, curvature-bounded theory for manifolds is a
+  different and much larger object, and nothing of it exists. It is the second
+  independent analytic prerequisite on this road and the first one that is not
+  shared with Hamilton's theorem.
+\end{theorem}
+
+\begin{definition}[$\kappa$-solution]
+  \label{def:kappa-solution}
+  \uses{thm:no-local-collapsing}
+  An ancient solution --- defined on $(-\infty, 0]$ --- that is
+  $\kappa$-noncollapsed, has bounded nonnegative curvature operator, and is not
+  flat. These are exactly the models that arise from rescaling a singularity.
+\end{definition}
+
+\begin{theorem}[Classification of three-dimensional $\kappa$-solutions]
+  \label{thm:kappa-classification}
+  \uses{def:kappa-solution, thm:compactness, thm:reduced-volume-monotone}
+  In dimension three every $\kappa$-solution is, at every point and scale, close
+  to one of a short explicit list: the round shrinking $S^3/\Gamma$, the round
+  shrinking neck $S^2 \times \R$, or a capped variant.
+
+  The technical core of Perelman's second preprint and, with the canonical
+  neighborhood theorem below, the hardest analysis on the entire road.
+\end{theorem}
+
+\begin{theorem}[Canonical neighborhood theorem]
+  \label{thm:canonical-nbhd}
+  \uses{thm:kappa-classification}
+  In a flow on a closed $3$-manifold, every point of sufficiently large
+  curvature has a neighborhood that, after rescaling, is close to a
+  corresponding piece of a $\kappa$-solution --- a neck, a cap, or a closed
+  spherical piece.
+
+  This is what converts an analytic classification into a topological
+  description of where and how the manifold is about to pinch, and it is what
+  makes surgery well-defined rather than arbitrary.
+\end{theorem}
+
+\chapter{Ricci flow with surgery}
+\label{chap:surgery}
+
+Here the object being studied changes character. Everything above is an
+estimate on a fixed manifold; below, the manifold itself is cut and reglued as
+the flow proceeds. Nothing of this shape has been formalized in any system, and
+it is a distinct kind of difficulty from the analysis --- not a harder
+inequality, but a construction that alters the underlying space at a discrete
+set of times while carrying every previously established estimate across.
+
+\begin{definition}[The standard solution]
+  \label{def:standard-solution}
+  \uses{def:kappa-solution}
+  The explicit flow on $\R^3$ with rotationally symmetric initial metric,
+  asymptotic to a cylinder, used as the model for the cap glued in at surgery.
+\end{definition}
+
+\begin{definition}[Ricci flow with surgery]
+  \label{def:surgery}
+  \uses{thm:canonical-nbhd, def:standard-solution}
+  A flow defined on a sequence of time intervals, where at each singular time
+  the high-curvature region is discarded, the manifold is cut along
+  $2$-spheres found inside necks, caps modelled on the standard solution are
+  glued in, and the flow is restarted.
+\end{definition}
+
+\begin{theorem}[Existence of Ricci flow with surgery]
+  \label{thm:surgery-exists}
+  \uses{def:surgery, thm:canonical-nbhd, thm:no-local-collapsing}
+  For any closed $3$-manifold there is a Ricci flow with surgery defined for
+  all time, with surgery parameters chosen so that the canonical neighborhood
+  and noncollapsing assumptions persist across every surgery.
+
+  The persistence is the whole difficulty: the parameters must be chosen in
+  advance, and the estimates re-proved after surgery, in a mutual induction
+  over the surgery times.
+\end{theorem}
+
+\begin{theorem}[Surgery times do not accumulate]
+  \label{thm:surgery-discrete}
+  \uses{thm:surgery-exists}
+  On any finite time interval only finitely many surgeries occur, each
+  removing a definite amount of volume.
+\end{theorem}
+
+\chapter{The spherical space form theorem}
+\label{chap:spaceform}
+
+This is the terminal node. The route below reaches it \emph{without} proving
+the geometrization conjecture, which matters a great deal for how much has to
+be formalized.
+
+\begin{theorem}[Finite extinction time]
+  \label{thm:finite-extinction}
+  \uses{thm:surgery-exists, thm:surgery-discrete}
+  If $\pi_1(\M)$ is finite, the Ricci flow with surgery starting at any metric
+  on $\M$ becomes extinct in finite time: after some $T$, nothing remains.
+
+  Perelman's third preprint proves this via the second variation of area for
+  minimal disks; Colding--Minicozzi give an alternative and shorter proof using
+  a min-max width and the second variation of area for spheres. The
+  Colding--Minicozzi route is the more plausible formalization target, but it
+  brings its own prerequisite --- min-max theory and harmonic-map heat flow ---
+  which Mathlib also lacks.
+\end{theorem}
+
+\begin{theorem}[Spherical space form / elliptization]
+  \label{thm:space-form}
+  \uses{thm:finite-extinction, thm:canonical-nbhd}
+  A closed $3$-manifold with finite fundamental group admits a metric of
+  constant positive sectional curvature, and is therefore diffeomorphic to
+  $S^3/\Gamma$ for a finite $\Gamma \subset SO(4)$ acting freely.
+
+  Extinction in finite time means the manifold is built, by the inverse of the
+  surgery process, entirely out of the spherical pieces the canonical
+  neighborhood theorem supplies; connected sums of space forms with finite
+  $\pi_1$ are space forms.
+\end{theorem}
+
+\begin{corollary}[Poincar\'e conjecture]
+  \label{cor:poincare}
+  \uses{thm:space-form}
+  A simply connected closed $3$-manifold is diffeomorphic to $S^3$. The case
+  $\Gamma = 1$.
+
+  Mathlib already states this, unproved, in
+  \texttt{Mathlib/Geometry/Manifold/PoincareConjecture.lean}. It is the only
+  node on this road that Lean has so far looked at.
+\end{corollary}
+
+\section*{What this route deliberately avoids}
+
+Geometrization requires, in addition to everything above, the analysis of the
+\emph{long-time} behaviour of the flow: the thick--thin decomposition,
+collapsing with local lower curvature bounds, and the recognition of graph
+manifolds --- together with the JSJ decomposition and Thurston's eight
+geometries on the topological side. None of that is needed here. Finite
+extinction short-circuits it: the flow simply ends, so its long-time behaviour
+never has to be described. Morgan--Tian's \emph{Ricci Flow and the Poincar\'e
+Conjecture} takes exactly this route and stops, with the geometrization case
+deferred to a second volume seven years later.
+
+The practical consequence is that targeting the space form theorem rather than
+geometrization removes roughly a third of the material and one entire
+independent prerequisite (collapsing theory), at no cost to the statement being
+a famous open-until-2003 theorem in its own right.
