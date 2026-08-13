@@ -20,7 +20,7 @@ variable
   {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
-  [IsManifold I (minSmoothness ℝ 3) M]
+  [IsManifold I ω M]
   {X Y Z : Π x : M, TangentSpace I x} {x : M}
 
 /-- The cyclic (Jacobi) form of the Leibniz identity for the Lie bracket of vector fields:
@@ -29,13 +29,15 @@ variable
 Mathlib supplies only the Leibniz form `[U,[V,W]] = [[U,V],W] + [V,[U,W]]`; converting needs
 antisymmetry in both slots. -/
 lemma jacobi_mlieBracket_apply
-    (hX : CMDiffAt (minSmoothness ℝ 2) (T% X) x)
-    (hY : CMDiffAt (minSmoothness ℝ 2) (T% Y) x)
-    (hZ : CMDiffAt (minSmoothness ℝ 2) (T% Z) x)
+    (hX : CMDiffAt 2 (T% X) x) (hY : CMDiffAt 2 (T% Y) x) (hZ : CMDiffAt 2 (T% Z) x)
     (hZX : MDiffAt (T% (mlieBracket I Z X)) x) :
     mlieBracket I X (mlieBracket I Y Z) x + mlieBracket I Y (mlieBracket I Z X) x
       + mlieBracket I Z (mlieBracket I X Y) x = 0 := by
-  have L := leibniz_identity_mlieBracket_apply (I := I) (U := X) (V := Y) (W := Z) hX hY hZ
+  have hm : minSmoothness ℝ 2 = 2 := by simp
+  have cX : CMDiffAt (minSmoothness ℝ 2) (T% X) x := by rw [hm]; exact hX
+  have cY : CMDiffAt (minSmoothness ℝ 2) (T% Y) x := by rw [hm]; exact hY
+  have cZ : CMDiffAt (minSmoothness ℝ 2) (T% Z) x := by rw [hm]; exact hZ
+  have L := leibniz_identity_mlieBracket_apply (I := I) (U := X) (V := Y) (W := Z) cX cY cZ
   -- `[[X,Y],Z] = -[Z,[X,Y]]`
   have e₁ : mlieBracket I (mlieBracket I X Y) Z x = - mlieBracket I Z (mlieBracket I X Y) x :=
     mlieBracket_swap_apply ..
@@ -56,8 +58,7 @@ variable
   {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
     [FiniteDimensional ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
-  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I 2 M]
-  [IsManifold I (minSmoothness ℝ 3) M]
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
 
 variable (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
 
@@ -104,24 +105,26 @@ theorem curvature_antisymm (X Y Z : Π x : M, TangentSpace I x) (x : M) :
 hypotheses. -/
 theorem bianchi_first_of_mdiff (hcov : cov.torsion = 0)
     {X Y Z : Π y : M, TangentSpace I y} {x : M}
-    (hX : CMDiff (minSmoothness ℝ 2) (T% X)) (hY : CMDiff (minSmoothness ℝ 2) (T% Y))
-    (hZ : CMDiff (minSmoothness ℝ 2) (T% Z))
+    (hX : CMDiff 2 (T% X)) (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z))
     (hYZ : MDiffAt (T% (fun y ↦ cov Z y (Y y))) x)
     (hZY : MDiffAt (T% (fun y ↦ cov Y y (Z y))) x)
     (hZX : MDiffAt (T% (fun y ↦ cov X y (Z y))) x)
     (hXZ : MDiffAt (T% (fun y ↦ cov Z y (X y))) x)
     (hXY : MDiffAt (T% (fun y ↦ cov Y y (X y))) x)
     (hYX : MDiffAt (T% (fun y ↦ cov X y (Y y))) x)
-    (hbYZ : MDiffAt (T% (mlieBracket I Y Z)) x)
-    (hbZX : MDiffAt (T% (mlieBracket I Z X)) x)
-    (hbXY : MDiffAt (T% (mlieBracket I X Y)) x)
     :
     cov.curvature X Y Z x + cov.curvature Y Z X x + cov.curvature Z X Y x = 0 := by
-  have h1 : minSmoothness ℝ 2 ≠ 0 :=
-    (lt_of_lt_of_le (by norm_num : (0 : ℕ∞ω) < 2) le_minSmoothness).ne'
+  have h1 : (2 : ℕ∞ω) ≠ 0 := by norm_num
   have hX' : MDiff (T% X) := hX.mdifferentiable h1
   have hY' : MDiff (T% Y) := hY.mdifferentiable h1
   have hZ' : MDiff (T% Z) := hZ.mdifferentiable h1
+  -- Brackets of C² fields are C¹, hence differentiable.
+  have hbYZ : MDiffAt (T% (mlieBracket I Y Z)) x :=
+    ((hY x).mlieBracket_vectorField (n := 2) (m := 1) (hZ x) (by norm_num)).mdifferentiableAt one_ne_zero
+  have hbZX : MDiffAt (T% (mlieBracket I Z X)) x :=
+    ((hZ x).mlieBracket_vectorField (n := 2) (m := 1) (hX x) (by norm_num)).mdifferentiableAt one_ne_zero
+  have hbXY : MDiffAt (T% (mlieBracket I X Y)) x :=
+    ((hX x).mlieBracket_vectorField (n := 2) (m := 1) (hY x) (by norm_num)).mdifferentiableAt one_ne_zero
   have hjac := VectorField.jacobi_mlieBracket_apply (hX x) (hY x) (hZ x) hbZX
   have htf : ∀ {A B : Π y : M, TangentSpace I y} {y : M},
       MDiffAt (T% A) y → MDiffAt (T% B) y →
