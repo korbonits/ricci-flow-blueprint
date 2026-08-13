@@ -41,16 +41,14 @@ obstruction. Ricci curvature cannot be *defined*:
 Discharging `hder` in `curvature_smul_right_of_derivation` completes slot 3 and
 unblocks defining Ricci.
 
-## IN FLIGHT
+## Slot 3 is now unconditional
 
-A Fable subagent is attempting the chart transport (model space → general
-manifold) and, if it succeeds, discharging `hder`. It may edit
-`LieBracketDerivation.lean` and `Curvature.lean`. **Do not edit those two files
-until it reports.** Template it was pointed at: mathlib's
-`leibniz_identity_mlieBracketWithin_apply` (~127 lines) and
-`mpullbackWithin_mlieBracketWithin_of_isSymmSndFDerivWithinAt`. Note there is no
-manifold-level second-derivative symmetry in mathlib — that may be the real
-deliverable.
+`curvature_smul_right` (renamed from `..._of_derivation`) no longer assumes the
+derivation identity — it is proved via `VectorField.mlieBracket_apply_fun`, the
+chart-transported identity on a general manifold. All three tensoriality slots
+are proved. What remains before Ricci can be *defined* is the packaging step:
+turning "C^∞-linear in each slot" into a pointwise tensor that can be traced
+(`TensorialAt` / the missing `mkHom₃`).
 
 ## Next: upstream the four lemmas
 

@@ -10,6 +10,7 @@ state the identities the blueprint depends on.
 import Mathlib.Geometry.Manifold.VectorBundle.CovariantDerivative.Basic
 import Mathlib.Geometry.Manifold.VectorBundle.CovariantDerivative.Torsion
 import Mathlib.Geometry.Manifold.VectorField.LieBracket
+import RicciFlowBlueprint.LieBracketDerivation
 
 open Bundle VectorField
 open scoped Manifold ContDiff
@@ -231,13 +232,15 @@ theorem curvature_smul_middle (f : M → ℝ) (X Y Z : Π y : M, TangentSpace I 
   module
 
 omit [FiniteDimensional ℝ E] in
-/-- `R(X, Y)(fZ) = f · R(X, Y)Z`, assuming the bracket acts as a derivation on
-functions. That identity — `[X,Y]f = X(Yf) - Y(Xf)` — is not in Mathlib; it
-needs symmetry of the second derivative transported to manifolds. Everything
-else in slot-3 tensoriality is discharged here. -/
-theorem curvature_smul_right_of_derivation
+/-- `R(X, Y)(fZ) = f · R(X, Y)Z`: third-slot tensoriality of the curvature operator.
+The former hypothesis that the bracket acts as a derivation on functions —
+`[X,Y]f = X(Yf) - Y(Xf)` — is now a theorem, `VectorField.mlieBracket_apply_fun`
+(`RicciFlowBlueprint.LieBracketDerivation`); it needs `f` to be `C²` at `x` and `X`, `Y`
+to be differentiable at `x`, whence the hypotheses `hf'`, `hX`, `hY`. -/
+theorem curvature_smul_right
     (f : M → ℝ) (X Y Z : Π y : M, TangentSpace I y) {x : M}
-    (hf : MDiff f) (hZ : MDiff (T% Z))
+    (hf : MDiff f) (hf' : CMDiffAt 2 f x)
+    (hX : MDiffAt (T% X) x) (hY : MDiffAt (T% Y) x) (hZ : MDiff (T% Z))
     (hYZ : MDiffAt (T% (fun y ↦ cov Z y (Y y))) x)
     (hXZ : MDiffAt (T% (fun y ↦ cov Z y (X y))) x)
     (hYf : MDiffAt (fun y ↦ d% f y (Y y)) x)
@@ -245,11 +248,11 @@ theorem curvature_smul_right_of_derivation
     (hfYZ : MDiffAt (T% (f • fun y ↦ cov Z y (Y y))) x)
     (hfXZ : MDiffAt (T% (f • fun y ↦ cov Z y (X y))) x)
     (hgYZ : MDiffAt (T% ((fun y ↦ d% f y (Y y)) • Z)) x)
-    (hgXZ : MDiffAt (T% ((fun y ↦ d% f y (X y)) • Z)) x)
-    -- the missing identity: the Lie bracket is a derivation on functions
-    (hder : d% (fun y ↦ d% f y (Y y)) x (X x) - d% (fun y ↦ d% f y (X y)) x (Y x)
-              = d% f x (mlieBracket I X Y x)) :
+    (hgXZ : MDiffAt (T% ((fun y ↦ d% f y (X y)) • Z)) x) :
     cov.curvature X Y (f • Z) x = f x • cov.curvature X Y Z x := by
+  -- the bracket acts as a derivation on functions
+  have hder : d% (fun y ↦ d% f y (Y y)) x (X x) - d% (fun y ↦ d% f y (X y)) x (Y x)
+      = d% f x (mlieBracket I X Y x) := mlieBracket_apply_fun hf' hX hY
   have hsecY : (fun y ↦ cov (f • Z) y (Y y))
       = (f • fun y ↦ cov Z y (Y y)) + ((fun y ↦ d% f y (Y y)) • Z) := by
     funext y; simp [cov.isCovariantDerivativeOn.leibniz (hZ y) (hf y)]
