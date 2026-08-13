@@ -17,7 +17,7 @@ branch that can be closed today: on a Lie group the flow is an ODE.
 
 \begin{definition}[Curvature of a covariant derivative]
   \label{def:curvature}
-  \lean{RicciFlowBlueprint.curvature}
+  \lean{CovariantDerivative.curvature}
   \leanok
   For a covariant derivative $\nab$ on the tangent bundle of $\M$,
   \[ \Riem(X,Y)Z = \nab_X \nab_Y Z - \nab_Y \nab_X Z - \nab_{[X,Y]} Z. \]
@@ -25,13 +25,21 @@ branch that can be closed today: on a Lie group the flow is an ODE.
 
 \begin{lemma}[Antisymmetry]
   \label{lem:curvature-antisymm}
-  \lean{RicciFlowBlueprint.curvature_antisymm}
+  \lean{CovariantDerivative.curvature_antisymm}
+  \leanok
   \uses{def:curvature}
   $\Riem(X,Y)Z = -\Riem(Y,X)Z$.
 \end{lemma}
 
+\begin{proof}
+  \leanok
+  Immediate from $[Y,X] = -[X,Y]$ and linearity of $\nab_{(-)} Z$ in the
+  direction slot.
+\end{proof}
+
 \begin{lemma}[First Bianchi identity]
   \label{lem:bianchi-first}
+  \lean{CovariantDerivative.bianchi_first}
   \uses{def:curvature, thm:levi-civita}
   For a torsion-free connection,
   $\Riem(X,Y)Z + \Riem(Y,Z)X + \Riem(Z,X)Y = 0$.
@@ -57,8 +65,13 @@ branch that can be closed today: on a Lie group the flow is an ODE.
 
 \begin{proof}
   Uniqueness from the Koszul formula; existence by constructing $\nab$ from it.
-  Mathlib supplies both ingredients as of August 2026
-  (\texttt{CovariantDerivative/Metric.lean} and \texttt{.../Torsion.lean}).
+  Mathlib supplies both ingredients as of August 2026:
+  \texttt{CovariantDerivative.IsMetricCompatible} in
+  \texttt{CovariantDerivative/Metric.lean} and
+  \texttt{CovariantDerivative.torsion} in \texttt{.../Torsion.lean}. Note the
+  metric must reach the tangent bundle through \texttt{RiemannianBundle}
+  rather than a raw \texttt{[$\forall$ x, InnerProductSpace $\R$ (TangentSpace I x)]}
+  binder, which would create a topology diamond.
 \end{proof}
 
 \begin{definition}[Ricci and scalar curvature]
@@ -66,6 +79,13 @@ branch that can be closed today: on a Lie group the flow is an ODE.
   \uses{def:curvature, thm:levi-civita}
   $\Ric(X,Y) = \operatorname{tr}(Z \mapsto \Riem(Z,X)Y)$ and
   $\scal = \operatorname{tr}_\g \Ric$.
+
+  \textbf{Blocked.} The trace requires $\Riem$ to descend from vector
+  \emph{fields} to vectors in its first slot. Upstream that is blocked on
+  \texttt{TensorialAt} supplying only first-order (\texttt{MDiffAt})
+  hypotheses, and on the absence of \texttt{mkHom₃}. Until those land, Ricci
+  curvature cannot be defined in Lean at all --- which is why every node below
+  this one is prose.
 \end{definition}
 
 \chapter{Ricci flow on left-invariant metrics}
