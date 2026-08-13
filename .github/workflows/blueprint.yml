@@ -46,10 +46,13 @@ jobs:
           leanblueprint pdf
           leanblueprint web
           leanblueprint checkdecls
+          # plasTeX writes to blueprint/web (plastex.cfg `directory=../web/`,
+          # resolved from blueprint/src). Ship the pdf alongside the site.
+          cp blueprint/print/print.pdf blueprint/web/blueprint.pdf
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: web
+          path: blueprint/web
 
   deploy:
     needs: build
