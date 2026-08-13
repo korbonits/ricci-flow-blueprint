@@ -1,0 +1,13 @@
+.lake/
+build/
+web/
+blueprint/print/
+blueprint/web/
+blueprint/src/*.aux
+blueprint/src/*.log
+blueprint/src/*.out
+blueprint/src/*.pdf
+blueprint/src/*.paux
+blueprint/src/*.pdf.log
+.venv/
+__pycache__/
