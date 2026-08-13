@@ -23,13 +23,13 @@ and close one branch end to end.
 | --- | --- |
 | `CovariantDerivative.curvature` | **defined** |
 | `curvature_antisymm` | **proved** |
-| `neg_apply`, `sub_apply` | **proved** — upstreamable; Mathlib's `IsCovariantDerivativeOn` has only `add`/`leibniz` |
-| `VectorField.jacobi_mlieBracket_apply` | **proved** — cyclic Jacobi; Mathlib has only the Leibniz form |
-| `mdiffAt_cov_apply` | **proved** — first consumer of `ContMDiffCovariantDerivative` anywhere |
-| `bianchi_first_of_mdiff` | **proved** — explicit differentiability hypotheses |
-| `bianchi_first` | **proved** — clean form, all side conditions discharged |
-| `exists_unique_leviCivita` (Koszul) | in flight upstream: mathlib4 [#36845](https://github.com/leanprover-community/mathlib4/pull/36845) |
-| Ricci and scalar curvature | blocked: needs first-slot tensoriality of `curvature` |
+| `neg_apply`, `sub_apply`, `mdiffAt_cov_apply` | **proved** — upstreamable, no Mathlib equivalent |
+| `bianchi_first` | **proved** — first Bianchi, all side conditions discharged |
+| `curvature_smul_left/middle/right` | **proved** — tensoriality, all three slots, unconditional |
+| `VectorField.lieBracket_apply_fun` | **proved** — `[V,W]f = V(Wf) − W(Vf)`, vector spaces |
+| `VectorField.mlieBracket_apply_fun` | **proved** — the same on any manifold, corners allowed |
+| Ricci and scalar curvature | mathematics done; needs tensor packaging (`TensorialAt`/`mkHom₃`) |
+| `exists_unique_leviCivita` | upstream: mathlib4 [#36845](https://github.com/leanprover-community/mathlib4/pull/36845) |
 | Ricci flow on left-invariant metrics (an ODE) | prose — the beachhead, no PDE required |
 | Short-time existence on a closed manifold | blocked: parabolic PDE |
 | Hamilton 1982 | terminal node |
