@@ -64,6 +64,11 @@ branch that can be closed today: on a Lie group the flow is an ODE.
 \end{theorem}
 
 \begin{proof}
+  \textbf{In flight upstream:} mathlib4 PR \#36845 supplies the Koszul formula,
+  uniqueness, the construction, and the compatibility/torsion-free proof. It has
+  been open since March 2026 and is \texttt{awaiting-author}. Do not duplicate
+  it.
+
   Uniqueness from the Koszul formula; existence by constructing $\nab$ from it.
   Mathlib supplies both ingredients as of August 2026:
   \texttt{CovariantDerivative.IsMetricCompatible} in

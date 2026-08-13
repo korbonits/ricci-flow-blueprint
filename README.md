@@ -24,7 +24,7 @@ and close one branch end to end.
 | `CovariantDerivative.curvature` | **defined** |
 | `curvature_antisymm` | **proved** |
 | `bianchi_first` | statement elaborates, `sorry` |
-| `exists_unique_leviCivita` (Koszul) | statement elaborates, `sorry` |
+| `exists_unique_leviCivita` (Koszul) | **in flight upstream**: mathlib4 [#36845](https://github.com/leanprover-community/mathlib4/pull/36845) |
 | Ricci and scalar curvature | blocked: needs first-slot tensoriality of `curvature` |
 | Ricci flow on left-invariant metrics (an ODE) | prose — the beachhead, no PDE required |
 | Short-time existence on a closed manifold | blocked: parabolic PDE |

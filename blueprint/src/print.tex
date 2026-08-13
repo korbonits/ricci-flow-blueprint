@@ -1,9 +1,15 @@
+% Printable version of the blueprint. Note this must NOT load the `blueprint`
+% package: that is a plasTeX-side stub which no-ops \graphcolor and friends.
 \documentclass[a4paper]{report}
 
 \usepackage{geometry}
-\usepackage{amsmath,amssymb,amsthm}
-\usepackage{hyperref}
-\usepackage[showmore, dep_graph]{blueprint}
+
+\usepackage{expl3}
+
+\usepackage{amssymb, amsthm, mathtools}
+\usepackage[unicode,colorlinks=true,linkcolor=blue,urlcolor=magenta, citecolor=blue]{hyperref}
+
+\usepackage[warnings-off={mathtools-colon,mathtools-overbracket}]{unicode-math}
 
 \input{macros/common}
 \input{macros/print}
@@ -11,13 +17,8 @@
 \title{Ricci flow: a formalization blueprint}
 \author{Alex Korbonits}
 
-\home{https://github.com/korbonits/ricci-flow-blueprint}
-\github{https://github.com/korbonits/ricci-flow-blueprint}
-
 \begin{document}
 \maketitle
 \tableofcontents
-
 \input{content}
-
 \end{document}

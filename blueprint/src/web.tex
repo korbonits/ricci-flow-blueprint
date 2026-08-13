@@ -1,20 +1,21 @@
+% Web version of the blueprint, rendered by plasTeX.
 \documentclass{report}
 
-\usepackage{amsmath,amssymb,amsthm}
-\usepackage{blueprint}
+\usepackage{amssymb, amsthm, amsmath}
+\usepackage{hyperref}
+\usepackage[showmore, dep_graph]{blueprint}
 
 \input{macros/common}
 \input{macros/web}
 
+\home{https://korbonits.github.io/ricci-flow-blueprint}
+\github{https://github.com/korbonits/ricci-flow-blueprint}
+\dochome{https://leanprover-community.github.io/mathlib4_docs}
+
 \title{Ricci flow: a formalization blueprint}
 \author{Alex Korbonits}
 
-\home{https://github.com/korbonits/ricci-flow-blueprint}
-\github{https://github.com/korbonits/ricci-flow-blueprint}
-
 \begin{document}
 \maketitle
-
 \input{content}
-
 \end{document}

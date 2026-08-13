@@ -1,13 +1,19 @@
 /-
 The Levi-Civita connection.
 
-Mathlib has both ingredients as of 2026-08 —
-`CovariantDerivative.IsMetricCompatible` (`.../CovariantDerivative/Metric.lean`)
-and `CovariantDerivative.torsion` (`.../CovariantDerivative/Torsion.lean`) —
-but not the existence/uniqueness theorem.
+UPSTREAM IN FLIGHT: mathlib4 PR #36845 (`grunweg`, opened 2026-03-19, reviewed
+by `sgouezel`, `awaiting-author` since 2026-07-28) adds
+`Mathlib/Geometry/Manifold/VectorBundle/CovariantDerivative/LeviCivita.lean`
+with the Koszul formula, uniqueness, the construction, and the proof that it is
+compatible and torsion-free. Do not duplicate it — either help finish it or
+build on it.
 
-Check `#maths` on the Lean Zulip before investing here; someone upstream is
-plausibly walking toward the same result.
+  https://github.com/leanprover-community/mathlib4/pull/36845
+
+Consequently the statement below is NOT a benchmark task: its proof has been
+public since March 2026, so it fails the contamination bar the benchmark exists
+to enforce. It stays here as a blueprint node so the dependency graph is
+complete.
 -/
 import Mathlib.Geometry.Manifold.VectorBundle.CovariantDerivative.Metric
 import Mathlib.Geometry.Manifold.VectorBundle.CovariantDerivative.Torsion
@@ -30,7 +36,7 @@ variable
   [IsContMDiffRiemannianBundle I 1 E (fun (x : M) ↦ TangentSpace I x)]
   [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
 
--- BENCH: koszul-uniqueness
+-- Not a benchmark task: see the contamination note above.
 -- The fundamental theorem of Riemannian geometry: there is exactly one
 -- torsion-free covariant derivative on `TM` compatible with the metric.
 -- Uniqueness is the Koszul formula; existence constructs the connection from it.
