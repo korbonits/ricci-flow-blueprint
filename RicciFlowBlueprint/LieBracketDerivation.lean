@@ -69,15 +69,27 @@ theorem mlieBracket_eq_lieBracket
   rw [← mlieBracketWithin_univ, mlieBracketWithin_eq_lieBracketWithin,
     lieBracketWithin_univ]
 
-/- ASSEMBLY BLOCKED. Combining the two collapse lemmas above into the
-model-space derivation identity runs into a type-synonym conflict:
-`HasFDerivAt V V' x` requires `V : E → E` (non-dependent codomain), while
-`mlieBracketWithin` requires `V : Π x, TangentSpace 𝓘(𝕜,E) x`. The two are
-defeq for elaboration but not for instance synthesis, and
-`backward.isDefEq.respectTransparency false` does not help since it governs
-defeq checking rather than instance search. Resolving this needs either a
-non-dependent restatement of the bracket API on the model space, or an explicit
-transport across the synonym. -/
+/-- The same collapse for plain `E → E` vector fields. `HasFDerivAt` needs a
+non-dependent codomain while `mlieBracketWithin` needs the dependent one; the
+two are defeq, and term-mode application bridges them where `simp`/`rw` cannot. -/
+theorem mlieBracket_eq_lieBracket' {V W : E → E} {x : E} :
+    mlieBracket 𝓘(𝕜, E) V W x = lieBracket 𝕜 V W x :=
+  mlieBracket_eq_lieBracket
+
+/- ASSEMBLY BLOCKED — an instance diamond, not a defeq problem.
+
+The three lemmas above are exactly what is needed for the model-space case of
+`[V,W] f = V (W f) - W (V f)`, but they cannot currently be combined. The goal
+and the assembled proof term print *identically*; they differ only in which
+`NormedAddCommGroup` instance the subtraction and the continuous-linear-map
+application go through — `TangentSpace 𝓘(𝕜,E) x` versus `E`. These are not the
+same term, so neither `simpa`, `rw`, nor term-mode `exact` closes the gap, and
+`backward.isDefEq.respectTransparency false` does not help (it governs defeq
+checking, not instance synthesis).
+
+`mlieBracket_eq_lieBracket'` shows the bridge is possible when a statement can
+be *restated* across the synonym. What is missing is the same move for an
+equation whose two sides carry different instance paths. -/
 
 end ModelSpace
 
