@@ -76,20 +76,27 @@ theorem mlieBracket_eq_lieBracket' {V W : E → E} {x : E} :
     mlieBracket 𝓘(𝕜, E) V W x = lieBracket 𝕜 V W x :=
   mlieBracket_eq_lieBracket
 
-/- ASSEMBLY BLOCKED — an instance diamond, not a defeq problem.
+/-- The model-space case of "the Lie bracket acts as a derivation on functions",
+in manifold notation: `[V,W] f = V (W f) - W (V f)` with `mvfderiv` and
+`mlieBracket` over `𝓘(𝕜, E)`.
 
-The three lemmas above are exactly what is needed for the model-space case of
-`[V,W] f = V (W f) - W (V f)`, but they cannot currently be combined. The goal
-and the assembled proof term print *identically*; they differ only in which
-`NormedAddCommGroup` instance the subtraction and the continuous-linear-map
-application go through — `TangentSpace 𝓘(𝕜,E) x` versus `E`. These are not the
-same term, so neither `simpa`, `rw`, nor term-mode `exact` closes the gap, and
-`backward.isDefEq.respectTransparency false` does not help (it governs defeq
-checking, not instance synthesis).
-
-`mlieBracket_eq_lieBracket'` shows the bridge is possible when a statement can
-be *restated* across the synonym. What is missing is the same move for an
-equation whose two sides carry different instance paths. -/
+Assembly note: the collapse lemmas must be applied at the *fully applied* level
+(the whole `mvfderiv … y (v)` term), where the goal lives in `F` and no
+`TangentSpace`-vs-`E` instance path survives. `simp only` does this and also
+rewrites under the binder `fun y ↦ …`, where `rw` cannot reach; `hfd` is needed
+in the same pass to turn the inner `fderiv 𝕜 f y` into `f' y` under that binder. -/
+theorem mlieBracket_apply_fun_model
+    {f : E → F} {f' : E → E →L[𝕜] F} {f'' : E →L[𝕜] E →L[𝕜] F}
+    {V W : E → E} {V' W' : E →L[𝕜] E} {x : E}
+    (hf : ∀ y, HasFDerivAt f (f' y) y) (hf' : HasFDerivAt f' f'' x)
+    (hV : HasFDerivAt V V' x) (hW : HasFDerivAt W W' x) :
+    (mvfderiv 𝓘(𝕜, E) (fun y ↦ mvfderiv 𝓘(𝕜, E) f y (W y)) x) (V x)
+      - (mvfderiv 𝓘(𝕜, E) (fun y ↦ mvfderiv 𝓘(𝕜, E) f y (V y)) x) (W x)
+      = (mvfderiv 𝓘(𝕜, E) f x) (mlieBracket 𝓘(𝕜, E) V W x) := by
+  have key := lieBracket_apply_fun hf hf' hV hW
+  have hfd : ∀ y, fderiv 𝕜 f y = f' y := fun y ↦ (hf y).fderiv
+  simp only [mvfderiv_eq_fderiv, mlieBracket_eq_lieBracket', hfd]
+  exact key
 
 end ModelSpace
 
