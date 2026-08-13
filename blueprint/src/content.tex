@@ -39,7 +39,7 @@ branch that can be closed today: on a Lie group the flow is an ODE.
 
 \begin{lemma}[First Bianchi identity]
   \label{lem:bianchi-first}
-  \lean{CovariantDerivative.bianchi_first_of_mdiff}
+  \lean{CovariantDerivative.bianchi_first}
   \leanok
   \uses{def:curvature, thm:levi-civita}
   For a torsion-free connection,
@@ -48,12 +48,8 @@ branch that can be closed today: on a Lie group the flow is an ODE.
 
 \begin{proof}
   \leanok
-  \textbf{Proved} as \texttt{bianchi\_first\_of\_mdiff}, which takes the
-  differentiability side conditions as explicit hypotheses. Deriving those from
-  smoothness of $X, Y, Z$ additionally needs
-  \texttt{[ContMDiffCovariantDerivative cov k]} --- smoothness of $\nab$ is a
-  typeclass, not part of \texttt{CovariantDerivative} --- and is bookkeeping
-  rather than mathematics.
+  \textbf{Proved}, for a $C^1$ connection and $C^2$ vector fields, with every
+  differentiability side condition discharged.
 
   Regroup the cyclic sum
   using torsion-freeness on each pair,

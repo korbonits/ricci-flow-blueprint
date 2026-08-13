@@ -82,6 +82,24 @@ lemma sub_apply {σ τ : Π y : M, TangentSpace I y} {y : M}
 
 
 
+omit [CompleteSpace E] [FiniteDimensional ℝ E] in
+/-- `∇_Y σ` is differentiable at `x` when `∇` is `C^1`, `σ` is `C^2` and `Y` is differentiable. -/
+lemma mdiffAt_cov_apply [ContMDiffCovariantDerivative cov 1]
+    {σ Y : Π y : M, TangentSpace I y} {x : M}
+    (hσ : CMDiff 2 (T% σ)) (hY : MDiffAt (T% Y) x) :
+    MDiffAt (T% (fun y ↦ cov σ y (Y y))) x := by
+  -- the Hom-bundle section `y ↦ cov σ y`
+  have hcovσ : ContMDiffOn I (I.prod 𝓘(ℝ, E →L[ℝ] E)) 1
+      (fun y : M ↦ (⟨y, cov σ y⟩ : TotalSpace (E →L[ℝ] E) fun y ↦ (TangentSpace I y →L[ℝ] TangentSpace I y)))
+      Set.univ := by
+    exact (ContMDiffCovariantDerivative.contMDiff (cov := cov) (k := 1)).contMDiff (by rw [show ((1 : ℕ∞ω) + 1) = 2 by norm_num]; exact hσ.contMDiffOn)
+  have h1 : MDiffAt (fun y : M ↦ (TotalSpace.mk' (E →L[ℝ] E)
+      (E := fun y : M ↦ (TangentSpace I y →L[ℝ] TangentSpace I y)) y (cov σ y))) x := by
+    have h := hcovσ x (Set.mem_univ x)
+    rw [contMDiffWithinAt_univ] at h
+    exact h.mdifferentiableAt one_ne_zero
+  exact h1.clm_bundle_apply hY
+
 /-- The curvature operator `R(X, Y)Z = ∇_X ∇_Y Z - ∇_Y ∇_X Z - ∇_[X,Y] Z`.
 
 Note the nonstandard argument order inherited from `CovariantDerivative`:
@@ -155,7 +173,23 @@ theorem bianchi_first_of_mdiff (hcov : cov.torsion = 0)
   linear_combination (norm := module) gX + gY + gZ + tX + tY + tZ + hjac
 
 
--- TODO: the clean form of `bianchi_first`, deriving the differentiability side
+-- BENCH: bianchi-first-clean
+-- First Bianchi identity for a `C^1` connection and `C^2` vector fields, with every
+-- differentiability side condition discharged.
+theorem bianchi_first [ContMDiffCovariantDerivative cov 1] (hcov : cov.torsion = 0)
+    {X Y Z : Π y : M, TangentSpace I y} {x : M}
+    (hX : CMDiff 2 (T% X)) (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z)) :
+    cov.curvature X Y Z x + cov.curvature Y Z X x + cov.curvature Z X Y x = 0 := by
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  exact cov.bianchi_first_of_mdiff hcov hX hY hZ
+    (cov.mdiffAt_cov_apply hZ ((hY.mdifferentiable h2) x))
+    (cov.mdiffAt_cov_apply hY ((hZ.mdifferentiable h2) x))
+    (cov.mdiffAt_cov_apply hX ((hZ.mdifferentiable h2) x))
+    (cov.mdiffAt_cov_apply hZ ((hX.mdifferentiable h2) x))
+    (cov.mdiffAt_cov_apply hY ((hX.mdifferentiable h2) x))
+    (cov.mdiffAt_cov_apply hX ((hY.mdifferentiable h2) x))
+
+-- (superseded) the clean form of `bianchi_first`, deriving the differentiability side
 -- conditions from smoothness of `X`, `Y`, `Z` rather than assuming them. Needs
 -- `[ContMDiffCovariantDerivative cov k]` (smoothness of `∇` is a typeclass, not
 -- part of `CovariantDerivative`) plus a lemma applying a `C^k` Hom-bundle

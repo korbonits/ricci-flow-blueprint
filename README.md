@@ -23,15 +23,24 @@ and close one branch end to end.
 | --- | --- |
 | `CovariantDerivative.curvature` | **defined** |
 | `curvature_antisymm` | **proved** |
-| `bianchi_first` | statement elaborates, `sorry` |
-| `exists_unique_leviCivita` (Koszul) | **in flight upstream**: mathlib4 [#36845](https://github.com/leanprover-community/mathlib4/pull/36845) |
+| `neg_apply`, `sub_apply` | **proved** — upstreamable; Mathlib's `IsCovariantDerivativeOn` has only `add`/`leibniz` |
+| `VectorField.jacobi_mlieBracket_apply` | **proved** — cyclic Jacobi; Mathlib has only the Leibniz form |
+| `mdiffAt_cov_apply` | **proved** — first consumer of `ContMDiffCovariantDerivative` anywhere |
+| `bianchi_first_of_mdiff` | **proved** — explicit differentiability hypotheses |
+| `bianchi_first` | **proved** — clean form, all side conditions discharged |
+| `exists_unique_leviCivita` (Koszul) | in flight upstream: mathlib4 [#36845](https://github.com/leanprover-community/mathlib4/pull/36845) |
 | Ricci and scalar curvature | blocked: needs first-slot tensoriality of `curvature` |
 | Ricci flow on left-invariant metrics (an ODE) | prose — the beachhead, no PDE required |
 | Short-time existence on a closed manifold | blocked: parabolic PDE |
 | Hamilton 1982 | terminal node |
 
-`lake build` is clean; the only `sorry`s are `bianchi_first` and
-`exists_unique_leviCivita`.
+`lake build` is clean; the only remaining `sorry` is `exists_unique_leviCivita`,
+which is superseded by the upstream PR above.
+
+Four lemmas here have no Mathlib equivalent and are candidates for upstreaming:
+`neg_apply`/`sub_apply` (subtraction for covariant derivatives),
+`jacobi_mlieBracket_apply` (the cyclic Jacobi identity), and `mdiffAt_cov_apply`
+(differentiability of `∇_Y σ`).
 
 Mathlib already carries the terminal statement of the road this is on:
 `Mathlib/Geometry/Manifold/PoincareConjecture.lean`.
