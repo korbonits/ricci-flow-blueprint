@@ -1,1 +1,6 @@
-@default_files = ('print.tex', 'web.tex');
+# Configures the latexmk run behind `leanblueprint pdf`.
+# Only print.tex is a latexmk target: web.tex is compiled by plasTeX, and uses
+# \home/\github/\dochome which come from the plasTeX plugin, not blueprint.sty.
+$pdf_mode = 1;
+$pdflatex = 'xelatex -synctex=1';
+@default_files = ('print.tex');
