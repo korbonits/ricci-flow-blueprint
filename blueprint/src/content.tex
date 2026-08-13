@@ -46,11 +46,24 @@ branch that can be closed today: on a Lie group the flow is an ODE.
 \end{lemma}
 
 \begin{proof}
-  Expand each term and cancel using the Jacobi identity for the Lie bracket.
-  Formally this is blocked on the bracket-as-derivation lemma for
-  \texttt{VectorField.mlieBracket} and on $Z$-slot tensoriality:
-  \texttt{TensorialAt} supplies only first-order hypotheses and there is no
-  \texttt{mkHom₃}.
+  \textbf{Not blocked --- this is the next thing to do.} Regroup the cyclic sum
+  using torsion-freeness on each pair,
+  \[ \textstyle\sum \Riem(X,Y)Z = \nab_X [Y,Z] - \nab_{[Y,Z]} X
+     + \nab_Y [Z,X] - \nab_{[Z,X]} Y + \nab_Z [X,Y] - \nab_{[X,Y]} Z, \]
+  apply torsion-freeness once more to each difference to obtain
+  $[X,[Y,Z]] + [Y,[Z,X]] + [Z,[X,Y]]$, and close with Jacobi
+  (\texttt{VectorField.leibniz\_identity\_mlieBracket\_apply}).
+
+  Both ingredients are in Mathlib as of August 2026. The $C^2$ hypotheses are
+  essential rather than cosmetic: \texttt{torsion\_eq\_zero\_iff} gives
+  $\nab_X Y - \nab_Y X = [X,Y]$ only for \texttt{MDiffAt} fields, and the
+  second application is to the pair $(X, [Y,Z])$, so the bracket itself must be
+  differentiable.
+
+  (An earlier version of this blueprint claimed the identity was blocked on
+  $Z$-slot tensoriality and \texttt{mkHom₃}. Those are prerequisites for
+  packaging curvature as a \emph{tensor}, not for the operator identity stated
+  here.)
 \end{proof}
 
 \chapter{The Levi-Civita connection}

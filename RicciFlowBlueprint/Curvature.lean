@@ -45,11 +45,25 @@ theorem curvature_antisymm (X Y Z : Π x : M, TangentSpace I x) (x : M) :
 -- BENCH: bianchi-first
 -- First Bianchi identity: for a torsion-free connection,
 -- R(X, Y)Z + R(Y, Z)X + R(Z, X)Y = 0.
--- Blocked upstream on the bracket-as-derivation lemma for `VectorField.mlieBracket`
--- and on Z-slot tensoriality (`TensorialAt` supplies only first-order hypotheses,
--- and there is no `mkHom₃`).
+--
+-- The C² hypotheses are not decoration. Both ingredients demand them:
+-- `torsion_eq_zero_iff` yields ∇_X Y - ∇_Y X = [X, Y] only for `MDiffAt` fields,
+-- and `leibniz_identity_mlieBracket_apply` (Jacobi) wants
+-- `CMDiffAt (minSmoothness 𝕜 2)`. Without them the statement is false: `cov`
+-- applied to a non-differentiable section is unconstrained.
+--
+-- Proof sketch. Regroup the cyclic sum using torsion-freeness on each pair,
+--   Σ R(X,Y)Z = ∇_X [Y,Z] - ∇_[Y,Z] X + ∇_Y [Z,X] - ∇_[Z,X] Y
+--                 + ∇_Z [X,Y] - ∇_[X,Y] Z,
+-- apply torsion-freeness once more to each difference to get
+-- [X,[Y,Z]] + [Y,[Z,X]] + [Z,[X,Y]], then close with Jacobi. The second
+-- application is why C² rather than C¹ is needed: it is applied to the pair
+-- (X, [Y,Z]), so the bracket itself must be differentiable.
 theorem bianchi_first (hcov : cov.torsion = 0) (X Y Z : Π x : M, TangentSpace I x)
-    (x : M) :
+    {x : M}
+    (hX : CMDiffAt (minSmoothness ℝ 2) (T% X) x)
+    (hY : CMDiffAt (minSmoothness ℝ 2) (T% Y) x)
+    (hZ : CMDiffAt (minSmoothness ℝ 2) (T% Z) x) :
     cov.curvature X Y Z x + cov.curvature Y Z X x + cov.curvature Z X Y x = 0 := by
   sorry
 
