@@ -1,4 +1,15 @@
 % Macros shared by the web and print builds.
+
+% Theorem-like environments that appear in the dependency graph.
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+
+% Notation.
 \newcommand{\Ric}{\operatorname{Ric}}
 \newcommand{\Rm}{\operatorname{Rm}}
 \newcommand{\scal}{\operatorname{scal}}
