@@ -191,6 +191,8 @@ branch that can be closed today: on a Lie group the flow is an ODE.
 
 \begin{definition}[Sectional curvature]
   \label{def:sectional}
+  \lean{Scratch4.sectionalCurvature}
+  \leanok
   \uses{def:curvature, lem:tensoriality, thm:levi-civita}
   For a $2$-plane spanned by tangent vectors $X, Y$ at a point,
   \[ \Sect(X,Y) = \frac{\langle \Riem(X,Y)Y, X\rangle}
@@ -198,8 +200,10 @@ branch that can be closed today: on a Lie group the flow is an ODE.
   and the metric has \emph{constant} sectional curvature $k$ if $\Sect \equiv k$
   on every $2$-plane at every point.
 
-  \textbf{Absent from Mathlib entirely} --- the string \texttt{sectional} does
-  not occur anywhere in the library. This is the \emph{conclusion} side of
+  \textbf{Defined}, together with its invariance under change of basis of the
+  spanned $2$-plane (\texttt{sectionalCurvature\_basis\_change}), which is the
+  actual content. Absent from Mathlib entirely --- the string \texttt{sectional}
+  does not occur anywhere in the library. This is the \emph{conclusion} side of
   Hamilton's theorem, and it is undefined for the same reason the hypothesis
   was: well-definedness on $2$-planes rather than on pairs of vector fields is
   exactly Lemma~\ref{lem:tensoriality}. Unlike $\Ric$ it needs no trace, so it
@@ -360,6 +364,18 @@ shrinks to a round point.
   diffeomorphic to a spherical space form $S^3/\Gamma$.
 
   \emph{J. Differential Geometry} \textbf{17} (1982), 255--306.
+
+  \textbf{Stated formally} in \texttt{RicciFlowBlueprint/Hamilton.lean} as
+  \texttt{hamilton\_1982}, via \texttt{proof\_wanted} --- so the statement is
+  elaborated and type-checked, with no \texttt{sorry} and no added axiom. The
+  hypothesis and conclusion are
+  \texttt{AdmitsPositiveRicciMetric} and \texttt{AdmitsConstPositiveSecMetric},
+  both built on the $\Ric$ and $\Sect$ definitions above. It carries no
+  \texttt{\textbackslash lean} marker here because \texttt{proof\_wanted}
+  produces a private declaration that \texttt{checkdecls} cannot resolve.
+
+  The proof is years away. Stating it was not possible before
+  2026-08-13: neither $\Ric$ nor $\Sect$ existed in any Lean library.
 \end{theorem}
 
 \chapter{Comparison geometry and non-negative curvature}

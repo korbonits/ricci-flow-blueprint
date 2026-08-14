@@ -47,6 +47,8 @@ import Batteries.Util.ProofWanted
 open Bundle CovariantDerivative
 open scoped Manifold ContDiff
 local notation "⟪" x ", " y "⟫" => inner ℝ x y
+
+namespace RicciFlowBlueprint
 variable
   {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
     [FiniteDimensional ℝ E]
@@ -102,3 +104,5 @@ proof_wanted hamilton_1982
     [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
     (hdim : Module.finrank ℝ E = 3) :
     AdmitsPositiveRicciMetric I M → AdmitsConstPositiveSecMetric I M
+
+end RicciFlowBlueprint

@@ -37,7 +37,10 @@ and close one branch end to end.
 | `exists_unique_leviCivita` | upstream: mathlib4 [#36845](https://github.com/leanprover-community/mathlib4/pull/36845) |
 | Ricci flow on left-invariant metrics (an ODE) | prose — the beachhead, no PDE required |
 | Short-time existence on a closed manifold | blocked: parabolic PDE |
-| Hamilton 1982 | terminal node |
+| `sectionalCurvature` + `_basis_change` | **defined** — with invariance under change of basis of the 2-plane |
+| `hamilton_1982` | **stated** — `proof_wanted`, no sorry, no added axiom |
+| Hamilton 1982 (proof) | years away: parabolic PDE, tensor maximum principle, pinching, Shi, convergence |
+| Perelman's spherical space form theorem | terminal node |
 
 `lake build` is clean; the only remaining `sorry` is `exists_unique_leviCivita`,
 which is superseded by the upstream PR above.
