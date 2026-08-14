@@ -15,14 +15,25 @@ decomposition from the dependency graph entirely --- see the end of Chapter
 \ref{chap:spaceform}.
 
 The obstacle is usually said to be analysis, and eventually it is --- but not
-first. Ricci curvature cannot presently be \emph{defined}, for reasons two levels
-below the analysis gap, so a project planning around parabolic PDE stalls well
-before reaching it. Mathlib has covariant derivatives,
-torsion, and metric compatibility on vector bundles, but no parabolic PDE
-theory, no elliptic regularity, and no Sobolev spaces of bundle sections ---
-so short-time existence of the flow has nothing to stand on. Chapter
-\ref{chap:flow} marks that region explicitly. Chapter \ref{chap:homog} is the
-branch that can be closed today: on a Lie group the flow is an ODE.
+first. When this blueprint began, Riemannian curvature did not exist in Mathlib
+at all: the library had manifolds, vector bundles, and covariant derivatives,
+but no Riemann tensor, no $\Ric$, and not one occurrence of the string
+\texttt{sectional}. A project planning around the parabolic gap therefore
+stalls long before reaching it. Chapters \ref{chap:curvature} and
+\ref{chap:levi-civita} close that first gap: $\Riem$, $\Ric$ and $\Sect$ are
+now defined, and Hamilton's theorem is stated in Lean.
+
+The analysis gap itself is real and unmoved. Mathlib has no parabolic PDE
+theory, no elliptic regularity, and no Sobolev spaces of bundle sections, so
+short-time existence has nothing to stand on; Chapter \ref{chap:flow} marks
+that region explicitly. It is also wider than usually described: the road needs
+\emph{three} distinct parabolic theories --- Ricci flow, harmonic map flow, and
+curve-shrinking flow --- and a second independent gap at Cheeger--Gromov
+compactness (Chapter \ref{chap:kappa}).
+
+Two branches are nevertheless closed end to end, both free of PDE: Chapter
+\ref{chap:homog}, where the flow on left-invariant metrics is an ODE, and
+Chapter \ref{chap:milnor}, Milnor's curvature formulas.
 
 \chapter{Curvature}
 \label{chap:curvature}
