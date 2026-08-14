@@ -42,6 +42,10 @@ and close one branch end to end.
 | `eq_koszul_of_torsionFree_of_compat` | **proved** — Levi-Civita *uniqueness*, left-invariant case |
 | `contDiffAt_ricciField` | **proved** — `g ↦ −2Ric(g)` is `C^n` at nondegenerate `g` |
 | `ricciFlow_leftInvariant` | **proved** — short-time existence + germ uniqueness. **Branch closed end to end** |
+| Milnor's Koszul + structure-constant formulas | **proved** — any dimension, any orthonormal basis |
+| `ricciBilin_milnorFrame` | **proved** — Ricci diagonal, `rᵢ = 2μⱼμₖ` |
+| `ricci_heisenberg_mixed_sign` | **proved** — Heisenberg has mixed Ricci signs (Milnor Thm 2.4) |
+| `ricciField_milnorFrame_diag` | **proved** — the Isenberg–Jackson ODE system, explicitly |
 | Short-time existence on a closed manifold | blocked: parabolic PDE |
 | `sectionalCurvature` + `_basis_change` | **defined** — with invariance under change of basis of the 2-plane |
 | `hamilton_1982` | **stated** — `proof_wanted`, no sorry, no added axiom |

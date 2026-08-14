@@ -312,6 +312,93 @@ coordinates and Cramer's rule.
   proved.
 \end{proof}
 
+\chapter{Milnor's formulas}
+\label{chap:milnor}
+
+Also closed, and also PDE-free. Milnor's 1976 paper computes the curvature of
+left-invariant metrics in terms of structure constants; nothing from it had been
+formalized. Everything in this chapter is proved.
+
+\textbf{Conventions.} Ours are $\Riem(x,y) = \nab_x\nab_y - \nab_y\nab_x -
+\nab_{[x,y]}$ and $\Ric(x,y) = \operatorname{tr}(w \mapsto \Riem(w,x)y)$, as in
+Chapter~\ref{chap:curvature}. Milnor flips \emph{both} the curvature sign and
+the contraction slot, so his numerical values agree with ours --- the two flips
+cancel. Had only one flipped, every eigenvalue below would be silently negated.
+
+\begin{lemma}[The Koszul formula]
+  \label{lem:milnor-koszul}
+  \lean{RicciFlowBlueprint.LeftInvariant.apply_koszul_apply_milnor}
+  \leanok
+  \uses{def:koszul-li}
+  $\langle \nab_x y, z\rangle = \tfrac12\big(\langle [x,y],z\rangle
+     - \langle [y,z],x\rangle + \langle [z,x],y\rangle\big)$.
+\end{lemma}
+
+\begin{lemma}[Ricci in structure constants]
+  \label{lem:milnor-ricci}
+  \lean{RicciFlowBlueprint.LeftInvariant.ricciBilin_structureConstants}
+  \leanok
+  \uses{lem:milnor-koszul}
+  With $\alpha_{ijk} = \langle [e_i,e_j], e_k\rangle$ for an orthonormal basis,
+  $\Ric$ expands as a double sum in the $\alpha_{ijk}$ --- in any dimension, for
+  any orthonormal basis. This is the computational backbone of the paper.
+\end{lemma}
+
+\begin{definition}[Milnor frame]
+  \label{def:milnor-frame}
+  \lean{RicciFlowBlueprint.LeftInvariant.IsMilnorFrame}
+  \leanok
+  In dimension three, a basis with
+  $[e_2,e_3] = \lambda_1 e_1$, $[e_3,e_1] = \lambda_2 e_2$,
+  $[e_1,e_2] = \lambda_3 e_3$.
+
+  \textbf{Existence is assumed, not proved.} Milnor's classification lemma ---
+  that every unimodular $3$-dimensional metric Lie algebra admits such a frame
+  --- is not formalized. The results below take the frame as a hypothesis.
+\end{definition}
+
+\begin{theorem}[Ricci is diagonal in a Milnor frame]
+  \label{thm:milnor-ricci-diag}
+  \lean{RicciFlowBlueprint.LeftInvariant.ricciBilin_milnorFrame}
+  \leanok
+  \uses{lem:milnor-ricci, def:milnor-frame}
+  In a Milnor frame $\Ric$ is diagonal, with
+  \[ r_i = 2\mu_j\mu_k, \qquad
+     \mu_i = \tfrac12(\lambda_j + \lambda_k - \lambda_i), \]
+  equivalently $r_i = \tfrac12\big(\lambda_i^2 - (\lambda_j-\lambda_k)^2\big)$.
+\end{theorem}
+
+\begin{corollary}[Heisenberg has mixed Ricci signs]
+  \label{cor:milnor-heisenberg}
+  \lean{RicciFlowBlueprint.LeftInvariant.ricci_heisenberg_mixed_sign}
+  \leanok
+  \uses{thm:milnor-ricci-diag}
+  The Heisenberg algebra ($\lambda_1 = \lambda_2 = 0 \neq \lambda_0$) has
+  principal Ricci curvatures
+  $(\lambda_0^2/2,\, -\lambda_0^2/2,\, -\lambda_0^2/2)$: strictly mixed signs.
+  An instance of Milnor's Theorem 2.4.
+\end{corollary}
+
+\begin{theorem}[The three-dimensional flow, explicitly]
+  \label{thm:isenberg-jackson}
+  \lean{RicciFlowBlueprint.LeftInvariant.ricciField_milnorFrame_diag}
+  \leanok
+  \uses{thm:milnor-ricci-diag, thm:ricci-lie-shortTime}
+  At a diagonal metric $\operatorname{diag}(A,B,C)$ in a Milnor frame the field
+  $\g \mapsto -2\Ric(\g)$ is again diagonal --- the ansatz is invariant --- and
+  \[ A' = -\frac{A^2\lambda_0^2}{BC} + \frac{B\lambda_1^2}{C}
+          + \frac{C\lambda_2^2}{B} - 2\lambda_1\lambda_2, \]
+  cyclically. This is the classical Isenberg--Jackson system: Ricci flow on the
+  three-dimensional unimodular Lie groups, written out.
+
+  Proving the $3$-dimensional case for a \emph{diagonal} rather than orthonormal
+  metric is what removes the square roots and makes this derivable.
+
+  \textbf{Stated at the level of the field's value} at diagonal metrics. That
+  solutions \emph{remain} diagonal needs a second Picard--Lindel\"of pass
+  through the positive octant, and is not proved.
+\end{theorem}
+
 \chapter{Ricci flow on a closed manifold}
 \label{chap:flow}
 
