@@ -1,6 +1,4 @@
-/- Sectional curvature. Namespaces `Scratch2`..`Scratch5` are the agent's incremental
-   layers, each with its own instance requirements; kept verbatim because this is the
-   form that compiles clean. Consolidating them is cosmetic follow-up work. -/
+/- Sectional curvature of a covariant derivative on the tangent bundle. -/
 import RicciFlowBlueprint.Ricci
 import Mathlib.Geometry.Manifold.VectorBundle.CovariantDerivative.Metric
 import Mathlib.Geometry.Manifold.VectorBundle.Riemannian
@@ -94,7 +92,7 @@ theorem inner_curvature_self_right [ContMDiffCovariantDerivative cov 1]
 
 end CovariantDerivative
 
-namespace Scratch2
+namespace CovariantDerivative
 
 variable
   {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
@@ -150,9 +148,9 @@ theorem curvature_smul_const_snd [ContMDiffCovariantDerivative cov 1]
   rw [h, cov.curvature_smul_middle (fun _ ↦ a) X Y Z (mdifferentiableAt_const)
     hY (cov.mdiffAt_cov_apply hZ hY)]
 
-end Scratch2
+end CovariantDerivative
 
-namespace Scratch3
+namespace CovariantDerivative
 
 variable
   {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
@@ -165,7 +163,7 @@ variable
 
 variable (cov : CovariantDerivative I E (TangentSpace I : M → Type _))
 
-open CovariantDerivative Scratch2
+open CovariantDerivative
 
 /-- The sectional-curvature numerator scales by `(ad - bc)²` under a constant-coefficient
 change of the spanning fields. -/
@@ -237,9 +235,9 @@ theorem inner_curvature_basis_change [ContMDiffCovariantDerivative cov 1]
   rw [s0, s1, s2]
   ring
 
-end Scratch3
+end CovariantDerivative
 
-namespace Scratch4
+namespace CovariantDerivative
 
 variable
   {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
@@ -252,7 +250,7 @@ variable
 
 variable (cov : CovariantDerivative I E (TangentSpace I : M → Type _))
 
-open CovariantDerivative Scratch2 Scratch3
+open CovariantDerivative
 
 /-- Sectional curvature: `K(X,Y) = ⟪R(X,Y)Y, X⟫ / (‖X‖²‖Y‖² - ⟪X,Y⟫²)` at `x`,
 with junk value `0` when `X x`, `Y x` are linearly dependent (division by zero). -/
@@ -302,9 +300,9 @@ theorem curvature_congr_snd [ContMDiffCovariantDerivative cov 1]
     cov.curvature V Y Z x = cov.curvature V Y' Z x :=
   (cov.tensorialAt_curvature_snd hZ x).pointwise hY hY' hyy
 
-end Scratch4
+end CovariantDerivative
 
-namespace Scratch5
+namespace CovariantDerivative
 
 variable
   {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
@@ -317,7 +315,7 @@ variable
 
 variable (cov : CovariantDerivative I E (TangentSpace I : M → Type _))
 
-open CovariantDerivative Scratch2 Scratch3 Scratch4
+open CovariantDerivative
 
 /-- Well-definedness of the sectional curvature: it depends only on the plane spanned by the
 values at `x`, given pointwise dependence of the curvature's third slot (hypothesis `h3`,
@@ -349,11 +347,12 @@ theorem sectionalCurvature_congr [ContMDiffCovariantDerivative cov 1]
   rw [step]
   exact sectionalCurvature_basis_change cov hcov hX hY hdet
 
-end Scratch5
+end CovariantDerivative
 
-section ScratchModel
+namespace CovariantDerivative
+section ModelSpace
 
-open CovariantDerivative Scratch2 Scratch3 Scratch4
+open CovariantDerivative
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   [CompleteSpace E] [FiniteDimensional ℝ E]
@@ -373,7 +372,8 @@ theorem sectionalCurvature_congr_model [ContMDiffCovariantDerivative cov 1]
     {a b c d : ℝ} (hdet : a * d - b * c ≠ 0)
     (hXx : X' x = a • X x + b • Y x) (hYx : Y' x = c • X x + d • Y x) :
     sectionalCurvature cov X' Y' x = sectionalCurvature cov X Y x :=
-  Scratch5.sectionalCurvature_congr cov hcov hX hY hX' hY' hdet hXx hYx
+  sectionalCurvature_congr cov hcov hX hY hX' hY' hdet hXx hYx
     (fun _ _ hW hW' hww ↦ cov.curvature_third_slot_pointwise_model hX' hY' hW hW' hww)
 
-end ScratchModel
+end ModelSpace
+end CovariantDerivative

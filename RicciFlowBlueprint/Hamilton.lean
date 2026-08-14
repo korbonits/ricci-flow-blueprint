@@ -75,7 +75,7 @@ def HasConstSecLC (I : ModelWithCorners ℝ E H) (M : Type*)
     cov.IsMetricCompatible ∧ cov.torsion = 0 ∧
       ∀ (x : M) (X Y : Π y : M, TangentSpace I y),
         ‖X x‖ ^ 2 * ‖Y x‖ ^ 2 - ⟪X x, Y x⟫ ^ 2 ≠ 0 →
-          Scratch4.sectionalCurvature cov X Y x = k
+          sectionalCurvature cov X Y x = k
 
 /-- `M` admits a metric of strictly positive Ricci curvature. -/
 def AdmitsPositiveRicciMetric (I : ModelWithCorners ℝ E H) (M : Type*)
