@@ -97,7 +97,40 @@ is the same class of packaging problem as the tensoriality one, one level up:
 theorem is inherently a statement about *two different* metrics on one
 manifold.
 
-BOTH ESCAPE ROUTES TESTED AND CLOSED (2026-08-13):
+THE INSTANCES ARE DEFEQ. Both `rfl`s below succeed under an ambient
+`[RiemannianBundle (fun x : M ↦ TangentSpace I x)]`:
+
+    example (x : M) : (inferInstance : AddCommGroup (TangentSpace I x))
+        = instAddCommGroupTangentSpace I x := rfl
+    example (x : M) : (inferInstance : TopologicalSpace (TangentSpace I x))
+        = instTopologicalSpaceTangentSpace I x := rfl
+
+and `#synth AddCommGroup (TangentSpace I x)` returns `instAddCommGroupTangentSpace`.
+So `RiemannianBundle`'s no-diamond design works as documented, and this is an
+elaboration failure over definitionally equal terms -- NOT a broken design.
+
+WHAT ACTUALLY DISCRIMINATES (all five tested 2026-08-13):
+
+    variable [RiemannianBundle (fun x : M ↦ TangentSpace I x)]   WORKS
+    letI  from an existentially quantified metric                 fails
+    letI  from a metric passed as a def parameter                 fails
+    letI := inst, from RiemannianBundle as an explicit hypothesis fails
+    haveI from a metric                                           fails
+
+Only an instance *binder* in a `variable` block works. Every way of introducing
+the instance inside a term fails, including from an explicit `RiemannianBundle`
+hypothesis -- so it is not about the metric, nor about metavariables from the
+existential (a plain parameter fails identically), nor about a missing
+`IsContMDiffRiemannianBundle` (supplying it by hand does not help).
+
+The error shows `IsMetricCompatible`'s expected type carrying the fibre
+structures as literal projections -- `NormedAddCommGroup.toAddCommGroup`,
+`InnerProductSpace.toNormedSpace.toModule`,
+`PseudoMetricSpace.toUniformSpace.toTopologicalSpace` -- while `cov` carries
+`instAddCommGroupTangentSpace` / `instModuleTangentSpace`. Defeq, but the
+elaborator will not commit outside an instance-binder context.
+
+EARLIER NOTES (superseded in part by the above):
 
 * ascribing `cov : CovariantDerivative I E (fun x ↦ TangentSpace I x)` under the
   `letI` -> `IsMetricCompatible` application type mismatch (instance paths differ:
