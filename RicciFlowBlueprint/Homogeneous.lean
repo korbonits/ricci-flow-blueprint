@@ -81,6 +81,11 @@ import Mathlib.LinearAlgebra.Trace
 
 open Set Filter Topology ContinuousLinearMap
 
+/- The file works in triple-nested spaces of continuous linear maps
+(`E →L[ℝ] E →L[ℝ] E →L[ℝ] ℝ` and friends); their norm instances need a deeper
+pending-synthesis budget than the default `1`. -/
+set_option maxSynthPendingDepth 3
+
 namespace RicciFlowBlueprint
 namespace LeftInvariant
 
@@ -135,9 +140,8 @@ noncomputable def koszulRHS : E →L[ℝ] E →L[ℝ] E →L[ℝ] ℝ :=
 
 theorem koszulRHS_apply (x y z : E) :
     koszulRHS β g x y z = 2⁻¹ * (g (β x y) z - g (β y z) x - g (β x z) y) := by
-  simp only [koszulRHS, smul_apply, sub_apply, coe_comp', Function.comp_apply, compL_apply,
-    comp_apply, compBilin_apply, flip_apply, smul_eq_mul]
-  ring
+  simp only [koszulRHS, smul_apply, sub_apply, comp_apply, compL_apply, compBilin_apply,
+    flip_apply, smul_eq_mul]
 
 /-- The Levi-Civita connection of the left-invariant metric `g`, defined outright by
 solving the Koszul formula: `∇ₓy = g⁻¹ (koszulRHS β g x y)`. Uses the total function
@@ -379,10 +383,15 @@ theorem contDiffAt_ricciField {n : WithTop ℕ∞} {g₀ : E →L[ℝ] E →L[�
       (ContDiffAt.comp g₀ (compL ℝ E (E →L[ℝ] E) (E →L[ℝ] E)).flip.contDiff.contDiffAt
         hkosflip)
       (contDiffAt_const.clm_comp hkos)
+  have hC₁ : ContDiffAt ℝ n (fun g : E →L[ℝ] E →L[ℝ] ℝ =>
+      (compL ℝ E E E).comp (koszul β g).flip) g₀ := by
+    exact contDiffAt_const.clm_comp hkosflip
+  have hC₂ : ContDiffAt ℝ n (fun g : E →L[ℝ] E →L[ℝ] ℝ =>
+      compBilin (koszul β g).flip β) g₀ := by
+    exact contDiffAt_const.clm_comp hC₁
   have hC : ContDiffAt ℝ n (fun g : E →L[ℝ] E →L[ℝ] ℝ =>
       (compBilin (koszul β g).flip β).flip) g₀ := by
-    exact ContDiffAt.comp g₀ (by exact (flipₗᵢ ℝ E E (E →L[ℝ] E)).contDiff.contDiffAt)
-      (contDiffAt_const.clm_comp (contDiffAt_const.clm_comp hkosflip))
+    exact ContDiffAt.comp g₀ (by exact (flipₗᵢ ℝ E E (E →L[ℝ] E)).contDiff.contDiffAt) hC₂
   have hEndo : ContDiffAt ℝ n (fun g : E →L[ℝ] E →L[ℝ] ℝ => ricciEndo β g) g₀ :=
     (hA.sub hB).add hC
   have hRic : ContDiffAt ℝ n (fun g : E →L[ℝ] E →L[ℝ] ℝ => ricciBilin β g) g₀ :=
@@ -416,8 +425,8 @@ theorem ricciFlow_unique {g₀ : E →L[ℝ] E →L[ℝ] ℝ} (hg₀ : g₀.IsIn
     h₁.self_of_nhds.continuousAt.preimage_mem_nhds (by rw [hγ₁]; exact hs)
   have m₂ : ∀ᶠ t in 𝓝 t₀, γ₂ t ∈ s :=
     h₂.self_of_nhds.continuousAt.preimage_mem_nhds (by rw [hγ₂]; exact hs)
-  exact ODE_solution_unique_of_eventually (.of_forall fun _ => hK)
-    (h₁.and m₁) (h₂.and m₂) (by rw [hγ₁, hγ₂])
+  exact ODE_solution_unique_of_eventually (v := fun _ x => ricciField β x) (s := fun _ => s)
+    (Eventually.of_forall fun _ => hK) (h₁.and m₁) (h₂.and m₂) (by rw [hγ₁, hγ₂])
 
 /-- **The Ricci flow on left-invariant metrics** — the closed branch of the blueprint.
 Through every inner product `g₀` on `E` there is a short-time solution of Hamilton's
@@ -432,7 +441,8 @@ theorem ricciFlow_leftInvariant {g₀ : E →L[ℝ] E →L[ℝ] ℝ} (hg₀ : Is
           γ' =ᶠ[𝓝 t₀] γ := by
   obtain ⟨γ, hγ0, ε, hε, hγ⟩ := ricciFlow_exists β hg₀.isInvertible t₀
   have hev : ∀ᶠ t in 𝓝 t₀, HasDerivAt γ (ricciField β (γ t)) t := by
-    filter_upwards [Ioo_mem_nhds (by linarith) (by linarith)] with t ht using hγ t ht
+    filter_upwards [Ioo_mem_nhds (a := t₀ - ε) (b := t₀ + ε) (by linarith) (by linarith)]
+      with t ht using hγ t ht
   exact ⟨γ, hγ0, hev, fun γ' h' h0 =>
     ricciFlow_unique β hg₀.isInvertible h' hev h0 hγ0⟩
 
@@ -449,7 +459,7 @@ follows for the transported structure. -/
 
 section OfLieAlgebra
 
-variable {𝔩 : Type*} [LieRing 𝔩] [LieAlgebra ℝ 𝔩]
+variable [FiniteDimensional ℝ E] {𝔩 : Type*} [LieRing 𝔩] [LieAlgebra ℝ 𝔩]
 
 /-- The bracket of a finite-dimensional real Lie algebra `𝔩`, transported to the
 normed model `E` along a linear equivalence: `β x y = e ⁅e.symm x, e.symm y⁆`. -/
@@ -470,13 +480,16 @@ theorem ofLieAlgebra_apply (e : 𝔩 ≃ₗ[ℝ] E) (x y : E) :
 theorem ofLieAlgebra_alt (e : 𝔩 ≃ₗ[ℝ] E) (x : E) : ofLieAlgebra e x x = 0 := by
   simp
 
+set_option maxRecDepth 4000 in
 /-- The transported bracket satisfies the (Leibniz form of the) Jacobi identity.
 Recorded for honesty — no result in this file consumes it. -/
 theorem ofLieAlgebra_jacobi (e : 𝔩 ≃ₗ[ℝ] E) (x y z : E) :
     ofLieAlgebra e x (ofLieAlgebra e y z) =
       ofLieAlgebra e (ofLieAlgebra e x y) z
         + ofLieAlgebra e y (ofLieAlgebra e x z) := by
-  simp [leibniz_lie]
+  rw [ofLieAlgebra_apply e y z, ofLieAlgebra_apply e x y, ofLieAlgebra_apply e x z,
+    ofLieAlgebra_apply, ofLieAlgebra_apply, ofLieAlgebra_apply,
+    e.symm_apply_apply, e.symm_apply_apply, e.symm_apply_apply, ← map_add, leibniz_lie]
 
 /-- **The Ricci flow exists on any finite-dimensional real Lie algebra**: the
 abstract-Lie-algebra phrasing of `ricciFlow_leftInvariant`, along a choice of normed
