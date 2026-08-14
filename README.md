@@ -38,7 +38,10 @@ and close one branch end to end.
 | `IsRicciFlowOn` | **defined** — `∂g/∂t = −2Ric(g)`, per time slice, on an interval |
 | `isRicciFlowAt_const_iff` | **proved** — stationary iff Ricci-flat; the definition has content |
 | `ricciFlow_shortTime_existence` | **stated** — `proof_wanted`; blocked on parabolic PDE |
-| Ricci flow on left-invariant metrics (an ODE) | in progress — the beachhead, no PDE required |
+| `LeftInvariant.koszul` + torsion/compat | **proved** — Levi-Civita defined algebraically |
+| `eq_koszul_of_torsionFree_of_compat` | **proved** — Levi-Civita *uniqueness*, left-invariant case |
+| `contDiffAt_ricciField` | **proved** — `g ↦ −2Ric(g)` is `C^n` at nondegenerate `g` |
+| `ricciFlow_leftInvariant` | **proved** — short-time existence + germ uniqueness. **Branch closed end to end** |
 | Short-time existence on a closed manifold | blocked: parabolic PDE |
 | `sectionalCurvature` + `_basis_change` | **defined** — with invariance under change of basis of the 2-plane |
 | `hamilton_1982` | **stated** — `proof_wanted`, no sorry, no added axiom |

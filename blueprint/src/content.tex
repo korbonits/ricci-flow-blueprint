@@ -213,25 +213,104 @@ branch that can be closed today: on a Lie group the flow is an ODE.
 \chapter{Ricci flow on left-invariant metrics}
 \label{chap:homog}
 
-This is the branch with no PDE in it. A left-invariant metric on a Lie group
-$G$ is determined by an inner product on $\mathfrak{g}$, so
-$\partial_t \g = -2\Ric(\g)$ becomes an ODE on a finite-dimensional space, and
-Mathlib's Picard--Lindel\"of suffices.
+\textbf{This branch is closed end to end.} It is the one part of the road with
+no PDE in it, and everything below is proved: no \texttt{sorry}, no
+\texttt{proof\_wanted}, all axiom-free.
 
-\begin{lemma}
-  \label{lem:ricci-lie-ode}
-  \uses{def:ricci}
-  On a Lie group, the Ricci endomorphism of a left-invariant metric is a
-  smooth function of the metric alone; the normalized flow is a locally
-  Lipschitz vector field on the space of inner products on $\mathfrak{g}$.
+A left-invariant metric on a Lie group $G$ is determined by an inner product on
+$\mathfrak{g}$, so $\partial_t \g = -2\Ric(\g)$ is an ODE on a
+finite-dimensional space and Mathlib's Picard--Lindel\"of suffices. The
+development lives purely at the level of a finite-dimensional real normed space
+carrying a bracket, and shares \emph{no} machinery with the rest of this
+blueprint --- no \texttt{CovariantDerivative}, no vector bundles, no
+\texttt{RiemannianBundle}. Neither the analysis gap nor
+Theorem~\ref{thm:levi-civita} is on its path.
+
+Two representation choices earned this. The bracket is carried as an explicit
+map rather than through \texttt{[LieRing]}: that class and
+\texttt{NormedAddCommGroup} both extend \texttt{AddCommGroup}, an unresolved
+diamond with no precedent in Mathlib, so with a norm in play the bracket must
+leave the instance system. A transport bridge restates the results for genuine
+Lie algebras, so no generality is lost. And the metric is carried as a map into
+the dual, which makes smoothness a chain of
+\texttt{contDiffAt\_map\_inverse} and composition lemmas rather than
+coordinates and Cramer's rule.
+
+\begin{definition}[The Koszul connection]
+  \label{def:koszul-li}
+  \lean{RicciFlowBlueprint.LeftInvariant.koszul}
+  \leanok
+  For left-invariant fields the Koszul formula
+  \[ 2\langle \nab_X Y, Z\rangle = \langle [X,Y],Z\rangle - \langle [Y,Z],X\rangle
+       + \langle [Z,X],Y\rangle \]
+  determines $\nab$ algebraically, so it can be \emph{defined} rather than shown
+  to exist.
+\end{definition}
+
+\begin{lemma}[Torsion-free and metric-compatible]
+  \label{lem:koszul-li-props}
+  \lean{RicciFlowBlueprint.LeftInvariant.koszul_sub_koszul}
+  \leanok
+  \uses{def:koszul-li}
+  $\nab_X Y - \nab_Y X = [X,Y]$, and
+  $\langle \nab_X Y, Z\rangle + \langle \nab_X Z, Y\rangle = 0$.
 \end{lemma}
 
-\begin{theorem}
-  \label{thm:ricci-lie-shortTime}
-  \uses{lem:ricci-lie-ode}
-  The left-invariant Ricci flow has a unique maximal solution through each
-  initial metric.
+\begin{theorem}[Levi-Civita uniqueness, left-invariant case]
+  \label{thm:levi-civita-li}
+  \lean{RicciFlowBlueprint.LeftInvariant.eq_koszul_of_torsionFree_of_compat}
+  \leanok
+  \uses{lem:koszul-li-props}
+  Any torsion-free, metric-compatible bilinear connection equals the Koszul
+  connection.
+
+  This is the fundamental theorem of Riemannian geometry in the left-invariant
+  world --- the statement Theorem~\ref{thm:levi-civita} still leaves open at
+  manifold level, discharged here because the algebra needs no existence
+  theory.
 \end{theorem}
+
+\begin{lemma}[The Ricci field is smooth]
+  \label{lem:ricci-lie-ode}
+  \lean{RicciFlowBlueprint.LeftInvariant.contDiffAt_ricciField}
+  \leanok
+  \uses{def:ricci, thm:levi-civita-li}
+  $\g \mapsto -2\Ric(\g)$ is $C^n$ at every nondegenerate $\g$, for every $n$.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  $\Ric$ is a polynomial in $\g$ and $\g^{-1}$. Building every operator inside
+  the algebra of continuous linear maps makes smoothness a mechanical chain of
+  composition lemmas, with \texttt{contDiffAt\_map\_inverse} at the single
+  non-polynomial node. Nondegeneracy of an inner product comes from positive
+  definiteness plus a dimension count.
+\end{proof}
+
+\begin{theorem}[Short-time existence and uniqueness]
+  \label{thm:ricci-lie-shortTime}
+  \lean{RicciFlowBlueprint.LeftInvariant.ricciFlow_leftInvariant}
+  \leanok
+  \uses{lem:ricci-lie-ode}
+  Through every left-invariant metric there is a solution of
+  $\partial_t \g = -2\Ric(\g)$ near each time $t_0$, and it is unique as a germ
+  at $t_0$.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  Picard--Lindel\"of, via
+  \texttt{ContDiffAt.exists\_forall\_mem\_closedBall\_exists\_eq\_forall\_mem\_Ioo\_hasDerivAt}
+  for existence and \texttt{ODE\_solution\_unique\_of\_eventually} for
+  uniqueness; the 2025 refactor means \texttt{IsPicardLindel\"of} never has to
+  be constructed by hand.
+
+  \textbf{Stated as a germ, deliberately.} An earlier version of this blueprint
+  claimed a unique \emph{maximal} solution. Mathlib has no maximal-solution
+  theory: gluing local solutions along a maximal interval is routine
+  mathematics but absent infrastructure. The honest statement is what is
+  proved.
+\end{proof}
 
 \chapter{Ricci flow on a closed manifold}
 \label{chap:flow}
