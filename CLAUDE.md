@@ -1,105 +1,140 @@
 # Ricci flow blueprint — working notes
 
-A `leanblueprint` for Hamilton's 1982 theorem. Live:
-https://korbonits.github.io/ricci-flow-blueprint/
+A `leanblueprint` for Ricci flow. Live: https://korbonits.github.io/ricci-flow-blueprint/
+Milestone: Hamilton 1982. Terminal node: Perelman's spherical space form theorem.
 
-## State (2026-08-13)
+## State (2026-08-14)
 
-`lake build` clean. Only `sorry` is `exists_unique_leviCivita` (superseded by
-upstream PR #36845). Everything below is axiom-free — `#print axioms` shows only
-`[propext, Classical.choice, Quot.sound]` — and none of it exists in Mathlib.
+`lake build` clean. The only `sorry` is `exists_unique_leviCivita` (superseded by
+mathlib4 PR #36845). Everything else is axiom-free —
+`#print axioms` shows only `[propext, Classical.choice, Quot.sound]`.
 
-**Curvature.lean**
-- `CovariantDerivative.curvature`, `curvature_antisymm`
-- `bianchi_first_of_mdiff`, `bianchi_first` — first Bianchi identity, clean form
-- `neg_apply`, `sub_apply` — subtraction for covariant derivatives
-- `mdiffAt_cov_apply` — first consumer of `ContMDiffCovariantDerivative` anywhere
-- `curvature_smul_left`, `curvature_smul_middle` — tensoriality slots 1, 2
-- `curvature_smul_right_of_derivation` — slot 3, modulo hypothesis `hder`
-
-**LieBracketDerivation.lean**
-- `lieBracket_apply_fun` — `[V,W]f = V(Wf) − W(Vf)`, vector spaces
-- `mvfderiv_eq_fderiv`, `mlieBracket_eq_lieBracket(')` — model-space collapses
-- `mlieBracket_apply_fun_model` — derivation identity, manifold notation on `E`
-
-## Where the blocker actually is
-
-The README's old "blocked on parabolic PDE" is true but is the **second**
-obstruction. Ricci curvature cannot be *defined*:
-
-    Ricci definable
-      ← curvature tensoriality slots 1–3   1,2 proved; 3 modulo `hder`
-      ← [X,Y]f = X(Yf) − Y(Xf) on manifolds
-           ├ vector-space case              proved
-           ├ model-space case               proved
-           └ chart transport to general M   ← the only remaining gap
-
-Discharging `hder` in `curvature_smul_right_of_derivation` completes slot 3 and
-unblocks defining Ricci.
-
-## Slot 3 is now unconditional
-
-`curvature_smul_right` (renamed from `..._of_derivation`) no longer assumes the
-derivation identity — it is proved via `VectorField.mlieBracket_apply_fun`, the
-chart-transported identity on a general manifold. All three tensoriality slots
-are proved. What remains before Ricci can be *defined* is the packaging step:
-turning "C^∞-linear in each slot" into a pointwise tensor that can be traced
-(`TensorialAt` / the missing `mkHom₃`).
-
-## Next: upstream the four lemmas
-
-These have **no Mathlib equivalent** and are independent of Ricci flow, so they
-are far easier to land than anything blueprint-specific. Best next contribution:
-
-| Lemma | Why Mathlib wants it |
+| File | Contents |
 | --- | --- |
-| `neg_apply`, `sub_apply` | `IsCovariantDerivativeOn` ships only `add` and `leibniz`; subtraction has to route through `smul_const (-1)` |
-| `jacobi_mlieBracket_apply` | Mathlib has only the Leibniz form `[U,[V,W]] = [[U,V],W] + [V,[U,W]]`; the cyclic form needs antisymmetry in *both* slots |
-| `mdiffAt_cov_apply` | first consumer of `ContMDiffCovariantDerivative` **anywhere** — the class had none |
+| `Curvature.lean` | `curvature`, `curvature_antisymm`, `bianchi_first`, `curvature_smul_*` and `curvature_add_*` (tensoriality, all three slots), `tensorialAt_curvature_fst/snd`, `neg_apply`, `sub_apply`, `mdiffAt_cov_apply` |
+| `LieBracketDerivation.lean` | `lieBracket_apply_fun`, `mlieBracket_apply_fun` (any manifold, corners allowed), `jacobi_mlieBracket_apply`, model-space collapses |
+| `Ricci.lean` | `ricci` — **defined**; `ricci_sub_ricci_swap` |
+| `Sectional.lean` | `sectionalCurvature`, `sectionalCurvature_basis_change` |
+| `Flow.lean` | `IsRicciFlowAt/On`, `isRicciFlowAt_const_iff` (proved), `ricciFlow_shortTime_existence` (`proof_wanted`) |
+| `Hamilton.lean` | `hamilton_1982` — **stated**, `proof_wanted`, no sorry, no axiom |
+| `Homogeneous.lean` | **branch closed**: `koszul`, torsion/compat, Levi-Civita uniqueness, `contDiffAt_ricciField`, `ricciFlow_leftInvariant` |
+| `Milnor.lean` | **branch closed**: Koszul formula, Ricci in structure constants, diagonal Ricci `rᵢ = 2μⱼμₖ`, Heisenberg, Isenberg–Jackson ODE |
 
-Also: **PR #36845** (Levi-Civita, `grunweg`, reviewed by `sgouezel`) is
-`awaiting-author` since 2026-07-28 with only cosmetic items left — doc-comment
-length, lemma naming order, hoisting `[FiniteDimensional ℝ E]` into a `variable`
-line. Adoptable, and the route into `t-differential-geometry`.
+Branch `wip/milnor-frame` has Milnor's classification lemma drafted (frame
+existence, plus the bridge to `IsMilnorFrame`). **It does not build**: a `ring`
+failure at `MilnorFrame.lean:136` and six `linarith` failures at 167.
 
-## Blocked, and why
+## Three corrected beliefs — do not re-derive these wrong
 
-- **Ricci / scalar curvature cannot be *defined*** — the trace needs `curvature` to
-  descend from vector *fields* to vectors in its first slot. Blocked upstream on
-  `TensorialAt` giving only first-order (`MDiffAt`) hypotheses and the absence of
-  `mkHom₃`. That wall is one level earlier than the missing PDE. This is
-  `grunweg`'s active area (see `plan.mde` in PR #36128) — **ask, don't build**.
-- **Short-time existence** needs parabolic PDE on bundle sections. Mathlib's entire
-  PDE surface is `Analysis/Distribution/Sobolev.lean` + `SobolevInequality.lean`.
-- The principal-bundle route to curvature (connection 1-form, `F = dω + ½[ω,ω]`)
-  is gated on differential forms on manifolds. Different Bianchi, different gap —
-  our affine-connection route needs no forms, which is why it closed.
-- **Beachhead with no PDE:** Ricci flow on left-invariant metrics on a Lie group is
-  an ODE on a finite-dimensional space. Mathlib has Picard–Lindelöf. Still prose.
+1. **`mkHom₃` was never needed and would not have worked.** The trace is in the
+   first slot only, so one-slot `TensorialAt.mkHom` suffices. A `mkHom₃` copied
+   from `mkHom₂` quantifies over merely-`MDiffAt` sections, whereas first-slot
+   tensoriality of `R` needs the third-slot field to be `C²`.
+2. **Ricci is NOT symmetric for a general torsion-free connection.** Tracing
+   first Bianchi gives `Ric(X,Y) − Ric(Y,X) = −tr R(X,Y)`; that vanishes for a
+   *metric* connection, where `R(X,Y)` is skew-adjoint. Symmetry is the
+   corollary, not the theorem.
+3. **The tangent-bundle "diamond" is not a diamond.** The fibre instances are
+   definitionally equal (`rfl` succeeds for `AddCommGroup` and
+   `TopologicalSpace`; `#synth` picks `instAddCommGroupTangentSpace`). What
+   fails is elaboration over defeq terms — see below.
 
-## Lean gotchas learned the hard way
+## Stating anything where the metric VARIES
 
-- Use `[IsManifold I ω M]`. Instance search will **not** see through
-  `minSmoothness ℝ n = n` even though it reduces over ℝ; `ω` synthesises
-  `3`, `(2:ℕ∞)+1` and `minSmoothness ℝ 2` directly and dissolves the index arithmetic.
-- The metric must reach `TM` via `[RiemannianBundle (fun x ↦ TangentSpace I x)]`,
-  never a raw `[∀ x, InnerProductSpace ℝ (TangentSpace I x)]` — the fibers already
-  carry a topology and the raw binder makes a diamond.
+Two conditions are **jointly necessary** for `cov.IsMetricCompatible` to elaborate:
+
+1. the `RiemannianBundle` instance must be an ambient **binder**
+   (`variable [RiemannianBundle …]`), not introduced by `letI`/`haveI` in a term;
+2. `cov` must be bound by an **existential** — not an explicit parameter, not a
+   structure field, and not a parameter in *hypothesis* position.
+
+So: elaborate the predicate ONCE in a section satisfying both, then only *apply*
+that constant under `letI := ⟨g.toRiemannianMetric⟩`. See `Hamilton.lean`'s header
+(`HasPositiveRicciLC` → `AdmitsPositiveRicciMetric`) and `Flow.lean`.
+**Corollary:** converse lemmas must be iffs between existentials. Ten variants
+were tested to establish this. It is a workaround, not a fix — open Zulip question.
+
+## Roadmap (week of 2026-08-14)
+
+**Day 1 — unblock (~45 min).** Post the Zulip question in `#mathlib4`, topic
+`RiemannianBundle: metrics as instances vs values`; tag `sgouezel`. It gates
+upstreaming the curvature stack. Also: `RicciFlow.lean` is prose-only and
+superseded by `Flow.lean` — merge or delete.
+
+**Day 2 — first upstream PR (~2–3 hrs).** `VectorField.lieBracket_apply_fun` →
+`Mathlib/Analysis/Calculus/VectorField.lean`, beside `lieBracket_smul_*`. No
+dependency on the curvature stack. Budget the time for mathlib conventions, not
+mathematics.
+
+**Days 3–4 — finish Milnor's classification (~2–3 hrs).** Resume
+`wip/milnor-frame`; two concrete tactic failures, structure and bridge already
+drafted. Closes the last hypothesis in `chap:milnor`.
+
+**Day 5 — second and third PRs (~2 hrs).** `neg_apply`/`sub_apply`, then
+`mdiffAt_cov_apply`. Three small merged PRs beat one large one in review.
+
+**Weekend — high leverage (~4–6 hrs).** mathlib4 **#36845** (Levi-Civita,
+`grunweg`, reviewed by `sgouezel`), `awaiting-author` since 2026-07-28. **Offer
+on Zulip before touching it.** It unblocks the function `g ↦ Ric(g)`, which
+DeTurck's trick and the curvature evolution equations both need.
+
+**Not this week:** upstreaming curvature/Ricci/sectional (wait for the Zulip
+answer), anything parabolic, any writing-up.
+**If a day is lost, drop in this order:** third PR, classification lemma, second
+PR. Keep Day 1 and the weekend item.
+
+## Where the real gaps are
+
+- **Levi-Civita existence is NOT needed to define the flow** — the per-slice
+  `∀ t, ∃ cov` is equivalent to the textbook equation. #36845 IS needed for the
+  *function* `g ↦ Ric(g)`, i.e. DeTurck and the curvature evolution equations.
+- **Three distinct parabolic theories** are on the road, not one: Ricci flow,
+  harmonic map flow (uniqueness of the standard solution), curve-shrinking flow
+  (finite extinction).
+- **Second independent analytic gap:** Cheeger–Gromov compactness. Mathlib has
+  Gromov–Hausdorff for compact metric spaces; pointed smooth convergence of
+  manifolds under curvature bounds does not exist. First bites above Hamilton.
+- Mathlib has **no maximal-solution ODE theory** — hence germ uniqueness in
+  `Homogeneous.lean`.
+
+## Lean gotchas
+
+- Use `[IsManifold I ω M]`. Instance search will not see through
+  `minSmoothness ℝ n = n`; `ω` synthesises `3`, `(2:ℕ∞)+1` and `minSmoothness ℝ 2`.
+- Metric reaches `TM` via `[RiemannianBundle (fun x ↦ TangentSpace I x)]`, never a
+  raw `[∀ x, InnerProductSpace ℝ (TangentSpace I x)]`.
+- `set_option maxSynthPendingDepth 3` for nested CLM spaces
+  (`E →L[ℝ] E →L[ℝ] E →L[ℝ] ℝ`), or norm instances silently fail to synthesise and
+  `simp` lemmas quietly no-op.
+- `[LieRing 𝔤]` **cannot** carry a norm — `LieRing` and `NormedAddCommGroup` both
+  extend `AddCommGroup`, an unresolved diamond with no mathlib precedent. Carry the
+  bracket as an explicit `β : E →L[ℝ] E →L[ℝ] E` and transport.
+- Carry a varying metric as a map into the dual (`g : E →L[ℝ] E →L[ℝ] ℝ`); then
+  nondegeneracy is `ContinuousLinearMap.IsInvertible` and smoothness is
+  `contDiffAt_map_inverse`, with no coordinates.
 - Argument order is nonstandard: `cov σ x (X x)` is `(∇_X σ) x` on paper.
-- `torsion_eq_zero_iff` takes `cov` **explicitly**: `(torsion_eq_zero_iff cov).mp`.
-- `ContMDiffAt.mdifferentiableAt` wants `n ≠ 0`, not `1 ≤ n`.
-- Bind a `have` of a ∀-statement with an explicit type or the implicits get
-  eagerly instantiated.
+- `torsion_eq_zero_iff` takes `cov` explicitly. `ContMDiffAt.mdifferentiableAt`
+  wants `n ≠ 0`, not `1 ≤ n`.
+- "Prints identically but won't unify" is usually a substitution made mentally
+  under a binder, not a diamond. `simp only` with collapse lemmas *and* pointwise
+  `∀ y` facts in one set; `rw` cannot reach under a binder.
 
-## Blueprint/CI gotchas
+## Blueprint / CI gotchas
 
-- `blueprint/src/latexmkrc` must list **`print.tex` only**. `web.tex` is plasTeX's
-  job and uses `\home`/`\github` from the plugin, not from `blueprint.sty`.
-- `print.tex` must **not** load `blueprint.sty` — it is a plasTeX-side stub that
-  no-ops `\graphcolor`. Print gets `\lean`/`\leanok`/`\uses` dummies from
-  `macros/print.tex` instead.
-- plasTeX writes to `blueprint/web`; the workflow uploads that path.
-- `checkdecls` is a lake dependency and verifies every `\lean{}` name exists.
+- **PDF builds locally**: basictex + `sudo /Library/TeX/texbin/tlmgr install latexmk`.
+  The config uses **xelatex** (`$pdflatex = 'xelatex -synctex=1'`), not pdflatex.
+  Fallback without latexmk: `xelatex` twice from `blueprint/src`.
+- **Grep the log for `Missing character`, not just errors.** A literal `₃` inside
+  `\texttt{}` has no glyph in `lmmono10-regular` and was silently dropped from the
+  PDF for several commits. Use `$_3$`.
+- Every macro must be declared in `macros/common.tex` — an undefined `\Z` broke CI.
+  And never write a bare `\lean` in prose; it takes an argument.
+- `checkdecls` verifies every `\lean{}` name. `proof_wanted` produces a **private**
+  declaration that it cannot resolve — name such statements in prose instead.
+- `latexmkrc` lists `print.tex` only; `print.tex` must not load `blueprint.sty`.
 - CI uses `concurrency: pages` with `cancel-in-progress` — **pushing while a run is
-  in flight cancels it.** Let runs finish.
-- `gh run watch | tail` swallows the exit status. Capture it separately.
+  in flight cancels it.** Batch pushes. This cancelled three runs on 2026-08-13.
+- `gh run watch` exits 1 on transient API errors and its shell exit code does not
+  reflect the CI conclusion. Poll `gh run view --json status,conclusion` in a loop.
+- **Never `git add -A` while a subagent is writing** — it swept 500 lines of
+  in-progress work into an unrelated commit (`d43dd54`). Stage explicit paths.
