@@ -243,15 +243,51 @@ target actually requires.
 
 \begin{definition}[Ricci flow]
   \label{def:ricci-flow}
+  \lean{RicciFlowBlueprint.IsRicciFlowOn}
+  \leanok
   \uses{def:ricci}
-  A smooth family $\g(t)$ of metrics with $\partial_t \g = -2\Ric(\g)$.
+  A family $\g(t)$ of metrics with $\partial_t \g = -2\Ric(\g)$.
+
+  \textbf{Defined.} Stated per time slice: at each $t$ there is a torsion-free
+  metric-compatible connection whose Ricci curvature gives the rate of change of
+  $\g$. Levi-Civita \emph{existence} is therefore \emph{not} required ---
+  uniqueness makes the witness unique and existence makes the quantifier
+  non-vacuous, and $\forall t\,\exists \nab$ collapses to a family by choice,
+  since no regularity in $t$ is demanded of the connection. What
+  \ref{thm:levi-civita} \emph{is} needed for is the function
+  $\g \mapsto \Ric(\g)$, which DeTurck's trick and the curvature evolution
+  equations both require.
+
+  The definition is on an interval rather than all of $\R$: flows live on
+  intervals, and short-time existence cannot be stated otherwise.
 \end{definition}
+
+\begin{lemma}[Stationary flows are Ricci-flat]
+  \label{lem:flow-stationary}
+  \lean{RicciFlowBlueprint.isRicciFlowAt_const_iff}
+  \leanok
+  \uses{def:ricci-flow}
+  A constant family is a Ricci flow at $t$ if and only if its Levi-Civita
+  connection is Ricci-flat.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  Uniqueness of derivatives against $\partial_t(\text{const}) = 0$, in both
+  directions. Proved --- and it is the check that
+  Definition~\ref{def:ricci-flow} has content rather than being vacuously
+  satisfiable.
+\end{proof}
 
 \begin{theorem}[Short-time existence]
   \label{thm:short-time}
   \uses{def:ricci-flow}
   On a closed manifold, Ricci flow has a unique solution on a maximal interval
   $[0,T)$ for any smooth initial metric.
+
+  \textbf{Stated} as \texttt{ricciFlow\_shortTime\_existence}, via
+  \texttt{proof\_wanted}: every metric on a closed manifold is the initial
+  value of a flow on some $(0,T)$, with coefficients continuous up to $t = 0$.
 
   \textbf{Blocked.} Requires quasilinear parabolic systems on sections of
   vector bundles (via DeTurck's trick, or Nash--Moser in Hamilton's original),

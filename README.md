@@ -35,7 +35,10 @@ and close one branch end to end.
 | Sectional curvature | undefined — absent from mathlib entirely (zero occurrences of `sectional`) |
 | Scalar curvature | needs the metric trace; not attempted |
 | `exists_unique_leviCivita` | upstream: mathlib4 [#36845](https://github.com/leanprover-community/mathlib4/pull/36845) |
-| Ricci flow on left-invariant metrics (an ODE) | prose — the beachhead, no PDE required |
+| `IsRicciFlowOn` | **defined** — `∂g/∂t = −2Ric(g)`, per time slice, on an interval |
+| `isRicciFlowAt_const_iff` | **proved** — stationary iff Ricci-flat; the definition has content |
+| `ricciFlow_shortTime_existence` | **stated** — `proof_wanted`; blocked on parabolic PDE |
+| Ricci flow on left-invariant metrics (an ODE) | in progress — the beachhead, no PDE required |
 | Short-time existence on a closed manifold | blocked: parabolic PDE |
 | `sectionalCurvature` + `_basis_change` | **defined** — with invariance under change of basis of the 2-plane |
 | `hamilton_1982` | **stated** — `proof_wanted`, no sorry, no added axiom |
