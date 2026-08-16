@@ -200,6 +200,40 @@ Chapter \ref{chap:milnor}, Milnor's curvature formulas.
   asserted symmetry from torsion-freeness alone. That is false.
 \end{proof}
 
+\begin{definition}[Scalar curvature]
+  \label{def:scalar}
+  \lean{CovariantDerivative.scalarCurvature}
+  \leanok
+  \uses{def:ricci}
+  $\scal = \operatorname{tr}_\g \Ric$, the metric trace of the Ricci tensor.
+
+  \textbf{Not simply a trace on a general manifold.} That description presumes
+  $\Ric$ descends to a bilinear form on the fibre, and it does not: only the
+  \emph{first} slot of $\Ric$ is tensorial. The second is the curvature's third
+  slot, which $\nab$ differentiates, so the trace demands a globally $C^2$ field
+  there while the canonical extension of a tangent vector is smooth only
+  \emph{near} the point. What is missing on a general $\M$ is global $C^2$
+  extensions --- bump-function sections --- and third-slot pointwiseness.
+
+  So the general-manifold object is frame-relative
+  (\texttt{scalarCurvatureWith}), independent of the frame modulo one
+  hypothesis (\texttt{scalarCurvatureWith\_congr}); the canonical
+  hypothesis-free $\scal$ lives on the model space, where both missing
+  ingredients are theorems. The same architecture as
+  Lemma~\ref{lem:trace-bianchi}.
+\end{definition}
+
+\begin{lemma}[Ricci as an orthonormal-frame sum]
+  \label{lem:ricci-frame-sum}
+  \lean{CovariantDerivative.ricci_eq_sum_inner_curvature}
+  \leanok
+  \uses{def:ricci}
+  $\Ric(X,Y)(x) = \sum_i \langle b_i, \Riem(b_i, X)Y(x)\rangle$ for any
+  orthonormal basis of the fibre --- hypothesis-free, on a general manifold.
+  Raising an index is never needed: the frame sum with Parseval replaces the
+  musical isomorphisms entirely.
+\end{lemma}
+
 \begin{definition}[Sectional curvature]
   \label{def:sectional}
   \lean{CovariantDerivative.sectionalCurvature}
@@ -414,6 +448,22 @@ cancel. Had only one flipped, every eigenvalue below would be silently negated.
   $(\lambda_0^2/2,\, -\lambda_0^2/2,\, -\lambda_0^2/2)$: strictly mixed signs.
   An instance of Milnor's Theorem 2.4.
 \end{corollary}
+
+\begin{theorem}[Milnor's scalar curvature]
+  \label{thm:milnor-scalar}
+  \lean{RicciFlowBlueprint.LeftInvariant.exists_milnorFrame_scalar}
+  \leanok
+  \uses{thm:milnor-ricci-diag, thm:milnor-classification, def:scalar}
+  Every $3$-dimensional unimodular metric Lie algebra admits an orthonormal
+  Milnor frame in which
+  \[ \scal = 2(\mu_0\mu_1 + \mu_1\mu_2 + \mu_2\mu_0), \]
+  with no frame assumed. At Lie-algebra level raising the index is a single
+  composition with $\g^{-1}$, because the metric is carried as a map into the
+  dual.
+
+  Sanity check: the round $SU(2)$ has $\lambda_i = 2$, hence $\mu_i = 1$ and
+  $\scal = 6$ --- the unit $3$-sphere.
+\end{theorem}
 
 \begin{theorem}[The three-dimensional flow, explicitly]
   \label{thm:isenberg-jackson}

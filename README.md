@@ -14,7 +14,9 @@ Poincaré conjecture as the case `Γ = 1`.
 The obstacle is usually said to be analysis, and eventually it is — but not
 first. As of August 2026, Riemannian **curvature did not exist in Mathlib at
 all**: the library has manifolds, vector bundles, and covariant derivatives, but
-no Riemann tensor, no Ricci, and zero occurrences of the string `sectional`. So
+no Riemann tensor, no Ricci, no scalar curvature, and zero occurrences of the
+string `sectional`. The vocabulary — Riemann, Ricci, sectional, scalar — is now
+complete here. So
 a project planning around the parabolic PDE gap stalls long before reaching it.
 
 That gap is real and is marked explicitly: short-time existence needs
@@ -41,7 +43,9 @@ on left-invariant metrics, which is an ODE, and Milnor's curvature formulas.
 | `CovariantDerivative.ricci` | **defined** — trace of `Z ↦ R(Z,X)Y`, via one-slot `mkHom` |
 | `ricci_sub_ricci_swap` | **proved** — `Ric(X,Y) − Ric(Y,X) = −tr R(X,Y)` |
 | `sectionalCurvature`, `_basis_change` | **defined** — with invariance under change of basis |
-| Scalar curvature | not attempted — needs the metric trace |
+| `scalarCurvature` | **defined** — on the model space, hypothesis-free |
+| `scalarCurvatureWith` + `_congr` | **proved** — frame-relative on a general manifold, frame-independent |
+| `ricci_eq_sum_inner_curvature` | **proved** — Ricci as an orthonormal-frame sum, general manifold |
 | `exists_unique_leviCivita` | the only `sorry`; superseded by mathlib4 [#36845](https://github.com/leanprover-community/mathlib4/pull/36845) |
 
 Note `Ric` is **not** symmetric for a general torsion-free connection; the
@@ -80,6 +84,8 @@ Mathlib has no maximal-solution theory, so uniqueness is stated as a germ at
 | `ricciBilin_milnorFrame` | **proved** — Ricci diagonal, `rᵢ = 2μⱼμₖ`, `μᵢ = ½(λⱼ+λₖ−λᵢ)` |
 | `ricci_heisenberg_mixed_sign` | **proved** — Heisenberg has mixed Ricci signs (Milnor Thm 2.4) |
 | `ricciField_milnorFrame_diag` | **proved** — the Isenberg–Jackson ODE system, explicitly |
+| `scalar` + `contDiffAt_scalar` | **proved** — Lie-algebra scalar curvature, smooth in `g` |
+| `exists_milnorFrame_scalar` | **proved** — `scal = 2(μ₀μ₁ + μ₁μ₂ + μ₂μ₀)`, no frame hypothesis |
 
 | `exists_milnorFrame` | **proved** — Milnor's classification lemma (Lemma 4.1) |
 | `exists_milnorFrame_ricci_diagonal` | **proved** — Ricci diagonal, *no frame hypothesis* |
