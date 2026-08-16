@@ -3,6 +3,7 @@ import RicciFlowBlueprint.LeviCivita
 import RicciFlowBlueprint.Ricci
 import RicciFlowBlueprint.Homogeneous
 import RicciFlowBlueprint.Milnor
+import RicciFlowBlueprint.MilnorFrame
 import RicciFlowBlueprint.RicciFlow
 import RicciFlowBlueprint.LieBracketDerivation
 import RicciFlowBlueprint.Sectional
