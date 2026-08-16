@@ -363,9 +363,7 @@ cancel. Had only one flipped, every eigenvalue below would be silently negated.
   $[e_2,e_3] = \lambda_1 e_1$, $[e_3,e_1] = \lambda_2 e_2$,
   $[e_1,e_2] = \lambda_3 e_3$.
 
-  \textbf{Existence is assumed, not proved.} Milnor's classification lemma ---
-  that every unimodular $3$-dimensional metric Lie algebra admits such a frame
-  --- is not formalized. The results below take the frame as a hypothesis.
+  \textbf{Existence is proved} --- see Theorem~\ref{thm:milnor-classification}.
 \end{definition}
 
 \begin{theorem}[Ricci is diagonal in a Milnor frame]
@@ -378,6 +376,33 @@ cancel. Had only one flipped, every eigenvalue below would be silently negated.
      \mu_i = \tfrac12(\lambda_j + \lambda_k - \lambda_i), \]
   equivalently $r_i = \tfrac12\big(\lambda_i^2 - (\lambda_j-\lambda_k)^2\big)$.
 \end{theorem}
+
+\begin{theorem}[Milnor's classification lemma]
+  \label{thm:milnor-classification}
+  \lean{RicciFlowBlueprint.LeftInvariant.exists_milnorFrame}
+  \leanok
+  \uses{def:milnor-frame}
+  Every $3$-dimensional unimodular metric Lie algebra admits a Milnor frame.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  In dimension three the alternating bracket factors as $[x,y] = L(x \times y)$
+  through the isomorphism $\Lambda^2\mathfrak{g} \cong \mathfrak{g}$;
+  unimodularity says exactly that $L$ is self-adjoint; and the spectral theorem
+  supplies an orthonormal eigenbasis, whose eigenvalues are the $\lambda_i$.
+  Dimension three is essential --- it is where $\Lambda^2\mathfrak{g} \cong
+  \mathfrak{g}$ comes from.
+\end{proof}
+
+\begin{corollary}[Ricci is diagonalizable]
+  \label{cor:milnor-ricci-diagonalizable}
+  \lean{RicciFlowBlueprint.LeftInvariant.exists_milnorFrame_ricci_diagonal}
+  \leanok
+  \uses{thm:milnor-classification, thm:milnor-ricci-diag}
+  Every $3$-dimensional unimodular metric Lie algebra admits a basis in which
+  $\Ric$ is diagonal with $r_i = 2\mu_j\mu_k$ --- with no frame assumed.
+\end{corollary}
 
 \begin{corollary}[Heisenberg has mixed Ricci signs]
   \label{cor:milnor-heisenberg}

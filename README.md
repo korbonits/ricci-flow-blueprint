@@ -81,10 +81,11 @@ Mathlib has no maximal-solution theory, so uniqueness is stated as a germ at
 | `ricci_heisenberg_mixed_sign` | **proved** — Heisenberg has mixed Ricci signs (Milnor Thm 2.4) |
 | `ricciField_milnorFrame_diag` | **proved** — the Isenberg–Jackson ODE system, explicitly |
 
-Two caveats: the Milnor frame's *existence* is a hypothesis (Milnor's
-classification lemma is not formalized — in progress on `wip/milnor-frame`), and
-the ODE is stated as the field's value at diagonal metrics rather than proving
-solutions stay diagonal.
+| `exists_milnorFrame` | **proved** — Milnor's classification lemma (Lemma 4.1) |
+| `exists_milnorFrame_ricci_diagonal` | **proved** — Ricci diagonal, *no frame hypothesis* |
+
+One caveat remains: the ODE is stated as the field's value at diagonal metrics
+rather than proving solutions stay diagonal.
 
 Milnor flips both the curvature sign and the contraction slot relative to our
 conventions, so the numerical values agree — the two flips cancel. Stated
