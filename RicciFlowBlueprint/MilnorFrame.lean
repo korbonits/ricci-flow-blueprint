@@ -52,7 +52,8 @@ by `ricciBilin_milnorFrame` and `ricciField_milnorFrame_diag` in `Milnor.lean`.
 `exists_milnorFrame_ricci_diagonal` records the combination: on a
 3-dimensional unimodular metric Lie algebra, Ricci is diagonalizable in a
 `g`-orthonormal frame with principal curvatures `rᵢ = 2 μⱼ μₖ`, with no frame
-hypothesis left.
+hypothesis left; `exists_milnorFrame_scalar` sums them:
+`scal = 2(μ₀μ₁ + μ₁μ₂ + μ₂μ₀)`.
 -/
 import Mathlib.Analysis.InnerProductSpace.Spectrum
 import Mathlib.LinearAlgebra.QuadraticForm.Basic
@@ -361,6 +362,22 @@ theorem exists_milnorFrame_ricci_diagonal (hg : IsInnerProduct g)
         if i = j then 2 * milnorMu l (i + 1) * milnorMu l (i + 2) else 0 := by
   obtain ⟨b, l, hf, hb⟩ := exists_milnorFrame β hg hdim hβ huni
   exact ⟨b, l, hf, hb, fun i j => ricciBilin_milnorFrame hβ hf hb i j⟩
+
+variable (β) in
+-- BENCH: milnor-scalar-classified
+/-- **The scalar curvature of a 3-dimensional unimodular metric Lie algebra**:
+combining the classification lemma (`exists_milnorFrame`) with Milnor's computation
+(`scalar_milnorFrame`), `scal(g) = 2(μ₀μ₁ + μ₁μ₂ + μ₂μ₀)` for the `μ`'s of some
+`g`-orthonormal Milnor frame — no frame hypothesis remains. -/
+theorem exists_milnorFrame_scalar (hg : IsInnerProduct g) (hdim : finrank ℝ E = 3)
+    (hβ : ∀ x, β x x = 0) (huni : IsUnimodular β) :
+    ∃ (b : Basis (Fin 3) ℝ E) (l : Fin 3 → ℝ),
+      IsMilnorFrame β b l ∧
+      (∀ i j, g (b i) (b j) = if i = j then 1 else 0) ∧
+      scalar β g = 2 * (milnorMu l 0 * milnorMu l 1 + milnorMu l 1 * milnorMu l 2
+        + milnorMu l 2 * milnorMu l 0) := by
+  obtain ⟨b, l, hf, hb⟩ := exists_milnorFrame β hg hdim hβ huni
+  exact ⟨b, l, hf, hb, scalar_milnorFrame hβ hf hb⟩
 
 end Bridge
 

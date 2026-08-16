@@ -18,6 +18,8 @@ Advances in Mathematics **21** (1976), 293–329, in the algebraic setting of
   - `ricciBilin_structureConstants` — Ricci fully expanded into structure
     constants: a double sum of products of `⟨∇··, ·⟩`- and `α`-terms, the
     computational backbone of Milnor's paper.
+  - `scalar_eq_sum_ricciBilin` — `scal = Σᵢ Ric(eᵢ, eᵢ)`, the trace of
+    `g⁻¹ ∘ Ric` (`scalar`, `Homogeneous.lean`) computed in an orthonormal frame.
 
 * **The three-dimensional case** (`IsMilnorFrame`). A *Milnor frame* is an
   orthonormal (more generally `g`-diagonal) basis `b₀, b₁, b₂` with
@@ -28,6 +30,8 @@ Advances in Mathematics **21** (1976), 293–329, in the algebraic setting of
   - `ricciBilin_milnorFrame` — **Ricci is diagonal in a Milnor frame**, with
     eigenvalues `rᵢ = 2 μⱼ μₖ` where `μᵢ = ½(λⱼ + λₖ − λᵢ)` (`milnorMu`);
     equivalently `rᵢ = ½(λᵢ² − (λⱼ − λₖ)²)`.
+  - `scalar_milnorFrame` — `scal = 2(μ₀μ₁ + μ₁μ₂ + μ₂μ₀)`, the sum of the
+    principal Ricci curvatures.
   - `ricciBilin_milnorFrame_diag` / `ricciField_milnorFrame_diag` — the same
     computation for the diagonal metric `g(bᵢ,bⱼ) = δᵢⱼ dᵢ` (write
     `(A,B,C) = (d₀,d₁,d₂)`): Ricci is again diagonal, with
@@ -210,6 +214,21 @@ theorem ricciBilin_eq_sum_curvature (hβ : ∀ x, β x x = 0)
   exact Finset.sum_congr rfl fun w _ => by
     rw [repr_apply_orthonormal b hb, ricciEndo_apply_eq_curvature β g hβ]
 
+-- BENCH: scalar-frame-sum
+/-- **Scalar curvature as an orthonormal-frame sum**: `scal = Σᵢ Ric(bᵢ, bᵢ)`. The
+trace of `g⁻¹ ∘ Ric` computed in a `g`-orthonormal basis, where coordinates are
+`g`-pairings and `g ∘ g⁻¹ = id`. -/
+theorem scalar_eq_sum_ricciBilin (hg : g.IsInvertible)
+    (hb : ∀ i j, g (b i) (b j) = if i = j then 1 else 0) :
+    scalar β g = ∑ i, ricciBilin β g (b i) (b i) := by
+  have haux : ∀ f : E →L[ℝ] ℝ, g (g.inverse f) = f := by
+    obtain ⟨A, rfl⟩ := hg
+    intro f
+    simp
+  rw [scalar, traceCLM_apply, trace_eq_sum_repr b]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [repr_apply_orthonormal b hb, ContinuousLinearMap.comp_apply, haux]
+
 /-- **Ricci in structure constants** (Milnor's computational backbone): for an
 orthonormal basis, with all pairings written out,
 
@@ -359,6 +378,24 @@ theorem ricciBilin_milnorFrame (hβ : ∀ x, β x x = 0) (hf : IsMilnorFrame β 
   have h := ricciBilin_milnorFrame_diag (d := fun _ => 1) hβ hf (by simpa using hb)
     (fun _ => one_pos) i j
   simpa using h
+
+-- BENCH: milnor-scalar
+/-- **Milnor's scalar curvature formula**: in an orthonormal Milnor frame,
+`scal = 2(μ₀μ₁ + μ₁μ₂ + μ₂μ₀)` — the sum of the principal Ricci curvatures
+`rᵢ = 2 μⱼ μₖ` of `ricciBilin_milnorFrame`. (Sanity check: the round `SU(2)` has
+`λᵢ = 2`, so `μᵢ = 1` and `scal = 6`, the scalar curvature of the unit 3-sphere.) -/
+theorem scalar_milnorFrame (hβ : ∀ x, β x x = 0) (hf : IsMilnorFrame β b l)
+    (hb : ∀ i j, g (b i) (b j) = if i = j then 1 else 0) :
+    scalar β g = 2 * (milnorMu l 0 * milnorMu l 1 + milnorMu l 1 * milnorMu l 2
+      + milnorMu l 2 * milnorMu l 0) := by
+  have hg : g.IsInvertible := (isInnerProduct_of_orthonormal b hb).isInvertible
+  have h0 := ricciBilin_milnorFrame hβ hf hb 0 0
+  have h1 := ricciBilin_milnorFrame hβ hf hb 1 1
+  have h2 := ricciBilin_milnorFrame hβ hf hb 2 2
+  norm_num [show (1 : Fin 3) + 1 = 2 from rfl, show (1 : Fin 3) + 2 = 0 from rfl,
+    show (2 : Fin 3) + 1 = 0 from rfl, show (2 : Fin 3) + 2 = 1 from rfl] at h0 h1 h2
+  rw [scalar_eq_sum_ricciBilin b hg hb, Fin.sum_univ_three, h0, h1, h2]
+  ring
 
 /-- **The Ricci flow of a left-invariant metric on a 3-dimensional unimodular
 Lie algebra is an explicit ODE system**: at a diagonal metric

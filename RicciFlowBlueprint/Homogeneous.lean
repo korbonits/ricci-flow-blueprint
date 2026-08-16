@@ -26,6 +26,9 @@ Picard–Lindelöf applies. This file carries that out in full:
   `LeviCivita.lean` is *proved* here.
 * `curvature`, `ricciEndo`, `ricciBilin` — R(x,y) = [∇ₓ,∇_y] − ∇_{[x,y]} and
   Ric(x,y) = tr(w ↦ R(w,x)y), matching the trace convention of `Ricci.lean`.
+* `scalar`, `contDiffAt_scalar` — scal = tr(g⁻¹ ∘ Ric), the `g`-trace of Ricci
+  (composition with `g.inverse` IS index raising here), and its smoothness in `g`
+  at invertible metrics.
 * `contDiffAt_ricciField` — the analytic heart: `g ↦ −2 Ric(g)` is `C^n` at
   every invertible `g`. Ricci is a polynomial in `g` and `g⁻¹`; smoothness of
   operator inversion at invertible points is `contDiffAt_map_inverse`.
@@ -293,6 +296,17 @@ theorem ricciBilin_apply (x y : E) :
     ricciBilin β g x y = LinearMap.trace ℝ E ↑(ricciEndo β g x y) := by
   simp [ricciBilin]
 
+-- BENCH: scalar-left-invariant
+/-- The scalar curvature of the left-invariant metric `g`: the `g`-trace of the Ricci
+form, `scal = tr (g⁻¹ ∘ Ric)` — raising an index of `Ric` is literally composition,
+because the metric is a map into the dual. As with `koszul`, the definition uses the
+total function `ContinuousLinearMap.inverse`, so it needs no hypotheses (junk value
+when `g` is not invertible); every lemma assumes invertibility. Unfolds to the
+orthonormal-frame sum `Σᵢ Ric(bᵢ, bᵢ)` via `scalar_eq_sum_ricciBilin`
+(`RicciFlowBlueprint.Milnor`). -/
+noncomputable def scalar : ℝ :=
+  traceCLM E (g.inverse.comp (ricciBilin β g))
+
 end Ricci
 
 /-! ### Inner products -/
@@ -397,6 +411,29 @@ theorem contDiffAt_ricciField {n : WithTop ℕ∞} {g₀ : E →L[ℝ] E →L[�
   have hRic : ContDiffAt ℝ n (fun g : E →L[ℝ] E →L[ℝ] ℝ => ricciBilin β g) g₀ :=
     contDiffAt_const.clm_comp hEndo
   exact hRic.const_smul (-2 : ℝ)
+
+-- BENCH: scalar-smooth
+/-- Smoothness of `g ↦ scal(g)` at invertible metrics: like `contDiffAt_ricciField`,
+the scalar curvature is a polynomial in `g` and `g⁻¹` composed with the (linear)
+trace. This is the analytic input for integrating `scal` over a *flowing* metric —
+the shape of Perelman's `F` and `W` functionals. -/
+theorem contDiffAt_scalar {n : WithTop ℕ∞} {g₀ : E →L[ℝ] E →L[ℝ] ℝ}
+    (hg₀ : g₀.IsInvertible) :
+    ContDiffAt ℝ n (fun g => scalar β g) g₀ := by
+  have hRic : ContDiffAt ℝ n (fun g : E →L[ℝ] E →L[ℝ] ℝ => ricciBilin β g) g₀ := by
+    have h := (contDiffAt_ricciField β (n := n) hg₀).const_smul ((-2 : ℝ)⁻¹)
+    have he : (fun g : E →L[ℝ] E →L[ℝ] ℝ => ricciBilin β g)
+        = fun g => (-2 : ℝ)⁻¹ • ricciField β g := by
+      funext g
+      rw [ricciField, smul_smul]
+      norm_num
+    rw [he]
+    exact h
+  have hinv : ContDiffAt ℝ n ContinuousLinearMap.inverse g₀ := hg₀.contDiffAt_map_inverse
+  have hcomp : ContDiffAt ℝ n
+      (fun g : E →L[ℝ] E →L[ℝ] ℝ => g.inverse.comp (ricciBilin β g)) g₀ :=
+    hinv.clm_comp hRic
+  exact ((traceCLM E).contDiff.contDiffAt).comp g₀ hcomp
 
 /-! ### Short-time existence and uniqueness -/
 
