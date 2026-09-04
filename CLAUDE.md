@@ -17,8 +17,9 @@ in `lake-manifest.json`) on Lean `v4.34.0-rc2`, because mathlib4 #36845
 | `Ricci.lean` | `ricci` — **defined**; `ricci_sub_ricci_swap` |
 | `Sectional.lean` | `sectionalCurvature`, `sectionalCurvature_basis_change` |
 | `LeviCivita.lean` | `exists_leviCivita`, `leviCivita_unique` (on differentiable sections — the `∃!` form was never provable), `curvature_eq_of_isLeviCivita`, `ricci_eq_of_isLeviCivita`, `sectionalCurvature_eq_of_isLeviCivita` |
-| `Flow.lean` | `IsRicciFlowAt/On`, `isRicciFlowAt_const_iff`, `isRicciFlowAt_iff_of_isLeviCivita` (proved), `ricciFlow_shortTime_existence` (`proof_wanted`); the analytic-frontier survey lives in its header |
-| `Hamilton.lean` | `hamilton_1982` — **stated**, `proof_wanted`, no sorry, no axiom. Predicates require a `C¹` witness and `C²` test fields (corrected 2026-09-04: the old `HasConstSecLC` quantified over arbitrary fields, i.e. over junk) |
+| `LeviCivitaSmooth.lean` | `contMDiffCovariantDerivative_leviCivitaConnection` — **Levi-Civita is `C^k` for a `C^{k+1}` metric** (Mathlib leaves this to "future PRs"); criteria `contMDiffAt_clm_of_basis`, `contMDiffAt_section_of_inner_localFrame`, `contMDiffAt_mvfderiv_apply`, `contMDiffAt_koszul`; instance for `k = 1`; `ricciOfMetric`, `sectionalCurvatureOfMetric` |
+| `Flow.lean` | `IsRicciFlowAt/On`, `isRicciFlowAt_const_iff`, `isRicciFlowAt_iff_of_isLeviCivita`, `isRicciFlowOn_iff_ricciOfMetric` — **the flow is `∂g/∂t = -2 Ric(g t)` with `Ric` a function of `g`**; `ricciFlow_shortTime_existence` (`proof_wanted`); the analytic-frontier survey lives in its header |
+| `Hamilton.lean` | `hamilton_1982` — **stated**, `proof_wanted`, no sorry, no axiom. Predicates require a `C¹` witness and `C²` test fields (corrected 2026-09-04: the old `HasConstSecLC` quantified over arbitrary fields, i.e. over junk). `admitsPositiveRicciMetric_iff` / `admitsConstPositiveSecMetric_iff` restate them via `ricciOfMetric` / `sectionalCurvatureOfMetric` |
 | `Homogeneous.lean` | **branch closed**: `koszul`, torsion/compat, Levi-Civita uniqueness, `contDiffAt_ricciField`, `ricciFlow_leftInvariant` |
 | `Milnor.lean` | **branch closed**: Koszul formula, Ricci in structure constants, diagonal Ricci `rᵢ = 2μⱼμₖ`, Heisenberg, Isenberg–Jackson ODE |
 
@@ -65,13 +66,20 @@ were tested to establish this. It is a workaround, not a fix — open Zulip ques
 gone, bridges to `Flow.lean`/`Hamilton.lean` proved); `RicciFlow.lean` folded
 into `Flow.lean`.
 
-**Next — smoothness of `leviCivitaConnection`.** Mathlib's file says "future
-PRs will prove smoothness: if `M` is `C^{n+2}` and `g` is `C^{n+1}`, the
-Levi-Civita connection is `C^n`". Offer on Zulip before starting. With it,
-`ricci_eq_of_isLeviCivita` applied to `leviCivitaConnection` makes
-`g ↦ Ric(g)` usable, and `IsRicciFlowAt` becomes an equation in `g` alone via
-`isRicciFlowAt_iff_of_isLeviCivita`. That is the gate for DeTurck and the
-curvature evolution equations.
+**Done 2026-09-04, later the same day:** smoothness of `leviCivitaConnection`
+(`LeviCivitaSmooth.lean`, `C^ω` manifold, `C^{k+1}` metric ⇒ `C^k` connection),
+hence `ricciOfMetric` and the textbook flow equation
+`isRicciFlowOn_iff_ricciOfMetric`. This was the gate for DeTurck and the
+curvature evolution equations. **Upstream candidate**: Mathlib's
+`LeviCivita.lean` lists smoothness as future work; the three criteria in
+`LeviCivitaSmooth.lean` are Mathlib-general (any bundle for the frame
+criterion) except the main theorem's `IsManifold I ω M`, which a Mathlib
+version should weaken to `C^{k+2}`. Offer on Zulip before opening the PR.
+
+**Next — curvature evolution.** With `Ric(g)` a function of `g`, the next
+PDE-free target is the evolution of `Ric`/`scal` under the flow, i.e. the
+first variation of curvature (`lem:evolution-rm`). It needs the second
+covariant derivative and the Laplacian on tensors; neither exists in Mathlib.
 
 **Day 1 — unblock (~45 min).** Post the Zulip question in `#mathlib4`, topic
 `RiemannianBundle: metrics as instances vs values`; tag `sgouezel`. It gates
@@ -94,9 +102,9 @@ the smoothness item.
 
 - **Levi-Civita existence is NOT needed to define the flow** — the per-slice
   `∀ t, ∃ cov` is equivalent to the textbook equation, now as a theorem
-  (`isRicciFlowAt_iff_of_isLeviCivita`). *Smoothness* of `leviCivitaConnection`
-  (not yet in mathlib) IS needed for the *function* `g ↦ Ric(g)`, i.e. DeTurck
-  and the curvature evolution equations.
+  (`isRicciFlowOn_iff_ricciOfMetric`, using smoothness of the connection from
+  `LeviCivitaSmooth.lean`). Both formulations are kept; the existential one is
+  what elaborates under `letI`.
 - **Three distinct parabolic theories** are on the road, not one: Ricci flow,
   harmonic map flow (uniqueness of the standard solution), curve-shrinking flow
   (finite extinction).
@@ -112,6 +120,19 @@ the smoothness item.
   `minSmoothness ℝ n = n`; `ω` synthesises `3`, `(2:ℕ∞)+1` and `minSmoothness ℝ 2`.
 - Metric reaches `TM` via `[RiemannianBundle (fun x ↦ TangentSpace I x)]`, never a
   raw `[∀ x, InnerProductSpace ℝ (TangentSpace I x)]`.
+- **lean4#14949 (unification sees through `TangentSpace`)**: applying a lemma
+  stated for a general bundle `V` to `TangentSpace I` can infer the wrong
+  fibre instances (`fun _ ↦ NormedAddCommGroup E`). Pass
+  `(V := fun x : M ↦ TangentSpace I x)` explicitly, or restate the lemma for
+  the tangent bundle (`ContMDiffAt.inner_bundle'` in `LeviCivitaSmooth.lean`,
+  as mathlib does in `LeviCivita.lean`).
+- `omit [..] in` goes *before* the docstring, not between docstring and
+  `theorem`. `set x := e with h` then `rw [← h]` fails when `e` sits under
+  dependent types (trivialisations); write the term out instead.
+- `ContMDiffAt.div_const`/`.mul` on `ℝ` want a Lie-group instance ℝ lacks;
+  use `(contDiffAt_id.mul contDiffAt_const).comp_contMDiffAt`.
+- `Basis` is `Module.Basis`; `Fintype.linearIndependent_iff` gives coefficients
+  from `∑ c i • b i = 0`.
 - Mathlib's `IsLeviCivitaConnection` spells compatibility as
   `cov.IsMetricCompatible (M := M) (V := TangentSpace I)` with `cov` an explicit
   variable — the named arguments are what lets it elaborate outside an

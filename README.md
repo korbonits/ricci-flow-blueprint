@@ -53,11 +53,18 @@ Note `Ric` is **not** symmetric for a general torsion-free connection; the
 identity above is the trace of first Bianchi, and symmetry is the corollary when
 `tr R(X,Y) = 0`, which holds for a metric connection.
 
-**No `sorry` remains.** What is still missing upstream is smoothness of
-`leviCivitaConnection` (Mathlib says "future PRs"); until then `Ric` of the
-canonical connection is not known to be non-junk, so `g ↦ Ric(g)` is definable
-but not usable, and the flow stays existentially quantified over `C¹`
-Levi-Civita connections.
+**No `sorry` remains.**
+
+### Smoothness of Levi-Civita, and `Ric` as a function of the metric (`LeviCivitaSmooth.lean`)
+
+| Node | Status |
+| --- | --- |
+| `contMDiffCovariantDerivative_leviCivitaConnection` | **proved** — on a `C^ω` manifold with a `C^{k+1}` metric, Mathlib's `leviCivitaConnection` is `C^k`; the result Mathlib's `LeviCivita.lean` defers to "future PRs" |
+| `contMDiffAt_section_of_inner_localFrame` | **proved** — a section of a Riemannian bundle is `C^n` if its inner products with a local frame are (Gram inversion, no orthonormal frames) |
+| `contMDiffAt_mvfderiv_apply` | **proved** — the derivative of a `C^{n+1}` function along a `C^n` field is `C^n` |
+| `ricciOfMetric`, `sectionalCurvatureOfMetric` | **defined** — `Ric(g)`, `K(g)` via the Levi-Civita connection; not junk, since it is `C¹` |
+| `isRicciFlowOn_iff_ricciOfMetric` | **proved** — the flow is `∂g/∂t = -2 Ric(g t)`, no connection quantified over |
+| `admitsPositiveRicciMetric_iff`, `admitsConstPositiveSecMetric_iff` | **proved** — Hamilton's hypothesis and conclusion in terms of `Ric(g)` and `K(g)` |
 
 ### Ricci flow (`Flow.lean`, `Hamilton.lean`)
 
@@ -66,6 +73,7 @@ Levi-Civita connections.
 | `IsRicciFlowOn` | **defined** — `∂g/∂t = −2Ric(g)`, per time slice, on an interval |
 | `isRicciFlowAt_const_iff` | **proved** — stationary iff Ricci-flat; the definition has content |
 | `isRicciFlowAt_iff_of_isLeviCivita` | **proved** — the existential can be discharged by *any* `C¹` Levi-Civita connection: the textbook equation with `Ric` computed by a specified connection |
+| `isRicciFlowAt_iff_leviCivita` | **proved** — with the canonical connection, which is `C¹` by `LeviCivitaSmooth.lean` |
 | `ricciFlow_shortTime_existence` | **stated** (`proof_wanted`) — blocked on parabolic PDE |
 | `hamilton_1982` | **stated** (`proof_wanted`) — no `sorry`, no added axiom |
 | Hamilton 1982, proved | years away |
