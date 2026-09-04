@@ -3,11 +3,12 @@
 A `leanblueprint` for Ricci flow. Live: https://korbonits.github.io/ricci-flow-blueprint/
 Milestone: Hamilton 1982. Terminal node: Perelman's spherical space form theorem.
 
-## State (2026-08-14)
+## State (2026-09-04)
 
-`lake build` clean. The only `sorry` is `exists_unique_leviCivita` (superseded by
-mathlib4 PR #36845). Everything else is axiom-free —
-`#print axioms` shows only `[propext, Classical.choice, Quot.sound]`.
+`lake build` clean, **no `sorry`**, axiom-free — `#print axioms` shows only
+`[propext, Classical.choice, Quot.sound]`. Tracks mathlib `master` (pinned rev
+in `lake-manifest.json`) on Lean `v4.34.0-rc2`, because mathlib4 #36845
+(Levi-Civita) merged after the last release and `LeviCivita.lean` builds on it.
 
 | File | Contents |
 | --- | --- |
@@ -15,16 +16,19 @@ mathlib4 PR #36845). Everything else is axiom-free —
 | `LieBracketDerivation.lean` | `lieBracket_apply_fun`, `mlieBracket_apply_fun` (any manifold, corners allowed), `jacobi_mlieBracket_apply`, model-space collapses |
 | `Ricci.lean` | `ricci` — **defined**; `ricci_sub_ricci_swap` |
 | `Sectional.lean` | `sectionalCurvature`, `sectionalCurvature_basis_change` |
-| `Flow.lean` | `IsRicciFlowAt/On`, `isRicciFlowAt_const_iff` (proved), `ricciFlow_shortTime_existence` (`proof_wanted`) |
-| `Hamilton.lean` | `hamilton_1982` — **stated**, `proof_wanted`, no sorry, no axiom |
+| `LeviCivita.lean` | `exists_leviCivita`, `leviCivita_unique` (on differentiable sections — the `∃!` form was never provable), `curvature_eq_of_isLeviCivita`, `ricci_eq_of_isLeviCivita`, `sectionalCurvature_eq_of_isLeviCivita` |
+| `Flow.lean` | `IsRicciFlowAt/On`, `isRicciFlowAt_const_iff`, `isRicciFlowAt_iff_of_isLeviCivita` (proved), `ricciFlow_shortTime_existence` (`proof_wanted`); the analytic-frontier survey lives in its header |
+| `Hamilton.lean` | `hamilton_1982` — **stated**, `proof_wanted`, no sorry, no axiom. Predicates require a `C¹` witness and `C²` test fields (corrected 2026-09-04: the old `HasConstSecLC` quantified over arbitrary fields, i.e. over junk) |
 | `Homogeneous.lean` | **branch closed**: `koszul`, torsion/compat, Levi-Civita uniqueness, `contDiffAt_ricciField`, `ricciFlow_leftInvariant` |
 | `Milnor.lean` | **branch closed**: Koszul formula, Ricci in structure constants, diagonal Ricci `rᵢ = 2μⱼμₖ`, Heisenberg, Isenberg–Jackson ODE |
 
-Branch `wip/milnor-frame` has Milnor's classification lemma drafted (frame
-existence, plus the bridge to `IsMilnorFrame`). **It does not build**: a `ring`
-failure at `MilnorFrame.lean:136` and six `linarith` failures at 167.
+## Four corrected beliefs — do not re-derive these wrong
 
-## Three corrected beliefs — do not re-derive these wrong
+0. **Levi-Civita uniqueness is NOT `∃!`.** A `CovariantDerivative` is
+   unconstrained on sections not differentiable at the point (every law and
+   predicate quantifies over differentiable sections), so two Levi-Civita
+   connections can differ there. Mathlib's `IsLeviCivitaConnection.uniqueness`
+   is pointwise on differentiable sections, and that is all curvature needs.
 
 1. **`mkHom₃` was never needed and would not have worked.** The trace is in the
    first slot only, so one-slot `TensorialAt.mkHom` suffices. A `mkHom₃` copied
@@ -54,40 +58,45 @@ that constant under `letI := ⟨g.toRiemannianMetric⟩`. See `Hamilton.lean`'s 
 **Corollary:** converse lemmas must be iffs between existentials. Ten variants
 were tested to establish this. It is a workaround, not a fix — open Zulip question.
 
-## Roadmap (week of 2026-08-14)
+## Roadmap (from 2026-09-04)
+
+**Done since 2026-08-14:** Milnor's classification lemma; scalar curvature;
+#36845 merged upstream and adopted here (`LeviCivita.lean` rewritten, `sorry`
+gone, bridges to `Flow.lean`/`Hamilton.lean` proved); `RicciFlow.lean` folded
+into `Flow.lean`.
+
+**Next — smoothness of `leviCivitaConnection`.** Mathlib's file says "future
+PRs will prove smoothness: if `M` is `C^{n+2}` and `g` is `C^{n+1}`, the
+Levi-Civita connection is `C^n`". Offer on Zulip before starting. With it,
+`ricci_eq_of_isLeviCivita` applied to `leviCivitaConnection` makes
+`g ↦ Ric(g)` usable, and `IsRicciFlowAt` becomes an equation in `g` alone via
+`isRicciFlowAt_iff_of_isLeviCivita`. That is the gate for DeTurck and the
+curvature evolution equations.
 
 **Day 1 — unblock (~45 min).** Post the Zulip question in `#mathlib4`, topic
 `RiemannianBundle: metrics as instances vs values`; tag `sgouezel`. It gates
-upstreaming the curvature stack. Also: `RicciFlow.lean` is prose-only and
-superseded by `Flow.lean` — merge or delete.
+upstreaming the curvature stack.
 
 **Day 2 — first upstream PR (~2–3 hrs).** `VectorField.lieBracket_apply_fun` →
 `Mathlib/Analysis/Calculus/VectorField.lean`, beside `lieBracket_smul_*`. No
 dependency on the curvature stack. Budget the time for mathlib conventions, not
 mathematics.
 
-**Days 3–4 — finish Milnor's classification (~2–3 hrs).** Resume
-`wip/milnor-frame`; two concrete tactic failures, structure and bridge already
-drafted. Closes the last hypothesis in `chap:milnor`.
-
 **Day 5 — second and third PRs (~2 hrs).** `neg_apply`/`sub_apply`, then
 `mdiffAt_cov_apply`. Three small merged PRs beat one large one in review.
 
-**Weekend — high leverage (~4–6 hrs).** mathlib4 **#36845** (Levi-Civita,
-`grunweg`, reviewed by `sgouezel`), `awaiting-author` since 2026-07-28. **Offer
-on Zulip before touching it.** It unblocks the function `g ↦ Ric(g)`, which
-DeTurck's trick and the curvature evolution equations both need.
-
-**Not this week:** upstreaming curvature/Ricci/sectional (wait for the Zulip
+**Not yet:** upstreaming curvature/Ricci/sectional (wait for the Zulip
 answer), anything parabolic, any writing-up.
-**If a day is lost, drop in this order:** third PR, classification lemma, second
-PR. Keep Day 1 and the weekend item.
+**If a day is lost, drop in this order:** third PR, second PR. Keep Day 1 and
+the smoothness item.
 
 ## Where the real gaps are
 
 - **Levi-Civita existence is NOT needed to define the flow** — the per-slice
-  `∀ t, ∃ cov` is equivalent to the textbook equation. #36845 IS needed for the
-  *function* `g ↦ Ric(g)`, i.e. DeTurck and the curvature evolution equations.
+  `∀ t, ∃ cov` is equivalent to the textbook equation, now as a theorem
+  (`isRicciFlowAt_iff_of_isLeviCivita`). *Smoothness* of `leviCivitaConnection`
+  (not yet in mathlib) IS needed for the *function* `g ↦ Ric(g)`, i.e. DeTurck
+  and the curvature evolution equations.
 - **Three distinct parabolic theories** are on the road, not one: Ricci flow,
   harmonic map flow (uniqueness of the standard solution), curve-shrinking flow
   (finite extinction).
@@ -103,6 +112,13 @@ PR. Keep Day 1 and the weekend item.
   `minSmoothness ℝ n = n`; `ω` synthesises `3`, `(2:ℕ∞)+1` and `minSmoothness ℝ 2`.
 - Metric reaches `TM` via `[RiemannianBundle (fun x ↦ TangentSpace I x)]`, never a
   raw `[∀ x, InnerProductSpace ℝ (TangentSpace I x)]`.
+- Mathlib's `IsLeviCivitaConnection` spells compatibility as
+  `cov.IsMetricCompatible (M := M) (V := TangentSpace I)` with `cov` an explicit
+  variable — the named arguments are what lets it elaborate outside an
+  existential. Prefer `cov.IsLeviCivitaConnection` in hypothesis position;
+  `isLeviCivitaConnection_iff` converts to the `∧` form used in the existentials.
+- Building mathlib `master` from source with no cache takes hours on 4 cores;
+  `lake exe cache get` needs `mathlib4.lakecache.org`.
 - `set_option maxSynthPendingDepth 3` for nested CLM spaces
   (`E →L[ℝ] E →L[ℝ] E →L[ℝ] ℝ`), or norm instances silently fail to synthesise and
   `simp` lemmas quietly no-op.

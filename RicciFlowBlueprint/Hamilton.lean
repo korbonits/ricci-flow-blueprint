@@ -10,8 +10,12 @@
    so there is no `sorry` and no added axiom: the statement is elaborated and
    type-checked, nothing more.
 
-   Until today it could not be *stated*: `Ric` and `K` existed in no Lean
-   library.
+   Until 2026-08-13 it could not be *stated*: `Ric` and `K` existed in no Lean
+   library. Since the Levi-Civita connection landed in Mathlib (see
+   `LeviCivita.lean`), the existentially quantified connection in the
+   hypotheses below is known to be well-posed: it exists, and every `C¹`
+   choice gives the same `Ric` and `K` on `C²` fields
+   (`ricci_eq_of_isLeviCivita`, `sectionalCurvature_eq_of_isLeviCivita`).
 
    ## The pattern that makes metric quantification work
 
@@ -43,6 +47,7 @@
    as documented; what failed was elaboration over defeq terms, and the pattern
    above sidesteps it rather than fixing it. A cleaner idiom would be welcome. -/
 import RicciFlowBlueprint.Sectional
+import RicciFlowBlueprint.LeviCivita
 import Batteries.Util.ProofWanted
 open Bundle CovariantDerivative
 open scoped Manifold ContDiff
@@ -56,24 +61,38 @@ variable
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
   [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
 
+/-- The ambient metric has strictly positive Ricci curvature: there is a `C¹`
+Levi-Civita connection whose Ricci tensor is positive on every nonzero value of a
+`C²` vector field. The `C¹` requirement and the `C²` test fields are not
+decoration: `ricci` takes the junk value `0` unless the first curvature slot is
+tensorial, which needs both, and by `ricci_eq_of_isLeviCivita` the value is then
+the same for every `C¹` Levi-Civita connection — so the existential is a genuine
+statement about the metric. -/
 def HasPositiveRicciLC (I : ModelWithCorners ℝ E H) (M : Type*)
     [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
     [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
     [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
     [IsContMDiffRiemannianBundle I 2 E (fun (x : M) ↦ TangentSpace I x)] : Prop :=
   ∃ cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x),
-    cov.IsMetricCompatible ∧ cov.torsion = 0 ∧
+    ContMDiffCovariantDerivative cov 1 ∧ cov.IsMetricCompatible ∧ cov.torsion = 0 ∧
       ∀ (x : M) (X : Π y : M, TangentSpace I y), CMDiff 2 (T% X) → X x ≠ 0 →
         0 < cov.ricci X X x
 
+/-- The ambient metric has constant sectional curvature `k`: there is a `C¹`
+Levi-Civita connection whose sectional curvature is `k` on every pair of `C²`
+vector fields that are linearly independent at the point. Restricting to `C²`
+fields matters: `curvature X Y Y x` involves `[X, Y]` and `∇_X ∇_Y Y`, which are
+junk on fields that are not differentiable at `x`, and an earlier version of this
+predicate quantified over all fields and so demanded equalities between junk
+values. -/
 def HasConstSecLC (I : ModelWithCorners ℝ E H) (M : Type*)
     [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
     [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
     [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
     [IsContMDiffRiemannianBundle I 2 E (fun (x : M) ↦ TangentSpace I x)] (k : ℝ) : Prop :=
   ∃ cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x),
-    cov.IsMetricCompatible ∧ cov.torsion = 0 ∧
-      ∀ (x : M) (X Y : Π y : M, TangentSpace I y),
+    ContMDiffCovariantDerivative cov 1 ∧ cov.IsMetricCompatible ∧ cov.torsion = 0 ∧
+      ∀ (x : M) (X Y : Π y : M, TangentSpace I y), CMDiff 2 (T% X) → CMDiff 2 (T% Y) →
         ‖X x‖ ^ 2 * ‖Y x‖ ^ 2 - ⟪X x, Y x⟫ ^ 2 ≠ 0 →
           sectionalCurvature cov X Y x = k
 

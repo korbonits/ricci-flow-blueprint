@@ -3,18 +3,20 @@
 
    ## Why the connection is existentially quantified
 
-   Levi-Civita *existence* is not available in this repository
-   (`exists_unique_leviCivita` is the only `sorry`, superseded by upstream
-   mathlib4 PR #36845), so "the Ricci curvature of `g t`" is not definable as a
-   function of `g t`: there is no connection to extract, hence no term
-   `Ric (g t)`. The flow is therefore stated existentially: at each time `t`
-   there is a connection, `C¹`, metric-compatible with `g t` and torsion-free
-   (i.e. *a* Levi-Civita connection of `g t`), whose Ricci curvature is minus
-   half the time derivative of the metric. Mathematically this is equivalent to
-   the textbook equation: once existence and uniqueness of Levi-Civita land,
-   the `∃ cov` can be replaced by the function `g ↦ Ric (g)` and the two
-   formulations coincide (uniqueness makes the witness unique, existence makes
-   the `∃` nonvacuous). Note the quantifier order: `∀ t, ∃ cov` rather than
+   Mathlib now constructs a Levi-Civita connection (`leviCivitaConnection`,
+   see `LeviCivita.lean`) but does not yet prove it is `C¹`, and `ricci` of a
+   connection that is not known to be `C¹` is junk. So "the Ricci curvature
+   of `g t`" is still not usable as a function of `g t`, and the flow is
+   stated existentially: at each time `t` there is a connection, `C¹`,
+   metric-compatible with `g t` and torsion-free (i.e. *a* Levi-Civita
+   connection of `g t`), whose Ricci curvature is minus half the time
+   derivative of the metric. This is equivalent to the textbook equation, and
+   the equivalence is now a theorem rather than a remark:
+   `isRicciFlowAt_iff_of_isLeviCivita` trades the existential for *any* `C¹`
+   Levi-Civita connection, because all of them have the same Ricci tensor on
+   `C²` fields (`ricci_eq_of_isLeviCivita`). Once smoothness of
+   `leviCivitaConnection` lands upstream, that lemma applied to it gives the
+   function `g ↦ Ric (g)`. Note the quantifier order: `∀ t, ∃ cov` rather than
    `∃ cov : ℝ → _, ∀ t` — these are equivalent by choice since no regularity
    in `t` is demanded of `cov`, and the pointwise form is the one the
    metric-quantification pattern (below) can express.
@@ -58,9 +60,31 @@
    * `ricciFlow_shortTime_existence` — Hamilton 1982 / DeTurck 1983, as
      `proof_wanted`: on a closed manifold every metric is the initial value of
      a Ricci flow on some `(0, T)`, with the metric coefficients continuous up
-     to `t = 0`. Blocked on quasilinear parabolic systems on bundle sections
-     (see `RicciFlow.lean` for the survey of that frontier). -/
-import RicciFlowBlueprint.Sectional
+     to `t = 0`. Blocked on quasilinear parabolic systems on bundle sections;
+     see the survey below.
+
+   ## Where the analytic frontier is
+
+   Everything past the definition is blocked on analysis Mathlib does not
+   have. It is recorded here so the dependency graph is honest about where the
+   frontier is, not because any of it is close.
+
+   * Short-time existence on a closed manifold (Hamilton 1982; DeTurck 1983)
+     needs quasilinear parabolic systems on sections of vector bundles, hence
+     Sobolev spaces of bundle sections and elliptic regularity. Mathlib's
+     entire PDE surface is `Analysis/Distribution/Sobolev.lean` and
+     `Analysis/FunctionalSpaces/SobolevInequality.lean`; none of the above
+     exists.
+   * Hamilton 1982 (`Hamilton.lean`) additionally needs the tensor maximum
+     principle, the three-dimensional pinching estimates, Shi's derivative
+     estimates, and convergence of the normalized flow.
+   * Now that the Levi-Civita connection exists in Mathlib
+     (`LeviCivita.lean`), the function `g ↦ Ric(g)` is definable; DeTurck's
+     trick and the curvature evolution equations are the first consumers.
+
+   Mathlib already carries the terminal statement of the road this sits on, in
+   `Mathlib/Geometry/Manifold/PoincareConjecture.lean`. -/
+import RicciFlowBlueprint.LeviCivita
 import Mathlib.Analysis.Calculus.Deriv.Basic
 import Batteries.Util.ProofWanted
 
@@ -151,6 +175,27 @@ theorem isRicciFlowAt_const_iff
     rw [hflat x X Y hX hY]
     simpa using hasDerivAt_const t (g₀.inner x (X x) (Y x))
 
+/-- The existential in `IsRicciFlowAt` can be discharged by *any* `C¹` Levi-Civita
+connection of the ambient metric: the flow equation holds for one iff it holds
+for every one, since `C¹` Levi-Civita connections share their Ricci tensor on
+`C²` fields (`ricci_eq_of_isLeviCivita`). This is the textbook equation
+`∂g/∂t = -2 Ric(g)` with `Ric` computed by a specified connection. -/
+theorem isRicciFlowAt_iff_of_isLeviCivita
+    {g : ℝ → ContMDiffRiemannianMetric I 2 E (fun (x : M) ↦ TangentSpace I x)} {t : ℝ}
+    {cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)}
+    [ContMDiffCovariantDerivative cov 1] (h : cov.IsLeviCivitaConnection) :
+    IsRicciFlowAt I M g t ↔
+      ∀ (x : M) (X Y : Π y : M, TangentSpace I y), CMDiff 2 (T% X) → CMDiff 2 (T% Y) →
+        HasDerivAt (fun u ↦ (g u).inner x (X x) (Y x)) (-2 * cov.ricci X Y x) t := by
+  constructor
+  · rintro ⟨cov', hsm', hcompat', htor', heq⟩ x X Y hX hY
+    have := hsm'
+    have h' : cov'.IsLeviCivitaConnection := ⟨hcompat', htor'⟩
+    rw [ricci_eq_of_isLeviCivita h h' ((hX.mdifferentiable (by norm_num)) x) hY]
+    exact heq x X Y hX hY
+  · intro H
+    exact ⟨cov, inferInstance, h.isMetricCompatible, h.torsion, H⟩
+
 end StationaryMetric
 
 -- BENCH: ricci-flow-short-time
@@ -159,7 +204,7 @@ on a closed manifold, every metric is the initial condition of a Ricci flow on
 some interval `(0, T)`, with the metric coefficients continuous up to `t = 0`.
 
 Blocked on quasilinear parabolic systems on sections of vector bundles — see
-the frontier survey in `RicciFlow.lean`. Stated with `proof_wanted`: elaborated
+the frontier survey in the header of this file. Stated with `proof_wanted`: elaborated
 and type-checked, no `sorry`, no axiom. -/
 proof_wanted ricciFlow_shortTime_existence
     {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
