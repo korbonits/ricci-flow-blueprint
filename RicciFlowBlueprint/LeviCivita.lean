@@ -84,7 +84,8 @@ theorem leviCivita_unique
 `Hamilton.lean` and `Flow.lean`, and Mathlib's structure. -/
 theorem isLeviCivitaConnection_iff
     {cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)} :
-    cov.IsLeviCivitaConnection ↔ cov.IsMetricCompatible ∧ cov.torsion = 0 :=
+    cov.IsLeviCivitaConnection ↔
+      cov.IsMetricCompatible (M := M) (V := TangentSpace I) ∧ cov.torsion = 0 :=
   ⟨fun h ↦ ⟨h.isMetricCompatible, h.torsion⟩, fun h ↦ ⟨h.1, h.2⟩⟩
 
 end ExistenceUniqueness
@@ -104,6 +105,7 @@ variable
 `C²` field `Z` and fields `X`, `Y` differentiable at the point. Only `cov` needs
 to be `C¹`: that is what makes `∇_Y Z` differentiable at `x`, so that uniqueness
 applies to the outer derivative. -/
+omit [CompleteSpace E] in
 theorem curvature_eq_of_isLeviCivita [ContMDiffCovariantDerivative cov 1]
     (h : cov.IsLeviCivitaConnection) (h' : cov'.IsLeviCivitaConnection)
     {X Y Z : Π y : M, TangentSpace I y} {x : M}
@@ -135,7 +137,7 @@ theorem ricci_eq_of_isLeviCivita
   congr 2
   ext v
   simp only [TensorialAt.mkHom_apply_eq_extend]
-  exact curvature_eq_of_isLeviCivita h h' (mdifferentiableAt_extend I E v) hX hY
+  exact curvature_eq_of_isLeviCivita h h' (FiberBundle.mdifferentiableAt_extend I E v) hX hY
 
 /-- Two `C¹` Levi-Civita connections have the same sectional curvature on `C²`
 fields, so `HasConstSecLC` in `Hamilton.lean` is a statement about the metric. -/
