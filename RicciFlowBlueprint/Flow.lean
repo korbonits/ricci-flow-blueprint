@@ -84,7 +84,7 @@
 
    Mathlib already carries the terminal statement of the road this sits on, in
    `Mathlib/Geometry/Manifold/PoincareConjecture.lean`. -/
-import RicciFlowBlueprint.LeviCivita
+import RicciFlowBlueprint.LeviCivitaSmooth
 import Mathlib.Analysis.Calculus.Deriv.Basic
 import Batteries.Util.ProofWanted
 
@@ -196,7 +196,34 @@ theorem isRicciFlowAt_iff_of_isLeviCivita
   · intro H
     exact ⟨cov, inferInstance, h.isMetricCompatible, h.torsion, H⟩
 
+-- BENCH: ricci-flow-levi-civita
+/-- **The flow equation with the canonical connection.** Since `leviCivitaConnection` is `C¹`
+for a `C²` metric (`LeviCivitaSmooth.lean`), the existential in `IsRicciFlowAt` can be
+discharged by it: `∂g/∂t = -2 Ric(g)` with `Ric` computed by *the* Levi-Civita connection. -/
+theorem isRicciFlowAt_iff_leviCivita
+    {g : ℝ → ContMDiffRiemannianMetric I 2 E (fun (x : M) ↦ TangentSpace I x)} {t : ℝ} :
+    IsRicciFlowAt I M g t ↔
+      ∀ (x : M) (X Y : Π y : M, TangentSpace I y), CMDiff 2 (T% X) → CMDiff 2 (T% Y) →
+        HasDerivAt (fun u ↦ (g u).inner x (X x) (Y x))
+          (-2 * (leviCivitaConnection I M).ricci X Y x) t :=
+  isRicciFlowAt_iff_of_isLeviCivita (isLeviCivitaConnection_leviCivitaConnection I)
+
 end StationaryMetric
+
+-- BENCH: ricci-flow-textbook
+/-- **Ricci flow as an equation in the metric alone**: `g` is a Ricci flow on `s` iff
+`∂_t g(t)(X, Y) = -2 Ric(g t)(X, Y)` for all `t ∈ s` and all `C²` fields `X`, `Y`, where
+`Ric(g t) = ricciOfMetric (g t)` is the Ricci curvature of the metric `g t`. No connection is
+quantified over. -/
+theorem isRicciFlowOn_iff_ricciOfMetric
+    {g : ℝ → ContMDiffRiemannianMetric I 2 E (fun (x : M) ↦ TangentSpace I x)} {s : Set ℝ} :
+    IsRicciFlowOn I M g s ↔
+      ∀ t ∈ s, ∀ (x : M) (X Y : Π y : M, TangentSpace I y), CMDiff 2 (T% X) → CMDiff 2 (T% Y) →
+        HasDerivAt (fun u ↦ (g u).inner x (X x) (Y x)) (-2 * ricciOfMetric (g t) X Y x) t := by
+  unfold IsRicciFlowOn
+  refine forall₂_congr fun t _ ↦ ?_
+  let _ : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨(g t).toRiemannianMetric⟩
+  exact isRicciFlowAt_iff_leviCivita
 
 -- BENCH: ricci-flow-short-time
 /-- **Short-time existence for the Ricci flow** (Hamilton 1982; DeTurck 1983):

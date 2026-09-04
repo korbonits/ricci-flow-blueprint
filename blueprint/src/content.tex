@@ -23,6 +23,11 @@ stalls long before reaching it. Chapters \ref{chap:curvature} and
 \ref{chap:levi-civita} close that first gap: $\Riem$, $\Ric$ and $\Sect$ are
 now defined, and Hamilton's theorem is stated in Lean.
 
+Since then the Levi-Civita connection has landed in Mathlib, and this
+blueprint proves it is smooth (Theorem \ref{thm:levi-civita-smooth}), so
+$\Ric$ is now a function of the metric and the flow is the textbook equation
+$\partial_t \g = -2\Ric(\g)$ (Lemma \ref{lem:flow-textbook}).
+
 The analysis gap itself is real and unmoved. Mathlib has no parabolic PDE
 theory, no elliptic regularity, and no Sobolev spaces of bundle sections, so
 short-time existence has nothing to stand on; Chapter \ref{chap:flow} marks
@@ -212,14 +217,55 @@ gives the road, and the one thing it does not give yet.
   connection.
 \end{proof}
 
-\paragraph{What is still missing.} Mathlib does not yet prove that
-\texttt{leviCivitaConnection} is $C^1$ when $\g$ is $C^2$ (the file says
-``future PRs''). Without that, $\Ric$ of the canonical connection is not known
-to be non-junk, so the function $\g \mapsto \Ric(\g)$ is definable but not yet
-usable. Theorem \ref{thm:ricci-well-defined} is the bridge: the moment
-smoothness lands, applying it to \texttt{leviCivitaConnection} turns every
-existential below into an equation in $\g$ alone. Until then the road is
-unchanged in shape and shorter by one \texttt{sorry}.
+\begin{theorem}[Smoothness of the Levi-Civita connection]
+  \label{thm:levi-civita-smooth}
+  \lean{RicciFlowBlueprint.contMDiffCovariantDerivative_leviCivitaConnection}
+  \leanok
+  \uses{thm:levi-civita}
+  On a $C^\omega$ manifold with a $C^{k+1}$ Riemannian metric, Mathlib's
+  \texttt{leviCivitaConnection} is a $C^k$ covariant derivative: for every
+  $C^{k+1}$ vector field $Y$, the section $x \mapsto \nab Y(x)$ of
+  $\operatorname{End}(TM)$ is $C^k$.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  This is the result Mathlib's \texttt{LeviCivita.lean} defers to ``future
+  PRs''. Work in a trivialisation $e$ of $TM$ at $x_0$ with the local frame
+  $s_i = e^{-1}(\cdot, b_i)$ for a basis $b$ of the model space. Three
+  criteria, each proved separately:
+  \begin{enumerate}
+  \item A map into $\operatorname{Hom}(E, F)$ is $C^k$ iff its values on a
+    basis of $E$ are (\texttt{contMDiffAt\_clm\_of\_basis}).
+  \item A section $w$ of a Riemannian bundle with $C^k$ metric is $C^k$ at
+    $x_0$ if the scalar functions $\langle w, s_j\rangle$ are
+    (\texttt{contMDiffAt\_section\_of\_inner\_localFrame}): the coordinates
+    of $w$ are $G^{-1}(\langle w, s_j\rangle)_j$ for the Gram operator $G$ of
+    the frame, $G$ is smooth and invertible on the base set, and
+    \texttt{ContinuousLinearMap.inverse} is smooth at invertible points.
+  \item The Koszul expression for $\langle \nab_{s_i} Y, s_j\rangle$ is
+    $C^k$: derivatives of $C^{k+1}$ inner products along $C^{k}$ fields
+    (\texttt{contMDiffAt\_mvfderiv\_apply}) and inner products of $C^{k+1}$
+    fields with brackets of $C^{k+1}$ fields, which are $C^k$.
+  \end{enumerate}
+  Then $\nab_{s_i} Y$ is $C^k$ by (2) and (3), and $\nab Y$ in coordinates
+  is determined by the $\nab_{s_i} Y$ by (1). No orthonormal frames are needed;
+  the Gram inversion replaces them.
+\end{proof}
+
+\begin{definition}[Curvature of a metric]
+  \label{def:ricci-of-metric}
+  \lean{RicciFlowBlueprint.ricciOfMetric}
+  \leanok
+  \uses{thm:levi-civita-smooth, def:ricci, def:sectional}
+  For a $C^2$ metric $\g$, $\Ric(\g)$ is the Ricci curvature of its
+  Levi-Civita connection, and likewise $\Sect(\g)$. By
+  Theorem \ref{thm:levi-civita-smooth} the connection is $C^1$, so these are
+  genuine tensors and not the junk value that \texttt{ricci} returns on a
+  connection not known to be $C^1$. This is the function
+  $\g \mapsto \Ric(\g)$ that DeTurck's trick and the curvature evolution
+  equations need.
+\end{definition}
 
 \begin{definition}[Ricci and scalar curvature]
   \label{def:ricci}
@@ -612,6 +658,23 @@ target actually requires.
   Theorem \ref{thm:ricci-well-defined}.
 \end{proof}
 
+\begin{lemma}[Ricci flow as an equation in the metric alone]
+  \label{lem:flow-textbook}
+  \lean{RicciFlowBlueprint.isRicciFlowOn_iff_ricciOfMetric}
+  \leanok
+  \uses{def:ricci-flow, def:ricci-of-metric, lem:flow-any-lc}
+  $\g$ is a Ricci flow on $s$ if and only if
+  $\partial_t \g(t)(X, Y) = -2\Ric(\g(t))(X, Y)$ for all $t \in s$ and all
+  $C^2$ fields $X, Y$, with $\Ric(\g(t))$ the Ricci curvature of the metric
+  $\g(t)$. No connection is quantified over: this is the textbook equation.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  Lemma \ref{lem:flow-any-lc} applied to the canonical connection, which is
+  $C^1$ by Theorem \ref{thm:levi-civita-smooth}.
+\end{proof}
+
 \begin{theorem}[Short-time existence]
   \label{thm:short-time}
   \uses{def:ricci-flow}
@@ -727,7 +790,7 @@ shrinks to a round point.
 
 \begin{theorem}[Hamilton 1982]
   \label{thm:hamilton}
-  \uses{thm:normalized-convergence, lem:bianchi-first, def:sectional, thm:ricci-well-defined}
+  \uses{thm:normalized-convergence, lem:bianchi-first, def:sectional, thm:ricci-well-defined, def:ricci-of-metric}
   A closed $3$-manifold admitting a metric of strictly positive Ricci curvature
   admits a metric of constant positive sectional curvature, and is therefore
   diffeomorphic to a spherical space form $S^3/\Gamma$.
@@ -745,7 +808,11 @@ shrinks to a round point.
   choice of connection is immaterial, so both are statements about the metric.
   (An earlier version tested sectional curvature against arbitrary fields,
   where $R(X,Y)Y$ is junk, and required no regularity of the connection, where
-  $\Ric$ is junk; both were corrected in September 2026.) It carries no
+  $\Ric$ is junk; both were corrected in September 2026.) With
+  Definition \ref{def:ricci-of-metric} both hypotheses become statements
+  about $\Ric(\g)$ and $\Sect(\g)$ directly:
+  \texttt{admitsPositiveRicciMetric\_iff} and
+  \texttt{admitsConstPositiveSecMetric\_iff}. It carries no
   \texttt{\textbackslash lean} marker here because \texttt{proof\_wanted}
   produces a private declaration that \texttt{checkdecls} cannot resolve.
 
