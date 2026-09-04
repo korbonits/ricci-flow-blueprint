@@ -189,7 +189,7 @@ theorem isRicciFlowAt_iff_of_isLeviCivita
         HasDerivAt (fun u ↦ (g u).inner x (X x) (Y x)) (-2 * cov.ricci X Y x) t := by
   constructor
   · rintro ⟨cov', hsm', hcompat', htor', heq⟩ x X Y hX hY
-    haveI := hsm'
+    have := hsm'
     have h' : cov'.IsLeviCivitaConnection := ⟨hcompat', htor'⟩
     rw [ricci_eq_of_isLeviCivita h h' ((hX.mdifferentiable (by norm_num)) x) hY]
     exact heq x X Y hX hY
