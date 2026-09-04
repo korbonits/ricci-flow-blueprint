@@ -79,6 +79,7 @@ variable
   {n : ℕ∞ω} [ContMDiffVectorBundle n F V I] [IsContMDiffRiemannianBundle I n F V]
   {ι : Type*} [Fintype ι] [DecidableEq ι]
 
+omit [FiniteDimensional ℝ F] in
 /-- **Smoothness of a section from its inner products with a local frame.** On a
 Riemannian bundle with `C^n` metric, a section `w` is `C^n` at `x₀` as soon as the scalar
 functions `x ↦ ⟪w x, sⱼ x⟫` are, where `sⱼ` is the local frame induced by the
@@ -182,5 +183,222 @@ theorem contMDiffAt_section_of_inner_localFrame (b : Module.Basis ι ℝ F) {x�
     (by filter_upwards [e.open_baseSet.mem_nhds hx₀] with x hx using key x hx)
 
 end InnerFrame
+
+section DerivAlong
+
+variable
+  {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
+  {m n : ℕ∞ω} [IsManifold I 1 M] [IsManifold I n M]
+
+omit [IsManifold I n M] in
+/-- The derivative of a `C^n` real function along a `C^m` vector field is `C^m`, for
+`m + 1 ≤ n`. -/
+theorem contMDiffAt_mvfderiv_apply {f : M → ℝ} {X : Π x : M, TangentSpace I x} {x₀ : M}
+    (hf : ContMDiffAt I 𝓘(ℝ, ℝ) n f x₀)
+    (hX : ContMDiffAt I (I.prod 𝓘(ℝ, E)) m (fun x ↦ TotalSpace.mk' E x (X x)) x₀)
+    (hmn : m + 1 ≤ n) :
+    ContMDiffAt I 𝓘(ℝ, ℝ) m (fun x ↦ mvfderiv I f x (X x)) x₀ := by
+  have hx₀ : x₀ ∈ (trivializationAt E (TangentSpace I (M := M)) x₀).baseSet :=
+    FiberBundle.mem_baseSet_trivializationAt' x₀
+  have hg₂ : ContMDiffAt I 𝓘(ℝ, E) m
+      (fun x ↦ ((trivializationAt E (TangentSpace I (M := M)) x₀) ⟨x, X x⟩).2) x₀ :=
+    (contMDiffAt_section x₀).mp hX
+  have hf' : ContMDiffAt (I.prod I) 𝓘(ℝ, ℝ) n
+      (Function.uncurry fun (_ : M) (y : M) ↦ f y) (id x₀, id x₀) :=
+    hf.comp (x₀, x₀) contMDiffAt_snd
+  have key := ContMDiffAt.mfderiv_apply (I := I) (I' := 𝓘(ℝ, ℝ)) (fun (_ : M) (y : M) ↦ f y)
+    id id (fun x ↦ ((trivializationAt E (TangentSpace I (M := M)) x₀) ⟨x, X x⟩).2)
+    hf' contMDiffAt_id contMDiffAt_id hg₂ hmn
+  apply key.congr_of_eventuallyEq
+  filter_upwards [(trivializationAt E (TangentSpace I (M := M)) x₀).open_baseSet.mem_nhds hx₀]
+    with x hx
+  simp only [inTangentCoordinates, ContinuousLinearMap.inCoordinates,
+    TangentBundle.continuousLinearMapAt_model_space]
+  change (d% f x) (X x) = (mfderiv I 𝓘(ℝ, ℝ) f x)
+    ((trivializationAt E (TangentSpace I (M := M)) x₀).symmL ℝ x
+      (((trivializationAt E (TangentSpace I (M := M)) x₀) ⟨x, X x⟩).2))
+  rw [← (trivializationAt E (TangentSpace I (M := M)) x₀).continuousLinearMapAt_apply_of_mem ℝ hx,
+    (trivializationAt E (TangentSpace I (M := M)) x₀).symmL_continuousLinearMapAt hx]
+  rfl
+
+end DerivAlong
+
+section Main
+
+variable
+  {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+  {k : ℕ∞}
+
+omit [FiniteDimensional ℝ E] [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] in
+/-- The local frame of a trivialisation, on its base set, is the trivialisation's inverse
+applied to the basis vectors. -/
+lemma localFrame_eq_symmL {x₀ x : M} (b : Module.Basis (Fin (Module.finrank ℝ E)) ℝ E)
+    (hx : x ∈ (trivializationAt E (TangentSpace I (M := M)) x₀).baseSet) (i) :
+    (trivializationAt E (TangentSpace I (M := M)) x₀).localFrame b i x =
+      (trivializationAt E (TangentSpace I (M := M)) x₀).symmL ℝ x (b i) := by
+  simp [(trivializationAt E (TangentSpace I (M := M)) x₀).localFrame_apply_of_mem_baseSet b hx,
+    Trivialization.basisAt, Module.Basis.map_apply, Trivialization.linearEquivAt_symm_apply,
+    (trivializationAt E (TangentSpace I (M := M)) x₀).symmL_apply hx]
+
+/- Workaround for https://github.com/leanprover/lean4/issues/14949 (unification sees through the
+type synonym `TangentSpace`): restate `ContMDiffAt.inner_bundle` for the tangent bundle, as
+mathlib's `LeviCivita.lean` does for `MDifferentiable.inner_bundle`. -/
+omit [FiniteDimensional ℝ E] in
+lemma _root_.ContMDiffAt.inner_bundle' {n : ℕ∞ω}
+    [IsContMDiffRiemannianBundle I n E (fun (x : M) ↦ TangentSpace I x)]
+    {X Y : Π x : M, TangentSpace I x} {x : M}
+    (hX : ContMDiffAt I (I.prod 𝓘(ℝ, E)) n (fun x ↦ TotalSpace.mk' E x (X x)) x)
+    (hY : ContMDiffAt I (I.prod 𝓘(ℝ, E)) n (fun x ↦ TotalSpace.mk' E x (Y x)) x) :
+    ContMDiffAt I 𝓘(ℝ, ℝ) n (fun x ↦ ⟪X x, Y x⟫) x :=
+  ContMDiffAt.inner_bundle hX hY
+
+/-- The **Koszul expression** is `C^k` when the metric is `C^{k+1}` and the three fields are
+`C^{k+1}` at the point. -/
+theorem contMDiffAt_koszul
+    [IsContMDiffRiemannianBundle I (k + 1) E (fun (x : M) ↦ TangentSpace I x)]
+    {X Y Z : Π x : M, TangentSpace I x} {x₀ : M}
+    (hX : ContMDiffAt I (I.prod 𝓘(ℝ, E)) (k + 1) (fun x ↦ TotalSpace.mk' E x (X x)) x₀)
+    (hY : ContMDiffAt I (I.prod 𝓘(ℝ, E)) (k + 1) (fun x ↦ TotalSpace.mk' E x (Y x)) x₀)
+    (hZ : ContMDiffAt I (I.prod 𝓘(ℝ, E)) (k + 1) (fun x ↦ TotalSpace.mk' E x (Z x)) x₀) :
+    ContMDiffAt I 𝓘(ℝ, ℝ) k (fun x ↦
+      (mvfderiv I (fun y ↦ ⟪Y y, Z y⟫) x (X x) + mvfderiv I (fun y ↦ ⟪Z y, X y⟫) x (Y x)
+        - mvfderiv I (fun y ↦ ⟪X y, Y y⟫) x (Z x)
+        - ⟪Y x, VectorField.mlieBracket I X Z x⟫
+        - ⟪Z x, VectorField.mlieBracket I Y X x⟫
+        + ⟪X x, VectorField.mlieBracket I Z Y x⟫) / 2) x₀ := by
+  have : IsContMDiffRiemannianBundle I k E (fun (x : M) ↦ TangentSpace I x) :=
+    IsContMDiffRiemannianBundle.of_le (n := k + 1) (by simp)
+  have hk1 : (k : ℕ∞ω) + 1 ≤ k + 1 := le_rfl
+  have hbr : ∀ {U V : Π x : M, TangentSpace I x},
+      ContMDiffAt I (I.prod 𝓘(ℝ, E)) (k + 1) (fun x ↦ TotalSpace.mk' E x (U x)) x₀ →
+      ContMDiffAt I (I.prod 𝓘(ℝ, E)) (k + 1) (fun x ↦ TotalSpace.mk' E x (V x)) x₀ →
+      ContMDiffAt I (I.prod 𝓘(ℝ, E)) k
+        (fun x ↦ TotalSpace.mk' E x (VectorField.mlieBracket I U V x)) x₀ := by
+    intro U V hU hV
+    have hU' : ContMDiffAt I (I.prod 𝓘(ℝ, E)) ((k + 1 : ℕ∞) : ℕ∞ω)
+        (fun x ↦ TotalSpace.mk' E x (U x)) x₀ := by push_cast; exact hU
+    have hV' : ContMDiffAt I (I.prod 𝓘(ℝ, E)) ((k + 1 : ℕ∞) : ℕ∞ω)
+        (fun x ↦ TotalSpace.mk' E x (V x)) x₀ := by push_cast; exact hV
+    exact hU'.mlieBracket_vectorField hV' (by simp)
+  have hXk := hX.of_le (by simp : (k : ℕ∞ω) ≤ k + 1)
+  have hYk := hY.of_le (by simp : (k : ℕ∞ω) ≤ k + 1)
+  have hZk := hZ.of_le (by simp : (k : ℕ∞ω) ≤ k + 1)
+  have h1 : ContMDiffAt I 𝓘(ℝ, ℝ) k (fun x ↦ mvfderiv I (fun y ↦ ⟪Y y, Z y⟫) x (X x)) x₀ :=
+    contMDiffAt_mvfderiv_apply (hY.inner_bundle' hZ) hXk hk1
+  have h2 : ContMDiffAt I 𝓘(ℝ, ℝ) k (fun x ↦ mvfderiv I (fun y ↦ ⟪Z y, X y⟫) x (Y x)) x₀ :=
+    contMDiffAt_mvfderiv_apply (hZ.inner_bundle' hX) hYk hk1
+  have h3 : ContMDiffAt I 𝓘(ℝ, ℝ) k (fun x ↦ mvfderiv I (fun y ↦ ⟪X y, Y y⟫) x (Z x)) x₀ :=
+    contMDiffAt_mvfderiv_apply (hX.inner_bundle' hY) hZk hk1
+  have h4 : ContMDiffAt I 𝓘(ℝ, ℝ) k (fun x ↦ ⟪Y x, VectorField.mlieBracket I X Z x⟫) x₀ :=
+    hYk.inner_bundle' (hbr hX hZ)
+  have h5 : ContMDiffAt I 𝓘(ℝ, ℝ) k (fun x ↦ ⟪Z x, VectorField.mlieBracket I Y X x⟫) x₀ :=
+    hZk.inner_bundle' (hbr hY hX)
+  have h6 : ContMDiffAt I 𝓘(ℝ, ℝ) k (fun x ↦ ⟪X x, VectorField.mlieBracket I Z Y x⟫) x₀ :=
+    hXk.inner_bundle' (hbr hZ hY)
+  simp only [div_eq_mul_inv]
+  exact (contDiffAt_id.mul contDiffAt_const).comp_contMDiffAt
+    (((((h1.add h2).sub h3).sub h4).sub h5).add h6)
+
+-- BENCH: levi-civita-smooth
+/-- **Smoothness of the Levi-Civita connection.** On a `C^ω` manifold with a `C^{k+1}` Riemannian
+metric, Mathlib's `leviCivitaConnection` is a `C^k` covariant derivative. This is the result
+Mathlib's `LeviCivita.lean` defers to "future PRs"; it is what makes `Ric` of the canonical
+connection a genuine function of the metric (`ricci` is junk on connections not known to be
+`C¹`). -/
+theorem contMDiffCovariantDerivative_leviCivitaConnection
+    [IsContMDiffRiemannianBundle I 1 E (fun (x : M) ↦ TangentSpace I x)]
+    [IsContMDiffRiemannianBundle I (k + 1) E (fun (x : M) ↦ TangentSpace I x)] :
+    ContMDiffCovariantDerivative (leviCivitaConnection I M) k := by
+  have : IsContMDiffRiemannianBundle I k E (fun (x : M) ↦ TangentSpace I x) :=
+    IsContMDiffRiemannianBundle.of_le (n := k + 1) (by simp)
+  refine ⟨⟨fun {Y} hY ↦ ?_⟩⟩
+  rw [contMDiffOn_univ] at hY ⊢
+  intro x₀
+  have hx₀ : x₀ ∈ (trivializationAt E (TangentSpace I (M := M)) x₀).baseSet :=
+    FiberBundle.mem_baseSet_trivializationAt' x₀
+  obtain ⟨b, hb⟩ : ∃ b : Module.Basis (Fin (Module.finrank ℝ E)) ℝ E, b = Module.finBasis ℝ E :=
+    ⟨_, rfl⟩
+  obtain ⟨s, hs_def⟩ : ∃ s : Fin (Module.finrank ℝ E) → Π x : M, TangentSpace I x,
+      s = (trivializationAt E (TangentSpace I (M := M)) x₀).localFrame b := ⟨_, rfl⟩
+  have hs : ∀ i, ∀ x ∈ (trivializationAt E (TangentSpace I (M := M)) x₀).baseSet,
+      ContMDiffAt I (I.prod 𝓘(ℝ, E)) (k + 1) (fun y ↦ TotalSpace.mk' E y (s i y)) x := by
+    intro i x hx
+    rw [hs_def]
+    exact contMDiffAt_localFrame_of_mem (k + 1) _ b i hx
+  have hne : ((k : ℕ∞ω) + 1) ≠ 0 := by simp
+  -- Step 3: `⟪∇_{sᵢ} Y, sⱼ⟫` is `C^k` at `x₀`, by the Koszul formula
+  have hinner : ∀ i j, ContMDiffAt I 𝓘(ℝ, ℝ) k
+      (fun x ↦ ⟪leviCivitaConnection I M Y x (s i x), s j x⟫) x₀ := by
+    intro i j
+    have hK := contMDiffAt_koszul (hs i x₀ hx₀) (hY x₀) (hs j x₀ hx₀)
+    apply hK.congr_of_eventuallyEq
+    filter_upwards [(trivializationAt E (TangentSpace I (M := M)) x₀).open_baseSet.mem_nhds hx₀]
+      with x hx
+    exact leviCivitaConnection_apply_inner I ((hs i x hx).mdifferentiableAt hne)
+      ((hY x).mdifferentiableAt hne) ((hs j x hx).mdifferentiableAt hne)
+  -- Step 2: the sections `∇_{sᵢ} Y` are `C^k` at `x₀`
+  subst hs_def
+  have hw : ∀ i, ContMDiffAt I (I.prod 𝓘(ℝ, E)) k
+      (fun x ↦ TotalSpace.mk' E x (leviCivitaConnection I M Y x
+        ((trivializationAt E (TangentSpace I (M := M)) x₀).localFrame b i x))) x₀ := by
+    intro i
+    exact contMDiffAt_section_of_inner_localFrame (V := fun x : M ↦ TangentSpace I x) b
+      (fun j ↦ hinner i j)
+  -- Step 1: the endomorphism-bundle section, in coordinates
+  rw [contMDiffAt_hom_bundle]
+  refine ⟨contMDiffAt_id, ?_⟩
+  simp only [ContinuousLinearMap.inCoordinates]
+  apply contMDiffAt_clm_of_basis b
+  intro i
+  apply ((contMDiffAt_section x₀).mp (hw i)).congr_of_eventuallyEq
+  filter_upwards [(trivializationAt E (TangentSpace I (M := M)) x₀).open_baseSet.mem_nhds hx₀]
+    with x hx
+  simp only [ContinuousLinearMap.comp_apply]
+  rw [(trivializationAt E (TangentSpace I (M := M)) x₀).continuousLinearMapAt_apply_of_mem ℝ hx,
+    localFrame_eq_symmL b hx i]
+
+/-- The case used by `Flow.lean` and `Hamilton.lean`: with a `C²` metric the Levi-Civita
+connection is `C¹`, so its `ricci` is not junk. Registered as an instance. -/
+instance instContMDiffCovariantDerivativeLeviCivitaConnectionOne
+    [IsContMDiffRiemannianBundle I 2 E (fun (x : M) ↦ TangentSpace I x)] :
+    ContMDiffCovariantDerivative (leviCivitaConnection I M) 1 := by
+  have : IsContMDiffRiemannianBundle I (((1 : ℕ∞) : ℕ∞ω) + 1) E (fun (x : M) ↦ TangentSpace I x) :=
+    IsContMDiffRiemannianBundle.of_le (n := 2) (by norm_num)
+  simpa using contMDiffCovariantDerivative_leviCivitaConnection (I := I) (M := M) (k := 1)
+
+end Main
+
+section RicciOfMetric
+
+variable
+  {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+    [FiniteDimensional ℝ E]
+  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
+
+-- BENCH: ricci-of-metric
+/-- **The Ricci curvature of a metric.** For a `C²` Riemannian metric `g`, `Ric(g)` is the Ricci
+curvature of its Levi-Civita connection. This is a genuine function of `g` and not junk: the
+Levi-Civita connection is `C¹` (`contMDiffCovariantDerivative_leviCivitaConnection`), which is
+what `ricci` needs to be the trace of a tensor. -/
+noncomputable def ricciOfMetric
+    (g : ContMDiffRiemannianMetric I 2 E (fun (x : M) ↦ TangentSpace I x))
+    (X Y : Π y : M, TangentSpace I y) (x : M) : ℝ :=
+  letI : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨g.toRiemannianMetric⟩
+  (leviCivitaConnection I M).ricci X Y x
+
+/-- The sectional curvature of a `C²` metric, via its Levi-Civita connection. -/
+noncomputable def sectionalCurvatureOfMetric
+    (g : ContMDiffRiemannianMetric I 2 E (fun (x : M) ↦ TangentSpace I x))
+    (X Y : Π y : M, TangentSpace I y) (x : M) : ℝ :=
+  letI : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨g.toRiemannianMetric⟩
+  sectionalCurvature (leviCivitaConnection I M) X Y x
+
+end RicciOfMetric
 
 end RicciFlowBlueprint
