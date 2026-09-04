@@ -47,7 +47,7 @@
    as documented; what failed was elaboration over defeq terms, and the pattern
    above sidesteps it rather than fixing it. A cleaner idiom would be welcome. -/
 import RicciFlowBlueprint.Sectional
-import RicciFlowBlueprint.LeviCivita
+import RicciFlowBlueprint.LeviCivitaSmooth
 import Batteries.Util.ProofWanted
 open Bundle CovariantDerivative
 open scoped Manifold ContDiff
@@ -96,6 +96,46 @@ def HasConstSecLC (I : ModelWithCorners ℝ E H) (M : Type*)
         ‖X x‖ ^ 2 * ‖Y x‖ ^ 2 - ⟪X x, Y x⟫ ^ 2 ≠ 0 →
           sectionalCurvature cov X Y x = k
 
+section Canonical
+
+variable [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+  [IsContMDiffRiemannianBundle I 2 E (fun (x : M) ↦ TangentSpace I x)]
+
+/-- Positive Ricci curvature, tested with the canonical Levi-Civita connection. -/
+theorem hasPositiveRicciLC_iff :
+    HasPositiveRicciLC I M ↔
+      ∀ (x : M) (X : Π y : M, TangentSpace I y), CMDiff 2 (T% X) → X x ≠ 0 →
+        0 < (leviCivitaConnection I M).ricci X X x := by
+  constructor
+  · rintro ⟨cov, hsm, hcompat, htor, hpos⟩ x X hX hx
+    have := hsm
+    have h' : cov.IsLeviCivitaConnection := ⟨hcompat, htor⟩
+    rw [← ricci_eq_of_isLeviCivita h' (isLeviCivitaConnection_leviCivitaConnection I)
+      ((hX.mdifferentiable (by norm_num)) x) hX]
+    exact hpos x X hX hx
+  · intro h
+    exact ⟨leviCivitaConnection I M, inferInstance, isMetricCompatible_leviCivitaConnection I,
+      torsion_leviCivitaConnection_eq_zero I, h⟩
+
+/-- Constant sectional curvature, tested with the canonical Levi-Civita connection. -/
+theorem hasConstSecLC_iff {k : ℝ} :
+    HasConstSecLC I M k ↔
+      ∀ (x : M) (X Y : Π y : M, TangentSpace I y), CMDiff 2 (T% X) → CMDiff 2 (T% Y) →
+        ‖X x‖ ^ 2 * ‖Y x‖ ^ 2 - ⟪X x, Y x⟫ ^ 2 ≠ 0 →
+          sectionalCurvature (leviCivitaConnection I M) X Y x = k := by
+  constructor
+  · rintro ⟨cov, hsm, hcompat, htor, hk⟩ x X Y hX hY hXY
+    have := hsm
+    have h' : cov.IsLeviCivitaConnection := ⟨hcompat, htor⟩
+    rw [← sectionalCurvature_eq_of_isLeviCivita h' (isLeviCivitaConnection_leviCivitaConnection I)
+      hX hY]
+    exact hk x X Y hX hY hXY
+  · intro h
+    exact ⟨leviCivitaConnection I M, inferInstance, isMetricCompatible_leviCivitaConnection I,
+      torsion_leviCivitaConnection_eq_zero I, h⟩
+
+end Canonical
+
 /-- `M` admits a metric of strictly positive Ricci curvature. -/
 def AdmitsPositiveRicciMetric (I : ModelWithCorners ℝ E H) (M : Type*)
     [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
@@ -112,6 +152,34 @@ def AdmitsConstPositiveSecMetric (I : ModelWithCorners ℝ E H) (M : Type*)
     0 < k ∧
       letI : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨g.toRiemannianMetric⟩
       HasConstSecLC I M k
+
+/-- `AdmitsPositiveRicciMetric`, with `Ric` a function of the metric: there is a `C²` metric `g`
+whose Ricci curvature `ricciOfMetric g` is positive on nonzero values of `C²` fields. -/
+theorem admitsPositiveRicciMetric_iff :
+    AdmitsPositiveRicciMetric I M ↔
+      ∃ g : ContMDiffRiemannianMetric I 2 E (fun (x : M) ↦ TangentSpace I x),
+        ∀ (x : M) (X : Π y : M, TangentSpace I y), CMDiff 2 (T% X) → X x ≠ 0 →
+          0 < ricciOfMetric g X X x := by
+  unfold AdmitsPositiveRicciMetric
+  refine exists_congr fun g ↦ ?_
+  let _ : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨g.toRiemannianMetric⟩
+  exact hasPositiveRicciLC_iff
+
+/-- `AdmitsConstPositiveSecMetric`, with `K` a function of the metric. -/
+theorem admitsConstPositiveSecMetric_iff :
+    AdmitsConstPositiveSecMetric I M ↔
+      ∃ (g : ContMDiffRiemannianMetric I 2 E (fun (x : M) ↦ TangentSpace I x)) (k : ℝ), 0 < k ∧
+        ∀ (x : M) (X Y : Π y : M, TangentSpace I y), CMDiff 2 (T% X) → CMDiff 2 (T% Y) →
+          g.inner x (X x) (X x) * g.inner x (Y x) (Y x) - g.inner x (X x) (Y x) ^ 2 ≠ 0 →
+            sectionalCurvatureOfMetric g X Y x = k := by
+  unfold AdmitsConstPositiveSecMetric
+  refine exists_congr fun g ↦ exists_congr fun k ↦ and_congr_right fun _ ↦ ?_
+  let _ : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨g.toRiemannianMetric⟩
+  rw [hasConstSecLC_iff]
+  refine forall_congr' fun x ↦ forall_congr' fun X ↦ forall_congr' fun Y ↦
+    imp_congr_right fun _ ↦ imp_congr_right fun _ ↦ imp_congr_left ?_
+  simp only [← real_inner_self_eq_norm_sq]
+  exact Iff.rfl
 
 /-- **Hamilton's theorem (1982).** -/
 proof_wanted hamilton_1982
