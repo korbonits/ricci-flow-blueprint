@@ -1,5 +1,6 @@
 import RicciFlowBlueprint.Curvature
 import RicciFlowBlueprint.LeviCivita
+import RicciFlowBlueprint.LeviCivitaSmooth
 import RicciFlowBlueprint.Ricci
 import RicciFlowBlueprint.Homogeneous
 import RicciFlowBlueprint.Milnor
