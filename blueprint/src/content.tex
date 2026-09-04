@@ -135,28 +135,91 @@ Chapter \ref{chap:milnor}, Milnor's curvature formulas.
 \chapter{The Levi-Civita connection}
 \label{chap:levi-civita}
 
-\begin{theorem}[Existence and uniqueness]
+Mathlib has the Levi-Civita connection as of September 2026: mathlib4
+PR \#36845 (Massot, Rothgang, Macbeth) added
+\texttt{CovariantDerivative/LeviCivita.lean} with the Koszul formula,
+uniqueness, a construction by the musical isomorphism, and the proof that the
+construction is compatible and torsion-free. This chapter records what that
+gives the road, and the one thing it does not give yet.
+
+\begin{theorem}[Existence]
   \label{thm:levi-civita}
-  \lean{RicciFlowBlueprint.exists_unique_leviCivita}
-  There is exactly one torsion-free covariant derivative compatible with a
-  given Riemannian metric $\g$.
+  \lean{RicciFlowBlueprint.exists_leviCivita}
+  \leanok
+  For a $C^1$ Riemannian metric $\g$ on a $C^2$ manifold there is a torsion-free
+  covariant derivative on $TM$ compatible with $\g$.
 \end{theorem}
 
 \begin{proof}
-  \textbf{In flight upstream:} mathlib4 PR \#36845 supplies the Koszul formula,
-  uniqueness, the construction, and the compatibility/torsion-free proof. It has
-  been open since March 2026 and is \texttt{awaiting-author}. Do not duplicate
-  it.
-
-  Uniqueness from the Koszul formula; existence by constructing $\nab$ from it.
-  Mathlib supplies both ingredients as of August 2026:
-  \texttt{CovariantDerivative.IsMetricCompatible} in
-  \texttt{CovariantDerivative/Metric.lean} and
-  \texttt{CovariantDerivative.torsion} in \texttt{.../Torsion.lean}. Note the
-  metric must reach the tangent bundle through \texttt{RiemannianBundle}
-  rather than a raw \texttt{[$\forall$ x, InnerProductSpace $\R$ (TangentSpace I x)]}
-  binder, which would create a topology diamond.
+  \leanok
+  Mathlib's \texttt{leviCivitaConnection I M}: the Koszul expression
+  $(X, Z) \mapsto \langle \nab_X Y, Z\rangle$ is tensorial in $X$ and $Z$ for
+  differentiable $Y$, so it is a $(2,0)$-tensor at each point; the musical
+  isomorphism turns it into an endomorphism $\nab Y$, and that is the
+  connection. Compatibility and torsion-freeness are then computations with the
+  Koszul formula. No local frames are involved.
 \end{proof}
+
+\begin{theorem}[Uniqueness]
+  \label{thm:levi-civita-unique}
+  \lean{RicciFlowBlueprint.leviCivita_unique}
+  \leanok
+  Two torsion-free metric-compatible covariant derivatives agree on every vector
+  field that is differentiable at the point.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  The Koszul formula determines $\langle \nab_X Y, Z\rangle$ for differentiable
+  $X, Y, Z$ without reference to $\nab$, and a vector is determined by its inner
+  products against differentiable sections.
+
+  This --- not ``there is exactly one'' --- is the fundamental theorem. A
+  \texttt{CovariantDerivative} is unconstrained on sections that are not
+  differentiable at the point: the Leibniz and additivity laws, compatibility
+  and the torsion all quantify over differentiable sections only, so a
+  Levi-Civita connection can be altered on non-differentiable sections and stay
+  Levi-Civita. The $\exists!$ statement this chapter carried until now, as its
+  only \texttt{sorry}, was therefore not provable as stated. Nothing downstream
+  needed it: every curvature computation evaluates $\nab$ on differentiable
+  sections.
+\end{proof}
+
+\begin{theorem}[Curvature is well defined]
+  \label{thm:ricci-well-defined}
+  \lean{RicciFlowBlueprint.ricci_eq_of_isLeviCivita}
+  \leanok
+  \uses{thm:levi-civita-unique, def:ricci, def:sectional}
+  Any two $C^1$ Levi-Civita connections have the same Riemann tensor on fields
+  $X, Y$ differentiable at the point and $C^2$ field $Z$, hence the same Ricci
+  tensor and the same sectional curvature on $C^2$ fields.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  $R(X,Y)Z = \nab_X \nab_Y Z - \nab_Y \nab_X Z - \nab_{[X,Y]} Z$. The inner
+  derivatives agree as sections by uniqueness, since $Z$ is differentiable
+  everywhere; the outer derivatives then agree by uniqueness again, since
+  $\nab_Y Z$ is differentiable at $x$ when $\nab$ is $C^1$ and $Z$ is $C^2$.
+  For $\Ric$, the trace is over the endomorphism produced by
+  \texttt{TensorialAt.mkHom}, whose value on a vector is $R$ evaluated on a
+  differentiable extension of it. Sectional curvature is a quotient of inner
+  products of $R$.
+
+  This is what makes the existential quantification over connections in
+  Chapters \ref{chap:flow} and \ref{chap:hamilton} well-posed: the
+  predicates there are statements about the metric, not about a choice of
+  connection.
+\end{proof}
+
+\paragraph{What is still missing.} Mathlib does not yet prove that
+\texttt{leviCivitaConnection} is $C^1$ when $\g$ is $C^2$ (the file says
+``future PRs''). Without that, $\Ric$ of the canonical connection is not known
+to be non-junk, so the function $\g \mapsto \Ric(\g)$ is definable but not yet
+usable. Theorem \ref{thm:ricci-well-defined} is the bridge: the moment
+smoothness lands, applying it to \texttt{leviCivitaConnection} turns every
+existential below into an equation in $\g$ alone. Until then the road is
+unchanged in shape and shorter by one \texttt{sorry}.
 
 \begin{definition}[Ricci and scalar curvature]
   \label{def:ricci}
@@ -500,15 +563,16 @@ target actually requires.
   \uses{def:ricci}
   A family $\g(t)$ of metrics with $\partial_t \g = -2\Ric(\g)$.
 
-  \textbf{Defined.} Stated per time slice: at each $t$ there is a torsion-free
-  metric-compatible connection whose Ricci curvature gives the rate of change of
-  $\g$. Levi-Civita \emph{existence} is therefore \emph{not} required ---
-  uniqueness makes the witness unique and existence makes the quantifier
-  non-vacuous, and $\forall t\,\exists \nab$ collapses to a family by choice,
-  since no regularity in $t$ is demanded of the connection. What
-  \ref{thm:levi-civita} \emph{is} needed for is the function
-  $\g \mapsto \Ric(\g)$, which DeTurck's trick and the curvature evolution
-  equations both require.
+  \textbf{Defined.} Stated per time slice: at each $t$ there is a $C^1$
+  torsion-free metric-compatible connection whose Ricci curvature gives the
+  rate of change of $\g$. By Theorem \ref{thm:ricci-well-defined} this is a
+  statement about $\g(t)$ alone, and Lemma \ref{lem:flow-any-lc} makes that
+  explicit. $\forall t\,\exists \nab$ collapses to a family by choice, since no
+  regularity in $t$ is demanded of the connection. The function
+  $\g \mapsto \Ric(\g)$ itself, which DeTurck's trick and the curvature
+  evolution equations both require, waits on smoothness of
+  \texttt{leviCivitaConnection} upstream (end of Chapter
+  \ref{chap:levi-civita}).
 
   The definition is on an interval rather than all of $\R$: flows live on
   intervals, and short-time existence cannot be stated otherwise.
@@ -529,6 +593,23 @@ target actually requires.
   directions. Proved --- and it is the check that
   Definition~\ref{def:ricci-flow} has content rather than being vacuously
   satisfiable.
+\end{proof}
+
+\begin{lemma}[The flow equation is independent of the connection]
+  \label{lem:flow-any-lc}
+  \lean{RicciFlowBlueprint.isRicciFlowAt_iff_of_isLeviCivita}
+  \leanok
+  \uses{def:ricci-flow, thm:ricci-well-defined}
+  For any $C^1$ Levi-Civita connection $\nab$ of $\g(t)$, the family $\g$ is a
+  Ricci flow at $t$ if and only if
+  $\partial_t \g(t)(X, Y) = -2\Ric_{\nab}(X, Y)$ for all $C^2$ fields $X, Y$.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  One direction is the witness. For the other, the witness $\nab'$ of the
+  existential and the given $\nab$ have the same $\Ric$ on $C^2$ fields by
+  Theorem \ref{thm:ricci-well-defined}.
 \end{proof}
 
 \begin{theorem}[Short-time existence]
@@ -646,7 +727,7 @@ shrinks to a round point.
 
 \begin{theorem}[Hamilton 1982]
   \label{thm:hamilton}
-  \uses{thm:normalized-convergence, lem:bianchi-first, def:sectional}
+  \uses{thm:normalized-convergence, lem:bianchi-first, def:sectional, thm:ricci-well-defined}
   A closed $3$-manifold admitting a metric of strictly positive Ricci curvature
   admits a metric of constant positive sectional curvature, and is therefore
   diffeomorphic to a spherical space form $S^3/\Gamma$.
@@ -658,7 +739,13 @@ shrinks to a round point.
   elaborated and type-checked, with no \texttt{sorry} and no added axiom. The
   hypothesis and conclusion are
   \texttt{AdmitsPositiveRicciMetric} and \texttt{AdmitsConstPositiveSecMetric},
-  both built on the $\Ric$ and $\Sect$ definitions above. It carries no
+  both built on the $\Ric$ and $\Sect$ definitions above. Each quantifies
+  existentially over a $C^1$ Levi-Civita connection of the metric and tests
+  against $C^2$ vector fields; by Theorem \ref{thm:ricci-well-defined} the
+  choice of connection is immaterial, so both are statements about the metric.
+  (An earlier version tested sectional curvature against arbitrary fields,
+  where $R(X,Y)Y$ is junk, and required no regularity of the connection, where
+  $\Ric$ is junk; both were corrected in September 2026.) It carries no
   \texttt{\textbackslash lean} marker here because \texttt{proof\_wanted}
   produces a private declaration that \texttt{checkdecls} cannot resolve.
 

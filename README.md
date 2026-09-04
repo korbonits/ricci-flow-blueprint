@@ -46,11 +46,18 @@ on left-invariant metrics, which is an ODE, and Milnor's curvature formulas.
 | `scalarCurvature` | **defined** — on the model space, hypothesis-free |
 | `scalarCurvatureWith` + `_congr` | **proved** — frame-relative on a general manifold, frame-independent |
 | `ricci_eq_sum_inner_curvature` | **proved** — Ricci as an orthonormal-frame sum, general manifold |
-| `exists_unique_leviCivita` | the only `sorry`; superseded by mathlib4 [#36845](https://github.com/leanprover-community/mathlib4/pull/36845) |
+| `exists_leviCivita`, `leviCivita_unique` | **proved** — from Mathlib's `leviCivitaConnection` ([#36845](https://github.com/leanprover-community/mathlib4/pull/36845), merged); uniqueness holds on differentiable sections, which is the correct statement — the old `∃!` was not provable |
+| `ricci_eq_of_isLeviCivita`, `sectionalCurvature_eq_of_isLeviCivita` | **proved** — every `C¹` Levi-Civita connection gives the same `Ric` and `K` on `C²` fields, so the existentials in `Hamilton.lean`/`Flow.lean` are statements about the metric |
 
 Note `Ric` is **not** symmetric for a general torsion-free connection; the
 identity above is the trace of first Bianchi, and symmetry is the corollary when
 `tr R(X,Y) = 0`, which holds for a metric connection.
+
+**No `sorry` remains.** What is still missing upstream is smoothness of
+`leviCivitaConnection` (Mathlib says "future PRs"); until then `Ric` of the
+canonical connection is not known to be non-junk, so `g ↦ Ric(g)` is definable
+but not usable, and the flow stays existentially quantified over `C¹`
+Levi-Civita connections.
 
 ### Ricci flow (`Flow.lean`, `Hamilton.lean`)
 
@@ -58,6 +65,7 @@ identity above is the trace of first Bianchi, and symmetry is the corollary when
 | --- | --- |
 | `IsRicciFlowOn` | **defined** — `∂g/∂t = −2Ric(g)`, per time slice, on an interval |
 | `isRicciFlowAt_const_iff` | **proved** — stationary iff Ricci-flat; the definition has content |
+| `isRicciFlowAt_iff_of_isLeviCivita` | **proved** — the existential can be discharged by *any* `C¹` Levi-Civita connection: the textbook equation with `Ric` computed by a specified connection |
 | `ricciFlow_shortTime_existence` | **stated** (`proof_wanted`) — blocked on parabolic PDE |
 | `hamilton_1982` | **stated** (`proof_wanted`) — no `sorry`, no added axiom |
 | Hamilton 1982, proved | years away |
@@ -125,6 +133,10 @@ rather than a soundness issue.
 
     lake exe cache get
     lake build
+
+The project tracks mathlib `master` (pinned in `lake-manifest.json`) on Lean
+`v4.34.0-rc2`, since the Levi-Civita connection is not yet in a mathlib
+release.
     leanblueprint pdf && leanblueprint web
 
 The PDF build uses **xelatex**, not pdflatex. Check the log for
