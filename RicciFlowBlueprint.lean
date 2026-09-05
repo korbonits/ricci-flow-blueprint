@@ -9,4 +9,5 @@ import RicciFlowBlueprint.LieBracketDerivation
 import RicciFlowBlueprint.Sectional
 import RicciFlowBlueprint.Scalar
 import RicciFlowBlueprint.Hamilton
+import RicciFlowBlueprint.Pinching
 import RicciFlowBlueprint.Flow
