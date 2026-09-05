@@ -14,3 +14,4 @@ import RicciFlowBlueprint.MaximumPrinciple
 import RicciFlowBlueprint.Hessian
 import RicciFlowBlueprint.SecondDerivativeTest
 import RicciFlowBlueprint.Flow
+import RicciFlowBlueprint.Variation

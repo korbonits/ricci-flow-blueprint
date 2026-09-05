@@ -779,9 +779,53 @@ target actually requires.
   differentiable section.
 \end{proof}
 
+\begin{lemma}[First variation of the Levi-Civita connection]
+  \label{lem:variation-connection}
+  \lean{RicciFlowBlueprint.inner_deriv_leviCivitaOfMetric_eq}
+  \leanok
+  \uses{thm:levi-civita-unique, def:ricci-flow}
+  Along a family of metrics $\g(t)$ with $\partial_t \g = h$, the Levi-Civita
+  connections $\nab^t$ satisfy
+  \[
+    \g\bigl(\partial_t \nab_X Y,\, Z\bigr)
+      = \tfrac12\bigl[(\nab_X h)(Y,Z) + (\nab_Y h)(Z,X) - (\nab_Z h)(X,Y)\bigr],
+  \]
+  with $\nab = \nab^{t_0}$ on the right and
+  $(\nab_X h)(Y,Z) = X(h(Y,Z)) - h(\nab_X Y, Z) - h(Y, \nab_X Z)$
+  (\texttt{CovariantDerivative.covBilin}).
+
+  \textbf{Proved}, with two hypotheses stated in exactly the form used. First,
+  the space derivatives $X(\g(Y,Z))$ commute with $\partial_t$ for the three
+  fields at hand: a joint-regularity statement about $(t,x) \mapsto \g(t)(x)$,
+  which the pointwise-in-$t$ Definition \ref{def:ricci-flow} does not impose.
+  Second, $t \mapsto \nab^t_X Y(x)$ is differentiable; this follows from the
+  differentiability of $\g$ through the musical isomorphism and is not yet
+  proved. The scalar form
+  (\texttt{hasDerivAt\_inner\_leviCivitaOfMetric}) needs only the first.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  By the Koszul formula, $\g(\nab_X Y, Z)$ is an explicit expression in the
+  metric alone, so $\partial_t$ of it is the same expression in $h$
+  (\texttt{hasDerivAt\_inner\_leviCivitaOfMetric}). The Koszul combination of a
+  symmetric bilinear form $h$, rewritten through a torsion-free connection, is
+  $(\nab_X h)(Y,Z) + (\nab_Y h)(Z,X) - (\nab_Z h)(X,Y) + 2h(\nab_X Y, Z)$
+  (\texttt{koszul\_bilin\_eq}: for $h = \g$ and $\nab$ compatible the first three
+  terms vanish and this is Koszul itself). The product rule
+  $\partial_t[\g(\nab_X Y, Z)] = h(\nab_X Y, Z) + \g(\partial_t \nab_X Y, Z)$
+  absorbs the last term.
+
+  Time derivatives of the metric are typed on the model space $E = T_xM$:
+  \texttt{TangentSpace} carries no norm of its own (the norm comes from the
+  metric), so \texttt{HasDerivAt} into $T_xM \to T_xM \to \R$ cannot be stated,
+  while into $E \to E \to \R$ it can, and in finite dimensions the notion does
+  not depend on the norm.
+\end{proof}
+
 \begin{lemma}[Evolution of the curvature tensor]
   \label{lem:evolution-rm}
-  \uses{def:ricci-flow, def:curvature, def:laplacian}
+  \uses{def:ricci-flow, def:curvature, def:laplacian, lem:variation-connection}
   Under the flow, $\partial_t \Rm = \Delta \Rm + Q(\Rm)$, where $Q$ is
   quadratic in the curvature operator.
 

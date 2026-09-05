@@ -104,6 +104,7 @@ maximum principle transfers these to the flow; that transfer is the missing part
 | `laplacianFun` | **defined** — the Laplacian of a function |
 | `deriv2_nonneg_of_isLocalMin`, `fderiv2_nonneg_of_isLocalMin` | **proved** — the second-derivative test on the line and in a normed space (`SecondDerivativeTest.lean`) |
 | `hessianFun_nonneg_of_isLocalMin`, `laplacianFun_nonneg_of_isLocalMin` | **proved** — `∇²f(X,X) ≥ 0` and `Δf ≥ 0` at a local minimum on a boundaryless manifold, any connection: the hypothesis the abstract maximum principle asks for. Model-space versions `*_model`; transported through `extChartAt` |
+| `inner_deriv_leviCivitaOfMetric_eq` | **proved** — first variation of the Levi-Civita connection along a family of metrics, `g(∂ₜ∇_X Y, Z) = ½[(∇_X h)(Y,Z) + (∇_Y h)(Z,X) − (∇_Z h)(X,Y)]`, by differentiating the Koszul formula (`Variation.lean`); `koszul_bilin_eq` is the algebraic core |
 
 ### The scalar maximum principle — **proved, abstractly** (`MaximumPrinciple.lean`)
 

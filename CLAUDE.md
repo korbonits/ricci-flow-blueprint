@@ -24,6 +24,7 @@ in `lake-manifest.json`) on Lean `v4.34.0-rc2`, because mathlib4 #36845
 | `Hessian.lean` | `hessian` (∇²), `hessian_sub_hessian_swap` (Ricci identity), tensoriality + `hessianAt`, `hessianFun` + `hessianFun_symm`, `laplacian` + `laplacian_eq_sum` (basis-independent metric trace, `OrthonormalBasis.sum_apply_self_eq`) |
 | `SecondDerivativeTest.lean` | **proved**: `deriv2_nonneg_of_isLocalMin`, `fderiv2_nonneg_of_isLocalMin`, `fderiv_fderiv_apply_nonneg_of_isLocalMin` (chart-side core), `hessianFun_nonneg_of_isLocalMin` and `laplacianFun_nonneg_of_isLocalMin` on a **boundaryless manifold** (transport through `extChartAt`, same pattern as `mlieBracket_apply_fun`), plus the `*_model` versions. The connection term `(∇_X X) f` dies at a critical point, so any `cov` works |
 | `MaximumPrinciple.lean` | **proved**: the scalar maximum principle on a compact space with the differential inequality assumed at spatial minima (`le_of_deriv_ge_at_min`, `le_of_deriv_le_at_max`). ε-perturbation `φ − ε e^{(2K+1)t}` + first touching time. No Laplacian |
+| `Variation.lean` | **proved**: `covBilin` (∇ of a bilinear form field), `koszul_bilin_eq` (Koszul combination of a symmetric `h` through a torsion-free `∇` is `∇h`-terms `+ 2h(∇_X Y,Z)`), `leviCivitaOfMetric`, `inner_leviCivitaOfMetric_eq` (Koszul in `g.inner`), `hasDerivAt_inner_leviCivitaOfMetric` (Koszul differentiated in `t`), `inner_deriv_leviCivitaOfMetric_eq` (**first variation of ∇**). Hypotheses: `∂ₜ` commutes with `X(g(Y,Z))` for the fields at hand; differentiability of `t ↦ ∇ᵗ_X Y` (vector form only) |
 | `Homogeneous.lean` | **branch closed**: `koszul`, torsion/compat, Levi-Civita uniqueness, `contDiffAt_ricciField`, `ricciFlow_leftInvariant` |
 | `Milnor.lean` | **branch closed**: Koszul formula, Ricci in structure constants, diagonal Ricci `rᵢ = 2μⱼμₖ`, Heisenberg, Isenberg–Jackson ODE |
 
@@ -102,11 +103,21 @@ manifold, by transport through `extChartAt` — the `hL1` block of
 every `Within` to the plain derivative. `[I.Boundaryless]` is essential: at
 a boundary point a local minimum need not be critical.
 
-**Next.** The first variation of curvature (`lem:evolution-rm`): differentiate
-the Koszul formula in `t` along a family of metrics; the Levi-Civita
-smoothness proof (`LeviCivitaSmooth.lean`) has the coordinate machinery.
-With it and the second-derivative test, the tensor maximum principle
-(`thm:max-tensor`) has all its inputs.
+**Done 2026-09-04 (last):** the first variation of the Levi-Civita
+connection (`Variation.lean`, `lem:variation-connection`), by differentiating
+the Koszul formula in `t`. Two hypotheses are taken as stated, not derived:
+(i) `∂ₜ` commutes with `X(g_t(Y,Z))` — joint regularity in `(t,x)`, which
+`IsRicciFlowAt` does not impose; (ii) `t ↦ ∇ᵗ_X Y (x)` is differentiable —
+follows from (i)-type regularity via the musical isomorphism
+(`contDiffAt_map_inverse` on `innerE`), not yet done.
+
+**Next.** (a) Discharge (ii): `∇ᵗ_X Y = (g_t)♯(Koszul functional)`, so
+differentiability in `t` is the inverse of a differentiable CLM family
+applied to a differentiable functional. (b) Then `∂ₜ Rm` from `∂ₜ ∇`:
+`R = ∇∇ − ∇∇ − ∇_{[,]}`, differentiate termwise (`lem:evolution-rm`, first
+half; the second Bianchi rewrite to `Δ Rm + Q` is separate). With the
+second-derivative test, the tensor maximum principle (`thm:max-tensor`)
+then has all its inputs.
 
 **Day 1 — unblock (~45 min).** Post the Zulip question in `#mathlib4`, topic
 `RiemannianBundle: metrics as instances vs values`; tag `sgouezel`. It gates
@@ -172,6 +183,15 @@ the smoothness item.
   `isLeviCivitaConnection_iff` converts to the `∧` form used in the existentials.
 - Building mathlib `master` from source with no cache takes hours on 4 cores;
   `lake exe cache get` needs `mathlib4.lakecache.org`.
+- **`TangentSpace I x` has no norm of its own** — the norm comes from a
+  `RiemannianBundle` instance, i.e. from a metric. `HasDerivAt` into
+  `TangentSpace I x` or `TangentSpace I x →L[ℝ] …` fails to elaborate with
+  `failed to synthesize NormedAddCommGroup (TangentSpace I x)`. Type such data
+  on `E` via a wrapper def whose signature says `E` (`innerE`,
+  `leviCivitaOfMetricE` in `Variation.lean`); a type ascription `(v : E)` does
+  **not** change the inferred type. Pass `hasDerivAt_const (F := E)`. Then
+  `map_sub`/`map_zero` will not fire on a `TangentSpace`-typed `a - b` fed to an
+  `E`-typed CLM: state the equation as a `have … := map_sub _ _ _` and rewrite.
 - `set_option maxSynthPendingDepth 3` for nested CLM spaces
   (`E →L[ℝ] E →L[ℝ] E →L[ℝ] ℝ`), or norm instances silently fail to synthesise and
   `simp` lemmas quietly no-op.
