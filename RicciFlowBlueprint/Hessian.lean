@@ -197,6 +197,13 @@ noncomputable def laplacian {Z : Π y : M, TangentSpace I y} (hZ : CMDiff 2 (T% 
   ∑ i, cov.hessianAt hZ x (stdOrthonormalBasis ℝ (TangentSpace I x) i)
     (stdOrthonormalBasis ℝ (TangentSpace I x) i)
 
+/-- The **Laplacian of a function**: `Δf = ∑ᵢ ∇²f(eᵢ, eᵢ)` over an orthonormal basis of `T_xM`,
+each `eᵢ` extended to a local section by `FiberBundle.extend`. -/
+noncomputable def laplacianFun (f : M → ℝ) (x : M) : ℝ :=
+  haveI : FiniteDimensional ℝ (TangentSpace I x) := VectorBundle.finiteDimensional ℝ E _ x
+  ∑ i, cov.hessianFun f (FiberBundle.extend E (stdOrthonormalBasis ℝ (TangentSpace I x) i))
+    (FiberBundle.extend E (stdOrthonormalBasis ℝ (TangentSpace I x) i)) x
+
 omit [CompleteSpace E] in
 /-- The Laplacian is the trace of the Hessian over any orthonormal basis. -/
 theorem laplacian_eq_sum {Z : Π y : M, TangentSpace I y} (hZ : CMDiff 2 (T% Z)) {x : M}

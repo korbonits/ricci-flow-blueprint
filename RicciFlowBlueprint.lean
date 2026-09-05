@@ -12,4 +12,5 @@ import RicciFlowBlueprint.Hamilton
 import RicciFlowBlueprint.Pinching
 import RicciFlowBlueprint.MaximumPrinciple
 import RicciFlowBlueprint.Hessian
+import RicciFlowBlueprint.SecondDerivativeTest
 import RicciFlowBlueprint.Flow
