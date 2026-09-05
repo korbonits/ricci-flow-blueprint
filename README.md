@@ -103,7 +103,7 @@ maximum principle transfers these to the flow; that transfer is the missing part
 | `laplacian`, `laplacian_eq_sum` | **defined** — the metric trace of the Hessian, basis-independent |
 | `laplacianFun` | **defined** — the Laplacian of a function |
 | `deriv2_nonneg_of_isLocalMin`, `fderiv2_nonneg_of_isLocalMin` | **proved** — the second-derivative test on the line and in a normed space (`SecondDerivativeTest.lean`) |
-| `hessianFun_nonneg_of_isLocalMin_model`, `laplacianFun_nonneg_of_isLocalMin_model` | **proved** — `∇²f(X,X) ≥ 0` and `Δf ≥ 0` at a local minimum, model space, any connection: the hypothesis the abstract maximum principle asks for |
+| `hessianFun_nonneg_of_isLocalMin`, `laplacianFun_nonneg_of_isLocalMin` | **proved** — `∇²f(X,X) ≥ 0` and `Δf ≥ 0` at a local minimum on a boundaryless manifold, any connection: the hypothesis the abstract maximum principle asks for. Model-space versions `*_model`; transported through `extChartAt` |
 
 ### The scalar maximum principle — **proved, abstractly** (`MaximumPrinciple.lean`)
 

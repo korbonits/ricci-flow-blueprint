@@ -104,6 +104,24 @@ theorem fderiv2_nonneg_of_isLocalMin {E : Type*} [NormedAddCommGroup E] [NormedS
     exact this
   exact deriv2_nonneg_of_isLocalMin hev hg' hgmin
 
+/-- The chart-side form of the second-derivative test for a Hessian. At a critical point `x₀`
+of `g`, the derivative of `y ↦ Dg(y)(Y y)` in the direction `Y x₀` is `D²g(x₀)(Y x₀, Y x₀)`: the
+term carrying `DY` is multiplied by `Dg(x₀) = 0`. Hence it is nonnegative at a local minimum. -/
+theorem fderiv_fderiv_apply_nonneg_of_isLocalMin {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] {g : E → ℝ} {x₀ : E} (hg : ContDiffAt ℝ 2 g x₀) (hmin : IsLocalMin g x₀)
+    {Y : E → E} {Y' : E →L[ℝ] E} (hY : HasFDerivAt Y Y' x₀) :
+    0 ≤ fderiv ℝ (fun y ↦ fderiv ℝ g y (Y y)) x₀ (Y x₀) := by
+  have hDg : HasFDerivAt (fderiv ℝ g) (fderiv ℝ (fderiv ℝ g) x₀) x₀ :=
+    ((hg.fderiv_right (m := 1) le_rfl).differentiableAt one_ne_zero).hasFDerivAt
+  have h0 : fderiv ℝ g x₀ = 0 := hmin.fderiv_eq_zero
+  have hprod : HasFDerivAt (fun y ↦ fderiv ℝ g y (Y y))
+      ((fderiv ℝ g x₀).comp Y' + (fderiv ℝ (fderiv ℝ g) x₀).flip (Y x₀)) x₀ :=
+    hDg.clm_apply hY
+  have h2 : fderiv ℝ g x₀ (Y' (Y x₀)) = 0 := by rw [h0]; rfl
+  rw [hprod.fderiv, add_apply, ContinuousLinearMap.comp_apply, h2, zero_add,
+    ContinuousLinearMap.flip_apply]
+  exact fderiv2_nonneg_of_isLocalMin hg hmin (Y x₀)
+
 section ModelSpace
 
 open Bundle CovariantDerivative
@@ -123,19 +141,12 @@ theorem hessianFun_nonneg_of_isLocalMin_model {f : E → ℝ} {x₀ : E}
     (hf : ContDiffAt ℝ 2 f x₀) (hmin : IsLocalMin f x₀)
     {X : E → E} {X' : E →L[ℝ] E} (hX : HasFDerivAt X X' x₀) :
     0 ≤ cov.hessianFun f X X x₀ := by
-  have hDf : HasFDerivAt (fderiv ℝ f) (fderiv ℝ (fderiv ℝ f) x₀) x₀ :=
-    ((hf.fderiv_right (m := 1) le_rfl).differentiableAt one_ne_zero).hasFDerivAt
   have h0 : fderiv ℝ f x₀ = 0 := hmin.fderiv_eq_zero
-  have hprod : HasFDerivAt (fun y ↦ fderiv ℝ f y (X y))
-      ((fderiv ℝ f x₀).comp X' + (fderiv ℝ (fderiv ℝ f) x₀).flip (X x₀)) x₀ :=
-    hDf.clm_apply hX
   simp only [hessianFun, VectorField.mvfderiv_eq_fderiv]
   show 0 ≤ fderiv ℝ (fun y ↦ fderiv ℝ f y (X y)) x₀ (X x₀) - fderiv ℝ f x₀ (cov X x₀ (X x₀))
   have h1 : fderiv ℝ f x₀ (cov X x₀ (X x₀)) = 0 := by rw [h0]; rfl
-  have h2 : fderiv ℝ f x₀ (X' (X x₀)) = 0 := by rw [h0]; rfl
-  rw [hprod.fderiv, h1, sub_zero, add_apply, ContinuousLinearMap.comp_apply,
-    h2, zero_add, ContinuousLinearMap.flip_apply]
-  exact fderiv2_nonneg_of_isLocalMin hf hmin (X x₀)
+  rw [h1, sub_zero]
+  exact fderiv_fderiv_apply_nonneg_of_isLocalMin hf hmin hX
 
 omit [CompleteSpace E] [FiniteDimensional ℝ E] in
 /-- On the model space, the extension of a tangent vector to a section is the constant
@@ -174,5 +185,107 @@ theorem laplacianFun_nonneg_of_isLocalMin_model {f : E → ℝ} {x₀ : E}
   exact hessianFun_nonneg_of_isLocalMin_model cov hf hmin hc
 
 end ModelSpace
+
+section Manifold
+
+open Bundle CovariantDerivative VectorField
+open scoped Manifold ContDiff
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+    [FiniteDimensional ℝ E]
+  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H} [I.Boundaryless]
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
+  (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+
+omit [FiniteDimensional ℝ E] in
+set_option backward.isDefEq.respectTransparency false in
+-- BENCH: hessian-nonneg-min-manifold
+/-- **The Hessian is nonnegative at a local minimum** on a boundaryless manifold: for `f`
+`C²` at a local minimum `x₀` and any covariant derivative `∇`, `∇²f(X, X)(x₀) ≥ 0` for every
+vector field `X` differentiable at `x₀`. Transported through `extChartAt I x₀` to the model
+space: `f ∘ (extChartAt I x₀).symm` has a local minimum at the chart image of `x₀`, its
+derivative vanishes there, so `mvfderiv` of `y ↦ X(f)(y)` in the direction `X` collapses to
+the chart Hessian on `(X x₀, X x₀)`, and the connection term `(∇_X X) f` dies. -/
+theorem hessianFun_nonneg_of_isLocalMin {f : M → ℝ} {x₀ : M}
+    (hf : ContMDiffAt I 𝓘(ℝ, ℝ) 2 f x₀) (hmin : IsLocalMin f x₀)
+    {X : Π y : M, TangentSpace I y} (hX : MDiffAt (T% X) x₀) :
+    0 ≤ cov.hessianFun f X X x₀ := by
+  have hxu : extChartAt I x₀ x₀ ∈ range I :=
+    extChartAt_target_subset_range x₀ (mem_extChartAt_target x₀)
+  -- the function, transferred to the chart
+  have hg : ContDiffWithinAt ℝ 2 (f ∘ (extChartAt I x₀).symm) (range I) (extChartAt I x₀ x₀) := by
+    have h := (contMDiffAt_iff.1 hf).2
+    simpa [extChartAt_model_space_eq_id] using h
+  have hg' : ContDiffAt ℝ 2 (f ∘ (extChartAt I x₀).symm) (extChartAt I x₀ x₀) := by
+    rwa [I.range_eq_univ, contDiffWithinAt_univ] at hg
+  have hgmin : IsLocalMin (f ∘ (extChartAt I x₀).symm) (extChartAt I x₀ x₀) := by
+    have : IsLocalMin f ((extChartAt I x₀).symm (extChartAt I x₀ x₀)) := by
+      rwa [(extChartAt I x₀).left_inv (mem_extChartAt_source x₀)]
+    exact this.comp_continuous (continuousAt_extChartAt_symm x₀)
+  have hg0 : fderiv ℝ (f ∘ (extChartAt I x₀).symm) (extChartAt I x₀ x₀) = 0 :=
+    hgmin.fderiv_eq_zero
+  -- the vector field, transferred to the chart
+  have hX' : DifferentiableWithinAt ℝ
+      (mpullbackWithin 𝓘(ℝ, E) I (extChartAt I x₀).symm X (range I)) (range I)
+      (extChartAt I x₀ x₀) := by
+    have h := MDifferentiableWithinAt.differentiableWithinAt_mpullbackWithin_vectorField
+      (V := X) (s := univ) (x := x₀) hX.mdifferentiableWithinAt
+    simpa using h
+  have hg1 : DifferentiableWithinAt ℝ
+      (fderivWithin ℝ (f ∘ (extChartAt I x₀).symm) (range I)) (range I) (extChartAt I x₀ x₀) :=
+    ((hg.fderivWithin_right (m := 1) I.uniqueDiffOn (by norm_num)
+      hxu).differentiableWithinAt one_ne_zero)
+  have hgX : DifferentiableWithinAt ℝ
+      (fun z ↦ fderivWithin ℝ (f ∘ (extChartAt I x₀).symm) (range I) z
+        (mpullbackWithin 𝓘(ℝ, E) I (extChartAt I x₀).symm X (range I) z)) (range I)
+      (extChartAt I x₀ x₀) := hg1.clm_apply hX'
+  -- `X(f)`, transferred to the chart
+  have hfev : ∀ᶠ y in nhds x₀, MDifferentiableAt I 𝓘(ℝ, ℝ) f y := by
+    filter_upwards [(contMDiffAt_iff_contMDiffAt_nhds (n := 2) (by simp)).1 hf] with y hy
+    exact hy.mdifferentiableAt two_ne_zero
+  have hXev : (fun y ↦ mvfderiv I f y (X y)) =ᶠ[nhds x₀]
+      (fun z ↦ fderivWithin ℝ (f ∘ (extChartAt I x₀).symm) (range I) z
+        (mpullbackWithin 𝓘(ℝ, E) I (extChartAt I x₀).symm X (range I) z)) ∘ (extChartAt I x₀) := by
+    filter_upwards [extChartAt_source_mem_nhds (I := I) x₀, hfev,
+      eventually_mpullbackWithin_extChartAt_symm_apply (V := X) (x := x₀)] with y hy hfy hXy
+    show mvfderiv I f y (X y) = _
+    rw [mvfderiv_apply_eq_fderivWithin hy hfy (X y)]
+    simp only [Function.comp_apply, hXy]
+  -- the second-order term, in the chart
+  have hL : mvfderiv I (fun y ↦ mvfderiv I f y (X y)) x₀ (X x₀)
+      = fderivWithin ℝ (fun z ↦ fderivWithin ℝ (f ∘ (extChartAt I x₀).symm) (range I) z
+          (mpullbackWithin 𝓘(ℝ, E) I (extChartAt I x₀).symm X (range I) z)) (range I)
+          (extChartAt I x₀ x₀)
+          (mpullbackWithin 𝓘(ℝ, E) I (extChartAt I x₀).symm X (range I) (extChartAt I x₀ x₀)) := by
+    rw [mvfderiv_congr_of_eventuallyEq hXev,
+      mvfderiv_comp_extChartAt_apply (mem_extChartAt_source x₀) hgX (X x₀)]
+    congr 1
+    exact (eventually_mpullbackWithin_extChartAt_symm_apply (V := X)
+      (x := x₀)).self_of_nhds.symm
+  -- the connection term dies at a critical point
+  have hR : mvfderiv I f x₀ (cov X x₀ (X x₀)) = 0 := by
+    rw [mvfderiv_apply_eq_fderivWithin (mem_extChartAt_source x₀)
+      (hf.mdifferentiableAt two_ne_zero), I.range_eq_univ, fderivWithin_univ, hg0]
+    rfl
+  simp only [hessianFun]
+  rw [hL, hR, sub_zero]
+  simp only [I.range_eq_univ, fderivWithin_univ]
+  rw [I.range_eq_univ, differentiableWithinAt_univ] at hX'
+  exact fderiv_fderiv_apply_nonneg_of_isLocalMin hg' hgmin hX'.hasFDerivAt
+
+variable [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+
+-- BENCH: laplacian-nonneg-min-manifold
+/-- **The Laplacian is nonnegative at a local minimum** on a boundaryless manifold: the trace
+of a nonnegative Hessian. Together with `MaximumPrinciple.le_of_deriv_ge_at_min` this is the
+classical scalar maximum principle. -/
+theorem laplacianFun_nonneg_of_isLocalMin {f : M → ℝ} {x₀ : M}
+    (hf : ContMDiffAt I 𝓘(ℝ, ℝ) 2 f x₀) (hmin : IsLocalMin f x₀) :
+    0 ≤ cov.laplacianFun f x₀ := by
+  unfold laplacianFun
+  refine Finset.sum_nonneg fun i _ ↦ ?_
+  exact hessianFun_nonneg_of_isLocalMin cov hf hmin (FiberBundle.mdifferentiableAt_extend I E _)
+
+end Manifold
 
 end RicciFlowBlueprint

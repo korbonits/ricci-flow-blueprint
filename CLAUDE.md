@@ -22,7 +22,7 @@ in `lake-manifest.json`) on Lean `v4.34.0-rc2`, because mathlib4 #36845
 | `Hamilton.lean` | `hamilton_1982` — **stated**, `proof_wanted`, no sorry, no axiom. Predicates require a `C¹` witness and `C²` test fields (corrected 2026-09-04: the old `HasConstSecLC` quantified over arbitrary fields, i.e. over junk). `admitsPositiveRicciMetric_iff` / `admitsConstPositiveSecMetric_iff` restate them via `ricciOfMetric` / `sectionalCurvatureOfMetric` |
 | `Pinching.lean` | **branch closed**: Hamilton's curvature ODE in dimension 3 — ordering, positive Ricci, `λ ≤ C(μ+ν)` preserved; `pinching_antitone` (Hamilton Thm 10.1, ODE half). Linear Grönwall helpers `nonpos_of_deriv_le_mul` etc. No manifold |
 | `Hessian.lean` | `hessian` (∇²), `hessian_sub_hessian_swap` (Ricci identity), tensoriality + `hessianAt`, `hessianFun` + `hessianFun_symm`, `laplacian` + `laplacian_eq_sum` (basis-independent metric trace, `OrthonormalBasis.sum_apply_self_eq`) |
-| `SecondDerivativeTest.lean` | **proved** (model space): `deriv2_nonneg_of_isLocalMin`, `fderiv2_nonneg_of_isLocalMin`, `hessianFun_nonneg_of_isLocalMin_model`, `laplacianFun_nonneg_of_isLocalMin_model`. The connection term `(∇_X X) f` dies at a critical point, so any `cov` works. Manifold version via charts is open |
+| `SecondDerivativeTest.lean` | **proved**: `deriv2_nonneg_of_isLocalMin`, `fderiv2_nonneg_of_isLocalMin`, `fderiv_fderiv_apply_nonneg_of_isLocalMin` (chart-side core), `hessianFun_nonneg_of_isLocalMin` and `laplacianFun_nonneg_of_isLocalMin` on a **boundaryless manifold** (transport through `extChartAt`, same pattern as `mlieBracket_apply_fun`), plus the `*_model` versions. The connection term `(∇_X X) f` dies at a critical point, so any `cov` works |
 | `MaximumPrinciple.lean` | **proved**: the scalar maximum principle on a compact space with the differential inequality assumed at spatial minima (`le_of_deriv_ge_at_min`, `le_of_deriv_le_at_max`). ε-perturbation `φ − ε e^{(2K+1)t}` + first touching time. No Laplacian |
 | `Homogeneous.lean` | **branch closed**: `koszul`, torsion/compat, Levi-Civita uniqueness, `contDiffAt_ricciField`, `ricciFlow_leftInvariant` |
 | `Milnor.lean` | **branch closed**: Koszul formula, Ricci in structure constants, diagonal Ricci `rᵢ = 2μⱼμₖ`, Heisenberg, Isenberg–Jackson ODE |
@@ -96,12 +96,17 @@ Laplacian (`Hessian.lean`).
 **Done 2026-09-05, last:** the second-derivative test on the model space
 (`SecondDerivativeTest.lean`).
 
-**Next — two options.** (a) Transport the second-derivative test to a
-manifold through `extChartAt`: `hessianFun` at a critical point equals the
-chart Hessian, needs `mvfderiv` in extended charts. (b) The first variation
-of curvature (`lem:evolution-rm`): differentiate the Koszul formula in `t`
-along a family of metrics; the Levi-Civita smoothness proof
-(`LeviCivitaSmooth.lean`) has the coordinate machinery.
+**Done 2026-09-04 (later):** the second-derivative test on a boundaryless
+manifold, by transport through `extChartAt` — the `hL1` block of
+`mlieBracket_apply_fun` reused verbatim, then `I.range_eq_univ` collapses
+every `Within` to the plain derivative. `[I.Boundaryless]` is essential: at
+a boundary point a local minimum need not be critical.
+
+**Next.** The first variation of curvature (`lem:evolution-rm`): differentiate
+the Koszul formula in `t` along a family of metrics; the Levi-Civita
+smoothness proof (`LeviCivitaSmooth.lean`) has the coordinate machinery.
+With it and the second-derivative test, the tensor maximum principle
+(`thm:max-tensor`) has all its inputs.
 
 **Day 1 — unblock (~45 min).** Post the Zulip question in `#mathlib4`, topic
 `RiemannianBundle: metrics as instances vs values`; tag `sgouezel`. It gates

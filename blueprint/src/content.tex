@@ -740,19 +740,20 @@ target actually requires.
 
 \begin{lemma}[Second-derivative test]
   \label{lem:second-derivative-test}
-  \lean{RicciFlowBlueprint.laplacianFun_nonneg_of_isLocalMin_model}
+  \lean{RicciFlowBlueprint.laplacianFun_nonneg_of_isLocalMin}
   \leanok
   \uses{def:laplacian}
-  At a local minimum $x_0$ of a $C^2$ function $f$, $\nab f(x_0) = 0$,
-  $\nab^2 f(X,X)(x_0) \ge 0$ for every vector field $X$ differentiable at
-  $x_0$, and $\Delta f(x_0) \ge 0$; for any covariant derivative, not only the
-  Levi-Civita connection.
+  At a local minimum $x_0$ of a $C^2$ function $f$ on a boundaryless
+  manifold, $\nab f(x_0) = 0$, $\nab^2 f(X,X)(x_0) \ge 0$ for every vector
+  field $X$ differentiable at $x_0$, and $\Delta f(x_0) \ge 0$; for any
+  covariant derivative, not only the Levi-Civita connection.
 
-  \textbf{Proved on the model space} (a finite-dimensional normed space with
-  its flat tangent bundle); the manifold statement is this one transported
-  through a chart, since at a critical point the Hessian is
-  connection-independent. With it, the abstract maximum principle
-  \ref{thm:max-scalar} becomes the classical one for
+  \textbf{Proved}, first on the model space
+  (\texttt{hessianFun\_nonneg\_of\_isLocalMin\_model}), then on a manifold by
+  transport through \texttt{extChartAt}
+  (\texttt{hessianFun\_nonneg\_of\_isLocalMin}), since at a critical point
+  the Hessian is connection-independent. With it, the abstract maximum
+  principle \ref{thm:max-scalar} becomes the classical one for
   $\partial_t u = \Delta u + F(u)$.
 \end{lemma}
 
@@ -765,9 +766,17 @@ target actually requires.
   $D^2 f(x_0)(v,v) \ge 0$ (\texttt{fderiv2\_nonneg\_of\_isLocalMin}). For the
   Hessian, $\nab^2 f(X,X) = X(Xf) - (\nab_X X) f$; the product rule gives
   $X(Xf) = D^2f(X,X) + Df(DX\cdot X)$, and $Df(x_0) = 0$ kills both the second
-  term and the connection term. The Laplacian is a sum of such terms over an
-  orthonormal basis, whose extensions to sections are constant on the model
-  space.
+  term and the connection term
+  (\texttt{fderiv\_fderiv\_apply\_nonneg\_of\_isLocalMin}). On a manifold,
+  write $g = f \circ (\mathrm{extChartAt}\, x_0)^{-1}$: $g$ has a local
+  minimum at the chart image of $x_0$ since the inverse chart is continuous,
+  so $Dg = 0$ there; $X(Xf)$ at $x_0$ is the chart-side expression
+  $D(Dg \cdot \tilde X)(\tilde X)$ with $\tilde X$ the pullback of $X$ (the
+  same transport as Lemma \ref{lem:derivation}), and the vector-space case
+  applies. Boundarylessness is what makes $g$ genuinely $C^2$ at an interior
+  point of the model rather than $C^2$ within its range. The Laplacian is a
+  sum of such terms over an orthonormal basis, each extended to a
+  differentiable section.
 \end{proof}
 
 \begin{lemma}[Evolution of the curvature tensor]
