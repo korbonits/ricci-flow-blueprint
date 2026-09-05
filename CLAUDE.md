@@ -26,6 +26,7 @@ in `lake-manifest.json`) on Lean `v4.34.0-rc2`, because mathlib4 #36845
 | `MaximumPrinciple.lean` | **proved**: the scalar maximum principle on a compact space with the differential inequality assumed at spatial minima (`le_of_deriv_ge_at_min`, `le_of_deriv_le_at_max`). ε-perturbation `φ − ε e^{(2K+1)t}` + first touching time. No Laplacian |
 | `Variation.lean` | **proved**: `covBilin` (∇ of a bilinear form field), `koszul_bilin_eq` (Koszul combination of a symmetric `h` through a torsion-free `∇` is `∇h`-terms `+ 2h(∇_X Y,Z)`), `leviCivitaOfMetric`, `inner_leviCivitaOfMetric_eq` (Koszul in `g.inner`), `hasDerivAt_inner_leviCivitaOfMetric` (Koszul differentiated in `t`), `inner_deriv_leviCivitaOfMetric_eq` (**first variation of ∇**). Hypotheses: `∂ₜ` commutes with `X(g(Y,Z))` for the fields at hand; differentiability of `t ↦ ∇ᵗ_X Y` (vector form only) |
 | `CurvatureVariation.lean` | **proved**: `covEnd` (∇ of an `End`-valued one-form), `curvature_eq_add_covEnd` (curvature of `∇ + A`, `∇` torsion-free — algebraic), `hasDerivAt_curvatureE` (`∂ₜ Rᵗ = (∇_X Ȧ)(Y,Z) − (∇_Y Ȧ)(X,Z)` along `∇ᵗ = ∇ + Aᵗ`), `exists_hasDerivAt_clm_of_apply` (coordinatewise ⇒ CLM-valued derivative), `differenceE` (Mathlib's `difference` on `E`), `derivDifferenceE` (`Ȧ = ∂ₜ∇` as `deriv`, no existential), `inner_derivDifferenceE_eq`, `hasDerivAt_curvatureE_leviCivitaOfMetric` (**first variation of Rm along metrics**). Hypotheses: `CommutesWithMvfderiv` (the `Variation.lean` commutation, all fields) and `∂ₜ`/`∇_X` commuting on `Aᵗ(Y,Z)` |
+| `Bianchi.lean` | **proved**: `contMDiff_cov_apply` (`C^k` connection, `C^{k+1}` section, `C^k` field ⇒ `C^k` covariant derivative), `mlieBracket_sub_left'`, `covCurvature` (`(∇_X R)(Y,Z)W`), `bianchi_second` (**second Bianchi**, `C²` connection, `C²` fields, `C³` argument; no metric). The proof is the first-Bianchi pattern: split the sections, rewrite `∇_X Y − ∇_Y X` as `[X,Y]` in both the direction slot and as sections, `linear_combination (norm := module)` with Jacobi |
 | `Homogeneous.lean` | **branch closed**: `koszul`, torsion/compat, Levi-Civita uniqueness, `contDiffAt_ricciField`, `ricciFlow_leftInvariant` |
 | `Milnor.lean` | **branch closed**: Koszul formula, Ricci in structure constants, diagonal Ricci `rᵢ = 2μⱼμₖ`, Heisenberg, Isenberg–Jackson ODE |
 
@@ -129,8 +130,14 @@ layer on `E` (`covE`, `curvatureE`, `covEndE`); `exact` bridges them by defeq.
 [extend_apply_self]` fails (`?v : E` vs `T_yM` at instances transparency) —
 use `unfold`.
 
-**Next.** The second Bianchi identity (`∇_X R(Y,Z) + cyclic = 0`, torsion-free)
-and its trace, then the rewrite of the antisymmetrised `∇² Ric` as `Δ Rm + Q`
+**Done 2026-09-05 (last):** the second Bianchi identity (`Bianchi.lean`,
+`lem:bianchi-second`), first attempt compiled. Both `[ContMDiffCovariantDerivative
+cov 1]` and `[… cov 2]` are taken as instances: Mathlib has no `C² ⇒ C¹`
+instance for connections yet.
+
+**Next.** The trace of the second Bianchi identity against the metric
+(`div Rm = ∇ Ric`-type identities, via `OrthonormalBasis.sum_apply_self_eq`),
+then the rewrite of the antisymmetrised `∇² Ric` as `Δ Rm + Q`
 (`lem:evolution-rm`, second half). Separately, the tensor maximum principle
 (`thm:max-tensor`) now has its inputs — the second-derivative test and an
 evolution equation — and can be stated abstractly like `MaximumPrinciple.lean`.

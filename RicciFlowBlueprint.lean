@@ -16,3 +16,4 @@ import RicciFlowBlueprint.SecondDerivativeTest
 import RicciFlowBlueprint.Flow
 import RicciFlowBlueprint.Variation
 import RicciFlowBlueprint.CurvatureVariation
+import RicciFlowBlueprint.Bianchi

@@ -38,6 +38,7 @@ on left-invariant metrics, which is an ODE, and Milnor's curvature formulas.
 | --- | --- |
 | `CovariantDerivative.curvature`, `curvature_antisymm` | defined, proved |
 | `bianchi_first` | **proved** — first Bianchi, all side conditions discharged |
+| `covCurvature`, `bianchi_second` | **proved** — `(∇_X R)(Y,Z)W` and the second Bianchi identity, `C²` connection, `C²` fields, `C³` argument; all side conditions discharged (`Bianchi.lean`) |
 | `curvature_smul_*`, `curvature_add_*` | **proved** — tensoriality, all three slots |
 | `tensorialAt_curvature_fst/snd` | **proved** — curvature descends to a pointwise tensor |
 | `CovariantDerivative.ricci` | **defined** — trace of `Z ↦ R(Z,X)Y`, via one-slot `mkHom` |
