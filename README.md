@@ -93,6 +93,15 @@ maximum principle transfers these to the flow; that transfer is the missing part
 | `pinching_antitone` | **proved** — `(λ − ν)(μ + ν)^{δ−1}` is nonincreasing for `δ(2C+1) ≤ 1`: Hamilton 1982, Theorem 10.1, the ODE half |
 | `nonpos_of_deriv_le_mul` | **proved** — linear Grönwall comparison, `f' ≤ a f`, `f 0 ≤ 0` ⇒ `f ≤ 0` |
 
+### Second covariant derivative and Laplacian (`Hessian.lean`)
+
+| Node | Status |
+| --- | --- |
+| `hessian`, `hessianAt` | **defined** — `∇²_{X,Y} Z`, tensorial in both slots, hence a bilinear map at each point |
+| `hessian_sub_hessian_swap` | **proved** — the Ricci identity `∇²_{X,Y} Z − ∇²_{Y,X} Z = R(X,Y) Z` for torsion-free connections |
+| `hessianFun`, `hessianFun_symm` | **proved** — the Hessian of a `C²` function is symmetric for torsion-free connections |
+| `laplacian`, `laplacian_eq_sum` | **defined** — the metric trace of the Hessian, basis-independent |
+
 ### The scalar maximum principle — **proved, abstractly** (`MaximumPrinciple.lean`)
 
 | Node | Status |

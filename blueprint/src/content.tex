@@ -691,9 +691,57 @@ target actually requires.
   the whole road, and it is shared by every node below.
 \end{theorem}
 
+\begin{definition}[Second covariant derivative]
+  \label{def:hessian}
+  \lean{CovariantDerivative.hessian}
+  \leanok
+  \uses{def:curvature}
+  $\nab^2_{X,Y} Z = \nab_X \nab_Y Z - \nab_{\nab_X Y} Z$, and for a function
+  $\nab^2 f(X,Y) = X(Yf) - (\nab_X Y)f$. Both are tensorial in $X$ and $Y$
+  (\texttt{tensorialAt\_hessian\_fst/snd}), so the Hessian of a $C^2$ field at a
+  point is a bilinear map on $T_xM$ (\texttt{hessianAt}).
+\end{definition}
+
+\begin{lemma}[Ricci identity; symmetry of the Hessian]
+  \label{lem:ricci-identity}
+  \lean{CovariantDerivative.hessian_sub_hessian_swap}
+  \leanok
+  \uses{def:hessian, lem:derivation}
+  For a torsion-free connection,
+  $\nab^2_{X,Y} Z - \nab^2_{Y,X} Z = R(X,Y)Z$, and the Hessian of a $C^2$
+  function is symmetric (\texttt{hessianFun\_symm}).
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  Expanding the definitions, the difference is
+  $R(X,Y)Z + \nab_{[X,Y]}Z - \nab_{\nab_X Y - \nab_Y X} Z$, and torsion-freeness
+  kills the last two terms. For functions the antisymmetric part is
+  $[X,Y]f - (\nab_X Y - \nab_Y X)f$, and $[X,Y]f = X(Yf) - Y(Xf)$ is
+  Lemma \ref{lem:derivation}.
+\end{proof}
+
+\begin{definition}[Laplacian]
+  \label{def:laplacian}
+  \lean{CovariantDerivative.laplacian}
+  \leanok
+  \uses{def:hessian}
+  The rough Laplacian of a $C^2$ vector field is the metric trace of its
+  Hessian, $\Delta Z = \sum_i \nab^2_{e_i,e_i} Z$ over an orthonormal basis of
+  $T_xM$; it does not depend on the basis (\texttt{laplacian\_eq\_sum}, via
+  \texttt{OrthonormalBasis.sum\_apply\_self\_eq}, the statement that
+  $\sum_i B(e_i,e_i)$ is basis-independent for any bilinear $B$).
+
+  This is the operator the evolution equations below are written in, and it
+  is what supplies the differential inequality at a spatial minimum that the
+  abstract maximum principle \ref{thm:max-scalar} takes as its hypothesis.
+  The missing link between the two is the second-derivative test
+  $\Delta f(x_0) \ge 0$ at a minimum, which needs the Hessian in coordinates.
+\end{definition}
+
 \begin{lemma}[Evolution of the curvature tensor]
   \label{lem:evolution-rm}
-  \uses{def:ricci-flow, def:curvature}
+  \uses{def:ricci-flow, def:curvature, def:laplacian}
   Under the flow, $\partial_t \Rm = \Delta \Rm + Q(\Rm)$, where $Q$ is
   quadratic in the curvature operator.
 

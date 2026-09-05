@@ -21,6 +21,7 @@ in `lake-manifest.json`) on Lean `v4.34.0-rc2`, because mathlib4 #36845
 | `Flow.lean` | `IsRicciFlowAt/On`, `isRicciFlowAt_const_iff`, `isRicciFlowAt_iff_of_isLeviCivita`, `isRicciFlowOn_iff_ricciOfMetric` — **the flow is `∂g/∂t = -2 Ric(g t)` with `Ric` a function of `g`**; `ricciFlow_shortTime_existence` (`proof_wanted`); the analytic-frontier survey lives in its header |
 | `Hamilton.lean` | `hamilton_1982` — **stated**, `proof_wanted`, no sorry, no axiom. Predicates require a `C¹` witness and `C²` test fields (corrected 2026-09-04: the old `HasConstSecLC` quantified over arbitrary fields, i.e. over junk). `admitsPositiveRicciMetric_iff` / `admitsConstPositiveSecMetric_iff` restate them via `ricciOfMetric` / `sectionalCurvatureOfMetric` |
 | `Pinching.lean` | **branch closed**: Hamilton's curvature ODE in dimension 3 — ordering, positive Ricci, `λ ≤ C(μ+ν)` preserved; `pinching_antitone` (Hamilton Thm 10.1, ODE half). Linear Grönwall helpers `nonpos_of_deriv_le_mul` etc. No manifold |
+| `Hessian.lean` | `hessian` (∇²), `hessian_sub_hessian_swap` (Ricci identity), tensoriality + `hessianAt`, `hessianFun` + `hessianFun_symm`, `laplacian` + `laplacian_eq_sum` (basis-independent metric trace, `OrthonormalBasis.sum_apply_self_eq`) |
 | `MaximumPrinciple.lean` | **proved**: the scalar maximum principle on a compact space with the differential inequality assumed at spatial minima (`le_of_deriv_ge_at_min`, `le_of_deriv_le_at_max`). ε-perturbation `φ − ε e^{(2K+1)t}` + first touching time. No Laplacian |
 | `Homogeneous.lean` | **branch closed**: `koszul`, torsion/compat, Levi-Civita uniqueness, `contDiffAt_ricciField`, `ricciFlow_leftInvariant` |
 | `Milnor.lean` | **branch closed**: Koszul formula, Ricci in structure constants, diagonal Ricci `rᵢ = 2μⱼμₖ`, Heisenberg, Isenberg–Jackson ODE |
@@ -88,10 +89,14 @@ the evolution equation and hence the Laplacian on tensors.
 needs is the evolution equation for the differential inequality at a touching
 point.
 
-**Next — curvature evolution.** With `Ric(g)` a function of `g`, the next
-PDE-free target is the evolution of `Ric`/`scal` under the flow, i.e. the
-first variation of curvature (`lem:evolution-rm`). It needs the second
-covariant derivative and the Laplacian on tensors; neither exists in Mathlib.
+**Done 2026-09-05, later still:** the second covariant derivative and the
+Laplacian (`Hessian.lean`).
+
+**Next — the second-derivative test.** `laplacianFun f x₀ ≥ 0` at a local
+minimum, which connects `Hessian.lean` to `MaximumPrinciple.lean` and turns
+the abstract maximum principle into the classical one. Needs the Hessian in a
+chart at a critical point (where it is connection-independent). After that:
+the first variation of curvature (`lem:evolution-rm`).
 
 **Day 1 — unblock (~45 min).** Post the Zulip question in `#mathlib4`, topic
 `RiemannianBundle: metrics as instances vs values`; tag `sgouezel`. It gates
