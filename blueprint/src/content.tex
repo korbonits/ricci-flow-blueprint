@@ -705,17 +705,46 @@ target actually requires.
 
 \begin{theorem}[Scalar maximum principle]
   \label{thm:max-scalar}
-  \uses{def:ricci-flow}
+  \lean{RicciFlowBlueprint.MaximumPrinciple.le_of_deriv_ge_at_min}
+  \leanok
   A solution of $\partial_t u = \Delta u + \langle X, \nab u\rangle + F(u)$ on
-  a closed manifold is bounded below by the solution of the associated ODE
-  $\dot\phi = F(\phi)$ with the same initial datum.
+  a closed manifold, with $F$ Lipschitz, is bounded below by the solution of
+  the associated ODE $\dot\phi = F(\phi)$ with $\phi(0) \le \min u(0,\cdot)$;
+  and above by it when $\phi(0) \ge \max u(0,\cdot)$.
+
+  \textbf{Proved, abstractly.} The Laplacian enters the classical proof at
+  one point only: at a spatial minimum $x_0$ of $u(t,\cdot)$, $\nab u = 0$ and
+  $\Delta u \ge 0$, hence $\partial_t u(t,x_0) \ge F(u(t,x_0))$. The
+  formalised statement takes exactly that as its hypothesis, on an arbitrary
+  compact space: if at every spatial minimum $x_0$ of $u(t,\cdot)$ one has
+  $F(u(t,x_0)) \le \partial_t u(t,x_0)$, then $\phi \le u$. No Laplacian and
+  no manifold appear; once the Laplacian exists in Mathlib, the classical
+  statement is this theorem plus the second-derivative test at a minimum.
 \end{theorem}
+
+\begin{proof}
+  \leanok
+  Perturb to $\psi_\epsilon = \phi - \epsilon e^{(2K+1)t}$, a strict
+  subsolution by the Lipschitz bound: $\dot\psi_\epsilon < F(\psi_\epsilon)$.
+  If $u \ge \psi_\epsilon$ failed, the set of times at which it fails is closed
+  (it is the projection of a compact subset of $[0,T] \times M$), so there is a
+  first time $t_0 > 0$ and a point $x_0$ with $u(t_0,x_0) = \psi_\epsilon(t_0)$.
+  Then $x_0$ is a spatial minimum of $u(t_0,\cdot)$, the left derivative of
+  $u(\cdot,x_0) - \psi_\epsilon$ at $t_0$ is $\le 0$, but the differential
+  inequality makes it $\ge \epsilon (K+1) e^{(2K+1)t_0} > 0$. Let
+  $\epsilon \to 0$. The upper bound is the same argument applied to $-u$.
+\end{proof}
 
 \begin{theorem}[Tensor maximum principle]
   \label{thm:max-tensor}
   \uses{thm:max-scalar, lem:evolution-rm}
   Hamilton's maximum principle for symmetric tensors: a closed convex subset of
   the bundle preserved by the ODE $\dot{\Rm} = Q(\Rm)$ is preserved by the PDE.
+
+  Same skeleton as the proof of \ref{thm:max-scalar}, with a supporting
+  half-space of the convex set in place of the half-line $[\phi(t),\infty)$
+  and the evolution equation \ref{lem:evolution-rm} supplying the
+  differential inequality at a first touching point.
 
   This is the workhorse. Every curvature-positivity statement in the subject is
   an instance of it, including the one Hamilton needs in dimension three.

@@ -93,6 +93,13 @@ maximum principle transfers these to the flow; that transfer is the missing part
 | `pinching_antitone` | **proved** — `(λ − ν)(μ + ν)^{δ−1}` is nonincreasing for `δ(2C+1) ≤ 1`: Hamilton 1982, Theorem 10.1, the ODE half |
 | `nonpos_of_deriv_le_mul` | **proved** — linear Grönwall comparison, `f' ≤ a f`, `f 0 ≤ 0` ⇒ `f ≤ 0` |
 
+### The scalar maximum principle — **proved, abstractly** (`MaximumPrinciple.lean`)
+
+| Node | Status |
+| --- | --- |
+| `le_of_deriv_ge_at_min` | **proved** — on a compact space, if `F(u) ≤ ∂ₜu` at every spatial minimum and `φ' = F(φ)`, `φ 0 ≤ u 0`, then `φ ≤ u`. The Laplacian's only role in the classical proof is to supply the hypothesis at a minimum |
+| `le_of_deriv_le_at_max` | **proved** — the mirrored upper bound |
+
 ### Left-invariant metrics — **closed** (`Homogeneous.lean`)
 
 | Node | Status |
