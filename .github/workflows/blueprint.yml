@@ -3,6 +3,7 @@ name: blueprint
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -10,12 +11,8 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: pages
-  cancel-in-progress: true
-
 jobs:
-  build:
+  lean:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,9 +23,60 @@ jobs:
             | tar xz && ./elan-init -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
+      - name: Cache project oleans
+        uses: actions/cache@v4
+        with:
+          path: .lake/build
+          key: lake-build-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ hashFiles('RicciFlowBlueprint/**/*.lean', 'RicciFlowBlueprint.lean') }}
+          restore-keys: |
+            lake-build-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+
+      - name: Get mathlib cache
+        # A cache miss must fail here, not fall through to building mathlib from source.
+        run: |
+          lake exe cache get
+          test -f .lake/packages/mathlib/.lake/build/lib/lean/Mathlib.olean
+
+      - name: Build Lean (warnings are errors)
+        run: |
+          set -o pipefail
+          lake build 2>&1 | tee build.log
+          if grep -q '^warning:' build.log; then
+            echo '::error::lake build produced warnings'; exit 1
+          fi
+
+      - name: Save project oleans
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .lake/build
+          key: lake-build-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ hashFiles('RicciFlowBlueprint/**/*.lean', 'RicciFlowBlueprint.lean') }}
+
+  pages:
+    needs: lean
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install elan
+        run: |
+          curl -sSfL https://github.com/leanprover/elan/releases/download/v3.1.1/elan-x86_64-unknown-linux-gnu.tar.gz \
+            | tar xz && ./elan-init -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Restore project oleans
+        uses: actions/cache/restore@v4
+        with:
+          path: .lake/build
+          key: lake-build-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ hashFiles('RicciFlowBlueprint/**/*.lean', 'RicciFlowBlueprint.lean') }}
+
       - name: Build Lean
         run: |
-          lake exe cache get || true
+          lake exe cache get
           lake build
 
       - uses: actions/setup-python@v5
@@ -55,7 +103,8 @@ jobs:
           path: blueprint/web
 
   deploy:
-    needs: build
+    needs: pages
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
