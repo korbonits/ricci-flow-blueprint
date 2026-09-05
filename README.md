@@ -105,6 +105,8 @@ maximum principle transfers these to the flow; that transfer is the missing part
 | `deriv2_nonneg_of_isLocalMin`, `fderiv2_nonneg_of_isLocalMin` | **proved** — the second-derivative test on the line and in a normed space (`SecondDerivativeTest.lean`) |
 | `hessianFun_nonneg_of_isLocalMin`, `laplacianFun_nonneg_of_isLocalMin` | **proved** — `∇²f(X,X) ≥ 0` and `Δf ≥ 0` at a local minimum on a boundaryless manifold, any connection: the hypothesis the abstract maximum principle asks for. Model-space versions `*_model`; transported through `extChartAt` |
 | `inner_deriv_leviCivitaOfMetric_eq` | **proved** — first variation of the Levi-Civita connection along a family of metrics, `g(∂ₜ∇_X Y, Z) = ½[(∇_X h)(Y,Z) + (∇_Y h)(Z,X) − (∇_Z h)(X,Y)]`, by differentiating the Koszul formula (`Variation.lean`); `koszul_bilin_eq` is the algebraic core |
+| `curvature_eq_add_covEnd` | **proved** — curvature of a perturbed connection, `R' = R + (∇_X A)(Y,Z) − (∇_Y A)(X,Z) + A(X,A(Y,Z)) − A(Y,A(X,Z))` for `∇' = ∇ + A`, `∇` torsion-free (`CurvatureVariation.lean`) |
+| `hasDerivAt_curvatureE_leviCivitaOfMetric` | **proved** — first variation of the curvature along a family of metrics, `∂ₜ Rm(X,Y)Z = (∇_X Ȧ)(Y,Z) − (∇_Y Ȧ)(X,Z)` with `Ȧ = ∂ₜ∇` characterised by `inner_derivDifferenceE_eq`; the first half of `lem:evolution-rm` |
 
 ### The scalar maximum principle — **proved, abstractly** (`MaximumPrinciple.lean`)
 

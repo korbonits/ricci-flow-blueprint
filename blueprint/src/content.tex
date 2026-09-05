@@ -830,9 +830,58 @@ target actually requires.
   not depend on the norm.
 \end{proof}
 
+\begin{lemma}[First variation of the curvature]
+  \label{lem:variation-curvature}
+  \lean{RicciFlowBlueprint.hasDerivAt_curvatureE_leviCivitaOfMetric}
+  \leanok
+  \uses{def:curvature, lem:variation-connection}
+  Along a family of metrics $\g(t)$ with $\partial_t \g = h$, the curvature
+  tensors $\Rm^t$ of the Levi-Civita connections satisfy
+  \[
+    \partial_t \Rm(X,Y)Z = (\nab_X \dot A)(Y,Z) - (\nab_Y \dot A)(X,Z),
+  \]
+  with $\nab = \nab^{t_0}$ and $\dot A = \partial_t \nab$ the tensor of
+  Lemma \ref{lem:variation-connection},
+  $\g(\dot A(v,w), Z) = \tfrac12[(\nab_v h)(w,Z) + (\nab_w h)(Z,v) - (\nab_Z h)(v,w)]$
+  (\texttt{inner\_derivDifferenceE\_eq}). With $h = -2\Ric$ this is
+  $\partial_t \Rm$ under the flow, before the second Bianchi identity turns
+  $\nab^2 \Ric$ into $\Delta \Rm + Q(\Rm)$ (Lemma \ref{lem:evolution-rm}).
+
+  \textbf{Proved}, in two layers. The algebraic layer
+  (\texttt{curvature\_eq\_add\_covEnd}) is for any two connections
+  $\nab' = \nab + A$ with $\nab$ torsion-free:
+  \[
+    R'(X,Y)Z = R(X,Y)Z + (\nab_X A)(Y,Z) - (\nab_Y A)(X,Z)
+      + A(X, A(Y,Z)) - A(Y, A(X,Z)).
+  \]
+  The analytic layer (\texttt{hasDerivAt\_curvatureE}) differentiates this
+  along a family $\nab^t = \nab + A^t$ with $A^{t_0} = 0$: the quadratic
+  terms have zero derivative at $t_0$. Two hypotheses are stated in the form
+  used: the commutation of Lemma \ref{lem:variation-connection}, now for all
+  fields differentiable at the point (\texttt{CommutesWithMvfderiv}), and the
+  commutation of $\partial_t$ with $\nab_X$ on the sections $A^t(Y,Z)$ and
+  $A^t(X,Z)$ at $x$. Both are joint regularity in $(t,x)$.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  The difference of two connections is a tensor, Mathlib's
+  \texttt{CovariantDerivative.difference}; expanding
+  $\nab'_X \nab'_Y Z - \nab'_Y \nab'_X Z - \nab'_{[X,Y]} Z$ with
+  $\nab' = \nab + A$ and collecting, the terms $A(\nab_X Y, Z) - A(\nab_Y X, Z)$
+  combine with $-A([X,Y], Z)$ by torsion-freeness, and what remains is the
+  displayed identity. Along the family, $t \mapsto A^t(y)$ is differentiable as a
+  bilinear map because it is differentiable on every pair of vectors
+  (\texttt{exists\_hasDerivAt\_clm\_of\_apply}, finite dimensions) and each value
+  $A^t(v,w)(y) = \nab^t_v \tilde w - \nab_v \tilde w$ is differentiable by
+  Lemma \ref{lem:variation-connection}, $\tilde w$ the extension of $w$ constant
+  in a trivialisation. The derivative $\dot A$ is \texttt{deriv}, so the
+  statement carries no existential.
+\end{proof}
+
 \begin{lemma}[Evolution of the curvature tensor]
   \label{lem:evolution-rm}
-  \uses{def:ricci-flow, def:curvature, def:laplacian, lem:variation-connection}
+  \uses{def:ricci-flow, def:curvature, def:laplacian, lem:variation-connection, lem:variation-curvature}
   Under the flow, $\partial_t \Rm = \Delta \Rm + Q(\Rm)$, where $Q$ is
   quadratic in the curvature operator.
 
@@ -840,6 +889,12 @@ target actually requires.
   removes the terms coming from the time-dependence of the metric on the
   bundle. Formally this is a computation, not an estimate, but it is a long one
   and it is what every subsequent estimate is applied to.
+
+  \textbf{First half done.} Lemma \ref{lem:variation-curvature} gives
+  $\partial_t \Rm$ as $\nab \dot A$, second covariant derivatives of
+  $h = -2\Ric$. What remains is the second Bianchi identity, which rewrites
+  the antisymmetrised $\nab^2 \Ric$ as $\Delta \Rm$ plus terms quadratic
+  in $\Rm$.
 \end{lemma}
 
 \begin{theorem}[Scalar maximum principle]

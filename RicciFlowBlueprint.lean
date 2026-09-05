@@ -15,3 +15,4 @@ import RicciFlowBlueprint.Hessian
 import RicciFlowBlueprint.SecondDerivativeTest
 import RicciFlowBlueprint.Flow
 import RicciFlowBlueprint.Variation
+import RicciFlowBlueprint.CurvatureVariation

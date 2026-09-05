@@ -25,6 +25,7 @@ in `lake-manifest.json`) on Lean `v4.34.0-rc2`, because mathlib4 #36845
 | `SecondDerivativeTest.lean` | **proved**: `deriv2_nonneg_of_isLocalMin`, `fderiv2_nonneg_of_isLocalMin`, `fderiv_fderiv_apply_nonneg_of_isLocalMin` (chart-side core), `hessianFun_nonneg_of_isLocalMin` and `laplacianFun_nonneg_of_isLocalMin` on a **boundaryless manifold** (transport through `extChartAt`, same pattern as `mlieBracket_apply_fun`), plus the `*_model` versions. The connection term `(∇_X X) f` dies at a critical point, so any `cov` works |
 | `MaximumPrinciple.lean` | **proved**: the scalar maximum principle on a compact space with the differential inequality assumed at spatial minima (`le_of_deriv_ge_at_min`, `le_of_deriv_le_at_max`). ε-perturbation `φ − ε e^{(2K+1)t}` + first touching time. No Laplacian |
 | `Variation.lean` | **proved**: `covBilin` (∇ of a bilinear form field), `koszul_bilin_eq` (Koszul combination of a symmetric `h` through a torsion-free `∇` is `∇h`-terms `+ 2h(∇_X Y,Z)`), `leviCivitaOfMetric`, `inner_leviCivitaOfMetric_eq` (Koszul in `g.inner`), `hasDerivAt_inner_leviCivitaOfMetric` (Koszul differentiated in `t`), `inner_deriv_leviCivitaOfMetric_eq` (**first variation of ∇**). Hypotheses: `∂ₜ` commutes with `X(g(Y,Z))` for the fields at hand; differentiability of `t ↦ ∇ᵗ_X Y` (vector form only) |
+| `CurvatureVariation.lean` | **proved**: `covEnd` (∇ of an `End`-valued one-form), `curvature_eq_add_covEnd` (curvature of `∇ + A`, `∇` torsion-free — algebraic), `hasDerivAt_curvatureE` (`∂ₜ Rᵗ = (∇_X Ȧ)(Y,Z) − (∇_Y Ȧ)(X,Z)` along `∇ᵗ = ∇ + Aᵗ`), `exists_hasDerivAt_clm_of_apply` (coordinatewise ⇒ CLM-valued derivative), `differenceE` (Mathlib's `difference` on `E`), `derivDifferenceE` (`Ȧ = ∂ₜ∇` as `deriv`, no existential), `inner_derivDifferenceE_eq`, `hasDerivAt_curvatureE_leviCivitaOfMetric` (**first variation of Rm along metrics**). Hypotheses: `CommutesWithMvfderiv` (the `Variation.lean` commutation, all fields) and `∂ₜ`/`∇_X` commuting on `Aᵗ(Y,Z)` |
 | `Homogeneous.lean` | **branch closed**: `koszul`, torsion/compat, Levi-Civita uniqueness, `contDiffAt_ricciField`, `ricciFlow_leftInvariant` |
 | `Milnor.lean` | **branch closed**: Koszul formula, Ricci in structure constants, diagonal Ricci `rᵢ = 2μⱼμₖ`, Heisenberg, Isenberg–Jackson ODE |
 
@@ -117,11 +118,22 @@ finrank of `E →L ℝ` via `Subspace.dual_finrank_eq`), the Koszul functional i
 differentiable coordinatewise, `contDiffAt_map_inverse` does the rest. The
 commutation hypothesis is now demanded for every test field `Z`.
 
-**Next.** `∂ₜ Rm` from `∂ₜ ∇`:
-`R = ∇∇ − ∇∇ − ∇_{[,]}`, differentiate termwise (`lem:evolution-rm`, first
-half; the second Bianchi rewrite to `Δ Rm + Q` is separate). With the
-second-derivative test, the tensor maximum principle (`thm:max-tensor`)
-then has all its inputs.
+**Done 2026-09-05 (later):** `∂ₜ Rm` from `∂ₜ ∇` (`CurvatureVariation.lean`,
+`lem:variation-curvature`). Two layers: the algebraic identity for the
+curvature of `∇ + A` (Mathlib's `difference` tensor), then the derivative
+along the family — the quadratic terms die at `t₀` since `Aᵗ⁰ = 0`. Typing
+lesson: `HAdd (TangentSpace I x) E` never synthesises, so the algebraic layer
+lives on tangent spaces (`A : Π y, T_yM →L T_yM →L T_yM`) and the analytic
+layer on `E` (`covE`, `curvatureE`, `covEndE`); `exact` bridges them by defeq.
+`simp only` zeta-reduces a `show T from v` ascription and then `rw
+[extend_apply_self]` fails (`?v : E` vs `T_yM` at instances transparency) —
+use `unfold`.
+
+**Next.** The second Bianchi identity (`∇_X R(Y,Z) + cyclic = 0`, torsion-free)
+and its trace, then the rewrite of the antisymmetrised `∇² Ric` as `Δ Rm + Q`
+(`lem:evolution-rm`, second half). Separately, the tensor maximum principle
+(`thm:max-tensor`) now has its inputs — the second-derivative test and an
+evolution equation — and can be stated abstractly like `MaximumPrinciple.lean`.
 
 **Day 1 — unblock (~45 min).** Post the Zulip question in `#mathlib4`, topic
 `RiemannianBundle: metrics as instances vs values`; tag `sgouezel`. It gates
