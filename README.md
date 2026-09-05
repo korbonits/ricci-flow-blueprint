@@ -101,6 +101,9 @@ maximum principle transfers these to the flow; that transfer is the missing part
 | `hessian_sub_hessian_swap` | **proved** — the Ricci identity `∇²_{X,Y} Z − ∇²_{Y,X} Z = R(X,Y) Z` for torsion-free connections |
 | `hessianFun`, `hessianFun_symm` | **proved** — the Hessian of a `C²` function is symmetric for torsion-free connections |
 | `laplacian`, `laplacian_eq_sum` | **defined** — the metric trace of the Hessian, basis-independent |
+| `laplacianFun` | **defined** — the Laplacian of a function |
+| `deriv2_nonneg_of_isLocalMin`, `fderiv2_nonneg_of_isLocalMin` | **proved** — the second-derivative test on the line and in a normed space (`SecondDerivativeTest.lean`) |
+| `hessianFun_nonneg_of_isLocalMin_model`, `laplacianFun_nonneg_of_isLocalMin_model` | **proved** — `∇²f(X,X) ≥ 0` and `Δf ≥ 0` at a local minimum, model space, any connection: the hypothesis the abstract maximum principle asks for |
 
 ### The scalar maximum principle — **proved, abstractly** (`MaximumPrinciple.lean`)
 

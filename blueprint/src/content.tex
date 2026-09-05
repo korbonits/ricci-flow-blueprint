@@ -734,10 +734,41 @@ target actually requires.
 
   This is the operator the evolution equations below are written in, and it
   is what supplies the differential inequality at a spatial minimum that the
-  abstract maximum principle \ref{thm:max-scalar} takes as its hypothesis.
-  The missing link between the two is the second-derivative test
-  $\Delta f(x_0) \ge 0$ at a minimum, which needs the Hessian in coordinates.
+  abstract maximum principle \ref{thm:max-scalar} takes as its hypothesis;
+  the link is the second-derivative test, Lemma \ref{lem:second-derivative-test}.
 \end{definition}
+
+\begin{lemma}[Second-derivative test]
+  \label{lem:second-derivative-test}
+  \lean{RicciFlowBlueprint.laplacianFun_nonneg_of_isLocalMin_model}
+  \leanok
+  \uses{def:laplacian}
+  At a local minimum $x_0$ of a $C^2$ function $f$, $\nab f(x_0) = 0$,
+  $\nab^2 f(X,X)(x_0) \ge 0$ for every vector field $X$ differentiable at
+  $x_0$, and $\Delta f(x_0) \ge 0$; for any covariant derivative, not only the
+  Levi-Civita connection.
+
+  \textbf{Proved on the model space} (a finite-dimensional normed space with
+  its flat tangent bundle); the manifold statement is this one transported
+  through a chart, since at a critical point the Hessian is
+  connection-independent. With it, the abstract maximum principle
+  \ref{thm:max-scalar} becomes the classical one for
+  $\partial_t u = \Delta u + F(u)$.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  On the line: if $g'' (t_0) < 0$ at a local minimum with $g'(t_0) = 0$,
+  then $g' < 0$ just to the right of $t_0$ and the mean value theorem gives
+  $g(t_1) < g(t_0)$ there (\texttt{deriv2\_nonneg\_of\_isLocalMin}). In a
+  normed space, restrict to the line $x_0 + tv$ to get
+  $D^2 f(x_0)(v,v) \ge 0$ (\texttt{fderiv2\_nonneg\_of\_isLocalMin}). For the
+  Hessian, $\nab^2 f(X,X) = X(Xf) - (\nab_X X) f$; the product rule gives
+  $X(Xf) = D^2f(X,X) + Df(DX\cdot X)$, and $Df(x_0) = 0$ kills both the second
+  term and the connection term. The Laplacian is a sum of such terms over an
+  orthonormal basis, whose extensions to sections are constant on the model
+  space.
+\end{proof}
 
 \begin{lemma}[Evolution of the curvature tensor]
   \label{lem:evolution-rm}
