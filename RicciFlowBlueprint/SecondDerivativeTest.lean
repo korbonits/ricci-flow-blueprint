@@ -152,6 +152,7 @@ theorem extend_model_space {x : E} (v : TangentSpace 𝓘(ℝ, E) x) (y : E) :
 
 variable [RiemannianBundle (fun (x : E) ↦ TangentSpace 𝓘(ℝ, E) x)]
 
+omit [CompleteSpace E] in
 -- BENCH: laplacian-nonneg-min
 /-- **The Laplacian is nonnegative at a local minimum** (model space): the trace of a
 nonnegative Hessian. This is the hypothesis the abstract maximum principle
