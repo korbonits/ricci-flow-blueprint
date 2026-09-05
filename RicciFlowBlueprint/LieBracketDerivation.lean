@@ -59,6 +59,7 @@ theorem lieBracket_apply_fun
 
 section ModelSpace
 
+omit [IsRCLikeNormedField 𝕜] in
 /-- On the model space, `mvfderiv` (the derivative of a map into a normed space,
 which `d%` denotes) is just `fderiv`. The `fromTangentSpace` identification is
 the identity. -/
@@ -66,6 +67,7 @@ theorem mvfderiv_eq_fderiv (g : E → F) (y : E) :
     mvfderiv 𝓘(𝕜, E) g y = fderiv 𝕜 g y := by
   simp [mvfderiv, mfderiv_eq_fderiv]; rfl
 
+omit [IsRCLikeNormedField 𝕜] in
 set_option backward.isDefEq.respectTransparency false in
 /-- On the model space the manifold bracket is the vector-space bracket. The
 transparency option is needed because `TangentSpace 𝓘(𝕜,E) x` is defeq to `E`
@@ -76,6 +78,7 @@ theorem mlieBracket_eq_lieBracket
   rw [← mlieBracketWithin_univ, mlieBracketWithin_eq_lieBracketWithin,
     lieBracketWithin_univ]
 
+omit [IsRCLikeNormedField 𝕜] in
 /-- The same collapse for plain `E → E` vector fields. `HasFDerivAt` needs a
 non-dependent codomain while `mlieBracketWithin` needs the dependent one; the
 two are defeq, and term-mode application bridges them where `simp`/`rw` cannot. -/

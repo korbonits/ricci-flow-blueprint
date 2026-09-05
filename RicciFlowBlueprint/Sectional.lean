@@ -17,6 +17,7 @@ variable
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
   [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
 
+omit [CompleteSpace E] [FiniteDimensional ℝ E] in
 /-- Workaround for the instance-through-type-synonym problem (lean4#9077), following the
 pattern of mathlib PR #36845: the inner product of two vector fields is differentiable at `x`
 when both fields are. -/
@@ -26,6 +27,7 @@ lemma mdiffAt_inner_vectorField [IsContMDiffRiemannianBundle I 1 E (fun (x : M) 
     MDiffAt (fun y ↦ ⟪X y, Y y⟫) x :=
   MDifferentiableAt.inner_bundle (E := TangentSpace I) (F := E) hX hY
 
+omit [CompleteSpace E] [FiniteDimensional ℝ E] in
 /-- `C^n` version of `mdiffAt_inner_vectorField`. -/
 lemma cmdiff_inner_vectorField {n : ℕ∞ω}
     [IsContMDiffRiemannianBundle I n E (fun (x : M) ↦ TangentSpace I x)]
@@ -64,13 +66,13 @@ theorem inner_curvature_self_right [ContMDiffCovariantDerivative cov 1]
       = (⟪cov (fun y ↦ cov Z y (Y y)) x (X x), Z x⟫ + ⟪cov Z x (Y x), cov Z x (X x)⟫)
         + (⟪cov Z x (X x), cov Z x (Y x)⟫ + ⟪Z x, cov (fun y ↦ cov Z y (Y y)) x (X x)⟫) := by
     rw [hdf Y, mvfderiv_add (mdiffAt_inner_vectorField hAx (hZm x))
-      (mdiffAt_inner_vectorField (hZm x) hAx), ContinuousLinearMap.add_apply,
+      (mdiffAt_inner_vectorField (hZm x) hAx), add_apply,
       hcov.mvfderiv_inner_eq X hAx (hZm x), hcov.mvfderiv_inner_eq X (hZm x) hAx]
   have e2 : d% (fun y ↦ d% (fun z ↦ ⟪Z z, Z z⟫) y (X y)) x (Y x)
       = (⟪cov (fun y ↦ cov Z y (X y)) x (Y x), Z x⟫ + ⟪cov Z x (X x), cov Z x (Y x)⟫)
         + (⟪cov Z x (Y x), cov Z x (X x)⟫ + ⟪Z x, cov (fun y ↦ cov Z y (X y)) x (Y x)⟫) := by
     rw [hdf X, mvfderiv_add (mdiffAt_inner_vectorField hBx (hZm x))
-      (mdiffAt_inner_vectorField (hZm x) hBx), ContinuousLinearMap.add_apply,
+      (mdiffAt_inner_vectorField (hZm x) hBx), add_apply,
       hcov.mvfderiv_inner_eq Y hBx (hZm x), hcov.mvfderiv_inner_eq Y (hZm x) hBx]
   -- the bracket term
   have ebr : d% (fun z ↦ ⟪Z z, Z z⟫) x (mlieBracket I X Y x)
@@ -122,6 +124,8 @@ theorem inner_curvature_right_skew [ContMDiffCovariantDerivative cov 1]
   linarith [real_inner_comm (cov.curvature X Y Z x) (W x),
     real_inner_comm (cov.curvature X Y W x) (Z x)]
 
+omit [CompleteSpace E] [FiniteDimensional ℝ E] [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+  [IsContMDiffRiemannianBundle I 2 E (fun (x : M) ↦ TangentSpace I x)] [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I] in
 /-- The curvature operator vanishes when its first two arguments agree. -/
 theorem curvature_self_left (X Z : Π y : M, TangentSpace I y) (x : M) :
     cov.curvature X X Z x = 0 := by
@@ -130,6 +134,8 @@ theorem curvature_self_left (X Z : Π y : M, TangentSpace I y) (x : M) :
     linear_combination (norm := module) h
   simpa using h2
 
+omit [FiniteDimensional ℝ E] [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+  [IsContMDiffRiemannianBundle I 2 E (fun (x : M) ↦ TangentSpace I x)] [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I] in
 /-- Constant-scalar homogeneity in the first slot. -/
 theorem curvature_smul_const_fst [ContMDiffCovariantDerivative cov 1]
     (a : ℝ) {X Y Z : Π y : M, TangentSpace I y} {x : M}
@@ -139,6 +145,8 @@ theorem curvature_smul_const_fst [ContMDiffCovariantDerivative cov 1]
   rw [h, cov.curvature_smul_left (fun _ ↦ a) X Y Z (mdifferentiableAt_const)
     hX (cov.mdiffAt_cov_apply hZ hX)]
 
+omit [FiniteDimensional ℝ E] [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+  [IsContMDiffRiemannianBundle I 2 E (fun (x : M) ↦ TangentSpace I x)] [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I] in
 /-- Constant-scalar homogeneity in the middle slot. -/
 theorem curvature_smul_const_snd [ContMDiffCovariantDerivative cov 1]
     (a : ℝ) {X Y Z : Π y : M, TangentSpace I y} {x : M}
@@ -286,6 +294,8 @@ theorem sectionalCurvature_basis_change [ContMDiffCovariantDerivative cov 1]
   rw [hnum, hden]
   exact mul_div_mul_left _ _ (pow_ne_zero 2 h)
 
+omit [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+  [IsContMDiffRiemannianBundle I 2 E (fun (x : M) ↦ TangentSpace I x)] in
 /-- Curvature depends on the first slot only through its value at `x`. -/
 theorem curvature_congr_fst [ContMDiffCovariantDerivative cov 1]
     {X X' V Z : Π y : M, TangentSpace I y} {x : M} (hZ : CMDiff 2 (T% Z))
@@ -293,6 +303,8 @@ theorem curvature_congr_fst [ContMDiffCovariantDerivative cov 1]
     cov.curvature X V Z x = cov.curvature X' V Z x :=
   (cov.tensorialAt_curvature_fst hZ x).pointwise hX hX' hxx
 
+omit [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+  [IsContMDiffRiemannianBundle I 2 E (fun (x : M) ↦ TangentSpace I x)] in
 /-- Curvature depends on the middle slot only through its value at `x`. -/
 theorem curvature_congr_snd [ContMDiffCovariantDerivative cov 1]
     {V Y Y' Z : Π y : M, TangentSpace I y} {x : M} (hZ : CMDiff 2 (T% Z))

@@ -95,34 +95,38 @@ private noncomputable def crossOB (x y : F) : F :=
 private noncomputable def crossL : F →ₗ[ℝ] F :=
   e.toBasis.constr ℝ ![β (e 1) (e 2), β (e 2) (e 0), β (e 0) (e 1)]
 
+omit [FiniteDimensional ℝ F] in
 private theorem crossL_apply₀ : crossL β e (e 0) = β (e 1) (e 2) := by
-  simpa [crossL, OrthonormalBasis.coe_toBasis] using
-    e.toBasis.constr_basis ℝ ![β (e 1) (e 2), β (e 2) (e 0), β (e 0) (e 1)] 0
+  simp [crossL]
 
+omit [FiniteDimensional ℝ F] in
 private theorem crossL_apply₁ : crossL β e (e 1) = β (e 2) (e 0) := by
-  simpa [crossL, OrthonormalBasis.coe_toBasis] using
-    e.toBasis.constr_basis ℝ ![β (e 1) (e 2), β (e 2) (e 0), β (e 0) (e 1)] 1
+  simp [crossL]
 
+omit [FiniteDimensional ℝ F] in
 private theorem crossL_apply₂ : crossL β e (e 2) = β (e 0) (e 1) := by
-  simpa [crossL, OrthonormalBasis.coe_toBasis] using
-    e.toBasis.constr_basis ℝ ![β (e 1) (e 2), β (e 2) (e 0), β (e 0) (e 1)] 2
+  simp [crossL]
 
+omit [FiniteDimensional ℝ F] in
 /-- Coordinates against an orthonormal basis are inner products, in the form
 used below. -/
 private theorem inner_basis (x : F) (i : Fin 3) : inner ℝ x (e i) = e.repr x i := by
   rw [real_inner_comm]
   exact (e.repr_apply_apply x i).symm
 
+omit [FiniteDimensional ℝ F] in
 /-- The cross product is orthogonal to its first factor. -/
 private theorem inner_crossOB_left (x y : F) : inner ℝ x (crossOB e x y) = 0 := by
   simp only [crossOB, inner_add_right, real_inner_smul_right, inner_basis]
   ring
 
+omit [FiniteDimensional ℝ F] in
 /-- The cross product is orthogonal to its second factor. -/
 private theorem inner_crossOB_right (x y : F) : inner ℝ y (crossOB e x y) = 0 := by
   simp only [crossOB, inner_add_right, real_inner_smul_right, inner_basis]
   ring
 
+omit [FiniteDimensional ℝ F] in
 /-- **The bracket factors through the cross product**: `[x,y] = L (x × y)`.
 Both sides are bilinear and agree on basis pairs (only alternation of `β` is
 used). This is the isomorphism `Λ²F ≅ F` doing its work; dimension 3 is
@@ -130,13 +134,12 @@ essential. -/
 private theorem bracket_eq_crossL (hβ : ∀ x, β x x = 0) (x y : F) :
     β x y = crossL β e (crossOB e x y) := by
   conv_lhs => rw [← e.sum_repr x, ← e.sum_repr y]
-  simp only [crossOB, map_sum, map_smulₛₗ, RingHom.id_apply, ContinuousLinearMap.coe_sum',
-    Finset.sum_apply, ContinuousLinearMap.coe_smul', Pi.smul_apply, Fin.sum_univ_three,
-    ContinuousLinearMap.add_apply, ContinuousLinearMap.smul_apply,
-    map_add, map_smul, crossL_apply₀, crossL_apply₁, crossL_apply₂, hβ,
+  simp only [crossOB, map_smulₛₗ, RingHom.id_apply, Fin.sum_univ_three, add_apply, smul_apply,
+    map_add, crossL_apply₀, crossL_apply₁, crossL_apply₂, hβ,
     skew_of_alt hβ (e 1) (e 2), skew_of_alt hβ (e 2) (e 0), skew_of_alt hβ (e 0) (e 1)]
   module
 
+omit [FiniteDimensional ℝ F] in
 /-- **Unimodularity says exactly that `L` is self-adjoint** — the crux of
 Milnor's Lemma 4.1. Tracing `ad eᵢ` in the orthonormal basis produces the
 difference of the two `(j,k)` off-diagonal entries of `L`; unimodularity kills
@@ -171,7 +174,6 @@ private theorem isSymmetric_crossL (hβ : ∀ x, β x x = 0) (huni : IsUnimodula
       first
         | exact real_inner_comm _ _
         | (rw [real_inner_comm]; linarith)
-        | linarith
   -- bilinear expansion
   intro x y
   conv_lhs => rw [← e.sum_repr x, ← e.sum_repr y]
@@ -219,8 +221,7 @@ theorem exists_orthonormalBasis_isMilnorFrame (hdim : finrank ℝ F = 3)
     simp only [OrthonormalBasis.coe_toBasis, Matrix.cons_val_zero]
     conv_lhs => rw [bracket_eq_crossL β e hβ, hv12, map_smul, hbe 0, smul_smul]
   · show β (b.toBasis 2) (b.toBasis 0) = _ • b.toBasis 1
-    simp only [OrthonormalBasis.coe_toBasis, Matrix.cons_val_one, Matrix.head_cons,
-      Matrix.cons_val_zero]
+    simp only [OrthonormalBasis.coe_toBasis, Matrix.cons_val_one, Matrix.cons_val_zero]
     conv_lhs => rw [bracket_eq_crossL β e hβ, hv20, map_smul, hbe 1, smul_smul]
   · show β (b.toBasis 0) (b.toBasis 1) = _ • b.toBasis 2
     simp only [OrthonormalBasis.coe_toBasis, Matrix.cons_val_two, Matrix.tail_cons,
@@ -259,13 +260,13 @@ theorem IsInnerProduct.exists_orthonormal_basis (hg : IsInnerProduct g) :
     Units.mk0 (Real.sqrt (g (v i) (v i)))⁻¹ (inv_ne_zero (hsqrt i))
   refine ⟨v.unitsSMul c, fun i j => ?_⟩
   rw [Basis.unitsSMul_apply, Basis.unitsSMul_apply, Units.smul_def, Units.smul_def,
-    map_smul, map_smul, ContinuousLinearMap.smul_apply, smul_eq_mul, smul_eq_mul]
+    map_smul, map_smul, smul_apply, smul_eq_mul, smul_eq_mul]
   rcases eq_or_ne i j with rfl | hij
-  · rw [if_pos rfl]
+  · rw [ite_eq_left rfl]
     simp only [c, Units.val_mk0]
     rw [← mul_assoc, ← mul_inv, Real.mul_self_sqrt (hpos i).le,
       inv_mul_cancel₀ (hpos i).ne']
-  · rw [if_neg hij, show (g (v i)) (v j) = 0 from hv hij, mul_zero, mul_zero]
+  · rw [ite_eq_right hij, show (g (v i)) (v j) = 0 from hv hij, mul_zero, mul_zero]
 
 variable (β) in
 /-- **Milnor's classification lemma (Lemma 4.1), bridged**: a 3-dimensional
@@ -286,7 +287,7 @@ theorem exists_milnorFrame (hg : IsInnerProduct g) (hdim : finrank ℝ E = 3)
   have hw : ∀ i j, g (w i) (w j) = if i = j then 1 else 0 := by
     intro i j
     rw [Basis.reindex_apply, Basis.reindex_apply, hw₀]
-    simp [Equiv.symm_apply_eq]
+    simp
   -- the coordinate model carrying `g` to the standard inner product
   let φ : E ≃ₗ[ℝ] EuclideanSpace ℝ (Fin 3) :=
     w.equivFun.trans (WithLp.linearEquiv 2 ℝ (Fin 3 → ℝ)).symm
