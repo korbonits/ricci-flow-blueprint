@@ -781,7 +781,7 @@ target actually requires.
 
 \begin{lemma}[First variation of the Levi-Civita connection]
   \label{lem:variation-connection}
-  \lean{RicciFlowBlueprint.inner_deriv_leviCivitaOfMetric_eq}
+  \lean{RicciFlowBlueprint.exists_hasDerivAt_leviCivitaOfMetricE_inner_eq}
   \leanok
   \uses{thm:levi-civita-unique, def:ricci-flow}
   Along a family of metrics $\g(t)$ with $\partial_t \g = h$, the Levi-Civita
@@ -794,14 +794,21 @@ target actually requires.
   $(\nab_X h)(Y,Z) = X(h(Y,Z)) - h(\nab_X Y, Z) - h(Y, \nab_X Z)$
   (\texttt{CovariantDerivative.covBilin}).
 
-  \textbf{Proved}, with two hypotheses stated in exactly the form used. First,
-  the space derivatives $X(\g(Y,Z))$ commute with $\partial_t$ for the three
-  fields at hand: a joint-regularity statement about $(t,x) \mapsto \g(t)(x)$,
-  which the pointwise-in-$t$ Definition \ref{def:ricci-flow} does not impose.
-  Second, $t \mapsto \nab^t_X Y(x)$ is differentiable; this follows from the
-  differentiability of $\g$ through the musical isomorphism and is not yet
-  proved. The scalar form
-  (\texttt{hasDerivAt\_inner\_leviCivitaOfMetric}) needs only the first.
+  \textbf{Proved}, including the differentiability of $t \mapsto \nab^t_X Y(x)$,
+  with one hypothesis stated in exactly the form used: the space derivatives
+  $X(\g(Y,Z))$ commute with $\partial_t$ for every test field $Z$
+  differentiable at $x$ (three permuted forms), a joint-regularity statement
+  about $(t,x) \mapsto \g(t)(x)$ which the pointwise-in-$t$ Definition
+  \ref{def:ricci-flow} does not impose. Differentiability of
+  $t \mapsto \nab^t_X Y(x)$ comes from the musical isomorphism:
+  $\nab^t_X Y = (\g_t)^{\sharp\,-1}(K_t)$ with $K_t = \g_t(\nab^t_X Y, \cdot)$
+  the Koszul functional; $(\g_t)^\sharp$ is invertible by positive
+  definiteness (\texttt{isInvertible\_innerE}), $K_t$ is differentiable
+  coordinatewise by the differentiated Koszul formula, and
+  \texttt{ContinuousLinearMap.inverse} is smooth at invertible points
+  (\texttt{exists\_hasDerivAt\_leviCivitaOfMetricE}). The scalar form
+  (\texttt{hasDerivAt\_inner\_leviCivitaOfMetric}) needs only the commutation
+  hypothesis for the one field $Z$ at hand.
 \end{lemma}
 
 \begin{proof}

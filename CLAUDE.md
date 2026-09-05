@@ -111,9 +111,13 @@ the Koszul formula in `t`. Two hypotheses are taken as stated, not derived:
 follows from (i)-type regularity via the musical isomorphism
 (`contDiffAt_map_inverse` on `innerE`), not yet done.
 
-**Next.** (a) Discharge (ii): `∇ᵗ_X Y = (g_t)♯(Koszul functional)`, so
-differentiability in `t` is the inverse of a differentiable CLM family
-applied to a differentiable functional. (b) Then `∂ₜ Rm` from `∂ₜ ∇`:
+**Done 2026-09-05:** (ii) discharged (`exists_hasDerivAt_leviCivitaOfMetricE`):
+`(g_t)♯` is invertible by positive definiteness (`isInvertible_innerE`,
+finrank of `E →L ℝ` via `Subspace.dual_finrank_eq`), the Koszul functional is
+differentiable coordinatewise, `contDiffAt_map_inverse` does the rest. The
+commutation hypothesis is now demanded for every test field `Z`.
+
+**Next.** `∂ₜ Rm` from `∂ₜ ∇`:
 `R = ∇∇ − ∇∇ − ∇_{[,]}`, differentiate termwise (`lem:evolution-rm`, first
 half; the second Bianchi rewrite to `Δ Rm + Q` is separate). With the
 second-derivative test, the tensor maximum principle (`thm:max-tensor`)
