@@ -23,8 +23,11 @@ connection, is `(∇_X h)(Y,Z) + (∇_Y h)(Z,X) − (∇_Z h)(X,Y) + 2 h(∇_X Y
 
 Differentiability of `t ↦ ∇ᵗ_X Y (x)` itself is a hypothesis of the vector
 form (`inner_deriv_leviCivitaOfMetric_eq`); it follows from that of `g` through
-the musical isomorphism, and is not proved here. The scalar form
-(`hasDerivAt_inner_leviCivitaOfMetric`) needs nothing of the kind.
+the musical isomorphism, `∇ᵗ_X Y = (g_t)♯⁻¹ (K_t)` with `K_t` the Koszul
+functional (`exists_hasDerivAt_leviCivitaOfMetricE`), given the commutation
+hypothesis for every test field `Z`. `exists_hasDerivAt_leviCivitaOfMetricE_inner_eq`
+packages both. The scalar form (`hasDerivAt_inner_leviCivitaOfMetric`) needs
+nothing of the kind.
 
 Argument order follows `CovariantDerivative`: `cov σ x (X x)` is `(∇_X σ) x`.
 -/
