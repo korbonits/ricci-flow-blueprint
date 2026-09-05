@@ -79,6 +79,20 @@ identity above is the trace of first Bianchi, and symmetry is the corollary when
 | Hamilton 1982, proved | years away |
 | Perelman's spherical space form theorem | terminal node |
 
+### Hamilton's curvature ODE — **closed** (`Pinching.lean`)
+
+The reaction ODE of the curvature evolution in dimension three,
+`λ̇ = λ² + μν, μ̇ = μ² + λν, ν̇ = ν² + λμ`, with no manifold in sight. The tensor
+maximum principle transfers these to the flow; that transfer is the missing part.
+
+| Node | Status |
+| --- | --- |
+| `le_preserved_lm`, `le_preserved_mn` | **proved** — the ordering `λ ≥ μ ≥ ν` is preserved |
+| `ricci_pos_preserved` | **proved** — positive Ricci curvature (`μ + ν > 0`) is preserved |
+| `bound_preserved` | **proved** — `λ ≤ C(μ + ν)` is preserved for `C ≥ 1/2` |
+| `pinching_antitone` | **proved** — `(λ − ν)(μ + ν)^{δ−1}` is nonincreasing for `δ(2C+1) ≤ 1`: Hamilton 1982, Theorem 10.1, the ODE half |
+| `nonpos_of_deriv_le_mul` | **proved** — linear Grönwall comparison, `f' ≤ a f`, `f 0 ≤ 0` ⇒ `f ≤ 0` |
+
 ### Left-invariant metrics — **closed** (`Homogeneous.lean`)
 
 | Node | Status |

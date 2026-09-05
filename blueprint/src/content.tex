@@ -758,13 +758,69 @@ maximum-principle estimates alone. Positive Ricci curvature is a strong enough
 hypothesis that the flow never forms a singularity in an interesting way: it
 shrinks to a round point.
 
+\begin{lemma}[Hamilton's curvature ODE in dimension three]
+  \label{lem:pinching-ode}
+  \lean{RicciFlowBlueprint.Pinching.IsCurvatureODE.pinching_antitone}
+  \leanok
+  In dimension three the curvature operator has three eigenvalues
+  $\lambda \ge \mu \ge \nu$, the Ricci eigenvalues are
+  $\mu+\nu, \lambda+\nu, \lambda+\mu$, and the reaction term
+  $\Rm^2 + \Rm^\#$ of the evolution equation \ref{lem:evolution-rm} is
+  diagonal in the same frame. The associated ODE is
+  \[
+    \dot\lambda = \lambda^2 + \mu\nu,\quad
+    \dot\mu = \mu^2 + \lambda\nu,\quad
+    \dot\nu = \nu^2 + \lambda\mu .
+  \]
+  Along its solutions on $[0,T]$:
+  \begin{enumerate}
+  \item the ordering $\lambda \ge \mu \ge \nu$ is preserved
+    (\texttt{le\_preserved\_lm}, \texttt{le\_preserved\_mn});
+  \item positive Ricci curvature, $\mu + \nu > 0$, is preserved
+    (\texttt{ricci\_pos\_preserved});
+  \item $\lambda \le C(\mu+\nu)$ is preserved for every $C \ge 1/2$
+    (\texttt{bound\_preserved});
+  \item given (1)--(3) at time $0$, for $0 \le \delta$ with
+    $\delta(2C+1) \le 1$ the ratio $(\lambda-\nu)/(\mu+\nu)^{1-\delta}$ is
+    nonincreasing (\texttt{pinching\_antitone}).
+  \end{enumerate}
+  Item (4) is the pinching estimate of Hamilton's paper (Theorem 10.1) for the
+  ODE: the traceless part of the curvature is dominated by a smaller power of
+  the scalar curvature, so wherever the curvature blows up it becomes
+  constant-sectional to leading order.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  Each quantity $f$ satisfies $\dot f = a f + (\text{a term of known sign})$
+  for a continuous $a$: $(\mu-\lambda)\dot{} = (\mu-\lambda)(\lambda+\mu-\nu)$
+  exactly; $(\mu+\nu)\dot{} = \lambda(\mu+\nu) + \mu^2+\nu^2$;
+  $(\lambda - C(\mu+\nu))\dot{} = \lambda(\lambda - C(\mu+\nu)) +
+  (\mu\nu - C(\mu^2+\nu^2))$ with the bracket $\le 0$ because
+  $\mu\nu \le (\mu^2+\nu^2)/2$. So $f e^{-\int a}$ is monotone, which is the
+  linear Grönwall comparison \texttt{nonpos\_of\_deriv\_le\_mul}. For (4),
+  the logarithmic derivative of the ratio is
+  $\delta\lambda + (\nu-\mu) - (1-\delta)(\mu^2+\nu^2)/(\mu+\nu)$, and with
+  $\lambda \le C(\mu+\nu)$, $\nu \le \mu$ and $\mu^2+\nu^2 \ge (\mu+\nu)^2/2$
+  this is at most $(\mu+\nu)\,(\delta(2C+1)-1)/2 \le 0$.
+
+  No manifold appears: this is the algebraic heart of Hamilton's theorem,
+  and everything else in the chapter is the machinery that transfers it from
+  the ODE to the flow.
+\end{proof}
+
 \begin{lemma}[Pinching in dimension three]
   \label{lem:pinching}
-  \uses{thm:max-tensor}
-  In dimension three the curvature operator has three eigenvalues, and positive
-  Ricci curvature is preserved by the flow. Moreover the eigenvalues pinch
-  together relative to their size: the traceless part of $\Ric$ is dominated by
-  $\scal^{1-\delta}$ for some $\delta > 0$.
+  \uses{thm:max-tensor, lem:pinching-ode}
+  In dimension three positive Ricci curvature is preserved by the flow, and
+  the eigenvalues pinch together relative to their size: the traceless part
+  of $\Ric$ is dominated by $\scal^{1-\delta}$ for some $\delta > 0$.
+
+  This is Lemma \ref{lem:pinching-ode} transported from the ODE to the PDE by
+  the tensor maximum principle \ref{thm:max-tensor}: the sets
+  $\{\mu+\nu \ge \epsilon\,\scal\}$, $\{\lambda \le C(\mu+\nu)\}$ and
+  $\{\lambda-\nu \le C'(\mu+\nu)^{1-\delta}\}$ are closed, convex, and
+  ODE-invariant. Only the transfer is missing.
 
   Special to dimension three, where the Weyl tensor vanishes and $\Rm$ is
   determined by $\Ric$. The higher-dimensional analogues (Hamilton 1986 in
