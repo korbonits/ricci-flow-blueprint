@@ -691,9 +691,88 @@ target actually requires.
   the whole road, and it is shared by every node below.
 \end{theorem}
 
+\begin{definition}[Second covariant derivative]
+  \label{def:hessian}
+  \lean{CovariantDerivative.hessian}
+  \leanok
+  \uses{def:curvature}
+  $\nab^2_{X,Y} Z = \nab_X \nab_Y Z - \nab_{\nab_X Y} Z$, and for a function
+  $\nab^2 f(X,Y) = X(Yf) - (\nab_X Y)f$. Both are tensorial in $X$ and $Y$
+  (\texttt{tensorialAt\_hessian\_fst/snd}), so the Hessian of a $C^2$ field at a
+  point is a bilinear map on $T_xM$ (\texttt{hessianAt}).
+\end{definition}
+
+\begin{lemma}[Ricci identity; symmetry of the Hessian]
+  \label{lem:ricci-identity}
+  \lean{CovariantDerivative.hessian_sub_hessian_swap}
+  \leanok
+  \uses{def:hessian, lem:derivation}
+  For a torsion-free connection,
+  $\nab^2_{X,Y} Z - \nab^2_{Y,X} Z = R(X,Y)Z$, and the Hessian of a $C^2$
+  function is symmetric (\texttt{hessianFun\_symm}).
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  Expanding the definitions, the difference is
+  $R(X,Y)Z + \nab_{[X,Y]}Z - \nab_{\nab_X Y - \nab_Y X} Z$, and torsion-freeness
+  kills the last two terms. For functions the antisymmetric part is
+  $[X,Y]f - (\nab_X Y - \nab_Y X)f$, and $[X,Y]f = X(Yf) - Y(Xf)$ is
+  Lemma \ref{lem:derivation}.
+\end{proof}
+
+\begin{definition}[Laplacian]
+  \label{def:laplacian}
+  \lean{CovariantDerivative.laplacian}
+  \leanok
+  \uses{def:hessian}
+  The rough Laplacian of a $C^2$ vector field is the metric trace of its
+  Hessian, $\Delta Z = \sum_i \nab^2_{e_i,e_i} Z$ over an orthonormal basis of
+  $T_xM$; it does not depend on the basis (\texttt{laplacian\_eq\_sum}, via
+  \texttt{OrthonormalBasis.sum\_apply\_self\_eq}, the statement that
+  $\sum_i B(e_i,e_i)$ is basis-independent for any bilinear $B$).
+
+  This is the operator the evolution equations below are written in, and it
+  is what supplies the differential inequality at a spatial minimum that the
+  abstract maximum principle \ref{thm:max-scalar} takes as its hypothesis;
+  the link is the second-derivative test, Lemma \ref{lem:second-derivative-test}.
+\end{definition}
+
+\begin{lemma}[Second-derivative test]
+  \label{lem:second-derivative-test}
+  \lean{RicciFlowBlueprint.laplacianFun_nonneg_of_isLocalMin_model}
+  \leanok
+  \uses{def:laplacian}
+  At a local minimum $x_0$ of a $C^2$ function $f$, $\nab f(x_0) = 0$,
+  $\nab^2 f(X,X)(x_0) \ge 0$ for every vector field $X$ differentiable at
+  $x_0$, and $\Delta f(x_0) \ge 0$; for any covariant derivative, not only the
+  Levi-Civita connection.
+
+  \textbf{Proved on the model space} (a finite-dimensional normed space with
+  its flat tangent bundle); the manifold statement is this one transported
+  through a chart, since at a critical point the Hessian is
+  connection-independent. With it, the abstract maximum principle
+  \ref{thm:max-scalar} becomes the classical one for
+  $\partial_t u = \Delta u + F(u)$.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  On the line: if $g'' (t_0) < 0$ at a local minimum with $g'(t_0) = 0$,
+  then $g' < 0$ just to the right of $t_0$ and the mean value theorem gives
+  $g(t_1) < g(t_0)$ there (\texttt{deriv2\_nonneg\_of\_isLocalMin}). In a
+  normed space, restrict to the line $x_0 + tv$ to get
+  $D^2 f(x_0)(v,v) \ge 0$ (\texttt{fderiv2\_nonneg\_of\_isLocalMin}). For the
+  Hessian, $\nab^2 f(X,X) = X(Xf) - (\nab_X X) f$; the product rule gives
+  $X(Xf) = D^2f(X,X) + Df(DX\cdot X)$, and $Df(x_0) = 0$ kills both the second
+  term and the connection term. The Laplacian is a sum of such terms over an
+  orthonormal basis, whose extensions to sections are constant on the model
+  space.
+\end{proof}
+
 \begin{lemma}[Evolution of the curvature tensor]
   \label{lem:evolution-rm}
-  \uses{def:ricci-flow, def:curvature}
+  \uses{def:ricci-flow, def:curvature, def:laplacian}
   Under the flow, $\partial_t \Rm = \Delta \Rm + Q(\Rm)$, where $Q$ is
   quadratic in the curvature operator.
 
@@ -705,17 +784,46 @@ target actually requires.
 
 \begin{theorem}[Scalar maximum principle]
   \label{thm:max-scalar}
-  \uses{def:ricci-flow}
+  \lean{RicciFlowBlueprint.MaximumPrinciple.le_of_deriv_ge_at_min}
+  \leanok
   A solution of $\partial_t u = \Delta u + \langle X, \nab u\rangle + F(u)$ on
-  a closed manifold is bounded below by the solution of the associated ODE
-  $\dot\phi = F(\phi)$ with the same initial datum.
+  a closed manifold, with $F$ Lipschitz, is bounded below by the solution of
+  the associated ODE $\dot\phi = F(\phi)$ with $\phi(0) \le \min u(0,\cdot)$;
+  and above by it when $\phi(0) \ge \max u(0,\cdot)$.
+
+  \textbf{Proved, abstractly.} The Laplacian enters the classical proof at
+  one point only: at a spatial minimum $x_0$ of $u(t,\cdot)$, $\nab u = 0$ and
+  $\Delta u \ge 0$, hence $\partial_t u(t,x_0) \ge F(u(t,x_0))$. The
+  formalised statement takes exactly that as its hypothesis, on an arbitrary
+  compact space: if at every spatial minimum $x_0$ of $u(t,\cdot)$ one has
+  $F(u(t,x_0)) \le \partial_t u(t,x_0)$, then $\phi \le u$. No Laplacian and
+  no manifold appear; once the Laplacian exists in Mathlib, the classical
+  statement is this theorem plus the second-derivative test at a minimum.
 \end{theorem}
+
+\begin{proof}
+  \leanok
+  Perturb to $\psi_\epsilon = \phi - \epsilon e^{(2K+1)t}$, a strict
+  subsolution by the Lipschitz bound: $\dot\psi_\epsilon < F(\psi_\epsilon)$.
+  If $u \ge \psi_\epsilon$ failed, the set of times at which it fails is closed
+  (it is the projection of a compact subset of $[0,T] \times M$), so there is a
+  first time $t_0 > 0$ and a point $x_0$ with $u(t_0,x_0) = \psi_\epsilon(t_0)$.
+  Then $x_0$ is a spatial minimum of $u(t_0,\cdot)$, the left derivative of
+  $u(\cdot,x_0) - \psi_\epsilon$ at $t_0$ is $\le 0$, but the differential
+  inequality makes it $\ge \epsilon (K+1) e^{(2K+1)t_0} > 0$. Let
+  $\epsilon \to 0$. The upper bound is the same argument applied to $-u$.
+\end{proof}
 
 \begin{theorem}[Tensor maximum principle]
   \label{thm:max-tensor}
   \uses{thm:max-scalar, lem:evolution-rm}
   Hamilton's maximum principle for symmetric tensors: a closed convex subset of
   the bundle preserved by the ODE $\dot{\Rm} = Q(\Rm)$ is preserved by the PDE.
+
+  Same skeleton as the proof of \ref{thm:max-scalar}, with a supporting
+  half-space of the convex set in place of the half-line $[\phi(t),\infty)$
+  and the evolution equation \ref{lem:evolution-rm} supplying the
+  differential inequality at a first touching point.
 
   This is the workhorse. Every curvature-positivity statement in the subject is
   an instance of it, including the one Hamilton needs in dimension three.
@@ -758,13 +866,69 @@ maximum-principle estimates alone. Positive Ricci curvature is a strong enough
 hypothesis that the flow never forms a singularity in an interesting way: it
 shrinks to a round point.
 
+\begin{lemma}[Hamilton's curvature ODE in dimension three]
+  \label{lem:pinching-ode}
+  \lean{RicciFlowBlueprint.Pinching.IsCurvatureODE.pinching_antitone}
+  \leanok
+  In dimension three the curvature operator has three eigenvalues
+  $\lambda \ge \mu \ge \nu$, the Ricci eigenvalues are
+  $\mu+\nu, \lambda+\nu, \lambda+\mu$, and the reaction term
+  $\Rm^2 + \Rm^\#$ of the evolution equation \ref{lem:evolution-rm} is
+  diagonal in the same frame. The associated ODE is
+  \[
+    \dot\lambda = \lambda^2 + \mu\nu,\quad
+    \dot\mu = \mu^2 + \lambda\nu,\quad
+    \dot\nu = \nu^2 + \lambda\mu .
+  \]
+  Along its solutions on $[0,T]$:
+  \begin{enumerate}
+  \item the ordering $\lambda \ge \mu \ge \nu$ is preserved
+    (\texttt{le\_preserved\_lm}, \texttt{le\_preserved\_mn});
+  \item positive Ricci curvature, $\mu + \nu > 0$, is preserved
+    (\texttt{ricci\_pos\_preserved});
+  \item $\lambda \le C(\mu+\nu)$ is preserved for every $C \ge 1/2$
+    (\texttt{bound\_preserved});
+  \item given (1)--(3) at time $0$, for $0 \le \delta$ with
+    $\delta(2C+1) \le 1$ the ratio $(\lambda-\nu)/(\mu+\nu)^{1-\delta}$ is
+    nonincreasing (\texttt{pinching\_antitone}).
+  \end{enumerate}
+  Item (4) is the pinching estimate of Hamilton's paper (Theorem 10.1) for the
+  ODE: the traceless part of the curvature is dominated by a smaller power of
+  the scalar curvature, so wherever the curvature blows up it becomes
+  constant-sectional to leading order.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  Each quantity $f$ satisfies $\dot f = a f + (\text{a term of known sign})$
+  for a continuous $a$: $(\mu-\lambda)\dot{} = (\mu-\lambda)(\lambda+\mu-\nu)$
+  exactly; $(\mu+\nu)\dot{} = \lambda(\mu+\nu) + \mu^2+\nu^2$;
+  $(\lambda - C(\mu+\nu))\dot{} = \lambda(\lambda - C(\mu+\nu)) +
+  (\mu\nu - C(\mu^2+\nu^2))$ with the bracket $\le 0$ because
+  $\mu\nu \le (\mu^2+\nu^2)/2$. So $f e^{-\int a}$ is monotone, which is the
+  linear Grönwall comparison \texttt{nonpos\_of\_deriv\_le\_mul}. For (4),
+  the logarithmic derivative of the ratio is
+  $\delta\lambda + (\nu-\mu) - (1-\delta)(\mu^2+\nu^2)/(\mu+\nu)$, and with
+  $\lambda \le C(\mu+\nu)$, $\nu \le \mu$ and $\mu^2+\nu^2 \ge (\mu+\nu)^2/2$
+  this is at most $(\mu+\nu)\,(\delta(2C+1)-1)/2 \le 0$.
+
+  No manifold appears: this is the algebraic heart of Hamilton's theorem,
+  and everything else in the chapter is the machinery that transfers it from
+  the ODE to the flow.
+\end{proof}
+
 \begin{lemma}[Pinching in dimension three]
   \label{lem:pinching}
-  \uses{thm:max-tensor}
-  In dimension three the curvature operator has three eigenvalues, and positive
-  Ricci curvature is preserved by the flow. Moreover the eigenvalues pinch
-  together relative to their size: the traceless part of $\Ric$ is dominated by
-  $\scal^{1-\delta}$ for some $\delta > 0$.
+  \uses{thm:max-tensor, lem:pinching-ode}
+  In dimension three positive Ricci curvature is preserved by the flow, and
+  the eigenvalues pinch together relative to their size: the traceless part
+  of $\Ric$ is dominated by $\scal^{1-\delta}$ for some $\delta > 0$.
+
+  This is Lemma \ref{lem:pinching-ode} transported from the ODE to the PDE by
+  the tensor maximum principle \ref{thm:max-tensor}: the sets
+  $\{\mu+\nu \ge \epsilon\,\scal\}$, $\{\lambda \le C(\mu+\nu)\}$ and
+  $\{\lambda-\nu \le C'(\mu+\nu)^{1-\delta}\}$ are closed, convex, and
+  ODE-invariant. Only the transfer is missing.
 
   Special to dimension three, where the Weyl tensor vanishes and $\Rm$ is
   determined by $\Ric$. The higher-dimensional analogues (Hamilton 1986 in

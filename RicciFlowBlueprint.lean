@@ -9,4 +9,8 @@ import RicciFlowBlueprint.LieBracketDerivation
 import RicciFlowBlueprint.Sectional
 import RicciFlowBlueprint.Scalar
 import RicciFlowBlueprint.Hamilton
+import RicciFlowBlueprint.Pinching
+import RicciFlowBlueprint.MaximumPrinciple
+import RicciFlowBlueprint.Hessian
+import RicciFlowBlueprint.SecondDerivativeTest
 import RicciFlowBlueprint.Flow

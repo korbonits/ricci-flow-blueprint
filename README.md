@@ -79,6 +79,39 @@ identity above is the trace of first Bianchi, and symmetry is the corollary when
 | Hamilton 1982, proved | years away |
 | Perelman's spherical space form theorem | terminal node |
 
+### Hamilton's curvature ODE — **closed** (`Pinching.lean`)
+
+The reaction ODE of the curvature evolution in dimension three,
+`λ̇ = λ² + μν, μ̇ = μ² + λν, ν̇ = ν² + λμ`, with no manifold in sight. The tensor
+maximum principle transfers these to the flow; that transfer is the missing part.
+
+| Node | Status |
+| --- | --- |
+| `le_preserved_lm`, `le_preserved_mn` | **proved** — the ordering `λ ≥ μ ≥ ν` is preserved |
+| `ricci_pos_preserved` | **proved** — positive Ricci curvature (`μ + ν > 0`) is preserved |
+| `bound_preserved` | **proved** — `λ ≤ C(μ + ν)` is preserved for `C ≥ 1/2` |
+| `pinching_antitone` | **proved** — `(λ − ν)(μ + ν)^{δ−1}` is nonincreasing for `δ(2C+1) ≤ 1`: Hamilton 1982, Theorem 10.1, the ODE half |
+| `nonpos_of_deriv_le_mul` | **proved** — linear Grönwall comparison, `f' ≤ a f`, `f 0 ≤ 0` ⇒ `f ≤ 0` |
+
+### Second covariant derivative and Laplacian (`Hessian.lean`)
+
+| Node | Status |
+| --- | --- |
+| `hessian`, `hessianAt` | **defined** — `∇²_{X,Y} Z`, tensorial in both slots, hence a bilinear map at each point |
+| `hessian_sub_hessian_swap` | **proved** — the Ricci identity `∇²_{X,Y} Z − ∇²_{Y,X} Z = R(X,Y) Z` for torsion-free connections |
+| `hessianFun`, `hessianFun_symm` | **proved** — the Hessian of a `C²` function is symmetric for torsion-free connections |
+| `laplacian`, `laplacian_eq_sum` | **defined** — the metric trace of the Hessian, basis-independent |
+| `laplacianFun` | **defined** — the Laplacian of a function |
+| `deriv2_nonneg_of_isLocalMin`, `fderiv2_nonneg_of_isLocalMin` | **proved** — the second-derivative test on the line and in a normed space (`SecondDerivativeTest.lean`) |
+| `hessianFun_nonneg_of_isLocalMin_model`, `laplacianFun_nonneg_of_isLocalMin_model` | **proved** — `∇²f(X,X) ≥ 0` and `Δf ≥ 0` at a local minimum, model space, any connection: the hypothesis the abstract maximum principle asks for |
+
+### The scalar maximum principle — **proved, abstractly** (`MaximumPrinciple.lean`)
+
+| Node | Status |
+| --- | --- |
+| `le_of_deriv_ge_at_min` | **proved** — on a compact space, if `F(u) ≤ ∂ₜu` at every spatial minimum and `φ' = F(φ)`, `φ 0 ≤ u 0`, then `φ ≤ u`. The Laplacian's only role in the classical proof is to supply the hypothesis at a minimum |
+| `le_of_deriv_le_at_max` | **proved** — the mirrored upper bound |
+
 ### Left-invariant metrics — **closed** (`Homogeneous.lean`)
 
 | Node | Status |
