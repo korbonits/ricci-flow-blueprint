@@ -99,6 +99,40 @@ Chapter \ref{chap:milnor}, Milnor's curvature formulas.
   here.)
 \end{proof}
 
+\begin{lemma}[Second Bianchi identity]
+  \label{lem:bianchi-second}
+  \lean{CovariantDerivative.bianchi_second}
+  \leanok
+  \uses{def:curvature, lem:bianchi-first}
+  For a torsion-free connection,
+  $(\nab_X \Riem)(Y,Z)W + (\nab_Y \Riem)(Z,X)W + (\nab_Z \Riem)(X,Y)W = 0$,
+  where $(\nab_X \Riem)(Y,Z)W = \nab_X(\Riem(Y,Z)W) - \Riem(\nab_X Y, Z)W
+  - \Riem(Y, \nab_X Z)W - \Riem(Y,Z)\nab_X W$
+  (\texttt{CovariantDerivative.covCurvature}).
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  \textbf{Proved}, for a $C^2$ connection, $C^2$ fields $X, Y, Z$ and a $C^3$
+  field $W$, with every differentiability side condition discharged. No metric
+  is involved.
+
+  Expand everything in iterated covariant derivatives of $W$. The twelve
+  third-order terms $\nab\nab\nab W$ cancel in pairs, as do the six terms
+  $\nab_X \nab_{[Y,Z]} W$ and $\nab_{[Y,Z]} \nab_X W$ once torsion-freeness has
+  turned $\nab_{\nab_X Y} - \nab_{\nab_Y X}$ into $\nab_{[X,Y]}$ in the
+  direction slot and $\nab_Z \nab_{\nab_X Y} W - \nab_Z \nab_{\nab_Y X} W$
+  into $\nab_Z \nab_{[X,Y]} W$ as sections. What survives is
+  $\nab_W$ applied to $[[X,Y],Z] + [[Y,Z],X] + [[Z,X],Y]$, which is Jacobi.
+
+  The regularity is what makes the sections differentiable: a $C^2$
+  connection sends the $C^3$ section $W$ to a $C^2$ section $\nab_Z W$
+  (\texttt{contMDiff\_cov\_apply}), so $\nab_Y \nab_Z W$ is differentiable and
+  $\nab_X$ of it is meaningful. As for the first identity, brackets of $C^2$
+  fields are differentiable, which the second application of torsion-freeness
+  needs.
+\end{proof}
+
 \begin{lemma}[The Lie bracket is a derivation]
   \label{lem:derivation}
   \lean{VectorField.mlieBracket_apply_fun}
@@ -881,7 +915,7 @@ target actually requires.
 
 \begin{lemma}[Evolution of the curvature tensor]
   \label{lem:evolution-rm}
-  \uses{def:ricci-flow, def:curvature, def:laplacian, lem:variation-connection, lem:variation-curvature}
+  \uses{def:ricci-flow, def:curvature, def:laplacian, lem:variation-connection, lem:variation-curvature, lem:bianchi-second}
   Under the flow, $\partial_t \Rm = \Delta \Rm + Q(\Rm)$, where $Q$ is
   quadratic in the curvature operator.
 
@@ -892,9 +926,10 @@ target actually requires.
 
   \textbf{First half done.} Lemma \ref{lem:variation-curvature} gives
   $\partial_t \Rm$ as $\nab \dot A$, second covariant derivatives of
-  $h = -2\Ric$. What remains is the second Bianchi identity, which rewrites
-  the antisymmetrised $\nab^2 \Ric$ as $\Delta \Rm$ plus terms quadratic
-  in $\Rm$.
+  $h = -2\Ric$. The second Bianchi identity is Lemma \ref{lem:bianchi-second}.
+  What remains is its trace against the metric, which rewrites the
+  antisymmetrised $\nab^2 \Ric$ as $\Delta \Rm$ plus terms quadratic in
+  $\Rm$.
 \end{lemma}
 
 \begin{theorem}[Scalar maximum principle]
