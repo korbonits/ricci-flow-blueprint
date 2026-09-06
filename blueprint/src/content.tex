@@ -934,8 +934,9 @@ target actually requires.
 
 \begin{theorem}[Scalar maximum principle]
   \label{thm:max-scalar}
-  \lean{RicciFlowBlueprint.MaximumPrinciple.le_of_deriv_ge_at_min}
+  \lean{RicciFlowBlueprint.MaximumPrinciple.le_of_deriv_ge_at_min, RicciFlowBlueprint.MaximumPrinciple.le_of_laplacian}
   \leanok
+  \uses{def:laplacian, lem:second-derivative-test}
   A solution of $\partial_t u = \Delta u + \langle X, \nab u\rangle + F(u)$ on
   a closed manifold, with $F$ Lipschitz, is bounded below by the solution of
   the associated ODE $\dot\phi = F(\phi)$ with $\phi(0) \le \min u(0,\cdot)$;
@@ -949,6 +950,15 @@ target actually requires.
   $F(u(t,x_0)) \le \partial_t u(t,x_0)$, then $\phi \le u$. No Laplacian and
   no manifold appear; once the Laplacian exists in Mathlib, the classical
   statement is this theorem plus the second-derivative test at a minimum.
+
+  \textbf{And on a manifold.} With the Laplacian of Definition
+  \ref{def:laplacian} and the second-derivative test
+  (Lemma \ref{lem:second-derivative-test}), the hypothesis at a minimum is
+  discharged: \texttt{le\_of\_laplacian} is the statement for
+  $\partial_t u = \Delta u + F(u)$ on a closed Riemannian manifold with
+  $u(t,\cdot)$ of class $C^2$, for any connection. The gradient term
+  $\langle X, \nab u\rangle$ is not yet included: it needs $\nab u = 0$ at a
+  minimum, which is the first-derivative test on a manifold.
 \end{theorem}
 
 \begin{proof}
@@ -966,9 +976,9 @@ target actually requires.
 
 \begin{theorem}[Tensor maximum principle]
   \label{thm:max-tensor}
-  \lean{RicciFlowBlueprint.MaximumPrinciple.mem_of_deriv_le_at_max}
+  \lean{RicciFlowBlueprint.MaximumPrinciple.mem_of_deriv_le_at_max, RicciFlowBlueprint.MaximumPrinciple.mem_of_laplacian}
   \leanok
-  \uses{thm:max-scalar, lem:evolution-rm}
+  \uses{thm:max-scalar, lem:evolution-rm, def:laplacian, lem:second-derivative-test}
   Hamilton's maximum principle for symmetric tensors: a closed convex subset of
   the bundle preserved by the ODE $\dot{\Rm} = Q(\Rm)$ is preserved by the PDE.
 
@@ -991,6 +1001,16 @@ target actually requires.
   and no tensor bundle appear; the trivial bundle with fibre $V$ is the case
   Hamilton uses in dimension three, and the general vector-bundle version is the
   same argument in a parallel frame.
+
+  \textbf{And on a manifold.} \texttt{mem\_of\_laplacian} is the statement on
+  a closed Riemannian manifold for the trivial bundle $M \times V$, the equation
+  $\partial_t u = \Delta u + F(u)$ taken componentwise, $\langle n,
+  \partial_t u\rangle = \Delta\langle n, u\rangle + \langle n, F(u)\rangle$
+  for every fixed $n \in V$, with $u(t,\cdot)$ of class $C^2$. A maximum of
+  $\langle n, u\rangle$ is a minimum of $\langle -n, u\rangle$, so the
+  second-derivative test applies unchanged. Hamilton's setting, a bundle with
+  an evolving fibre metric, needs the Laplacian on sections together with
+  Uhlenbeck's trick.
 \end{theorem}
 
 \begin{proof}

@@ -122,6 +122,7 @@ maximum principle transfers these to the flow; that transfer is the missing part
 | `le_of_deriv_le_at_max` | **proved** — the mirrored upper bound |
 | `mem_of_deriv_le_at_max` | **proved** — **Hamilton's tensor maximum principle**: `K` closed convex in a complete inner product space, `⟪n, ∂ₜu⟫ ≤ ⟪n, F(u)⟫` at every spatial maximum of `⟪n, u⟫`, `K` preserved by the ODE in Nagumo's form; then `u(0) ∈ K ⇒ u(t) ∈ K`. Supporting half-space of the nearest point in place of the half-line |
 | `subtangential_of_invariant` | **proved** — the easy direction of Nagumo: invariance along solution curves gives `⟪n, F p⟫ ≤ 0` for outward normals |
+| `le_of_laplacian`, `le_of_laplacian'`, `mem_of_laplacian` | **proved** — the scalar and tensor principles **on a closed Riemannian manifold**, for `∂ₜu = Δu + F(u)` with `u(t,·)` `C²` (`ManifoldMaximumPrinciple.lean`): the abstract versions plus the second-derivative test. The tensor case is the trivial bundle `M × V`, the equation stated componentwise |
 
 ### Left-invariant metrics — **closed** (`Homogeneous.lean`)
 
