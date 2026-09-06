@@ -204,6 +204,22 @@ noncomputable def laplacianFun (f : M → ℝ) (x : M) : ℝ :=
   ∑ i, cov.hessianFun f (FiberBundle.extend E (stdOrthonormalBasis ℝ (TangentSpace I x) i))
     (FiberBundle.extend E (stdOrthonormalBasis ℝ (TangentSpace I x) i)) x
 
+omit [CompleteSpace E] [FiniteDimensional ℝ E] [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+  [ContMDiffCovariantDerivative cov 1] in
+/-- The Hessian of a function is odd: `∇²(-f) = -∇²f`. -/
+theorem hessianFun_neg (f : M → ℝ) (X Y : Π y : M, TangentSpace I y) (x : M) :
+    cov.hessianFun (-f) X Y x = -cov.hessianFun f X Y x := by
+  simp only [hessianFun, mvfderiv_neg, _root_.neg_apply]
+  rw [show (fun y ↦ -(mvfderiv I f y (Y y))) = -(fun y ↦ mvfderiv I f y (Y y)) from rfl,
+    mvfderiv_neg, _root_.neg_apply]
+  ring
+
+omit [CompleteSpace E] [ContMDiffCovariantDerivative cov 1] in
+/-- The Laplacian of a function is odd: `Δ(-f) = -Δf`. -/
+theorem laplacianFun_neg (f : M → ℝ) (x : M) :
+    cov.laplacianFun (-f) x = -cov.laplacianFun f x := by
+  simp only [laplacianFun, hessianFun_neg, Finset.sum_neg_distrib]
+
 omit [CompleteSpace E] in
 /-- The Laplacian is the trace of the Hessian over any orthonormal basis. -/
 theorem laplacian_eq_sum {Z : Π y : M, TangentSpace I y} (hZ : CMDiff 2 (T% Z)) {x : M}

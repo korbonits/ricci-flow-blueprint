@@ -9,6 +9,11 @@ Poincaré conjecture as the case `Γ = 1`.
 
 **Rendered blueprint: https://korbonits.github.io/ricci-flow-blueprint/**
 
+CI runs on every pull request: `lake build` with warnings as errors, an axiom
+check on every declaration the blueprint cites (`scripts/check_axioms.py`), and
+the blueprint itself (PDF with the log checked for errors and missing glyphs,
+web, `checkdecls`). The site deploys from `main` only.
+
 ## What is and isn't here
 
 The obstacle is usually said to be analysis, and eventually it is — but not
@@ -108,13 +113,17 @@ maximum principle transfers these to the flow; that transfer is the missing part
 | `inner_deriv_leviCivitaOfMetric_eq` | **proved** — first variation of the Levi-Civita connection along a family of metrics, `g(∂ₜ∇_X Y, Z) = ½[(∇_X h)(Y,Z) + (∇_Y h)(Z,X) − (∇_Z h)(X,Y)]`, by differentiating the Koszul formula (`Variation.lean`); `koszul_bilin_eq` is the algebraic core |
 | `curvature_eq_add_covEnd` | **proved** — curvature of a perturbed connection, `R' = R + (∇_X A)(Y,Z) − (∇_Y A)(X,Z) + A(X,A(Y,Z)) − A(Y,A(X,Z))` for `∇' = ∇ + A`, `∇` torsion-free (`CurvatureVariation.lean`) |
 | `hasDerivAt_curvatureE_leviCivitaOfMetric` | **proved** — first variation of the curvature along a family of metrics, `∂ₜ Rm(X,Y)Z = (∇_X Ȧ)(Y,Z) − (∇_Y Ȧ)(X,Z)` with `Ȧ = ∂ₜ∇` characterised by `inner_derivDifferenceE_eq`; the first half of `lem:evolution-rm` |
+| `metricTraceE`, `hasDerivAt_metricTraceE` | **proved** — the metric trace `tr_g B = tr(g♯⁻¹ B♭) = ∑ᵢ B(eᵢ,eᵢ)` and its time derivative `∂ₜ tr_{g_t} B_t = tr_g Ḃ − ⟨h, B⟩_g` along `∂ₜ g = h` (`MetricTrace.lean`); `hasDerivAt_inverse_innerE` is `∂ₜ g⁻¹ = −g⁻¹ h g⁻¹` |
 
-### The scalar maximum principle — **proved, abstractly** (`MaximumPrinciple.lean`)
+### The maximum principles — **proved, abstractly** (`MaximumPrinciple.lean`, `TensorMaximumPrinciple.lean`)
 
 | Node | Status |
 | --- | --- |
 | `le_of_deriv_ge_at_min` | **proved** — on a compact space, if `F(u) ≤ ∂ₜu` at every spatial minimum and `φ' = F(φ)`, `φ 0 ≤ u 0`, then `φ ≤ u`. The Laplacian's only role in the classical proof is to supply the hypothesis at a minimum |
 | `le_of_deriv_le_at_max` | **proved** — the mirrored upper bound |
+| `mem_of_deriv_le_at_max` | **proved** — **Hamilton's tensor maximum principle**: `K` closed convex in a complete inner product space, `⟪n, ∂ₜu⟫ ≤ ⟪n, F(u)⟫` at every spatial maximum of `⟪n, u⟫`, `K` preserved by the ODE in Nagumo's form; then `u(0) ∈ K ⇒ u(t) ∈ K`. Supporting half-space of the nearest point in place of the half-line |
+| `subtangential_of_invariant` | **proved** — the easy direction of Nagumo: invariance along solution curves gives `⟪n, F p⟫ ≤ 0` for outward normals |
+| `le_of_laplacian`, `le_of_laplacian'`, `mem_of_laplacian` | **proved** — the scalar and tensor principles **on a closed Riemannian manifold**, for `∂ₜu = Δu + F(u)` with `u(t,·)` `C²` (`ManifoldMaximumPrinciple.lean`): the abstract versions plus the second-derivative test. The tensor case is the trivial bundle `M × V`, the equation stated componentwise |
 
 ### Left-invariant metrics — **closed** (`Homogeneous.lean`)
 

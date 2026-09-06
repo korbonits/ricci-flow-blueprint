@@ -11,6 +11,12 @@ permissions:
   pages: write
   id-token: write
 
+env:
+  # The TeX distribution used for `leanblueprint pdf` (xelatex + latexmk). A fixed TinyTeX
+  # bundle downloads in seconds and is what the PDF is verified against locally;
+  # `texlive-full` took longer to install than the Lean build.
+  TINYTEX_URL: https://github.com/rstudio/tinytex-releases/releases/download/v2026.09/TinyTeX-v2026.09.tar.gz
+
 jobs:
   lean:
     runs-on: ubuntu-latest
@@ -45,6 +51,12 @@ jobs:
             echo '::error::lake build produced warnings'; exit 1
           fi
 
+      - name: Check axioms
+        # Every declaration the blueprint points at rests on propext, Classical.choice,
+        # Quot.sound only, and the project declares no axioms of its own. `sorry` is
+        # already caught above (it is a warning).
+        run: python3 scripts/check_axioms.py
+
       - name: Save project oleans
         uses: actions/cache/save@v4
         if: always()
@@ -52,12 +64,13 @@ jobs:
           path: .lake/build
           key: lake-build-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ hashFiles('RicciFlowBlueprint/**/*.lean', 'RicciFlowBlueprint.lean') }}
 
-  pages:
+  blueprint:
+    # Runs on pull requests too: a wrong `\lean{}` name, an undefined macro or a TeX error
+    # fails the PR, not the deploy after the merge.
     needs: lean
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     concurrency:
-      group: pages
+      group: blueprint-${{ github.ref }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
@@ -86,12 +99,28 @@ jobs:
       - name: Install blueprint tooling
         run: |
           sudo apt-get update
-          sudo apt-get install -y graphviz libgraphviz-dev texlive-full
+          sudo apt-get install -y graphviz libgraphviz-dev
           pip install leanblueprint
+
+      - name: Install TeX (TinyTeX)
+        run: |
+          mkdir -p "$HOME/tinytex"
+          curl -sSfL "$TINYTEX_URL" | tar xz -C "$HOME/tinytex"
+          echo "$HOME/tinytex/.TinyTeX/bin/x86_64-linux" >> "$GITHUB_PATH"
 
       - name: Build blueprint
         run: |
           leanblueprint pdf
+          # A missing glyph is not a LaTeX error: it is silently dropped from the PDF.
+          # Fail on it, and on any error the log records.
+          if grep -q 'Missing character' blueprint/print/print.log; then
+            grep 'Missing character' blueprint/print/print.log | sort -u
+            echo '::error::the PDF is missing glyphs (use math mode for subscripts in \texttt)'; exit 1
+          fi
+          if grep -q '^!' blueprint/print/print.log; then
+            grep -A3 '^!' blueprint/print/print.log
+            echo '::error::LaTeX reported errors'; exit 1
+          fi
           leanblueprint web
           leanblueprint checkdecls
           # plasTeX writes to blueprint/web (plastex.cfg `directory=../web/`,
@@ -99,13 +128,17 @@ jobs:
           cp blueprint/print/print.pdf blueprint/web/blueprint.pdf
 
       - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
         with:
           path: blueprint/web
 
   deploy:
-    needs: pages
+    needs: blueprint
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

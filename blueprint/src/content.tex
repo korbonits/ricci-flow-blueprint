@@ -913,9 +913,49 @@ target actually requires.
   statement carries no existential.
 \end{proof}
 
+\begin{lemma}[Variation of the metric trace]
+  \label{lem:metric-trace-variation}
+  \lean{RicciFlowBlueprint.hasDerivAt_metricTraceE}
+  \leanok
+  \uses{def:scalar, lem:variation-connection}
+  For a metric $\g$ on $T_xM$ and a bilinear form $B$, write
+  $\operatorname{tr}_\g B = \sum_i B(e_i,e_i)$ over a $\g$-orthonormal basis,
+  equivalently the trace of the endomorphism $\g^{\sharp\,-1} B^\flat$. Along a
+  family of metrics with $\partial_t \g = h$ and a family of forms with
+  $\partial_t B = \dot B$,
+  \[
+    \partial_t \operatorname{tr}_{\g_t} B_t
+      = \operatorname{tr}_\g \dot B - \langle h, B\rangle_\g,
+    \qquad
+    \langle h, B\rangle_\g = \sum_{i,j} B(e_i,e_j)\, h(e_j,e_i).
+  \]
+  This is what turns Lemma \ref{lem:variation-curvature} into the variations of
+  $\Ric = \operatorname{tr}_\g \Rm$ and $R = \operatorname{tr}_\g \Ric$; under
+  the flow $h = -2\Ric$, and the correction term is the $2|\Ric|^2$ of
+  $\partial_t R = \Delta R + 2|\Ric|^2$.
+
+  \textbf{Proved}, at a point, on the model space $E = T_xM$
+  (\texttt{MetricTrace.lean}). The trace is defined as
+  $\operatorname{tr}(\g^{\sharp\,-1} \circ B^\flat)$
+  (\texttt{metricTraceE}) and shown equal to the sum over any orthonormal basis
+  (\texttt{metricTraceE\_eq\_sum}); the pairing is the trace of
+  $\g^{\sharp\,-1} h^\flat \g^{\sharp\,-1} B^\flat$
+  (\texttt{metricTraceE\_comp\_sharpE\_eq\_sum}).
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  The inverse of the metric is differentiable, since inversion of continuous
+  linear maps is smooth at invertible points, and its derivative is found by
+  differentiating $\g^\sharp \circ \g^{\sharp\,-1} = \mathrm{id}$:
+  $\partial_t \g^{\sharp\,-1} = -\g^{\sharp\,-1} h^\flat \g^{\sharp\,-1}$
+  (\texttt{hasDerivAt\_inverse\_innerE}). The product rule for
+  $\g^{\sharp\,-1} \circ B^\flat$ and linearity of the trace give the formula.
+\end{proof}
+
 \begin{lemma}[Evolution of the curvature tensor]
   \label{lem:evolution-rm}
-  \uses{def:ricci-flow, def:curvature, def:laplacian, lem:variation-connection, lem:variation-curvature, lem:bianchi-second}
+  \uses{def:ricci-flow, def:curvature, def:laplacian, lem:variation-connection, lem:variation-curvature, lem:bianchi-second, lem:metric-trace-variation}
   Under the flow, $\partial_t \Rm = \Delta \Rm + Q(\Rm)$, where $Q$ is
   quadratic in the curvature operator.
 
@@ -934,8 +974,9 @@ target actually requires.
 
 \begin{theorem}[Scalar maximum principle]
   \label{thm:max-scalar}
-  \lean{RicciFlowBlueprint.MaximumPrinciple.le_of_deriv_ge_at_min}
+  \lean{RicciFlowBlueprint.MaximumPrinciple.le_of_deriv_ge_at_min, RicciFlowBlueprint.MaximumPrinciple.le_of_laplacian}
   \leanok
+  \uses{def:laplacian, lem:second-derivative-test}
   A solution of $\partial_t u = \Delta u + \langle X, \nab u\rangle + F(u)$ on
   a closed manifold, with $F$ Lipschitz, is bounded below by the solution of
   the associated ODE $\dot\phi = F(\phi)$ with $\phi(0) \le \min u(0,\cdot)$;
@@ -949,6 +990,15 @@ target actually requires.
   $F(u(t,x_0)) \le \partial_t u(t,x_0)$, then $\phi \le u$. No Laplacian and
   no manifold appear; once the Laplacian exists in Mathlib, the classical
   statement is this theorem plus the second-derivative test at a minimum.
+
+  \textbf{And on a manifold.} With the Laplacian of Definition
+  \ref{def:laplacian} and the second-derivative test
+  (Lemma \ref{lem:second-derivative-test}), the hypothesis at a minimum is
+  discharged: \texttt{le\_of\_laplacian} is the statement for
+  $\partial_t u = \Delta u + F(u)$ on a closed Riemannian manifold with
+  $u(t,\cdot)$ of class $C^2$, for any connection. The gradient term
+  $\langle X, \nab u\rangle$ is not yet included: it needs $\nab u = 0$ at a
+  minimum, which is the first-derivative test on a manifold.
 \end{theorem}
 
 \begin{proof}
@@ -966,18 +1016,60 @@ target actually requires.
 
 \begin{theorem}[Tensor maximum principle]
   \label{thm:max-tensor}
-  \uses{thm:max-scalar, lem:evolution-rm}
+  \lean{RicciFlowBlueprint.MaximumPrinciple.mem_of_deriv_le_at_max, RicciFlowBlueprint.MaximumPrinciple.mem_of_laplacian}
+  \leanok
+  \uses{thm:max-scalar, lem:evolution-rm, def:laplacian, lem:second-derivative-test}
   Hamilton's maximum principle for symmetric tensors: a closed convex subset of
   the bundle preserved by the ODE $\dot{\Rm} = Q(\Rm)$ is preserved by the PDE.
 
-  Same skeleton as the proof of \ref{thm:max-scalar}, with a supporting
-  half-space of the convex set in place of the half-line $[\phi(t),\infty)$
-  and the evolution equation \ref{lem:evolution-rm} supplying the
-  differential inequality at a first touching point.
-
   This is the workhorse. Every curvature-positivity statement in the subject is
   an instance of it, including the one Hamilton needs in dimension three.
+
+  \textbf{Proved, abstractly.} Let $V$ be a complete real inner product space,
+  $K \subseteq V$ closed, convex and nonempty, $M$ compact, $u : [0,T] \times M
+  \to V$ jointly continuous with time derivative $\partial_t u$, and $F$
+  Lipschitz. Two hypotheses are taken in exactly the form the classical proof
+  uses them. First, at every spatial maximum $x_0$ of $x \mapsto \langle n,
+  u(t,x)\rangle$ one has $\langle n, \partial_t u\rangle \le \langle n,
+  F(u)\rangle$ at $(t,x_0)$; on a manifold this is $\partial_t u = \Delta u +
+  F(u)$ together with $\Delta \langle n, u\rangle \le 0$ at a maximum. Second,
+  $K$ is preserved by the ODE in Nagumo's form: $\langle n, F(p)\rangle \le 0$
+  for every $p \in K$ and every outward normal $n$ at $p$, which
+  \texttt{subtangential\_of\_invariant} derives from invariance along solution
+  curves (the easy direction of Nagumo's theorem). Then $u(0,\cdot) \in K$
+  implies $u(t,\cdot) \in K$ for all $t \in [0,T]$. No manifold, no Laplacian
+  and no tensor bundle appear; the trivial bundle with fibre $V$ is the case
+  Hamilton uses in dimension three, and the general vector-bundle version is the
+  same argument in a parallel frame.
+
+  \textbf{And on a manifold.} \texttt{mem\_of\_laplacian} is the statement on
+  a closed Riemannian manifold for the trivial bundle $M \times V$, the equation
+  $\partial_t u = \Delta u + F(u)$ taken componentwise, $\langle n,
+  \partial_t u\rangle = \Delta\langle n, u\rangle + \langle n, F(u)\rangle$
+  for every fixed $n \in V$, with $u(t,\cdot)$ of class $C^2$. A maximum of
+  $\langle n, u\rangle$ is a minimum of $\langle -n, u\rangle$, so the
+  second-derivative test applies unchanged. Hamilton's setting, a bundle with
+  an evolving fibre metric, needs the Laplacian on sections together with
+  Uhlenbeck's trick.
 \end{theorem}
+
+\begin{proof}
+  \leanok
+  Same skeleton as the proof of \ref{thm:max-scalar}, with a supporting
+  half-space of the convex set in place of the half-line $[\phi(t),\infty)$.
+  Perturb: the claim is $\operatorname{dist}(u(t,x), K) < \epsilon
+  e^{(2L+1)t}$. If it fails, the set of times where it fails is closed, so
+  there is a first time $t_0 > 0$ and a point $x_0$ where it does; let $p$ be
+  the nearest point of $K$ to $u_0 = u(t_0,x_0)$ and $n = u_0 - p$. Since $K$
+  lies in the half-space $\langle n, \cdot - p\rangle \le 0$, the function
+  $\langle n, u(t,\cdot) - p\rangle$ is bounded by $|n| \cdot
+  \operatorname{dist}(u(t,\cdot), K)$, so $x_0$ is a spatial maximum of it at
+  time $t_0$, and $t \mapsto \langle n, u(t,x_0) - p\rangle - |n| \epsilon
+  e^{(2L+1)t}$ is negative before $t_0$ and zero at $t_0$, whence its left
+  derivative is $\ge 0$. The two inequalities give $(2L+1)|n|^2 \le \langle n,
+  F(u_0)\rangle \le \langle n, F(p)\rangle + L|n|^2 \le L|n|^2$, absurd. Let
+  $\epsilon \to 0$ and use closedness of $K$.
+\end{proof}
 
 \begin{theorem}[Shi's local derivative estimates]
   \label{thm:shi}
