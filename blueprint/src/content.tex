@@ -1033,8 +1033,8 @@ target actually requires.
   formalised statement takes exactly that as its hypothesis, on an arbitrary
   compact space: if at every spatial minimum $x_0$ of $u(t,\cdot)$ one has
   $F(u(t,x_0)) \le \partial_t u(t,x_0)$, then $\phi \le u$. No Laplacian and
-  no manifold appear; once the Laplacian exists in Mathlib, the classical
-  statement is this theorem plus the second-derivative test at a minimum.
+  no manifold appear; the classical statement is this theorem plus the
+  second-derivative test at a minimum, and that is the manifold version below.
 
   \textbf{And on a manifold.} With the Laplacian of Definition
   \ref{def:laplacian} and the second-derivative test
@@ -1063,7 +1063,7 @@ target actually requires.
   \label{thm:max-tensor}
   \lean{RicciFlowBlueprint.MaximumPrinciple.mem_of_deriv_le_at_max, RicciFlowBlueprint.MaximumPrinciple.mem_of_laplacian}
   \leanok
-  \uses{thm:max-scalar, lem:evolution-rm, def:laplacian, lem:second-derivative-test}
+  \uses{thm:max-scalar, def:laplacian, lem:second-derivative-test}
   Hamilton's maximum principle for symmetric tensors: a closed convex subset of
   the bundle preserved by the ODE $\dot{\Rm} = Q(\Rm)$ is preserved by the PDE.
 
@@ -1102,7 +1102,9 @@ target actually requires.
   \leanok
   Same skeleton as the proof of \ref{thm:max-scalar}, with a supporting
   half-space of the convex set in place of the half-line $[\phi(t),\infty)$.
-  Perturb: the claim is $\operatorname{dist}(u(t,x), K) < \epsilon
+  The principle itself does not depend on the evolution equation
+  \ref{lem:evolution-rm}; that enters only when it is applied, in Lemma
+  \ref{lem:pinching}. Perturb: the claim is $\operatorname{dist}(u(t,x), K) < \epsilon
   e^{(2L+1)t}$. If it fails, the set of times where it fails is closed, so
   there is a first time $t_0 > 0$ and a point $x_0$ where it does; let $p$ be
   the nearest point of $K$ to $u_0 = u(t_0,x_0)$ and $n = u_0 - p$. Since $K$
@@ -1206,7 +1208,7 @@ shrinks to a round point.
 
 \begin{lemma}[Pinching in dimension three]
   \label{lem:pinching}
-  \uses{thm:max-tensor, lem:pinching-ode}
+  \uses{thm:max-tensor, lem:pinching-ode, lem:evolution-rm}
   In dimension three positive Ricci curvature is preserved by the flow, and
   the eigenvalues pinch together relative to their size: the traceless part
   of $\Ric$ is dominated by $\scal^{1-\delta}$ for some $\delta > 0$.
@@ -1215,7 +1217,20 @@ shrinks to a round point.
   the tensor maximum principle \ref{thm:max-tensor}: the sets
   $\{\mu+\nu \ge \epsilon\,\scal\}$, $\{\lambda \le C(\mu+\nu)\}$ and
   $\{\lambda-\nu \le C'(\mu+\nu)^{1-\delta}\}$ are closed, convex, and
-  ODE-invariant. Only the transfer is missing.
+  ODE-invariant. Convexity: the largest eigenvalue is convex and the smallest
+  concave in the curvature operator, so $\lambda - \nu$ and $\lambda$ are
+  convex, $\mu + \nu = \scal - \lambda$ is concave, and $t \mapsto
+  t^{1-\delta}$ is concave increasing; each set is a sublevel set of a convex
+  function against a concave one.
+
+  \textbf{What is missing} is more than a transfer. In order: the evolution
+  equation \ref{lem:evolution-rm} itself; the maximum principle on the bundle
+  of curvature operators with the metric evolving on the fibres (Uhlenbeck's
+  trick), where \ref{thm:max-tensor} is proved for a fixed fibre; the
+  convexity of the eigenvalue-defined sets, which needs the variational
+  characterisation of eigenvalues; and Nagumo's condition for these sets from
+  the ODE invariance of \ref{lem:pinching-ode}, which is stated for
+  eigenvalues and must be lifted to the operator ODE by equivariance.
 
   Special to dimension three, where the Weyl tensor vanishes and $\Rm$ is
   determined by $\Ric$. The higher-dimensional analogues (Hamilton 1986 in

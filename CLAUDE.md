@@ -3,7 +3,7 @@
 A `leanblueprint` for Ricci flow. Live: https://korbonits.github.io/ricci-flow-blueprint/
 Milestone: Hamilton 1982. Terminal node: Perelman's spherical space form theorem.
 
-## State (2026-09-04)
+## State (2026-09-06)
 
 `lake build` clean, **no `sorry`**, axiom-free — `#print axioms` shows only
 `[propext, Classical.choice, Quot.sound]`. Tracks mathlib `master` (pinned rev
@@ -70,123 +70,68 @@ that constant under `letI := ⟨g.toRiemannianMetric⟩`. See `Hamilton.lean`'s 
 **Corollary:** converse lemmas must be iffs between existentials. Ten variants
 were tested to establish this. It is a workaround, not a fix — open Zulip question.
 
-## Roadmap (from 2026-09-04)
+## Roadmap (revised 2026-09-06)
 
-**Done since 2026-08-14:** Milnor's classification lemma; scalar curvature;
-#36845 merged upstream and adopted here (`LeviCivita.lean` rewritten, `sorry`
-gone, bridges to `Flow.lean`/`Hamilton.lean` proved); `RicciFlow.lean` folded
-into `Flow.lean`.
+The dated diary that used to sit here is condensed; the Lean-level lessons it
+carried are now in "Lean gotchas". Chronology, for the record: mathlib bump and
+Levi-Civita (09-04), its smoothness and the textbook flow equation (09-04), the
+curvature ODE invariants and both abstract maximum principles (09-05/06), the
+second-derivative test (model space, then manifold), the variations of the
+connection, curvature, metric trace, Ricci and scalar curvature (09-05/06),
+second Bianchi (09-05), the principles on a manifold and CI hardening (09-06).
 
-**Done 2026-09-04, later the same day:** smoothness of `leviCivitaConnection`
-(`LeviCivitaSmooth.lean`, `C^ω` manifold, `C^{k+1}` metric ⇒ `C^k` connection),
-hence `ricciOfMetric` and the textbook flow equation
-`isRicciFlowOn_iff_ricciOfMetric`. This was the gate for DeTurck and the
-curvature evolution equations. **Upstream candidate**: Mathlib's
-`LeviCivita.lean` lists smoothness as future work; the three criteria in
-`LeviCivitaSmooth.lean` are Mathlib-general (any bundle for the frame
-criterion) except the main theorem's `IsManifold I ω M`, which a Mathlib
-version should weaken to `C^{k+2}`. Offer on Zulip before opening the PR.
+**Where Hamilton 1982 stands.** The theorem is stated honestly
+(`hamilton_1982`, `proof_wanted`). Its proof splits into a curvature-pinching
+half and an analytic half.
 
-**Done 2026-09-05:** Hamilton's curvature ODE and its invariant sets
-(`Pinching.lean`): the algebraic heart of Hamilton 1982. What transfers it
-to the flow is the tensor maximum principle (`thm:max-tensor`), which needs
-the evolution equation and hence the Laplacian on tensors.
+Pinching half, in order of what is done:
+1. Curvature ODE and its invariant sets (`Pinching.lean`) — done.
+2. Tensor maximum principle — done abstractly and on a closed manifold for a
+   fixed fibre (`TensorMaximumPrinciple.lean`, `ManifoldMaximumPrinciple.lean`).
+3. Evolution equation `∂ₜ Rm = Δ Rm + Q(Rm)` (`lem:evolution-rm`) — the
+   inputs are done (`∂ₜ Rm` in terms of `∇²h`, second Bianchi, the metric
+   trace and its variation, `∂ₜ Ric`, `∂ₜ R = tr_g Ṙic + 2|Ric|²`); the
+   rewrite to `Δ Rm + Q` is not.
+4. Transfer of the invariant sets to the flow (`lem:pinching`) — not started;
+   needs 3, the bundle version of 2 with an evolving fibre metric (Uhlenbeck's
+   trick), convexity of eigenvalue-defined sets (variational
+   characterisation of eigenvalues), and Nagumo's condition lifted from the
+   eigenvalue ODE to the operator ODE by equivariance.
 
-**Done 2026-09-05, later:** the scalar maximum principle, abstractly
-(`MaximumPrinciple.lean`). The tensor version has the same skeleton; what it
-needs is the evolution equation for the differential inequality at a touching
-point.
+Analytic half: short-time existence, Shi's estimates, long-time existence,
+convergence of the normalised flow. Parabolic theory Mathlib does not have.
+Nothing here is started; see "Where the real gaps are".
 
-**Done 2026-09-05, later still:** the second covariant derivative and the
-Laplacian (`Hessian.lean`).
+**Next, in order.**
+1. The manifold trace lemma `X(tr_g B) = tr_g(∇_X B)` for a metric
+   connection. Needs a local frame of sections and the inverse Gram matrix
+   (`extend` is orthonormal only at `x`; differentiate `y ↦ ∑ᵢⱼ Gⁱʲ(y)
+   B(Eᵢ,Eⱼ)(y)` at `x`, where `G(x) = I` and `∂G = ⟨∇Eᵢ,Eⱼ⟩ + ⟨Eᵢ,∇Eⱼ⟩` by
+   compatibility, and the frame terms cancel). This is the gate for
+   everything with a Laplacian in it.
+2. Contracted second Bianchi, `tr_g Ṙic = ΔR` under the flow, hence
+   `∂ₜ R = ΔR + 2|Ric|²` — the scalar case of `lem:evolution-rm` — and with
+   the scalar maximum principle, Hamilton's `R_min` is nondecreasing: the
+   first flow *estimate* in the project.
+3. `∂ₜ Rm = Δ Rm + Q` (Uhlenbeck's trick, `Q = Rm² + Rm#` in dimension three).
+4. Item 4 of the pinching half above.
 
-**Done 2026-09-05, last:** the second-derivative test on the model space
-(`SecondDerivativeTest.lean`).
-
-**Done 2026-09-04 (later):** the second-derivative test on a boundaryless
-manifold, by transport through `extChartAt` — the `hL1` block of
-`mlieBracket_apply_fun` reused verbatim, then `I.range_eq_univ` collapses
-every `Within` to the plain derivative. `[I.Boundaryless]` is essential: at
-a boundary point a local minimum need not be critical.
-
-**Done 2026-09-04 (last):** the first variation of the Levi-Civita
-connection (`Variation.lean`, `lem:variation-connection`), by differentiating
-the Koszul formula in `t`. Two hypotheses are taken as stated, not derived:
-(i) `∂ₜ` commutes with `X(g_t(Y,Z))` — joint regularity in `(t,x)`, which
-`IsRicciFlowAt` does not impose; (ii) `t ↦ ∇ᵗ_X Y (x)` is differentiable —
-follows from (i)-type regularity via the musical isomorphism
-(`contDiffAt_map_inverse` on `innerE`), not yet done.
-
-**Done 2026-09-05:** (ii) discharged (`exists_hasDerivAt_leviCivitaOfMetricE`):
-`(g_t)♯` is invertible by positive definiteness (`isInvertible_innerE`,
-finrank of `E →L ℝ` via `Subspace.dual_finrank_eq`), the Koszul functional is
-differentiable coordinatewise, `contDiffAt_map_inverse` does the rest. The
-commutation hypothesis is now demanded for every test field `Z`.
-
-**Done 2026-09-05 (later):** `∂ₜ Rm` from `∂ₜ ∇` (`CurvatureVariation.lean`,
-`lem:variation-curvature`). Two layers: the algebraic identity for the
-curvature of `∇ + A` (Mathlib's `difference` tensor), then the derivative
-along the family — the quadratic terms die at `t₀` since `Aᵗ⁰ = 0`. Typing
-lesson: `HAdd (TangentSpace I x) E` never synthesises, so the algebraic layer
-lives on tangent spaces (`A : Π y, T_yM →L T_yM →L T_yM`) and the analytic
-layer on `E` (`covE`, `curvatureE`, `covEndE`); `exact` bridges them by defeq.
-`simp only` zeta-reduces a `show T from v` ascription and then `rw
-[extend_apply_self]` fails (`?v : E` vs `T_yM` at instances transparency) —
-use `unfold`.
-
-**Done 2026-09-05 (last):** the second Bianchi identity (`Bianchi.lean`,
-`lem:bianchi-second`), first attempt compiled. Both `[ContMDiffCovariantDerivative
-cov 1]` and `[… cov 2]` are taken as instances: Mathlib has no `C² ⇒ C¹`
-instance for connections yet.
-
-**Done 2026-09-06:** Hamilton's tensor maximum principle, abstractly
-(`TensorMaximumPrinciple.lean`, `thm:max-tensor`), the scalar skeleton with the
-supporting half-space of the nearest point of `K` in place of the half-line.
-Two hypotheses stated as used: `⟪n, ∂ₜu⟫ ≤ ⟪n, F(u)⟫` at spatial maxima of
-`⟪n, u⟫`, and Nagumo's subtangential condition on `K`. Unnormalised normal
-`n = u₀ − p` throughout (no division); `nlinarith` closes the scalings.
-
-**Done 2026-09-06 (later):** both maximum principles on a closed Riemannian
-manifold (`ManifoldMaximumPrinciple.lean`), and the variation of the metric
-trace (`MetricTrace.lean`, `lem:metric-trace-variation`): `∂ₜ tr_{g_t} B_t =
-tr Ḃ − ⟨h, B⟩`. Typing lesson: `LinearMap.trace ℝ E` and `LinearMap.trace ℝ
-(TangentSpace I x)` are defeq but `rw` will not cross; `change` the statement
-to the `TangentSpace` form before `trace_eq_sum_inner`, and state sum-expansion
-facts for plain `E`-vectors (`key : ∀ c e w, …`) then `exact` them at `b i`.
-
-**Done 2026-09-06 (last):** `∂ₜ Ric` on any manifold and `∂ₜ R` on the model
-space (`RicciVariation.lean`, `lem:variation-scalar`): `∂ₜ R = tr_g Ṙic + 2|Ric|²`
-under the flow. Ricci is the trace of an endomorphism, so no metric term; the
-scalar curvature is a metric trace, so `MetricTrace.lean` supplies `−⟨h, Ric⟩`.
-The scalar statement is on `M = E` because `ricci`'s second slot needs globally
-`C²` fields and `extend` is only smooth near `x` (Scalar.lean's obstruction);
-a general-manifold version needs bump-function extensions.
-
-**Next.** The manifold version of the trace lemma (`X(tr B) = tr(∇_X B)` for a
-metric connection; needs a local frame and the inverse Gram matrix, since
-`extend` is not orthonormal away from `x`), which gives the contracted second
-Bianchi identity, `tr_g Ṙic = ΔR` under the flow, and so `∂ₜ R = ΔR + 2|Ric|²`
-(`lem:evolution-rm`, scalar case). With `Δ Rm + Q` after that, `thm:max-tensor`
-applied to the invariant sets of `Pinching.lean` is the curvature-pinching half
-of Hamilton 1982; the other half (short-time existence, Shi, convergence) is
-parabolic theory Mathlib does not have.
-
-**Day 1 — unblock (~45 min).** Post the Zulip question in `#mathlib4`, topic
-`RiemannianBundle: metrics as instances vs values`; tag `sgouezel`. It gates
-upstreaming the curvature stack.
-
-**Day 2 — first upstream PR (~2–3 hrs).** `VectorField.lieBracket_apply_fun` →
-`Mathlib/Analysis/Calculus/VectorField.lean`, beside `lieBracket_smul_*`. No
-dependency on the curvature stack. Budget the time for mathlib conventions, not
-mathematics.
-
-**Day 5 — second and third PRs (~2 hrs).** `neg_apply`/`sub_apply`, then
-`mdiffAt_cov_apply`. Three small merged PRs beat one large one in review.
+**Upstream candidates** (Mathlib-general, no dependence on the curvature
+stack unless noted): `VectorField.lieBracket_apply_fun`; `neg_apply`,
+`sub_apply`, `mdiffAt_cov_apply`, `contMDiff_cov_apply` (`C^k` connection ⇒
+`C^k` covariant derivative); `mlieBracket_sub_left'`;
+`exists_hasDerivAt_clm_of_apply` (coordinatewise ⇒ CLM-valued derivative);
+`hasDerivAt_inverse_innerE`'s pattern (derivative of `inverse` from
+`contDiffAt_map_inverse` plus `f ∘ f⁻¹ = id`); `hessianFun_neg`; and the
+big one, smoothness of `leviCivitaConnection` (`LeviCivitaSmooth.lean`,
+which Mathlib's `LeviCivita.lean` lists as future work — weaken
+`IsManifold I ω M` to `C^{k+2}` first). Post the Zulip question
+(`#mathlib4`, "RiemannianBundle: metrics as instances vs values", tag
+`sgouezel`) before upstreaming anything that quantifies over metrics.
+Small PRs first; budget the time for conventions, not mathematics.
 
 **Not yet:** upstreaming curvature/Ricci/sectional (wait for the Zulip
 answer), anything parabolic, any writing-up.
-**If a day is lost, drop in this order:** third PR, second PR. Keep Day 1 and
-the smoothness item.
 
 ## Where the real gaps are
 
@@ -203,6 +148,15 @@ the smoothness item.
   manifolds under curvature bounds does not exist. First bites above Hamilton.
 - Mathlib has **no maximal-solution ODE theory** — hence germ uniqueness in
   `Homogeneous.lean`.
+- **No global `C²` extension of a tangent vector** (bump function times
+  `FiberBundle.extend`, or any section through a given `v ∈ T_xM` that is
+  `C²` everywhere). `ricci`'s second slot needs one, so Ricci is not a
+  pointwise bilinear form on a general manifold, and the scalar curvature
+  (`Scalar.lean`) and `∂ₜ R` (`RicciVariation.lean`) are on the model space
+  only. First bites when the trace lemma (Next 1) is applied to `Ric`.
+- **The metric trace does not yet commute with `∇`** on the manifold
+  (Next 1). Every Laplacian identity — contracted Bianchi, `ΔR`, `Δ Rm` —
+  waits on it.
 
 ## Lean gotchas
 
@@ -235,6 +189,26 @@ the smoothness item.
   `isLeviCivitaConnection_iff` converts to the `∧` form used in the existentials.
 - Building mathlib `master` from source with no cache takes hours on 4 cores;
   `lake exe cache get` needs `mathlib4.lakecache.org`.
+- `HAdd (TangentSpace I x) E` never synthesises: keep algebraic identities on
+  tangent spaces (`A : Π y, T_yM →L T_yM →L T_yM`) and analytic statements on
+  `E` (`covE`, `curvatureE`, `covEndE`), and bridge with `exact` by defeq.
+- `simp only` zeta-reduces a `show T from v` ascription and then
+  `rw [extend_apply_self]` fails (`?v : E` vs `T_yM` at instances
+  transparency) — use `unfold`. Same family: `LinearMap.trace ℝ E` and
+  `LinearMap.trace ℝ (TangentSpace I x)` are defeq but `rw` will not cross;
+  `change` to the `TangentSpace` form before `trace_eq_sum_inner`, and state
+  sum-expansion facts for plain `E`-vectors (`key : ∀ c e w, …`) then `exact`
+  them at `b i`.
+- A bare `TensorialAt.mkHom …` elaborated against an expected type `E →L E`
+  leaves `?V x =?= E` unsolved; ascribe `(… : TangentSpace I x →L[ℝ]
+  TangentSpace I x)` first, then use it at type `E →L E`.
+- **Never `local notation` over a section variable.** Hygiene hides `E`, the
+  next `variable (g : … E …)` silently fails, and everything downstream is
+  auto-bound with stuck `IsManifold ?I ω ?M` instances. Write the lambda out.
+- The `RiemannianBundle` instance for a metric `g` is introduced by
+  `letI : RiemannianBundle … := ⟨g.toRiemannianMetric⟩` in defs and
+  `let _ : … := …` in proofs (the `haveI`/`letI` linter); a hypothesis that
+  needs it is written `(h : letI := …; P)`, as `IsRicciFlowOn` does.
 - **`TangentSpace I x` has no norm of its own** — the norm comes from a
   `RiemannianBundle` instance, i.e. from a metric. `HasDerivAt` into
   `TangentSpace I x` or `TangentSpace I x →L[ℝ] …` fails to elaborate with
