@@ -913,9 +913,49 @@ target actually requires.
   statement carries no existential.
 \end{proof}
 
+\begin{lemma}[Variation of the metric trace]
+  \label{lem:metric-trace-variation}
+  \lean{RicciFlowBlueprint.hasDerivAt_metricTraceE}
+  \leanok
+  \uses{def:scalar, lem:variation-connection}
+  For a metric $\g$ on $T_xM$ and a bilinear form $B$, write
+  $\operatorname{tr}_\g B = \sum_i B(e_i,e_i)$ over a $\g$-orthonormal basis,
+  equivalently the trace of the endomorphism $\g^{\sharp\,-1} B^\flat$. Along a
+  family of metrics with $\partial_t \g = h$ and a family of forms with
+  $\partial_t B = \dot B$,
+  \[
+    \partial_t \operatorname{tr}_{\g_t} B_t
+      = \operatorname{tr}_\g \dot B - \langle h, B\rangle_\g,
+    \qquad
+    \langle h, B\rangle_\g = \sum_{i,j} B(e_i,e_j)\, h(e_j,e_i).
+  \]
+  This is what turns Lemma \ref{lem:variation-curvature} into the variations of
+  $\Ric = \operatorname{tr}_\g \Rm$ and $R = \operatorname{tr}_\g \Ric$; under
+  the flow $h = -2\Ric$, and the correction term is the $2|\Ric|^2$ of
+  $\partial_t R = \Delta R + 2|\Ric|^2$.
+
+  \textbf{Proved}, at a point, on the model space $E = T_xM$
+  (\texttt{MetricTrace.lean}). The trace is defined as
+  $\operatorname{tr}(\g^{\sharp\,-1} \circ B^\flat)$
+  (\texttt{metricTraceE}) and shown equal to the sum over any orthonormal basis
+  (\texttt{metricTraceE\_eq\_sum}); the pairing is the trace of
+  $\g^{\sharp\,-1} h^\flat \g^{\sharp\,-1} B^\flat$
+  (\texttt{metricTraceE\_comp\_sharpE\_eq\_sum}).
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  The inverse of the metric is differentiable, since inversion of continuous
+  linear maps is smooth at invertible points, and its derivative is found by
+  differentiating $\g^\sharp \circ \g^{\sharp\,-1} = \mathrm{id}$:
+  $\partial_t \g^{\sharp\,-1} = -\g^{\sharp\,-1} h^\flat \g^{\sharp\,-1}$
+  (\texttt{hasDerivAt\_inverse\_innerE}). The product rule for
+  $\g^{\sharp\,-1} \circ B^\flat$ and linearity of the trace give the formula.
+\end{proof}
+
 \begin{lemma}[Evolution of the curvature tensor]
   \label{lem:evolution-rm}
-  \uses{def:ricci-flow, def:curvature, def:laplacian, lem:variation-connection, lem:variation-curvature, lem:bianchi-second}
+  \uses{def:ricci-flow, def:curvature, def:laplacian, lem:variation-connection, lem:variation-curvature, lem:bianchi-second, lem:metric-trace-variation}
   Under the flow, $\partial_t \Rm = \Delta \Rm + Q(\Rm)$, where $Q$ is
   quadratic in the curvature operator.
 
