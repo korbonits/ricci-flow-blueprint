@@ -953,9 +953,54 @@ target actually requires.
   $\g^{\sharp\,-1} \circ B^\flat$ and linearity of the trace give the formula.
 \end{proof}
 
+\begin{lemma}[First variations of the Ricci and scalar curvatures]
+  \label{lem:variation-scalar}
+  \lean{RicciFlowBlueprint.hasDerivAt_ricciOfMetric, RicciFlowBlueprint.hasDerivAt_scalarCurvatureOfMetric'_of_isRicciFlowAt}
+  \leanok
+  \uses{lem:variation-curvature, lem:metric-trace-variation, def:ricci-of-metric, def:scalar, def:ricci-flow}
+  Along a family of metrics $\g(t)$ with $\partial_t \g = h$,
+  \[
+    \partial_t \Ric(X,Y) = \operatorname{tr}\bigl(\partial_t [v \mapsto \Rm(v,X)Y]\bigr),
+    \qquad
+    \partial_t R = \operatorname{tr}_\g(\partial_t \Ric) - \langle h, \Ric\rangle_\g,
+  \]
+  and under the Ricci flow $h = -2\Ric$, so
+  $\partial_t R = \operatorname{tr}_\g(\partial_t \Ric) + 2|\Ric|^2$.
+
+  \textbf{Proved} (\texttt{RicciVariation.lean}). Ricci is the trace of the
+  endomorphism $v \mapsto \Rm(v,X)Y$ of $T_xM$, so its variation is the trace
+  of the variation of Lemma \ref{lem:variation-curvature} and no term from the
+  metric appears; this is on any manifold. Scalar curvature is the
+  \emph{metric} trace of the Ricci form, and Lemma
+  \ref{lem:metric-trace-variation} supplies the correction $-\langle h,
+  \Ric\rangle_\g$, which is $2|\Ric|^2_\g = 2\sum_{i,j} \Ric(e_i,e_j)\Ric(e_j,e_i)$
+  under the flow. The scalar statement is on the model space $M = E$, where
+  Definition \ref{def:scalar} lives: constant fields are global smooth
+  sections there, which the second slot of $\Ric$ requires
+  (\texttt{ricciE}, \texttt{ricci\_add\_right\_const}). What remains for
+  $\partial_t R = \Delta R + 2|\Ric|^2$ is $\operatorname{tr}_\g(\partial_t
+  \Ric) = \Delta R$ under the flow, the contracted second Bianchi identity,
+  which needs the trace to commute with $\nab$ on the manifold.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  $\Ric_t(X,Y)(x) = \operatorname{tr} T_t$ with $T_t v = \Rm_t(\bar v, X)Y(x)$,
+  $\bar v$ the extension of $v$ constant in a trivialisation; $t \mapsto T_t$
+  is differentiable as a linear map because each $T_t v$ is, by Lemma
+  \ref{lem:variation-curvature} on the field $\bar v$, and the trace is linear.
+  On the model space the Ricci form $\Ric_t(v,w) = \Ric_t(\bar v, \bar w)(x)$
+  is bilinear by tensoriality in both slots (the second slot from the
+  curvature's third), differentiable in $t$ coordinatewise, and $R_t =
+  \operatorname{tr}_{\g_t} \Ric_t$; Lemma \ref{lem:metric-trace-variation}
+  differentiates the trace. Under the flow, $\partial_t \g(v,w) = -2\Ric(v,w)$
+  by definition of the flow and uniqueness of derivatives, and
+  $\langle -2\Ric, \Ric\rangle_\g = -2|\Ric|^2_\g$.
+\end{proof}
+
 \begin{lemma}[Evolution of the curvature tensor]
   \label{lem:evolution-rm}
-  \uses{def:ricci-flow, def:curvature, def:laplacian, lem:variation-connection, lem:variation-curvature, lem:bianchi-second, lem:metric-trace-variation}
+  \uses{def:ricci-flow, def:curvature, def:laplacian, lem:variation-connection, lem:variation-curvature, lem:bianchi-second, lem:metric-trace-variation, lem:variation-scalar}
   Under the flow, $\partial_t \Rm = \Delta \Rm + Q(\Rm)$, where $Q$ is
   quadratic in the curvature operator.
 

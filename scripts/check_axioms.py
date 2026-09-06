@@ -59,7 +59,8 @@ def main() -> int:
     # `#print axioms` output may wrap the list across lines: join and parse.
     text = re.sub(r"\s+", " ", out)
     seen = set()
-    for match in re.finditer(r"'([^']+)' (depends on axioms: \[([^\]]*)\]|does not depend on any axioms)", text):
+    # Names may contain apostrophes (`foo'`); they never contain spaces.
+    for match in re.finditer(r"'(\S+)' (depends on axioms: \[([^\]]*)\]|does not depend on any axioms)", text):
         name = match.group(1)
         seen.add(name)
         axioms = {a.strip() for a in (match.group(3) or "").split(",") if a.strip()}

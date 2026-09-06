@@ -18,5 +18,6 @@ import RicciFlowBlueprint.Variation
 import RicciFlowBlueprint.CurvatureVariation
 import RicciFlowBlueprint.Bianchi
 import RicciFlowBlueprint.MetricTrace
+import RicciFlowBlueprint.RicciVariation
 import RicciFlowBlueprint.TensorMaximumPrinciple
 import RicciFlowBlueprint.ManifoldMaximumPrinciple

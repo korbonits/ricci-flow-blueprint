@@ -114,6 +114,8 @@ maximum principle transfers these to the flow; that transfer is the missing part
 | `curvature_eq_add_covEnd` | **proved** — curvature of a perturbed connection, `R' = R + (∇_X A)(Y,Z) − (∇_Y A)(X,Z) + A(X,A(Y,Z)) − A(Y,A(X,Z))` for `∇' = ∇ + A`, `∇` torsion-free (`CurvatureVariation.lean`) |
 | `hasDerivAt_curvatureE_leviCivitaOfMetric` | **proved** — first variation of the curvature along a family of metrics, `∂ₜ Rm(X,Y)Z = (∇_X Ȧ)(Y,Z) − (∇_Y Ȧ)(X,Z)` with `Ȧ = ∂ₜ∇` characterised by `inner_derivDifferenceE_eq`; the first half of `lem:evolution-rm` |
 | `metricTraceE`, `hasDerivAt_metricTraceE` | **proved** — the metric trace `tr_g B = tr(g♯⁻¹ B♭) = ∑ᵢ B(eᵢ,eᵢ)` and its time derivative `∂ₜ tr_{g_t} B_t = tr_g Ḃ − ⟨h, B⟩_g` along `∂ₜ g = h` (`MetricTrace.lean`); `hasDerivAt_inverse_innerE` is `∂ₜ g⁻¹ = −g⁻¹ h g⁻¹` |
+| `hasDerivAt_ricciOfMetric` | **proved** — first variation of Ricci, `∂ₜ Ric(X,Y) = tr(∂ₜ[v ↦ R(v,X)Y])`, any manifold (`RicciVariation.lean`) |
+| `hasDerivAt_scalarCurvatureOfMetric'_of_isRicciFlowAt` | **proved** — under the flow, `∂ₜ R = tr_g(∂ₜ Ric) + 2\|Ric\|²_g` on the model space; `hasDerivAt_scalarCurvatureOfMetric'` is the general `∂ₜ R = tr_g(∂ₜ Ric) − ⟨h, Ric⟩_g`. Left: `tr_g(∂ₜ Ric) = ΔR` (contracted second Bianchi) |
 
 ### The maximum principles — **proved, abstractly** (`MaximumPrinciple.lean`, `TensorMaximumPrinciple.lean`)
 

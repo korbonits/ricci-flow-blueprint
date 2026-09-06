@@ -123,6 +123,13 @@ theorem metricTraceE_innerE_comp (T : E →L[ℝ] E) :
   rw [← ContinuousLinearMap.comp_assoc, (isInvertible_innerE g x).inverse_comp_self,
     ContinuousLinearMap.id_comp]
 
+omit [CompleteSpace E] [FiniteDimensional ℝ E] in
+/-- The metric trace is linear in the form. -/
+theorem metricTraceE_smul (c : ℝ) (B : E →L[ℝ] E →L[ℝ] ℝ) :
+    metricTraceE g x (c • B) = c * metricTraceE g x B := by
+  unfold metricTraceE sharpE
+  rw [ContinuousLinearMap.comp_smul, ContinuousLinearMap.toLinearMap_smul, map_smul, smul_eq_mul]
+
 end MetricTrace
 
 section Ricci
