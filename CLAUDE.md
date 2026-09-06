@@ -242,6 +242,17 @@ the smoothness item.
 
 ## Blueprint / CI gotchas
 
+- **CI (`.github/workflows/blueprint.yml`) runs three jobs.** `lean`: mathlib cache
+  (a miss fails, never builds from source), `lake build` with warnings as errors,
+  then `scripts/check_axioms.py` (`#print axioms` on every `\lean{}` name in the
+  blueprint; only `propext`, `Classical.choice`, `Quot.sound` allowed; no `axiom`
+  declarations). `blueprint`: **on PRs too** — `leanblueprint pdf` with the log
+  checked for `^!` and `Missing character`, then `web` and `checkdecls`; uploads
+  the site only on `main`. `deploy`: Pages, `main` only. TeX is a pinned TinyTeX
+  bundle (`TINYTEX_URL`, xelatex + latexmk included, ~200 MB, verified locally),
+  not `texlive-full`.
+- The axiom script is the local pre-PR check too: `python3 scripts/check_axioms.py`
+  after `lake build` (~3 min, mostly loading oleans).
 - **PDF builds locally**: basictex + `sudo /Library/TeX/texbin/tlmgr install latexmk`.
   The config uses **xelatex** (`$pdflatex = 'xelatex -synctex=1'`), not pdflatex.
   Fallback without latexmk: `xelatex` twice from `blueprint/src`.

@@ -9,6 +9,11 @@ Poincaré conjecture as the case `Γ = 1`.
 
 **Rendered blueprint: https://korbonits.github.io/ricci-flow-blueprint/**
 
+CI runs on every pull request: `lake build` with warnings as errors, an axiom
+check on every declaration the blueprint cites (`scripts/check_axioms.py`), and
+the blueprint itself (PDF with the log checked for errors and missing glyphs,
+web, `checkdecls`). The site deploys from `main` only.
+
 ## What is and isn't here
 
 The obstacle is usually said to be analysis, and eventually it is — but not
