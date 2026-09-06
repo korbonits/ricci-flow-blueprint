@@ -109,12 +109,14 @@ maximum principle transfers these to the flow; that transfer is the missing part
 | `curvature_eq_add_covEnd` | **proved** — curvature of a perturbed connection, `R' = R + (∇_X A)(Y,Z) − (∇_Y A)(X,Z) + A(X,A(Y,Z)) − A(Y,A(X,Z))` for `∇' = ∇ + A`, `∇` torsion-free (`CurvatureVariation.lean`) |
 | `hasDerivAt_curvatureE_leviCivitaOfMetric` | **proved** — first variation of the curvature along a family of metrics, `∂ₜ Rm(X,Y)Z = (∇_X Ȧ)(Y,Z) − (∇_Y Ȧ)(X,Z)` with `Ȧ = ∂ₜ∇` characterised by `inner_derivDifferenceE_eq`; the first half of `lem:evolution-rm` |
 
-### The scalar maximum principle — **proved, abstractly** (`MaximumPrinciple.lean`)
+### The maximum principles — **proved, abstractly** (`MaximumPrinciple.lean`, `TensorMaximumPrinciple.lean`)
 
 | Node | Status |
 | --- | --- |
 | `le_of_deriv_ge_at_min` | **proved** — on a compact space, if `F(u) ≤ ∂ₜu` at every spatial minimum and `φ' = F(φ)`, `φ 0 ≤ u 0`, then `φ ≤ u`. The Laplacian's only role in the classical proof is to supply the hypothesis at a minimum |
 | `le_of_deriv_le_at_max` | **proved** — the mirrored upper bound |
+| `mem_of_deriv_le_at_max` | **proved** — **Hamilton's tensor maximum principle**: `K` closed convex in a complete inner product space, `⟪n, ∂ₜu⟫ ≤ ⟪n, F(u)⟫` at every spatial maximum of `⟪n, u⟫`, `K` preserved by the ODE in Nagumo's form; then `u(0) ∈ K ⇒ u(t) ∈ K`. Supporting half-space of the nearest point in place of the half-line |
+| `subtangential_of_invariant` | **proved** — the easy direction of Nagumo: invariance along solution curves gives `⟪n, F p⟫ ≤ 0` for outward normals |
 
 ### Left-invariant metrics — **closed** (`Homogeneous.lean`)
 

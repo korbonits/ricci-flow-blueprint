@@ -966,18 +966,50 @@ target actually requires.
 
 \begin{theorem}[Tensor maximum principle]
   \label{thm:max-tensor}
+  \lean{RicciFlowBlueprint.MaximumPrinciple.mem_of_deriv_le_at_max}
+  \leanok
   \uses{thm:max-scalar, lem:evolution-rm}
   Hamilton's maximum principle for symmetric tensors: a closed convex subset of
   the bundle preserved by the ODE $\dot{\Rm} = Q(\Rm)$ is preserved by the PDE.
 
-  Same skeleton as the proof of \ref{thm:max-scalar}, with a supporting
-  half-space of the convex set in place of the half-line $[\phi(t),\infty)$
-  and the evolution equation \ref{lem:evolution-rm} supplying the
-  differential inequality at a first touching point.
-
   This is the workhorse. Every curvature-positivity statement in the subject is
   an instance of it, including the one Hamilton needs in dimension three.
+
+  \textbf{Proved, abstractly.} Let $V$ be a complete real inner product space,
+  $K \subseteq V$ closed, convex and nonempty, $M$ compact, $u : [0,T] \times M
+  \to V$ jointly continuous with time derivative $\partial_t u$, and $F$
+  Lipschitz. Two hypotheses are taken in exactly the form the classical proof
+  uses them. First, at every spatial maximum $x_0$ of $x \mapsto \langle n,
+  u(t,x)\rangle$ one has $\langle n, \partial_t u\rangle \le \langle n,
+  F(u)\rangle$ at $(t,x_0)$; on a manifold this is $\partial_t u = \Delta u +
+  F(u)$ together with $\Delta \langle n, u\rangle \le 0$ at a maximum. Second,
+  $K$ is preserved by the ODE in Nagumo's form: $\langle n, F(p)\rangle \le 0$
+  for every $p \in K$ and every outward normal $n$ at $p$, which
+  \texttt{subtangential\_of\_invariant} derives from invariance along solution
+  curves (the easy direction of Nagumo's theorem). Then $u(0,\cdot) \in K$
+  implies $u(t,\cdot) \in K$ for all $t \in [0,T]$. No manifold, no Laplacian
+  and no tensor bundle appear; the trivial bundle with fibre $V$ is the case
+  Hamilton uses in dimension three, and the general vector-bundle version is the
+  same argument in a parallel frame.
 \end{theorem}
+
+\begin{proof}
+  \leanok
+  Same skeleton as the proof of \ref{thm:max-scalar}, with a supporting
+  half-space of the convex set in place of the half-line $[\phi(t),\infty)$.
+  Perturb: the claim is $\operatorname{dist}(u(t,x), K) < \epsilon
+  e^{(2L+1)t}$. If it fails, the set of times where it fails is closed, so
+  there is a first time $t_0 > 0$ and a point $x_0$ where it does; let $p$ be
+  the nearest point of $K$ to $u_0 = u(t_0,x_0)$ and $n = u_0 - p$. Since $K$
+  lies in the half-space $\langle n, \cdot - p\rangle \le 0$, the function
+  $\langle n, u(t,\cdot) - p\rangle$ is bounded by $|n| \cdot
+  \operatorname{dist}(u(t,\cdot), K)$, so $x_0$ is a spatial maximum of it at
+  time $t_0$, and $t \mapsto \langle n, u(t,x_0) - p\rangle - |n| \epsilon
+  e^{(2L+1)t}$ is negative before $t_0$ and zero at $t_0$, whence its left
+  derivative is $\ge 0$. The two inequalities give $(2L+1)|n|^2 \le \langle n,
+  F(u_0)\rangle \le \langle n, F(p)\rangle + L|n|^2 \le L|n|^2$, absurd. Let
+  $\epsilon \to 0$ and use closedness of $K$.
+\end{proof}
 
 \begin{theorem}[Shi's local derivative estimates]
   \label{thm:shi}

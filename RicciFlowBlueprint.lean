@@ -17,3 +17,4 @@ import RicciFlowBlueprint.Flow
 import RicciFlowBlueprint.Variation
 import RicciFlowBlueprint.CurvatureVariation
 import RicciFlowBlueprint.Bianchi
+import RicciFlowBlueprint.TensorMaximumPrinciple

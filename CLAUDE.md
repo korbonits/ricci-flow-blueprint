@@ -24,6 +24,7 @@ in `lake-manifest.json`) on Lean `v4.34.0-rc2`, because mathlib4 #36845
 | `Hessian.lean` | `hessian` (∇²), `hessian_sub_hessian_swap` (Ricci identity), tensoriality + `hessianAt`, `hessianFun` + `hessianFun_symm`, `laplacian` + `laplacian_eq_sum` (basis-independent metric trace, `OrthonormalBasis.sum_apply_self_eq`) |
 | `SecondDerivativeTest.lean` | **proved**: `deriv2_nonneg_of_isLocalMin`, `fderiv2_nonneg_of_isLocalMin`, `fderiv_fderiv_apply_nonneg_of_isLocalMin` (chart-side core), `hessianFun_nonneg_of_isLocalMin` and `laplacianFun_nonneg_of_isLocalMin` on a **boundaryless manifold** (transport through `extChartAt`, same pattern as `mlieBracket_apply_fun`), plus the `*_model` versions. The connection term `(∇_X X) f` dies at a critical point, so any `cov` works |
 | `MaximumPrinciple.lean` | **proved**: the scalar maximum principle on a compact space with the differential inequality assumed at spatial minima (`le_of_deriv_ge_at_min`, `le_of_deriv_le_at_max`). ε-perturbation `φ − ε e^{(2K+1)t}` + first touching time. No Laplacian |
+| `TensorMaximumPrinciple.lean` | **proved**: Hamilton's tensor maximum principle abstractly (`mem_of_deriv_le_at_max`): `K` closed convex in a complete real inner product space, hypothesis `⟪n, ∂ₜu⟫ ≤ ⟪n, F(u)⟫` at spatial maxima of `⟪n,u⟫`, ODE-invariance in Nagumo form `⟪n, F p⟫ ≤ 0` for outward normals (`subtangential_of_invariant` derives it). Nearest point via `exists_norm_eq_iInf_of_complete_convex` + `norm_eq_iInf_iff_real_inner_le_zero`; distance via `Metric.infDist`, `le_infDist`. Same skeleton as the scalar one |
 | `Variation.lean` | **proved**: `covBilin` (∇ of a bilinear form field), `koszul_bilin_eq` (Koszul combination of a symmetric `h` through a torsion-free `∇` is `∇h`-terms `+ 2h(∇_X Y,Z)`), `leviCivitaOfMetric`, `inner_leviCivitaOfMetric_eq` (Koszul in `g.inner`), `hasDerivAt_inner_leviCivitaOfMetric` (Koszul differentiated in `t`), `inner_deriv_leviCivitaOfMetric_eq` (**first variation of ∇**). Hypotheses: `∂ₜ` commutes with `X(g(Y,Z))` for the fields at hand; differentiability of `t ↦ ∇ᵗ_X Y` (vector form only) |
 | `CurvatureVariation.lean` | **proved**: `covEnd` (∇ of an `End`-valued one-form), `curvature_eq_add_covEnd` (curvature of `∇ + A`, `∇` torsion-free — algebraic), `hasDerivAt_curvatureE` (`∂ₜ Rᵗ = (∇_X Ȧ)(Y,Z) − (∇_Y Ȧ)(X,Z)` along `∇ᵗ = ∇ + Aᵗ`), `exists_hasDerivAt_clm_of_apply` (coordinatewise ⇒ CLM-valued derivative), `differenceE` (Mathlib's `difference` on `E`), `derivDifferenceE` (`Ȧ = ∂ₜ∇` as `deriv`, no existential), `inner_derivDifferenceE_eq`, `hasDerivAt_curvatureE_leviCivitaOfMetric` (**first variation of Rm along metrics**). Hypotheses: `CommutesWithMvfderiv` (the `Variation.lean` commutation, all fields) and `∂ₜ`/`∇_X` commuting on `Aᵗ(Y,Z)` |
 | `Bianchi.lean` | **proved**: `contMDiff_cov_apply` (`C^k` connection, `C^{k+1}` section, `C^k` field ⇒ `C^k` covariant derivative), `mlieBracket_sub_left'`, `covCurvature` (`(∇_X R)(Y,Z)W`), `bianchi_second` (**second Bianchi**, `C²` connection, `C²` fields, `C³` argument; no metric). The proof is the first-Bianchi pattern: split the sections, rewrite `∇_X Y − ∇_Y X` as `[X,Y]` in both the direction slot and as sections, `linear_combination (norm := module)` with Jacobi |
@@ -135,12 +136,20 @@ use `unfold`.
 cov 1]` and `[… cov 2]` are taken as instances: Mathlib has no `C² ⇒ C¹`
 instance for connections yet.
 
+**Done 2026-09-06:** Hamilton's tensor maximum principle, abstractly
+(`TensorMaximumPrinciple.lean`, `thm:max-tensor`), the scalar skeleton with the
+supporting half-space of the nearest point of `K` in place of the half-line.
+Two hypotheses stated as used: `⟪n, ∂ₜu⟫ ≤ ⟪n, F(u)⟫` at spatial maxima of
+`⟪n, u⟫`, and Nagumo's subtangential condition on `K`. Unnormalised normal
+`n = u₀ − p` throughout (no division); `nlinarith` closes the scalings.
+
 **Next.** The trace of the second Bianchi identity against the metric
 (`div Rm = ∇ Ric`-type identities, via `OrthonormalBasis.sum_apply_self_eq`),
 then the rewrite of the antisymmetrised `∇² Ric` as `Δ Rm + Q`
-(`lem:evolution-rm`, second half). Separately, the tensor maximum principle
-(`thm:max-tensor`) now has its inputs — the second-derivative test and an
-evolution equation — and can be stated abstractly like `MaximumPrinciple.lean`.
+(`lem:evolution-rm`, second half). With that, `thm:max-tensor` applied to the
+invariant sets of `Pinching.lean` is the curvature-pinching half of Hamilton
+1982; the other half (short-time existence, Shi, convergence) is parabolic
+theory Mathlib does not have.
 
 **Day 1 — unblock (~45 min).** Post the Zulip question in `#mathlib4`, topic
 `RiemannianBundle: metrics as instances vs values`; tag `sgouezel`. It gates
