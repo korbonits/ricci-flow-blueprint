@@ -30,6 +30,7 @@ in `lake-manifest.json`) on Lean `v4.34.0-rc2`, because mathlib4 #36845
 | `CurvatureVariation.lean` | **proved**: `covEnd` (∇ of an `End`-valued one-form), `curvature_eq_add_covEnd` (curvature of `∇ + A`, `∇` torsion-free — algebraic), `hasDerivAt_curvatureE` (`∂ₜ Rᵗ = (∇_X Ȧ)(Y,Z) − (∇_Y Ȧ)(X,Z)` along `∇ᵗ = ∇ + Aᵗ`), `exists_hasDerivAt_clm_of_apply` (coordinatewise ⇒ CLM-valued derivative), `differenceE` (Mathlib's `difference` on `E`), `derivDifferenceE` (`Ȧ = ∂ₜ∇` as `deriv`, no existential), `inner_derivDifferenceE_eq`, `hasDerivAt_curvatureE_leviCivitaOfMetric` (**first variation of Rm along metrics**). Hypotheses: `CommutesWithMvfderiv` (the `Variation.lean` commutation, all fields) and `∂ₜ`/`∇_X` commuting on `Aᵗ(Y,Z)` |
 | `Bianchi.lean` | **proved**: `contMDiff_cov_apply` (`C^k` connection, `C^{k+1}` section, `C^k` field ⇒ `C^k` covariant derivative), `mlieBracket_sub_left'`, `covCurvature` (`(∇_X R)(Y,Z)W`), `bianchi_second` (**second Bianchi**, `C²` connection, `C²` fields, `C³` argument; no metric). The proof is the first-Bianchi pattern: split the sections, rewrite `∇_X Y − ∇_Y X` as `[X,Y]` in both the direction slot and as sections, `linear_combination (norm := module)` with Jacobi |
 | `MetricTrace.lean` | **proved**: `sharpE` (`g♯⁻¹ ∘ B♭`), `metricTraceE` (`tr(g♯⁻¹ B♭)`), `metricTraceE_eq_sum` (= `∑ᵢ B(eᵢ,eᵢ)` over any `g`-orthonormal basis, via `LinearMap.trace_eq_sum_inner`), `sharpE_apply_eq_sum`, `metricTraceE_comp_sharpE_eq_sum` (`⟨h,B⟩_g`), `hasDerivAt_inverse_innerE` (`∂ₜ g⁻¹ = −g⁻¹ h g⁻¹`, from `contDiffAt_map_inverse` plus differentiating `g ∘ g⁻¹ = id`), `hasDerivAt_metricTraceE` (**`∂ₜ tr_{g_t} B_t = tr Ḃ − ⟨h,B⟩`**). All at a point on `E`. `metricTraceE_innerE_comp`, `ricci_eq_metricTraceE` bridge to `ricci` |
+| `RicciVariation.lean` | **proved**: `CommutesWithCov` (∂ₜ/∇_X commute on the difference-tensor sections, all fields), `curvatureEndoE` (`v ↦ R(v,X)Y` via `mkHom`, typed on `E` by ascription — an expected type `E →L E` on a bare `mkHom` leaves `?V x =?= E` unsolved), `hasDerivAt_ricciOfMetric` (**∂ₜ Ric = tr ∂ₜ[v ↦ R(v,X)Y]**, any manifold). Model space: `constField`, `ricci_add_right_const`/`ricci_smul_right_const` (second slot on constant fields), `ricciE` (Ricci form as `E →L E →L ℝ` via `LinearMap.mk₂`), `scalarCurvatureOfMetric'` (= `Scalar.lean`'s), `hasDerivAt_scalarCurvatureOfMetric'` (`∂ₜ R = tr_g Ṙic − ⟨h,Ric⟩`), `innerE_deriv_eq_of_isRicciFlowAt` (`h = −2 Ric` from the flow by uniqueness), `hasDerivAt_scalarCurvatureOfMetric'_of_isRicciFlowAt` (**∂ₜ R = tr_g Ṙic + 2\|Ric\|²**). Never `local notation` over a section variable: hygiene hides `E` and everything downstream is silently auto-bound |
 | `Homogeneous.lean` | **branch closed**: `koszul`, torsion/compat, Levi-Civita uniqueness, `contDiffAt_ricciField`, `ricciFlow_leftInvariant` |
 | `Milnor.lean` | **branch closed**: Koszul formula, Ricci in structure constants, diagonal Ricci `rᵢ = 2μⱼμₖ`, Heisenberg, Isenberg–Jackson ODE |
 
@@ -153,17 +154,22 @@ tr Ḃ − ⟨h, B⟩`. Typing lesson: `LinearMap.trace ℝ E` and `LinearMap.tr
 to the `TangentSpace` form before `trace_eq_sum_inner`, and state sum-expansion
 facts for plain `E`-vectors (`key : ∀ c e w, …`) then `exact` them at `b i`.
 
-**Next.** `∂ₜ Ric` and `∂ₜ R` at a point, from `∂ₜ Rm`
-(`hasDerivAt_curvatureE_leviCivitaOfMetric`) through `hasDerivAt_metricTraceE`
-and `ricci_eq_metricTraceE`: `∂ₜ R = tr(∂ₜ Ric) − ⟨h, Ric⟩`, which under the
-flow is the `2|Ric|²`. Then the manifold version of the trace lemma (`X(tr B) =
-tr(∇_X B)` for a metric connection; needs a local frame and the inverse Gram
-matrix, since `extend` is not orthonormal away from `x`), which gives the
-contracted second Bianchi identity and `Δ R` in `∂ₜ R = ΔR + 2|Ric|²`. With
-`Δ Rm + Q` after that, `thm:max-tensor` applied to the invariant sets of
-`Pinching.lean` is the curvature-pinching half of Hamilton 1982; the other
-half (short-time existence, Shi, convergence) is parabolic theory Mathlib does
-not have.
+**Done 2026-09-06 (last):** `∂ₜ Ric` on any manifold and `∂ₜ R` on the model
+space (`RicciVariation.lean`, `lem:variation-scalar`): `∂ₜ R = tr_g Ṙic + 2|Ric|²`
+under the flow. Ricci is the trace of an endomorphism, so no metric term; the
+scalar curvature is a metric trace, so `MetricTrace.lean` supplies `−⟨h, Ric⟩`.
+The scalar statement is on `M = E` because `ricci`'s second slot needs globally
+`C²` fields and `extend` is only smooth near `x` (Scalar.lean's obstruction);
+a general-manifold version needs bump-function extensions.
+
+**Next.** The manifold version of the trace lemma (`X(tr B) = tr(∇_X B)` for a
+metric connection; needs a local frame and the inverse Gram matrix, since
+`extend` is not orthonormal away from `x`), which gives the contracted second
+Bianchi identity, `tr_g Ṙic = ΔR` under the flow, and so `∂ₜ R = ΔR + 2|Ric|²`
+(`lem:evolution-rm`, scalar case). With `Δ Rm + Q` after that, `thm:max-tensor`
+applied to the invariant sets of `Pinching.lean` is the curvature-pinching half
+of Hamilton 1982; the other half (short-time existence, Shi, convergence) is
+parabolic theory Mathlib does not have.
 
 **Day 1 — unblock (~45 min).** Post the Zulip question in `#mathlib4`, topic
 `RiemannianBundle: metrics as instances vs values`; tag `sgouezel`. It gates
