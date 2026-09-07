@@ -12,8 +12,22 @@ That is what makes the *divergence* `div Rm (Y,Z,W) = ∑ᵢ ⟪(∇_{eᵢ}R)(Y,
 well-defined — the trace is over the direction slot — and the divergence is what
 the contracted second Bianchi identity, and hence `Δ scal`, are about.
 
-The other three slots are not done here. `Y` and `Z` should go the same way; `W`
-is the analogue of the curvature's third slot and will need the same
+The other three slots are not done here, and they are not the same problem.
+
+`Y` and `Z` are tensorial too, but the proof is not a copy of this one: under
+`Y ↦ f•Y` the *first* term picks up a Leibniz term, because
+`∇_X(f • R(Y,Z)W) = f ∇_X(R(Y,Z)W) + (Xf) R(Y,Z)W`, and it is cancelled by the
+matching term from `R(∇_X(f•Y), Z)W`. Applying Leibniz there needs
+`y ↦ R(Y,Z)W y` to be a *differentiable section*, which nothing in this project
+establishes — `covCurvature` is well defined without it, since `cov` is total.
+The missing lemma is smoothness of the curvature section, and it is reachable:
+the two `∇∇` terms are `contMDiff_cov_apply` twice, and the bracket term needs
+smoothness of `mlieBracket`, which Mathlib has as
+`ContMDiffAt.mlieBracket_vectorField` (`Mathlib/Geometry/Manifold/VectorField/
+LieBracket.lean`). Expect to spend the regularity budget: `C^{k+2}` fields for a
+`C^k` curvature section.
+
+`W` is the analogue of the curvature's third slot and will need the same
 frame-and-globalise argument as `CurvaturePointwise.lean`.
 
 Regularity follows `bianchi_second`: `W` is `C³`, `X`, `Y`, `Z` are `C²`, and the
