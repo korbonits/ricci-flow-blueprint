@@ -156,9 +156,13 @@ Now `thm:hamilton-ivey` at the head of `chap:kappa`, with a
    `f` is convex and increasing on `[e²,∞)` and `n ↦ max(-n,e²)` is convex and
    lands there. `K` is closed and convex (`convex_iveyPinchedSet`,
    `isClosed_iveyPinchedSet`), which is exactly what `thm:max-tensor` consumes.
-   (b) the time-dependent `K_t` form of `thm:max-tensor` for Hamilton 1999's
-   `log(1+t)` improvement — still open, and now the only thing between the ODE
-   result and the flow.
+   Invariance of `K` under the ODE is also packaged in that language
+   (`IsCurvatureODE.isIveyPinched`, `IsCurvatureODE.mem_iveyPinchedSet`), so
+   **both** things `thm:max-tensor` asks about `K` are proved.
+   **What is actually left is item 3 below** — `∂ₜ Rm = Δ Rm + Q`, the equation
+   the principle is applied to. (b) the time-dependent `K_t` form of
+   `thm:max-tensor` is needed only for Hamilton 1999's `log(1+t)` improvement,
+   not for the basic estimate; an earlier version of this list said otherwise.
    Watch out: `Real.log (-n) = Real.log n` is a simp lemma
    (`Real.log_neg_eq_log`), so `simpa [iveyF]` rewrites under you — use a
    `calc` with `rfl`, or `set L := Real.log (-n t)` before `field_simp`.
@@ -169,8 +173,16 @@ Now `thm:hamilton-ivey` at the head of `chap:kappa`, with a
    (`div Rm = d scal /2`), then `tr_g Ṙic = Δ scal` under the flow and hence
    `∂ₜ scal = Δ scal + 2|Ric|²`. `RicciVariation.lean` already has
    `∂ₜ R = tr_g Ṙic + 2|Ric|²`, so only `tr_g Ṙic = Δ R` is missing.
-3. **`∂ₜ Rm = Δ Rm + Q`** (Uhlenbeck's trick) — needed to state (1) on the
-   flow rather than on the ODE alone.
+3. **`∂ₜ Rm = Δ Rm + Q`** (Uhlenbeck's trick) — **now the single gate**, for
+   both (1) and (2): the Hamilton–Ivey transport needs the flow written in the
+   form `thm:max-tensor` consumes, and `∂ₜ scal = Δ scal + 2|Ric|²` needs the
+   contraction of the same identity. Everything else either side of it is done.
+   The prerequisite nobody has built here yet is `∇Rm` **as a tensor**:
+   `covCurvature` exists (`Bianchi.lean`) but is not known to be pointwise in
+   its slots, which is what `curvature_congr_third` did one level down. That is
+   the next concrete piece of work, and it is a build of the same shape as
+   `CurvaturePointwise.lean` — expand in a frame, globalise, use linearity —
+   but in four slots instead of one.
 4. **Perelman's `L`-geometry** (`def:reduced-volume`,
    `thm:reduced-volume-monotone`). The deepest genuinely-open node and the one
    everything downstream of `chap:kappa` consumes. Pure comparison geometry +
