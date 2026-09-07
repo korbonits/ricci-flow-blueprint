@@ -13,7 +13,7 @@ import Mathlib.Geometry.Manifold.VectorField.LieBracket
 import RicciFlowBlueprint.LieBracketDerivation
 
 open Bundle VectorField
-open scoped Manifold ContDiff
+open scoped Manifold ContDiff Topology
 
 namespace VectorField
 
@@ -198,6 +198,38 @@ theorem bianchi_first [ContMDiffCovariantDerivative cov 1] (hcov : cov.torsion =
 -- `ContDiff.mlieBracket_vectorField`, and Jacobi from
 -- `leibniz_identity_mlieBracket_apply` combined with `mlieBracket_swap_apply`.
 -- That is bookkeeping, not mathematics: the content is `bianchi_first_of_mdiff`.
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E] in
+-- BENCH: curvature-local-third
+/-- **The curvature is local in its third slot**: `R(X,Y)Z` at `x` depends only on `Z`
+near `x`. Both `∇_X ∇_Y Z` and `∇_{[X,Y]} Z` are built from `cov`, which is local on
+differentiable sections (`IsCovariantDerivativeOn.congr_of_eventuallyEq`). -/
+theorem curvature_congr_third_of_eventuallyEq [ContMDiffCovariantDerivative cov 1]
+    {X Y Z Z' : Π y : M, TangentSpace I y} {x : M}
+    (hZ : CMDiff 2 (T% Z)) (hZ' : CMDiff 2 (T% Z'))
+    (hX : MDiffAt (T% X) x) (hY : MDiffAt (T% Y) x)
+    (h : Z =ᶠ[𝓝 x] Z') :
+    cov.curvature X Y Z x = cov.curvature X Y Z' x := by
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  have hZm : MDiff (T% Z) := hZ.mdifferentiable h2
+  have hZ'm : MDiff (T% Z') := hZ'.mdifferentiable h2
+  obtain ⟨U, hUeq, hUopen, hxU⟩ := eventually_nhds_iff.mp h
+  -- `cov Z` and `cov Z'` agree on all of `U`, hence near `x`
+  have hcovU : ∀ y ∈ U, cov Z y = cov Z' y := fun y hy ↦
+    cov.isCovariantDerivativeOn.congr_of_eventuallyEq (hZm y) (hZ'm y) Filter.univ_mem
+      (eventually_nhds_iff.mpr ⟨U, hUeq, hUopen, hy⟩)
+  have hsec : ∀ {W : Π y : M, TangentSpace I y},
+      (fun y ↦ cov Z y (W y)) =ᶠ[𝓝 x] (fun y ↦ cov Z' y (W y)) := by
+    intro W
+    refine eventually_nhds_iff.mpr ⟨U, fun y hy ↦ ?_, hUopen, hxU⟩
+    show cov Z y (W y) = cov Z' y (W y)
+    rw [hcovU y hy]
+  simp only [curvature]
+  rw [cov.isCovariantDerivativeOn.congr_of_eventuallyEq (cov.mdiffAt_cov_apply hZ hY)
+      (cov.mdiffAt_cov_apply hZ' hY) Filter.univ_mem hsec,
+    cov.isCovariantDerivativeOn.congr_of_eventuallyEq (cov.mdiffAt_cov_apply hZ hX)
+      (cov.mdiffAt_cov_apply hZ' hX) Filter.univ_mem hsec,
+    cov.isCovariantDerivativeOn.congr_of_eventuallyEq (hZm x) (hZ'm x) Filter.univ_mem h]
 
 omit [FiniteDimensional ℝ E] in
 /-- `R(fX, Y)Z = f · R(X, Y)Z`: the curvature operator is `C^∞(M)`-linear in its

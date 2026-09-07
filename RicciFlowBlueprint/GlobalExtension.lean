@@ -38,22 +38,34 @@ variable
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
   [T2Space M]
 
+-- BENCH: global-extension-of-local
+/-- **A section that is `C^k` near a point agrees near that point with a globally `C^k`
+section.** Multiply by a bump function that is `1` near `x` and supported where the section
+is regular. This is the general local-to-global step; `exists_contMDiff_extension` is the
+case of `FiberBundle.extend`. -/
+theorem exists_contMDiff_eventuallyEq {n : ℕ∞} {x : M} {u : Set M} (hu : u ∈ 𝓝 x)
+    {σ : Π y : M, TangentSpace I y} (hσ : CMDiff[u] (n : ℕ∞ω) (T% σ)) :
+    ∃ τ : Π y : M, TangentSpace I y, CMDiff (n : ℕ∞ω) (T% τ) ∧ τ =ᶠ[𝓝 x] σ := by
+  obtain ⟨f, hf⟩ :=
+    (SmoothBumpFunction.nhds_basis_support (I := I) (interior_mem_nhds.mpr hu)).ex_mem
+  refine ⟨fun y ↦ f y • σ y, ?_, ?_⟩
+  · exact ContMDiffOn.smul_section_of_tsupport
+      ((f.contMDiff.of_le (by exact_mod_cast le_top)).contMDiffOn) isOpen_interior hf
+      (hσ.mono interior_subset)
+  · filter_upwards [f.eventuallyEq_one] with y hy
+    show f y • σ y = σ y
+    rw [hy, Pi.one_apply, one_smul]
+
 -- BENCH: global-extension
-/-- **Every tangent vector is the value of a globally `C^k` vector field.**
-A bump function centred at `x`, with closed support inside a neighbourhood on which
-`FiberBundle.extend` is `C^k`, times that local extension. -/
+/-- **Every tangent vector is the value of a globally `C^k` vector field.** -/
 theorem exists_contMDiff_extension {n : ℕ∞} {x : M} (v : TangentSpace I x) :
     ∃ X : Π y : M, TangentSpace I y, CMDiff (n : ℕ∞ω) (T% X) ∧ X x = v := by
   obtain ⟨s, hs, hext⟩ :=
-    FiberBundle.exists_contMDiffOn_extend (k := (n : ℕ∞ω)) I E (V := fun y : M ↦ TangentSpace I y) v
-  have hu : interior s ∈ 𝓝 x := interior_mem_nhds.mpr hs
-  obtain ⟨f, hf⟩ := (SmoothBumpFunction.nhds_basis_support (I := I) hu).ex_mem
-  refine ⟨fun y ↦ f y • FiberBundle.extend E v y, ?_, ?_⟩
-  · exact ContMDiffOn.smul_section_of_tsupport
-      ((f.contMDiff.of_le (by exact_mod_cast le_top)).contMDiffOn) isOpen_interior hf
-      (hext.mono interior_subset)
-  · show (f x : ℝ) • FiberBundle.extend E v x = v
-    rw [FiberBundle.extend_apply_self, f.eq_one, one_smul]
+    FiberBundle.exists_contMDiffOn_extend (k := (n : ℕ∞ω)) I E
+      (V := fun y : M ↦ TangentSpace I y) v
+  obtain ⟨X, hX, hXeq⟩ := exists_contMDiff_eventuallyEq hs hext
+  refine ⟨X, hX, ?_⟩
+  rw [hXeq.eq_of_nhds, FiberBundle.extend_apply_self]
 
 /-- The `C²` case, which is what the curvature predicates use. -/
 theorem exists_contMDiff_two_extension {x : M} (v : TangentSpace I x) :
