@@ -473,6 +473,194 @@ theorem le_of_isIveyPinched {l m n : ℝ} (hml : m ≤ l) (hnm : n ≤ m)
     · exact le_trans (iveyF_le_neg_three h1 hsmall) hR
   · exact hdone
 
+/-! #### Invariance of `K`: the two boundary cases are one Grönwall
+
+Cao--Zhu check the boundary in two cases according to the sign of `μ`, but the two are the
+same inequality: `hamiltonIvey_boundary_of_neg`'s hypothesis `λ = P + N(L-2)` with `P = -μ`
+is `λ + μ = N(L-2)`, the hypothesis of the other. Eliminating `L` from either leaves the
+*same* polynomial, `iveyE`, and it is nonnegative under the ordering alone — no boundary
+relation, no logarithm.
+
+That turns Hamilton's boundary argument into a linear Grönwall comparison. Writing
+`Ψ = R - f(-ν)` for the defect and `N = -ν > 0`,
+
+    Ψ' = iveyE / N - Ψ · (N² + λμ) / N,
+
+identically, so `iveyE ≥ 0` gives `Ψ' ≥ a Ψ` with `a = -(N² + λμ)/N` continuous wherever
+`ν < 0`, and `nonneg_of_mul_le_deriv` applies. -/
+
+/-- The polynomial left after eliminating the logarithm from Hamilton's boundary condition:
+`N(λ²+μ²) + N³ + λμ(λ+μ+N)`, with `N = -ν`. -/
+def iveyE (l m N : ℝ) : ℝ := N * (l ^ 2 + m ^ 2) + N ^ 3 + l * m * (l + m + N)
+
+-- BENCH: pinching-ivey-E
+/-- **`iveyE ≥ 0` under the ordering alone.** This is Cao--Zhu's Case (i) and Case (ii)
+unified: `hamiltonIvey_boundary_of_nonneg` and `hamiltonIvey_boundary_of_neg` are the two
+halves of this proof, dressed in the boundary relation that eliminates the logarithm.
+
+If `μ ≥ 0` then `λ ≥ μ ≥ 0` and every term is a product of nonnegatives. If `μ < 0` use
+
+    N(λ²+μ²) + N³ + λμ(λ+μ+N) = (λ² + λμ + μ²)(N + μ) + N³ - μ³,
+
+where `λ² + λμ + μ² = (λ + μ/2)² + ¾μ² ≥ 0`, `N + μ ≥ 0` is the ordering `ν ≤ μ`, and
+`N³ - μ³ > 0` because `μ < 0 < N`. -/
+theorem iveyE_nonneg {l m N : ℝ} (hml : m ≤ l) (hmN : -N ≤ m) (hN : 0 < N) :
+    0 ≤ iveyE l m N := by
+  unfold iveyE
+  rcases le_total 0 m with hm | hm
+  · have hl : 0 ≤ l := hm.trans hml
+    have h1 : 0 ≤ N * (l ^ 2 + m ^ 2) := by positivity
+    have h2 : 0 ≤ l * m * (l + m + N) := by positivity
+    nlinarith [pow_pos hN 3]
+  · have hq : 0 ≤ l ^ 2 + l * m + m ^ 2 := by nlinarith [sq_nonneg (2 * l + m), sq_nonneg m]
+    have hNm : 0 ≤ N + m := by linarith
+    have hm3 : m ^ 3 ≤ 0 := by
+      nlinarith [mul_nonneg (sq_nonneg m) (neg_nonneg.2 hm)]
+    have hcube : 0 ≤ N ^ 3 - m ^ 3 := by nlinarith [pow_pos hN 3]
+    nlinarith [mul_nonneg hq hNm]
+
+/-- The **defect** `Ψ = R - f(-ν)`. Hamilton's second condition, for an ordered triple, is
+exactly `Ψ ≥ 0` (`le_of_isIveyPinched` in one direction, the definition in the other). -/
+noncomputable def iveyPsi (l m n : ℝ) : ℝ := l + m + n - iveyF (-n)
+
+/-- `Ψ' = λ̇ + μ̇ + ν̇ + (log(-ν) - 2) ν̇` along the curvature ODE, by the chain rule through
+`hasDerivAt_iveyF`. -/
+theorem IsCurvatureODE.hasDerivAt_iveyPsi (h : IsCurvatureODE l m n T) {t : ℝ} (ht : t ∈ Icc 0 T)
+    (hn : n t < 0) :
+    HasDerivAt (fun s ↦ iveyPsi (l s) (m s) (n s))
+      ((l t ^ 2 + m t * n t) + (m t ^ 2 + l t * n t) + (n t ^ 2 + l t * m t)
+        + (Real.log (-n t) - 2) * (n t ^ 2 + l t * m t)) t := by
+  have hN : (0:ℝ) < -n t := by linarith
+  have hu : HasDerivAt (fun s ↦ -n s) (-(n t ^ 2 + l t * m t)) t := (h.hn t ht).neg
+  have hcomp := (hasDerivAt_iveyF hN).comp t hu
+  rw [Function.comp_def] at hcomp
+  have hsum := (((h.hl t ht).add (h.hm t ht)).add (h.hn t ht)).sub hcomp
+  have heq : (l t ^ 2 + m t * n t) + (m t ^ 2 + l t * n t) + (n t ^ 2 + l t * m t)
+      - (Real.log (-n t) - 2) * -(n t ^ 2 + l t * m t)
+      = (l t ^ 2 + m t * n t) + (m t ^ 2 + l t * n t) + (n t ^ 2 + l t * m t)
+        + (Real.log (-n t) - 2) * (n t ^ 2 + l t * m t) := by ring
+  rw [heq] at hsum
+  exact hsum
+
+-- BENCH: pinching-ivey-invariant
+/-- **The defect is nonnegative for as long as `ν < 0`** — the middle of Hamilton's argument.
+
+The identity behind it is
+\[ \Psi' \;=\; \frac{\texttt{iveyE}(\lambda,\mu,N)}{N} \;-\; \Psi\,\frac{N^2+\lambda\mu}{N},
+   \qquad N = -\nu, \]
+which holds with no hypotheses beyond `ν < 0` (`field_simp; ring`, the `log N` terms
+cancelling). So `iveyE_nonneg` gives `a Ψ ≤ Ψ'` for the continuous
+`a = -(N^2+\lambda\mu)/N`, and `nonneg_of_mul_le_deriv` finishes it. Cao--Zhu's boundary
+argument is this Grönwall comparison restricted to `Ψ = 0`. -/
+theorem IsCurvatureODE.iveyPsi_nonneg (h : IsCurvatureODE l m n T) (hT : 0 ≤ T)
+    (hml : ∀ t ∈ Icc 0 T, m t ≤ l t) (hnm : ∀ t ∈ Icc 0 T, n t ≤ m t)
+    (hneg : ∀ t ∈ Icc 0 T, n t < 0)
+    (h0 : 0 ≤ iveyPsi (l 0) (m 0) (n 0)) :
+    ∀ t ∈ Icc 0 T, 0 ≤ iveyPsi (l t) (m t) (n t) := by
+  refine nonneg_of_mul_le_deriv (f := fun t ↦ iveyPsi (l t) (m t) (n t))
+    (f' := fun t ↦ (l t ^ 2 + m t * n t) + (m t ^ 2 + l t * n t) + (n t ^ 2 + l t * m t)
+      + (Real.log (-n t) - 2) * (n t ^ 2 + l t * m t))
+    (a := fun t ↦ -(n t ^ 2 + l t * m t) / (-n t)) hT
+    (fun t ht ↦ h.hasDerivAt_iveyPsi ht (hneg t ht)) ?_ (fun t ht ↦ ?_) h0
+  · exact ((((h.continuousOn_n.pow 2).add (h.continuousOn_l.mul h.continuousOn_m)).neg).div
+      h.continuousOn_n.neg (fun t ht ↦ by have := hneg t ht; intro hc; simp at hc; linarith))
+  · have hN : (0:ℝ) < -n t := by linarith [hneg t ht]
+    have hne : (-n t) ≠ 0 := ne_of_gt hN
+    have hn0 : n t ≠ 0 := ne_of_lt (hneg t ht)
+    have key : ((l t ^ 2 + m t * n t) + (m t ^ 2 + l t * n t) + (n t ^ 2 + l t * m t)
+        + (Real.log (-n t) - 2) * (n t ^ 2 + l t * m t))
+        - (-(n t ^ 2 + l t * m t) / (-n t)) * iveyPsi (l t) (m t) (n t)
+        = iveyE (l t) (m t) (-n t) / (-n t) := by
+      unfold iveyPsi iveyF iveyE
+      set L := Real.log (-n t) with hL
+      field_simp
+      ring
+    have hE : 0 ≤ iveyE (l t) (m t) (-n t) / (-n t) :=
+      div_nonneg (iveyE_nonneg (hml t ht) (by linarith [hnm t ht]) hN) hN.le
+    linarith
+
+/-- **Non-negative curvature is preserved.** `ν̇ = ν² + λμ`, and the ordering gives
+`λν ≤ ν² + λμ` — for `λ ≥ 0` because `μ ≥ ν`, and for `λ < 0` because then `ν ≤ μ ≤ λ < 0`, so
+`(-λ)(μ-ν) ≤ (-ν)(-ν) = ν²`. Hence `ν̇ ≥ λ ν` and `nonneg_of_mul_le_deriv` applies. -/
+theorem IsCurvatureODE.nonneg_preserved (h : IsCurvatureODE l m n T) (hT : 0 ≤ T)
+    (h0lm : m 0 ≤ l 0) (h0mn : n 0 ≤ m 0) (h0 : 0 ≤ n 0) :
+    ∀ t ∈ Icc 0 T, 0 ≤ n t := by
+  have hlm := h.le_preserved_lm hT h0lm
+  have hmn := h.le_preserved_mn hT h0mn
+  refine nonneg_of_mul_le_deriv (f := n) (f' := fun t ↦ n t ^ 2 + l t * m t) (a := l) hT
+    (fun t ht ↦ h.hn t ht) h.continuousOn_l (fun t ht ↦ ?_) h0
+  have h1 := hlm t ht
+  have h2 := hmn t ht
+  show l t * n t ≤ n t ^ 2 + l t * m t
+  rcases le_total 0 (l t) with hl | hl
+  · nlinarith [mul_nonneg hl (sub_nonneg.2 h2)]
+  · nlinarith [mul_le_mul (by linarith : -l t ≤ -n t) (by linarith : m t - n t ≤ -n t)
+      (by linarith) (by linarith)]
+
+/-- **Time translation.** The curvature ODE restarted at `s`. Needed to run
+`nonneg_preserved` from an interior time. -/
+theorem IsCurvatureODE.shift (h : IsCurvatureODE l m n T) {s : ℝ} (hs0 : 0 ≤ s) :
+    IsCurvatureODE (fun u ↦ l (s + u)) (fun u ↦ m (s + u)) (fun u ↦ n (s + u)) (T - s) where
+  hl u hu := (h.hl (s + u) ⟨by linarith [hu.1], by linarith [hu.2]⟩).comp_const_add s u
+  hm u hu := (h.hm (s + u) ⟨by linarith [hu.1], by linarith [hu.2]⟩).comp_const_add s u
+  hn u hu := (h.hn (s + u) ⟨by linarith [hu.1], by linarith [hu.2]⟩).comp_const_add s u
+
+/-- **Restriction to a shorter interval.** -/
+theorem IsCurvatureODE.restrict (h : IsCurvatureODE l m n T) {S : ℝ} (hS : S ≤ T) :
+    IsCurvatureODE l m n S where
+  hl s hs := h.hl s ⟨hs.1, le_trans hs.2 hS⟩
+  hm s hs := h.hm s ⟨hs.1, le_trans hs.2 hS⟩
+  hn s hs := h.hn s ⟨hs.1, le_trans hs.2 hS⟩
+
+/-- **`ν < 0` propagates backwards.** If `ν` is negative at `t`, it was negative on all of
+`[0,t]`: otherwise `nonneg_preserved`, applied to the ODE restarted where `ν ≥ 0`, would make
+`ν(t) ≥ 0`. -/
+theorem IsCurvatureODE.neg_of_neg (h : IsCurvatureODE l m n T) (hT : 0 ≤ T)
+    (h0lm : m 0 ≤ l 0) (h0mn : n 0 ≤ m 0)
+    {t : ℝ} (ht : t ∈ Icc 0 T) (hnt : n t < 0) : ∀ s ∈ Icc 0 t, n s < 0 := by
+  have hlm := h.le_preserved_lm hT h0lm
+  have hmn := h.le_preserved_mn hT h0mn
+  intro s hs
+  by_contra hcon
+  have hc : 0 ≤ n s := not_lt.1 hcon
+  have hsT : s ≤ T := le_trans hs.2 ht.2
+  have hsmem : s ∈ Icc 0 T := ⟨hs.1, hsT⟩
+  have hkey := (h.shift hs.1).nonneg_preserved (by linarith) (by simpa using hlm s hsmem)
+    (by simpa using hmn s hsmem) (by simpa using hc) (t - s)
+    ⟨by linarith [hs.2], by linarith [ht.2]⟩
+  simp only [add_sub_cancel] at hkey
+  linarith
+
+-- BENCH: pinching-ivey-ode
+/-- **The Hamilton--Ivey estimate at the level of the ODE** (Hamilton 1995 §4, Ivey 1993;
+Cao--Zhu Theorem 2.4.1). For an ordered solution of the curvature ODE normalised by
+`ν(0) ≥ -1`, at every time at which `ν < 0`,
+\[ \lambda + \mu + \nu \ \ge\ (-\nu)\bigl(\log(-\nu) - 3\bigr) . \]
+
+The three parts: `isIveyPinched_of_neg_one_le` puts the initial data in Hamilton's set `K`;
+`iveyPsi_nonneg` carries the defect `Ψ = R - f(-ν)` forward, by the Grönwall comparison that
+`iveyE_nonneg` powers; `le_of_isIveyPinched` reads the estimate back off `K`. `neg_of_neg`
+supplies the hypothesis `iveyPsi_nonneg` needs, that `ν < 0` on the whole of `[0,t]` —
+non-negative curvature is preserved, so a later negative `ν` was negative all along.
+
+This is the ODE half. Transporting it to the flow is `thm:max-tensor` applied to `K`, which
+additionally wants `K` convex — and that is the one place `f⁻¹` is needed. -/
+theorem IsCurvatureODE.hamiltonIvey (h : IsCurvatureODE l m n T) (hT : 0 ≤ T)
+    (h0lm : m 0 ≤ l 0) (h0mn : n 0 ≤ m 0) (h0n : -1 ≤ n 0) :
+    ∀ t ∈ Icc 0 T, n t < 0 → iveyF (-n t) ≤ l t + m t + n t := by
+  intro t ht hnt
+  have ht0 : (0:ℝ) ≤ t := ht.1
+  have hneg := h.neg_of_neg hT h0lm h0mn ht hnt
+  have hres := h.restrict ht.2
+  have hlm := hres.le_preserved_lm ht0 h0lm
+  have hmn := hres.le_preserved_mn ht0 h0mn
+  have hstart : 0 ≤ iveyPsi (l 0) (m 0) (n 0) :=
+    sub_nonneg.2 (le_of_isIveyPinched h0lm h0mn
+      (isIveyPinched_of_neg_one_le h0lm h0mn h0n) (hneg 0 ⟨le_refl 0, ht0⟩))
+  have hmid := hres.iveyPsi_nonneg ht0 hlm hmn hneg hstart t ⟨ht0, le_refl t⟩
+  unfold iveyPsi at hmid
+  linarith
+
 end CurvatureODE
 
 end Pinching

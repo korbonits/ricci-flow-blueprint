@@ -1452,7 +1452,7 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
 
 \begin{theorem}[Hamilton--Ivey pinching]
   \label{thm:hamilton-ivey}
-  \uses{thm:max-tensor, lem:evolution-rm, lem:pinching-ode}
+  \uses{thm:max-tensor, lem:evolution-rm, lem:ivey-ode}
   Let $(\M^3, \g(t))$ be a Ricci flow on a closed three-manifold, normalised so
   that the smallest eigenvalue $\nu$ of the curvature operator satisfies
   $\nu \ge -1$ at $t = 0$. Then at every point and every $t \ge 0$ at which
@@ -1481,13 +1481,12 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
     \qquad f(x) = x(\log x - 3) \ \text{on}\ [e^2,\infty),
   \]
   and the whole content at the ODE level is that $K$ is preserved.
-  \emph{(Cao--Zhu, Theorem 2.4.1.)} Both \emph{ends} of the argument are done:
-  Lemma~\ref{lem:ivey-set} puts the normalised initial data into $K$ and reads
-  the estimate back off it. What remains is the middle --- assembling
-  Lemma~\ref{lem:ivey-scal} and Lemma~\ref{lem:ivey-boundary} into invariance
-  of $K$ under the ODE; then $f^{-1}$ and its concavity, which is what makes
-  $K$ convex and so is what Theorem~\ref{thm:max-tensor} consumes; and, for
-  Hamilton's later improvement with the $\log(1+t)$ term, a form of
+  \emph{(Cao--Zhu, Theorem 2.4.1.)} \textbf{The ODE half is done} ---
+  Lemma~\ref{lem:ivey-ode}. What remains is the transport to the flow: $f^{-1}$
+  on $[-e^2,\infty)$ and its concavity, which together with concavity of the
+  least-eigenvalue function make $K$ convex, and that convexity is exactly what
+  Theorem~\ref{thm:max-tensor} consumes. For Hamilton's later improvement with
+  the $\log(1+t)$ term one additionally needs a form of
   Theorem~\ref{thm:max-tensor} for a \emph{time-dependent} family $\{K_t\}$.
 \end{theorem}
 
@@ -1567,6 +1566,43 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   $f' = \log N - 2 \le 0$ --- so $f(N) \le f(1) = -3$, and the \emph{first} condition of $K$
   finishes it. That middle range is the whole reason $K$ carries the otherwise unmotivated
   bound $\lambda+\mu+\nu \ge -3$.
+\end{lemma}
+
+\begin{lemma}[Hamilton--Ivey for the curvature ODE]
+  \label{lem:ivey-ode}
+  \lean{RicciFlowBlueprint.Pinching.IsCurvatureODE.hamiltonIvey,
+        RicciFlowBlueprint.Pinching.IsCurvatureODE.iveyPsi_nonneg,
+        RicciFlowBlueprint.Pinching.iveyE_nonneg,
+        RicciFlowBlueprint.Pinching.IsCurvatureODE.nonneg_preserved}
+  \leanok
+  \uses{lem:pinching-ode, lem:ivey-scal, lem:ivey-set}
+  Let $\lambda \ge \mu \ge \nu$ solve Hamilton's curvature ODE on $[0,T]$ with
+  $\nu(0) \ge -1$. Then at every time at which $\nu < 0$,
+  \[
+    \lambda + \mu + \nu \ \ge\ (-\nu)\bigl(\log(-\nu) - 3\bigr).
+  \]
+
+  Cao--Zhu check invariance of $K$ on its boundary, in two cases according to the
+  sign of $\mu$. The two cases are the same inequality: the hypothesis of the
+  second, $\lambda = -\mu + N(L-2)$ with $N = -\nu$, is the hypothesis of the
+  first, $\lambda+\mu = N(L-2)$, and eliminating $L$ from either leaves the same
+  polynomial
+  \[
+    \texttt{iveyE} \;=\; N(\lambda^2+\mu^2) + N^3 + \lambda\mu(\lambda+\mu+N),
+  \]
+  which is nonnegative under the ordering alone --- no boundary relation, no
+  logarithm. So the boundary argument becomes a linear Gr\"onwall comparison: for
+  the defect $\Psi = \scal - f(-\nu)$ one has the identity
+  \[
+    \Psi' \;=\; \frac{\texttt{iveyE}}{N} \;-\; \Psi\,\frac{N^2 + \lambda\mu}{N},
+  \]
+  valid wherever $\nu < 0$, so $\Psi' \ge a\Psi$ with $a = -(N^2+\lambda\mu)/N$
+  continuous, and $\Psi \ge 0$ is preserved.
+
+  That $\nu < 0$ on the whole interval is not an extra hypothesis: non-negative
+  curvature is preserved by the ODE ($\dot\nu \ge \lambda\nu$ under the ordering),
+  so a $\nu$ that is negative at $t$ was negative on all of $[0,t]$, and where
+  $\nu \ge 0$ the estimate is vacuous.
 \end{lemma}
 
 \begin{theorem}[Geometric convergence of manifolds and of flows]
