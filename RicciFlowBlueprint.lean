@@ -25,3 +25,4 @@ import RicciFlowBlueprint.MetricTrace
 import RicciFlowBlueprint.RicciVariation
 import RicciFlowBlueprint.TensorMaximumPrinciple
 import RicciFlowBlueprint.ManifoldMaximumPrinciple
+import RicciFlowBlueprint.TraceCov

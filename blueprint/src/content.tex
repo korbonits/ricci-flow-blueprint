@@ -896,6 +896,62 @@ target actually requires.
   the link is the second-derivative test, Lemma \ref{lem:second-derivative-test}.
 \end{definition}
 
+\begin{lemma}[The metric trace commutes with $\nab$]
+  \label{lem:metric-trace-cov}
+  \lean{CovariantDerivative.mvfderiv_sum_eq_sum_covBilin,
+    CovariantDerivative.mvfderiv_sum_eq_sum_covBilin_of_frame,
+    CovariantDerivative.inner_cov_antisymm,
+    CovariantDerivative.sum_bilin_of_antisymm}
+  \leanok
+  \uses{def:laplacian, thm:levi-civita}
+  Let $\nab$ be a metric connection, $B$ a bilinear form field on $TM$ and
+  $e_1, \dots, e_n$ a local orthonormal frame near $x$. Then
+  \[
+    X\Big(\sum_i B(e_i, e_i)\Big) \;=\; \sum_i (\nab_X B)(e_i, e_i),
+  \]
+  where $(\nab_X B)(Y,Z) = X(B(Y,Z)) - B(\nab_X Y, Z) - B(Y, \nab_X Z)$. Since
+  $\sum_i B(e_i,e_i)$ is the metric trace $\operatorname{tr}_\g B$ for any
+  orthonormal frame, this is $X(\operatorname{tr}_\g B) =
+  \operatorname{tr}_\g(\nab_X B)$.
+
+  \textbf{Proved} (\texttt{TraceCov.lean}). This is the gate for every
+  Laplacian identity below: the contracted second Bianchi identity, $\partial_t
+  R = \Delta R + 2|\Ric|^2$ inside Lemma \ref{lem:variation-scalar}, and
+  $\partial_t \Rm = \Delta \Rm + Q$ (Lemma \ref{lem:evolution-rm}).
+
+  $B$ need not be symmetric, and the frame need not be parallel --- which is
+  the point, since a parallel frame exists only along a curve. Two auxiliary
+  results are stated separately and are of independent use:
+  \texttt{inner\_cov\_antisymm}, that the connection coefficients of an
+  orthonormal frame are antisymmetric, and
+  \texttt{sum\_bilin\_of\_antisymm}, the purely algebraic cancellation.
+  A local orthonormal frame is supplied by \texttt{OrthonormalFrame.lean}, and
+  \texttt{exists\_orthonormalBasis\_of\_isOrthonormalFrameOn} turns it into
+  an orthonormal basis of each fibre over its base set.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  Expanding the definition of $\nab_X B$, the claim is that the $2n^2$
+  correction terms cancel:
+  \[
+    \sum_i \big[ B(\nab_X e_i, e_i) + B(e_i, \nab_X e_i) \big] = 0 .
+  \]
+  Write $\nab_X e_i = \sum_j a_{ij} e_j$ with $a_{ij} = \langle \nab_X e_i,
+  e_j \rangle$. Because $\langle e_i, e_j \rangle$ is constant near $x$, its
+  derivative along $X$ vanishes, and metric compatibility
+  $X\langle e_i, e_j\rangle = \langle \nab_X e_i, e_j\rangle + \langle e_i,
+  \nab_X e_j\rangle$ forces $a_{ij} = -a_{ji}$. The sum above is then
+  $\sum_{i,j} a_{ij}\big[B(e_j,e_i) + B(e_i,e_j)\big]$, in which the bracket is
+  symmetric under $i \leftrightarrow j$ while $a$ is antisymmetric; swapping
+  the two summation indices shows the sum is its own negative. Differentiating
+  the trace term by term needs $\mathrm{d}$ of a finite sum
+  (\texttt{mvfderiv\_fun\_sum}), and the vanishing of the derivative of a
+  locally constant function needs that $\mathrm{d}$ depends only on the germ
+  (\texttt{Filter.EventuallyEq.mvfderiv\_eq}); both are missing from Mathlib
+  and are proved here.
+\end{proof}
+
 \begin{lemma}[Second-derivative test]
   \label{lem:second-derivative-test}
   \lean{RicciFlowBlueprint.laplacianFun_nonneg_of_isLocalMin}
@@ -1103,8 +1159,9 @@ target actually requires.
   sections there, which the second slot of $\Ric$ requires
   (\texttt{ricciE}, \texttt{ricci\_add\_right\_const}). What remains for
   $\partial_t R = \Delta R + 2|\Ric|^2$ is $\operatorname{tr}_\g(\partial_t
-  \Ric) = \Delta R$ under the flow, the contracted second Bianchi identity,
-  which needs the trace to commute with $\nab$ on the manifold.
+  \Ric) = \Delta R$ under the flow, the contracted second Bianchi identity.
+  The trace lemma it needs is now available (Lemma
+  \ref{lem:metric-trace-cov}); what is left is the contraction itself.
 \end{lemma}
 
 \begin{proof}
@@ -1124,7 +1181,7 @@ target actually requires.
 
 \begin{lemma}[Evolution of the curvature tensor]
   \label{lem:evolution-rm}
-  \uses{def:ricci-flow, def:curvature, def:laplacian, lem:variation-connection, lem:variation-curvature, lem:bianchi-second, lem:metric-trace-variation, lem:variation-scalar}
+  \uses{def:ricci-flow, def:curvature, def:laplacian, lem:variation-connection, lem:variation-curvature, lem:bianchi-second, lem:metric-trace-variation, lem:variation-scalar, lem:metric-trace-cov}
   Under the flow, $\partial_t \Rm = \Delta \Rm + Q(\Rm)$, where $Q$ is
   quadratic in the curvature operator.
 

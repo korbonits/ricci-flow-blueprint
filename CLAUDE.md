@@ -31,6 +31,7 @@ in `lake-manifest.json`) on Lean `v4.34.0-rc2`, because mathlib4 #36845
 | `CurvatureVariation.lean` | **proved**: `covEnd` (∇ of an `End`-valued one-form), `curvature_eq_add_covEnd` (curvature of `∇ + A`, `∇` torsion-free — algebraic), `hasDerivAt_curvatureE` (`∂ₜ Rᵗ = (∇_X Ȧ)(Y,Z) − (∇_Y Ȧ)(X,Z)` along `∇ᵗ = ∇ + Aᵗ`), `exists_hasDerivAt_clm_of_apply` (coordinatewise ⇒ CLM-valued derivative), `differenceE` (Mathlib's `difference` on `E`), `derivDifferenceE` (`Ȧ = ∂ₜ∇` as `deriv`, no existential), `inner_derivDifferenceE_eq`, `hasDerivAt_curvatureE_leviCivitaOfMetric` (**first variation of Rm along metrics**). Hypotheses: `CommutesWithMvfderiv` (the `Variation.lean` commutation, all fields) and `∂ₜ`/`∇_X` commuting on `Aᵗ(Y,Z)` |
 | `Bianchi.lean` | **proved**: `contMDiff_cov_apply` (`C^k` connection, `C^{k+1}` section, `C^k` field ⇒ `C^k` covariant derivative), `mlieBracket_sub_left'`, `covCurvature` (`(∇_X R)(Y,Z)W`), `bianchi_second` (**second Bianchi**, `C²` connection, `C²` fields, `C³` argument; no metric). The proof is the first-Bianchi pattern: split the sections, rewrite `∇_X Y − ∇_Y X` as `[X,Y]` in both the direction slot and as sections, `linear_combination (norm := module)` with Jacobi |
 | `MetricTrace.lean` | **proved**: `sharpE` (`g♯⁻¹ ∘ B♭`), `metricTraceE` (`tr(g♯⁻¹ B♭)`), `metricTraceE_eq_sum` (= `∑ᵢ B(eᵢ,eᵢ)` over any `g`-orthonormal basis, via `LinearMap.trace_eq_sum_inner`), `sharpE_apply_eq_sum`, `metricTraceE_comp_sharpE_eq_sum` (`⟨h,B⟩_g`), `hasDerivAt_inverse_innerE` (`∂ₜ g⁻¹ = −g⁻¹ h g⁻¹`, from `contDiffAt_map_inverse` plus differentiating `g ∘ g⁻¹ = id`), `hasDerivAt_metricTraceE` (**`∂ₜ tr_{g_t} B_t = tr Ḃ − ⟨h,B⟩`**). All at a point on `E`. `metricTraceE_innerE_comp`, `ricci_eq_metricTraceE` bridge to `ricci` |
+| `TraceCov.lean` | **proved**: **the metric trace commutes with `∇`** (roadmap Next 1, the gate for every Laplacian identity). `mvfderiv_sum_eq_sum_covBilin`: for a metric connection, a bilinear form field `B` and a local orthonormal frame, `X(∑ᵢ B(eᵢ,eᵢ)) = ∑ᵢ (∇_X B)(eᵢ,eᵢ)`; `_of_frame` is the same with the hypotheses read off an `IsOrthonormalFrameOn`. `B` need not be symmetric and the frame need not be parallel: `inner_cov_antisymm` (metric compatibility + locally constant `⟪eᵢ,eⱼ⟫` ⟹ the coefficients `aᵢⱼ = ⟪∇_X eᵢ, eⱼ⟫` are antisymmetric) and `sum_bilin_of_antisymm` (antisymmetric against symmetric is `0`, by `Finset.sum_comm`). `exists_orthonormalBasis_of_isOrthonormalFrameOn` turns a frame into an `OrthonormalBasis` of each fibre. Two Mathlib gaps filled on the way: `Filter.EventuallyEq.mvfderiv_eq` and `mvfderiv_fun_sum`/`mdifferentiableAt_fun_sum` |
 | `RicciVariation.lean` | **proved**: `CommutesWithCov` (∂ₜ/∇_X commute on the difference-tensor sections, all fields), `curvatureEndoE` (`v ↦ R(v,X)Y` via `mkHom`, typed on `E` by ascription — an expected type `E →L E` on a bare `mkHom` leaves `?V x =?= E` unsolved), `hasDerivAt_ricciOfMetric` (**∂ₜ Ric = tr ∂ₜ[v ↦ R(v,X)Y]**, any manifold). Model space: `constField`, `ricci_add_right_const`/`ricci_smul_right_const` (second slot on constant fields), `ricciE` (Ricci form as `E →L E →L ℝ` via `LinearMap.mk₂`), `scalarCurvatureOfMetric'` (= `Scalar.lean`'s), `hasDerivAt_scalarCurvatureOfMetric'` (`∂ₜ R = tr_g Ṙic − ⟨h,Ric⟩`), `innerE_deriv_eq_of_isRicciFlowAt` (`h = −2 Ric` from the flow by uniqueness), `hasDerivAt_scalarCurvatureOfMetric'_of_isRicciFlowAt` (**∂ₜ R = tr_g Ṙic + 2\|Ric\|²**). Never `local notation` over a section variable: hygiene hides `E` and everything downstream is silently auto-bound |
 | `Homogeneous.lean` | **branch closed**: `koszul`, torsion/compat, Levi-Civita uniqueness, `contDiffAt_ricciField`, `ricciFlow_leftInvariant` |
 | `Milnor.lean` | **branch closed**: Koszul formula, Ricci in structure constants, diagonal Ricci `rᵢ = 2μⱼμₖ`, Heisenberg, Isenberg–Jackson ODE |
@@ -141,15 +142,13 @@ Now `thm:hamilton-ivey` at the head of `chap:kappa`, with a
    Watch out: `Real.log (-n) = Real.log n` is a simp lemma
    (`Real.log_neg_eq_log`), so `simpa [iveyF]` rewrites under you — use a
    `calc` with `rfl`, or `set L := Real.log (-n t)` before `field_simp`.
-2. **The manifold trace lemma** `X(tr_g B) = tr_g(∇_X B)` — the gate for every
-   Laplacian identity here, and hence for `lem:evolution-rm`, `lem:pinching`
-   and the flow half of Hamilton–Ivey. **Now unblocked**: it needs a smooth
-   orthonormal local frame, which `OrthonormalFrame.lean` supplies (smoke-
-   tested on `TangentSpace I`, `C^ω`). The proof does *not* need a parallel
-   frame: with any orthonormal frame, write `∇_X eᵢ = Σⱼ aᵢⱼ eⱼ`; metric
-   compatibility makes `a` antisymmetric, the correction terms are
-   `Σᵢⱼ aᵢⱼ[B(eⱼ,eᵢ) + B(eᵢ,eⱼ)]`, and antisymmetric against symmetric is 0.
-   Then contracted second Bianchi and `∂ₜ scal = Δ scal + 2|Ric|²`.
+2. ~~**The manifold trace lemma** `X(tr_g B) = tr_g(∇_X B)`~~ — **done**,
+   `TraceCov.lean`, exactly along the sketch that used to sit here (no parallel
+   frame; antisymmetric coefficients against a symmetric bracket). **Next on
+   this line:** the *contraction* itself — contracted second Bianchi
+   (`div Rm = d scal /2`), then `tr_g Ṙic = Δ scal` under the flow and hence
+   `∂ₜ scal = Δ scal + 2|Ric|²`. `RicciVariation.lean` already has
+   `∂ₜ R = tr_g Ṙic + 2|Ric|²`, so only `tr_g Ṙic = Δ R` is missing.
 3. **`∂ₜ Rm = Δ Rm + Q`** (Uhlenbeck's trick) — needed to state (1) on the
    flow rather than on the ODE alone.
 4. **Perelman's `L`-geometry** (`def:reduced-volume`,
@@ -165,6 +164,10 @@ stack unless noted): `VectorField.lieBracket_apply_fun`; `neg_apply`,
 `sub_apply`, `mdiffAt_cov_apply`, `contMDiff_cov_apply` (`C^k` connection ⇒
 `C^k` covariant derivative); `mlieBracket_sub_left'`;
 `exists_hasDerivAt_clm_of_apply` (coordinatewise ⇒ CLM-valued derivative);
+`Filter.EventuallyEq.mvfderiv_eq`, `mvfderiv_fun_sum` and
+`mdifferentiableAt_fun_sum` (Mathlib has `mvfderiv_fun_add` but no germ-congruence
+and no finite-sum rule; its `MDifferentiableAt.sum` is stated for `ι : Type`, not
+`Type*`);
 `hasDerivAt_inverse_innerE`'s pattern (derivative of `inverse` from
 `contDiffAt_map_inverse` plus `f ∘ f⁻¹ = id`); `hessianFun_neg`; and the
 big one, smoothness of `leviCivitaConnection` (`LeviCivitaSmooth.lean`,
@@ -209,9 +212,9 @@ theirs is imported here.
   pointwise bilinear form on a general manifold, and the scalar curvature
   (`Scalar.lean`) and `∂ₜ R` (`RicciVariation.lean`) are on the model space
   only. First bites when the trace lemma (Next 1) is applied to `Ric`.
-- **The metric trace does not yet commute with `∇`** on the manifold
-  (Next 1). Every Laplacian identity — contracted Bianchi, `ΔR`, `Δ Rm` —
-  waits on it.
+- ~~The metric trace does not yet commute with `∇` on the manifold.~~ Closed
+  by `TraceCov.lean`. What still waits is the *contraction*: rewriting the
+  traced second Bianchi identity as `ΔR`, and the analogous step for `Δ Rm`.
 
 ## Lean gotchas
 
@@ -285,6 +288,11 @@ theirs is imported here.
 - Argument order is nonstandard: `cov σ x (X x)` is `(∇_X σ) x` on paper.
 - `torsion_eq_zero_iff` takes `cov` explicitly. `ContMDiffAt.mdifferentiableAt`
   wants `n ≠ 0`, not `1 ≤ n`.
+- `real_inner_comm x y` orients the *other* way than reading suggests: `rw` with
+  it hunts for the pattern you were trying to produce. State the swap as a
+  `have e : ⟪a, b⟫ = ⟪b, a⟫ := real_inner_comm _ _` and rewrite with `e`.
+- `refine ⟨fun i j ↦ e, …⟩` leaves the later goals beta-unreduced, so `rw`
+  fails on `(fun i j => e) i j`; put a `show` first.
 - "Prints identically but won't unify" is usually a substitution made mentally
   under a binder, not a diamond. `simp only` with collapse lemmas *and* pointwise
   `∀ y` facts in one set; `rw` cannot reach under a binder.
