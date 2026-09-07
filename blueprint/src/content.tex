@@ -264,6 +264,32 @@ gives the road, and the one thing it does not give yet.
   sections.
 \end{proof}
 
+\begin{lemma}[Global extension of a tangent vector]
+  \label{lem:global-extension}
+  \lean{RicciFlowBlueprint.exists_contMDiff_extension, RicciFlowBlueprint.forall_contMDiff_iff_forall_tangent}
+  \leanok
+  On a Hausdorff manifold, every tangent vector $v \in T_x\M$ is the value at $x$
+  of a globally $C^k$ vector field. Consequently, quantifying a property of
+  $X(x)$ over globally $C^2$ fields $X$ is the same as quantifying it over
+  tangent vectors.
+
+  \textbf{Proved.} Mathlib's \texttt{FiberBundle.extend} produces a section
+  through $v$ that is $C^k$ only on a neighbourhood of $x$
+  (\texttt{exists\_contMDiffOn\_extend}). Multiplying by a smooth bump function
+  whose closed support lies inside that neighbourhood
+  (\texttt{SmoothBumpFunction.nhds\_basis\_support}) gives a global field, still
+  equal to $v$ at $x$ because the bump is $1$ at its centre. Hausdorffness is
+  needed for the bump function to be smooth and is exactly the hypothesis whose
+  absence made the curvature predicates vacuously satisfiable; see
+  \texttt{notes/hamilton-statement-comparison.md}.
+
+  This closes the long-standing gap "no global $C^2$ extension of a tangent
+  vector". What it does \emph{not} yet give is that $\Ric(X,X)(x)$ depends only
+  on $X(x)$: that is tensoriality of the curvature's third slot on a general
+  manifold, which is the one remaining obstruction to stating positive Ricci
+  pointwise in $v$ as Chow--Liao--Qin do.
+\end{lemma}
+
 \begin{theorem}[Curvature is well defined]
   \label{thm:ricci-well-defined}
   \lean{RicciFlowBlueprint.ricci_eq_of_isLeviCivita}
@@ -1297,7 +1323,7 @@ shrinks to a round point.
 
 \begin{theorem}[Hamilton 1982]
   \label{thm:hamilton}
-  \uses{thm:normalized-convergence, lem:bianchi-first, def:sectional, thm:ricci-well-defined, def:ricci-of-metric}
+  \uses{thm:normalized-convergence, lem:bianchi-first, def:sectional, thm:ricci-well-defined, def:ricci-of-metric, lem:global-extension}
   A closed $3$-manifold admitting a metric of strictly positive Ricci curvature
   admits a metric of constant positive sectional curvature, and is therefore
   diffeomorphic to a spherical space form $S^3/\Gamma$.
