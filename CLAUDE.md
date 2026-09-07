@@ -80,41 +80,62 @@ second-derivative test (model space, then manifold), the variations of the
 connection, curvature, metric trace, Ricci and scalar curvature (09-05/06),
 second Bianchi (09-05), the principles on a manifold and CI hardening (09-06).
 
-**Where Hamilton 1982 stands.** The theorem is stated honestly
-(`hamilton_1982`, `proof_wanted`). Its proof splits into a curvature-pinching
-half and an analytic half.
+**Scooped, 2026-08-21.** Chow–Liao–Qin, `arXiv:2608.21502`, "A Lean
+Formalization of Hamilton's Three-Manifold Theorem". Repo
+`github.com/qinz1yang/differential-geometry`, tag `arxiv-v1-preview`,
+Apache-2.0, **1.9M lines of Lean, zero `sorry`, zero project axioms** (audited
+locally 2026-09-06). Top-level `hamilton_positive_ricci` takes exactly
+`isClosedThreeManifold` + `admitsPositiveRicci` and concludes
+`admitsConstantPositiveSectionalCurvature ∧ isSphericalSpaceForm`; the
+definitions are honest. They also have short-time existence (DeTurck +
+spectral/Galerkin), forward uniqueness, maximal continuation, Shi, Uhlenbeck,
+both maximum principles, F- and W-entropy with the cutoff argument, Perelman
+κ-noncollapsing, and Cheeger–Gromov–Hamilton compactness. **Both analytic gaps
+this project had flagged as blocking are closed in the literature.**
 
-Pinching half, in order of what is done:
-1. Curvature ODE and its invariant sets (`Pinching.lean`) — done.
-2. Tensor maximum principle — done abstractly and on a closed manifold for a
-   fixed fibre (`TensorMaximumPrinciple.lean`, `ManifoldMaximumPrinciple.lean`).
-3. Evolution equation `∂ₜ Rm = Δ Rm + Q(Rm)` (`lem:evolution-rm`) — the
-   inputs are done (`∂ₜ Rm` in terms of `∇²h`, second Bianchi, the metric
-   trace and its variation, `∂ₜ Ric`, `∂ₜ R = tr_g Ṙic + 2|Ric|²`); the
-   rewrite to `Δ Rm + Q` is not.
-4. Transfer of the invariant sets to the flow (`lem:pinching`) — not started;
-   needs 3, the bundle version of 2 with an evolving fibre metric (Uhlenbeck's
-   trick), convexity of eigenvalue-defined sets (variational
-   characterisation of eigenvalues), and Nagumo's condition lifted from the
-   eigenvalue ODE to the operator ODE by equivariance.
+Do not race them on parabolic PDE. They have a 266:1 line advantage and Bennett
+Chow. Race where their library is empty.
 
-Analytic half: short-time existence, Shi's estimates, long-time existence,
-convergence of the normalised flow. Parabolic theory Mathlib does not have.
-Nothing here is started; see "Where the real gaps are".
+**What their repo does NOT contain** (grepped, 2026-09-06): `Real.log` anywhere
+in `Preservation/` — so **no Hamilton–Ivey**; no reduced volume, no `L`-length,
+no `L`-geodesics; no κ-*solutions* (their `kappa` is all noncollapsing) and no
+canonical *neighborhoods* (their `canonical` is all Moser-iteration constants);
+no surgery, no solitons, no finite extinction, no harmonic map flow, no
+curve-shrinking flow, no cut locus, no Toponogov. They do have `Geometry/
+Exponential`, `Comparison/Volume`, `Comparison/Variation`, Jacobi fields,
+Bishop, index form, injectivity radius — the substrate `L`-geometry needs, and
+which this repo has none of.
+
+**Also found: the blueprint chart was missing Hamilton–Ivey entirely.** It is
+the fifth correction to the chart and a load-bearing one: without it no blow-up
+limit is ever known to have non-negative curvature, so `def:kappa-solution`'s
+standing hypothesis is never verified for anything that actually arises.
+Now `thm:hamilton-ivey` at the head of `chap:kappa`, with a
+`State of the art, September 2026` section in the Overview.
 
 **Next, in order.**
-1. The manifold trace lemma `X(tr_g B) = tr_g(∇_X B)` for a metric
-   connection. Needs a local frame of sections and the inverse Gram matrix
-   (`extend` is orthonormal only at `x`; differentiate `y ↦ ∑ᵢⱼ Gⁱʲ(y)
-   B(Eᵢ,Eⱼ)(y)` at `x`, where `G(x) = I` and `∂G = ⟨∇Eᵢ,Eⱼ⟩ + ⟨Eᵢ,∇Eⱼ⟩` by
-   compatibility, and the frame terms cancel). This is the gate for
-   everything with a Laplacian in it.
-2. Contracted second Bianchi, `tr_g Ṙic = ΔR` under the flow, hence
-   `∂ₜ R = ΔR + 2|Ric|²` — the scalar case of `lem:evolution-rm` — and with
-   the scalar maximum principle, Hamilton's `R_min` is nondecreasing: the
-   first flow *estimate* in the project.
-3. `∂ₜ Rm = Δ Rm + Q` (Uhlenbeck's trick, `Q = Rm² + Rm#` in dimension three).
-4. Item 4 of the pinching half above.
+1. **Hamilton–Ivey** (`thm:hamilton-ivey`). Reachable from what is already
+   here and from nothing else in the world. Two pieces:
+   (a) extend `TensorMaximumPrinciple.lean` / `ManifoldMaximumPrinciple.lean`
+   from a fixed closed convex `K` to a **time-dependent family `K_t`** — the
+   Nagumo condition acquires a `∂ₜ` term and the ε-perturbation argument is
+   otherwise unchanged; (b) the invariant set itself, as a new theorem on the
+   existing `IsCurvatureODE` structure in `Pinching.lean`: `scal ≥
+   (-ν)(log(-ν) + log(1+t) - 3)` when `ν < 0`, given `ν(0) ≥ -1`. The
+   Grönwall helpers do not apply directly — the comparison is for
+   `scal + |ν| log|ν|` — but the file's shape carries over.
+2. **The manifold trace lemma** `X(tr_g B) = tr_g(∇_X B)` (was Next 1, still
+   the gate for every Laplacian identity here), then contracted second
+   Bianchi and `∂ₜ scal = Δ scal + 2|Ric|²`.
+3. **`∂ₜ Rm = Δ Rm + Q`** (Uhlenbeck's trick) — needed to state (1) on the
+   flow rather than on the ODE alone.
+4. **Perelman's `L`-geometry** (`def:reduced-volume`,
+   `thm:reduced-volume-monotone`). The deepest genuinely-open node and the one
+   everything downstream of `chap:kappa` consumes. Pure comparison geometry +
+   ODE, no parabolic theory — but it needs an exponential-map / Jacobi-field /
+   second-variation substrate this repo does not have and theirs does.
+   Decide before starting whether to build it or to build on their library.
+
 
 **Upstream candidates** (Mathlib-general, no dependence on the curvature
 stack unless noted): `VectorField.lieBracket_apply_fun`; `neg_apply`,
@@ -135,6 +156,11 @@ answer), anything parabolic, any writing-up.
 
 ## Where the real gaps are
 
+Read this list as *gaps in Mathlib and in this repo*. Since 2026-08-21 the
+parabolic and Cheeger–Gromov entries are no longer gaps **in the literature** —
+Chow–Liao–Qin closed both — but nothing of theirs is in Mathlib, and nothing of
+theirs is imported here.
+
 - **Levi-Civita existence is NOT needed to define the flow** — the per-slice
   `∀ t, ∃ cov` is equivalent to the textbook equation, now as a theorem
   (`isRicciFlowOn_iff_ricciOfMetric`, using smoothness of the connection from
@@ -142,10 +168,16 @@ answer), anything parabolic, any writing-up.
   what elaborates under `letI`.
 - **Three distinct parabolic theories** are on the road, not one: Ricci flow,
   harmonic map flow (uniqueness of the standard solution), curve-shrinking flow
-  (finite extinction).
+  (finite extinction). Chow–Liao–Qin have the first; the other two are open
+  everywhere.
 - **Second independent analytic gap:** Cheeger–Gromov compactness. Mathlib has
   Gromov–Hausdorff for compact metric spaces; pointed smooth convergence of
-  manifolds under curvature bounds does not exist. First bites above Hamilton.
+  manifolds under curvature bounds does not exist. Chow–Liao–Qin built it
+  (`Geometry/Compactness/CheegerGromov`), so it is done but not upstreamed.
+- **No comparison-geometry substrate here at all** — no exponential map, no
+  Jacobi fields, no second variation, no index form, no injectivity radius, no
+  cut locus. Perelman's `L`-geometry (Next 4) cannot start without it. This is
+  the deciding fact in build-versus-import.
 - Mathlib has **no maximal-solution ODE theory** — hence germ uniqueness in
   `Homogeneous.lean`.
 - **No global `C²` extension of a tangent vector** (bump function times

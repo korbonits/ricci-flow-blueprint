@@ -40,6 +40,46 @@ Two branches are nevertheless closed end to end, both free of PDE: Chapter
 \ref{chap:homog}, where the flow on left-invariant metrics is an ODE, and
 Chapter \ref{chap:milnor}, Milnor's curvature formulas.
 
+\section*{State of the art, September 2026}
+
+Hamilton's theorem is no longer open. Chow, Liao and Qin
+(\texttt{arXiv:2608.21502}, 21 August 2026) give a Lean formalization of it:
+the endpoint \texttt{hamilton\_positive\_ricci} concludes
+\emph{constant positive sectional curvature and spherical space form} from
+\emph{closed connected three-manifold} and \emph{admits positive Ricci},
+with no auxiliary hypotheses, no \texttt{sorry} and no project axiom. Their
+library is roughly $1.9$ million lines. It closes, in the language of this
+chart, Chapter \ref{chap:flow}'s short-time existence and maximal
+continuation, Shi's estimates, both maximum principles,
+Theorem \ref{thm:w-monotone}, Theorem \ref{thm:no-local-collapsing} and
+Theorem \ref{thm:compactness} --- that is, \emph{both} of the analytic gaps
+this overview names above, together with the whole of Chapter
+\ref{chap:hamilton}.
+
+So the frontier has moved, and it has moved past the two obstacles that were
+supposed to be the hard ones. What is left between here and
+Corollary \ref{cor:poincare} is no longer parabolic existence theory. It is,
+in dependency order:
+
+\begin{itemize}
+  \item Theorem \ref{thm:hamilton-ivey}, the Hamilton--Ivey estimate --- an
+    ODE invariant set plus a time-dependent tensor maximum principle, with no
+    new analysis in it at all, and absent from their library;
+  \item Definition \ref{def:reduced-volume} and
+    Theorem \ref{thm:reduced-volume-monotone}, Perelman's
+    $\mathcal{L}$-geometry --- two chapters of comparison geometry built on
+    the flow, needing Jacobi fields and the second variation but no parabolic
+    theory, and likewise absent;
+  \item Theorem \ref{thm:kappa-classification} and
+    Theorem \ref{thm:canonical-nbhd}, which consume the two above together
+    with the compactness theory that now exists;
+  \item Theorem \ref{thm:surgery-exists} and
+    Theorem \ref{thm:finite-extinction}, which carry the two remaining
+    parabolic prerequisites --- harmonic map flow and curve-shrinking flow.
+\end{itemize}
+
+The first two items are the ones reachable from what is proved here.
+
 \chapter{Curvature}
 \label{chap:curvature}
 
@@ -1403,6 +1443,40 @@ Perelman's monotone functionals are what rule it out.
 
 \chapter{Singularity models}
 \label{chap:kappa}
+Blow-up limits at a singularity are the objects this chapter describes, and
+before any of them can be recognised one has to know they have non-negative
+curvature. In dimension three that is not automatic --- it is the
+Hamilton--Ivey estimate, and it was missing from this chart entirely.
+
+\begin{theorem}[Hamilton--Ivey pinching]
+  \label{thm:hamilton-ivey}
+  \uses{thm:max-tensor, lem:evolution-rm, lem:pinching-ode}
+  Let $(\M^3, \g(t))$ be a Ricci flow on a closed three-manifold, normalised so
+  that the smallest eigenvalue $\nu$ of the curvature operator satisfies
+  $\nu \ge -1$ at $t = 0$. Then at every point and every $t \ge 0$ at which
+  $\nu < 0$,
+  \[
+    \scal \;\ge\; |\nu| \bigl( \log |\nu| + \log(1+t) - 3 \bigr).
+  \]
+  \emph{(Hamilton 1999 §24; Ivey 1993; Morgan--Tian 4.4; Chow--Knopf 6.44.)}
+
+  Negative curvature is dominated by the scalar curvature, at a rate that
+  degenerates only logarithmically. Rescaling a singularity multiplies $\scal$
+  by a factor tending to infinity while the estimate is scale-invariant up to
+  the logarithm, so every blow-up limit has $\nu \ge 0$: the limits are
+  \emph{non-negatively} curved. That is exactly the standing hypothesis in
+  Definition~\ref{def:kappa-solution}, and without this theorem no blow-up
+  limit is ever known to satisfy it.
+
+  \textbf{Structurally this is Lemma~\ref{lem:pinching-ode} again} --- a closed
+  convex set of curvature operators preserved by the ODE
+  $\dot{\Rm} = \Rm^2 + \Rm^{\#}$, transported to the flow by the tensor
+  maximum principle. Two things are new. The set is \emph{time-dependent}, so
+  Theorem~\ref{thm:max-tensor} has to be restated for a family
+  $\{K_t\}$ moving with the flow; and the defining function involves
+  $\log$, so the Gr\"onwall comparisons of \texttt{Pinching.lean} are replaced
+  by a differential inequality for $\scal + |\nu|\log|\nu|$.
+\end{theorem}
 
 \begin{theorem}[Geometric convergence of manifolds and of flows]
   \label{thm:compactness}
@@ -1424,7 +1498,7 @@ Perelman's monotone functionals are what rule it out.
 
 \begin{definition}[$\kappa$-solution]
   \label{def:kappa-solution}
-  \uses{thm:no-local-collapsing}
+  \uses{thm:no-local-collapsing, thm:hamilton-ivey}
   An ancient solution --- defined on $(-\infty, 0]$ --- that is
   $\kappa$-noncollapsed, has bounded non-negative curvature operator, and is not
   flat. These are exactly the models that arise from rescaling a singularity.
@@ -1607,11 +1681,14 @@ downstream of the material in Chapters \ref{chap:curvature} and
 six sections of Riemannian geometry assumed as background, and it is the part
 Mathlib does not have.
 
-Reading their structure corrected four errors in this chart: an entire chapter
+Reading their structure corrected five errors in this chart: an entire chapter
 of comparison geometry was missing (Chapter \ref{chap:comparison}), the
 $\mathcal{L}$-geometry was compressed from two chapters into one definition,
-bounded-curvature-at-bounded-distance was absent, and the $\R P^2$ hypothesis
-was dropped from the surgery theorem. It also produced one finding that no
+bounded-curvature-at-bounded-distance was absent, the $\R P^2$ hypothesis
+was dropped from the surgery theorem, and the Hamilton--Ivey estimate
+(Theorem \ref{thm:hamilton-ivey}) --- without which no blow-up limit is known
+to be non-negatively curved, and so no $\kappa$-solution is ever produced ---
+did not appear at all. It also produced one finding that no
 citation list would have surfaced: this road needs \emph{three} distinct
 parabolic theories --- Ricci flow, harmonic map flow, and curve-shrinking flow
 --- not one.
