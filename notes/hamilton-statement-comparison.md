@@ -58,7 +58,7 @@ theorem hamilton_positive_ricci
 
 | # | Divergence | Class |
 | --- | --- | --- |
-| 1 | **Test class: global `C²` fields (ours) vs. tangent vectors (theirs).** Ours quantifies over globally `C²` sections. Producing one with a prescribed nonzero value at `x` needs a bump function times `FiberBundle.extend`, hence partitions of unity, hence Hausdorff + paracompactness — none of which our hypotheses supply or imply. Two consequences. (i) On pathological `M` with no such fields, both `HasPositiveRicciLC` and `HasConstSecLC` are **vacuously true**, and since the conclusion may reuse the hypothesis's metric with `k = 1`, `hamilton_1982` becomes **trivially provable and asserts nothing**. (ii) Even on well-behaved `M`, our hypothesis is equivalent to the intended "`Ric(v,v) > 0` for every nonzero tangent vector" only *via* the bump-function bridge, which we have not proved. Their pointwise formulation has neither problem: it is meaningful with no ambient hypotheses at all, because `metricRicciAt g x` is a genuine tensor at `x`. **This is the substantive finding.** | **(c)** |
+| 1 | **CLOSED (see below).** **Test class: global `C²` fields (ours) vs. tangent vectors (theirs).** Ours quantifies over globally `C²` sections. Producing one with a prescribed nonzero value at `x` needs a bump function times `FiberBundle.extend`, hence partitions of unity, hence Hausdorff + paracompactness — none of which our hypotheses supply or imply. Two consequences. (i) On pathological `M` with no such fields, both `HasPositiveRicciLC` and `HasConstSecLC` are **vacuously true**, and since the conclusion may reuse the hypothesis's metric with `k = 1`, `hamilton_1982` becomes **trivially provable and asserts nothing**. (ii) Even on well-behaved `M`, our hypothesis is equivalent to the intended "`Ric(v,v) > 0` for every nonzero tangent vector" only *via* the bump-function bridge, which we have not proved. Their pointwise formulation has neither problem: it is meaningful with no ambient hypotheses at all, because `metricRicciAt g x` is a genuine tensor at `x`. **This is the substantive finding.** | **(c)** |
 | 2 | **Sectional curvature: quotient (ours) vs. multiplied-out identity (theirs).** `sectionalCurvature` divides by the Gram determinant, so degenerate pairs silently yield `0`; we guard with a nondegeneracy hypothesis on the quantified pair. Their `Rm04(X,Y,Y,X) = c(g(X,X)g(Y,Y) − g(X,Y)²)` needs no guard at all — on a degenerate pair it reads `0 = c·0`, automatically true — so there is no division and no junk branch to reason about. Strictly the better encoding. | **(c)** for ours; theirs immune |
 | 3 | **Connectedness: absent (ours) vs. present (theirs).** Ours happens to survive the omission because our conclusion is metric existence with a single constant: a compact manifold has finitely many components, so apply Hamilton componentwise and rescale each metric to `k = 1` (`g ↦ λg` scales sectional curvature by `1/λ`). So ours is a mild *strengthening* needing a rescaling step Hamilton does not. But this is luck, not design: with their `isSphericalSpaceForm` conclusion the omission would make the statement **false**. Their short-time theorem deliberately omits connectedness and the paper says so explicitly ("Connectedness is absent, as it should be"), which is the right discipline. | **(b)** |
 | 4 | **Conclusion strength.** Ours stops at metric existence. Theirs adds the spherical-space-form conclusion with an explicit quotient model and a genuine diffeomorphism, bridged in both directions. Ours is strictly weaker than the classical statement; the missing bridge is Killing–Hopf, which mathlib does not have and which they built. | **(b)** |
@@ -88,6 +88,26 @@ Still open on our side, and both are places where theirs is immune:
 
 Neither of these is a junk value on *their* side, because neither `metricRicciAt`
 nor the multiplied-out curvature identity has a degenerate branch to fall into.
+
+## Update: divergence 1 is closed
+
+`curvature_congr_third` (`CurvaturePointwise.lean`) proves `R(X,Y)Z` at `x` depends
+only on `Z x`, hence `ricci_congr_snd_of_eq` and `ricciAt`, Ricci as a genuine
+function of tangent vectors, and `hasPositiveRicciLC_iff_tangent`: our predicate is
+equivalent to the pointwise statement they use. Route: expand `Z` in the orthonormal
+local frame, globalise the frame fields and coefficients with the bump lemmas, apply
+`C^∞(M)`-linearity in the third slot. No tensor bundle required.
+
+Two by-products worth keeping:
+
+- Only *pointwise* regularity of the first two slots is needed, which is what makes
+  the result applicable to `FiberBundle.extend` and hence to the trace defining Ricci.
+- `Scalar.lean`'s `ricci_congr_snd` took third-slot pointwise dependence as a
+  hypothesis `h3`, noting it was a theorem on the model space only. That hypothesis
+  is now discharged on a general manifold.
+
+Divergence 2 (the multiplied-out sectional curvature) is still open, and is still
+the cheap one.
 
 ## What I would take from their design
 

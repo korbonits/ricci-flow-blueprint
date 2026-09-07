@@ -56,6 +56,32 @@ theorem exists_contMDiff_eventuallyEq {n : ℕ∞} {x : M} {u : Set M} (hu : u �
     show f y • σ y = σ y
     rw [hy, Pi.one_apply, one_smul]
 
+-- BENCH: global-extension-fun
+/-- **The scalar analogue**: a function that is `C^k` near `x` agrees near `x` with a globally
+`C^k` function. Needed to globalise local frame coefficients. -/
+theorem exists_contMDiff_eventuallyEq_fun {n : ℕ∞} {x : M} {u : Set M} (hu : u ∈ 𝓝 x)
+    {f : M → ℝ} (hf : ContMDiffOn I 𝓘(ℝ, ℝ) (n : ℕ∞ω) f u) :
+    ∃ g : M → ℝ, ContMDiff I 𝓘(ℝ, ℝ) (n : ℕ∞ω) g ∧ g =ᶠ[𝓝 x] f := by
+  obtain ⟨φ, hφ⟩ :=
+    (SmoothBumpFunction.nhds_basis_support (I := I) (interior_mem_nhds.mpr hu)).ex_mem
+  have hφs : CMDiff (n : ℕ∞ω) (φ : M → ℝ) := φ.contMDiff.of_le (by exact_mod_cast le_top)
+  refine ⟨(φ : M → ℝ) • f, ?_, ?_⟩
+  · refine contMDiff_of_contMDiffOn_union_of_isOpen
+      (s := interior u) (t := (tsupport (φ : M → ℝ))ᶜ) ?_ ?_ ?_ isOpen_interior
+      (isOpen_compl_iff.mpr (isClosed_tsupport _))
+    · exact hφs.contMDiffOn.smul (hf.mono interior_subset)
+    · refine ContMDiffOn.congr (contMDiffOn_const (c := (0 : ℝ))) fun y hy ↦ ?_
+      show φ y • f y = (0 : ℝ)
+      rw [image_eq_zero_of_notMem_tsupport hy, zero_smul]
+    · rw [Set.eq_univ_iff_forall]
+      intro y
+      by_cases hy : y ∈ interior u
+      · exact Or.inl hy
+      · exact Or.inr fun hc ↦ hy (hφ hc)
+  · filter_upwards [φ.eventuallyEq_one] with y hy
+    show φ y • f y = f y
+    rw [hy, Pi.one_apply, one_smul]
+
 -- BENCH: global-extension
 /-- **Every tangent vector is the value of a globally `C^k` vector field.** -/
 theorem exists_contMDiff_extension {n : ℕ∞} {x : M} (v : TangentSpace I x) :
