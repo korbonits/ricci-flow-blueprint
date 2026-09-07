@@ -20,7 +20,7 @@ in `lake-manifest.json`) on Lean `v4.34.0-rc2`, because mathlib4 #36845
 | `LeviCivitaSmooth.lean` | `contMDiffCovariantDerivative_leviCivitaConnection` — **Levi-Civita is `C^k` for a `C^{k+1}` metric** (Mathlib leaves this to "future PRs"); criteria `contMDiffAt_clm_of_basis`, `contMDiffAt_section_of_inner_localFrame`, `contMDiffAt_mvfderiv_apply`, `contMDiffAt_koszul`; instance for `k = 1`; `ricciOfMetric`, `sectionalCurvatureOfMetric` |
 | `Flow.lean` | `IsRicciFlowAt/On`, `isRicciFlowAt_const_iff`, `isRicciFlowAt_iff_of_isLeviCivita`, `isRicciFlowOn_iff_ricciOfMetric` — **the flow is `∂g/∂t = -2 Ric(g t)` with `Ric` a function of `g`**; `ricciFlow_shortTime_existence` (`proof_wanted`); the analytic-frontier survey lives in its header |
 | `Hamilton.lean` | `hamilton_1982` — **stated**, `proof_wanted`, no sorry, no axiom. Predicates require a `C¹` witness and `C²` test fields (corrected 2026-09-04: the old `HasConstSecLC` quantified over arbitrary fields, i.e. over junk). `admitsPositiveRicciMetric_iff` / `admitsConstPositiveSecMetric_iff` restate them via `ricciOfMetric` / `sectionalCurvatureOfMetric` |
-| `Pinching.lean` | **branch closed**: Hamilton's curvature ODE in dimension 3 — ordering, positive Ricci, `λ ≤ C(μ+ν)` preserved; `pinching_antitone` (Hamilton Thm 10.1, ODE half). Linear Grönwall helpers `nonpos_of_deriv_le_mul` etc. No manifold |
+| `Pinching.lean` | Hamilton's curvature ODE in dimension 3 — ordering, positive Ricci, `λ ≤ C(μ+ν)` preserved; `pinching_antitone` (Hamilton Thm 10.1, ODE half). Linear Grönwall helpers `nonpos_of_deriv_le_mul` etc. No manifold. **Reopened for Hamilton–Ivey**: `hasDerivAt_scal`, `le_scal` (`Ṙ = ½[(λ+μ)²+(λ+ν)²+(μ+ν)²] ≥ 0`, so any lower bound on `R` is preserved — the first inequality of Hamilton's set `K`), `hamiltonIvey_boundary_of_nonneg`/`_of_neg` (the boundary check with the log eliminated; pure polynomial, Cao–Zhu Cases (i)/(ii)). **Normalisation**: `λ,μ,ν` are *twice* the sectional curvatures, `R = λ+μ+ν`, Ricci eigenvalues `(μ+ν)/2` etc. — the header said `μ+ν`, off by 2; every proved statement is a sign or ratio claim so none moved |
 | `Hessian.lean` | `hessian` (∇²), `hessian_sub_hessian_swap` (Ricci identity), tensoriality + `hessianAt`, `hessianFun` + `hessianFun_symm`, `laplacian` + `laplacian_eq_sum` (basis-independent metric trace, `OrthonormalBasis.sum_apply_self_eq`) |
 | `SecondDerivativeTest.lean` | **proved**: `deriv2_nonneg_of_isLocalMin`, `fderiv2_nonneg_of_isLocalMin`, `fderiv_fderiv_apply_nonneg_of_isLocalMin` (chart-side core), `hessianFun_nonneg_of_isLocalMin` and `laplacianFun_nonneg_of_isLocalMin` on a **boundaryless manifold** (transport through `extChartAt`, same pattern as `mlieBracket_apply_fun`), plus the `*_model` versions. The connection term `(∇_X X) f` dies at a critical point, so any `cov` works |
 | `MaximumPrinciple.lean` | **proved**: the scalar maximum principle on a compact space with the differential inequality assumed at spatial minima (`le_of_deriv_ge_at_min`, `le_of_deriv_le_at_max`). ε-perturbation `φ − ε e^{(2K+1)t}` + first touching time. No Laplacian |
@@ -114,16 +114,23 @@ Now `thm:hamilton-ivey` at the head of `chap:kappa`, with a
 `State of the art, September 2026` section in the Overview.
 
 **Next, in order.**
-1. **Hamilton–Ivey** (`thm:hamilton-ivey`). Reachable from what is already
-   here and from nothing else in the world. Two pieces:
-   (a) extend `TensorMaximumPrinciple.lean` / `ManifoldMaximumPrinciple.lean`
-   from a fixed closed convex `K` to a **time-dependent family `K_t`** — the
-   Nagumo condition acquires a `∂ₜ` term and the ε-perturbation argument is
-   otherwise unchanged; (b) the invariant set itself, as a new theorem on the
-   existing `IsCurvatureODE` structure in `Pinching.lean`: `scal ≥
-   (-ν)(log(-ν) + log(1+t) - 3)` when `ν < 0`, given `ν(0) ≥ -1`. The
-   Grönwall helpers do not apply directly — the comparison is for
-   `scal + |ν| log|ν|` — but the file's shape carries over.
+1. **Hamilton–Ivey** (`thm:hamilton-ivey`), *in progress*. The source is
+   Cao–Zhu Thm 2.4.1 (= Hamilton 1995 §4 / Ivey), whose LaTeX is on arXiv
+   (`math/0612069`, grep `Hamilton-Ivey Curvature Pinching`) — a complete,
+   clean ODE proof. The estimate is `R ≥ (-ν)(log(-ν) - 3)` when `ν < 0`,
+   given `ν(0) ≥ -1`; the `log(1+t)` version is Hamilton 1999, Cao–Zhu Thm
+   5.3.2, and needs a **time-dependent** `K_t`. Hamilton's set is
+   `K : λ+μ+ν ≥ -3 ∧ ν + f⁻¹(λ+μ+ν) ≥ 0`, `f(x) = x(log x - 3)` on `[e²,∞)`.
+   **Done:** `le_scal` (first inequality) and both boundary cases
+   (`hamiltonIvey_boundary_of_nonneg`/`_of_neg`) — the log cancels against the
+   boundary relation and what is left is a product of nonnegatives.
+   **Left:** (a) `f⁻¹` on `[-e²,∞)` — `f' = log x - 2 ≥ 0` on `[e²,∞)`,
+   `f(e²) = -e²`, so `StrictMonoOn` + IVT gives it; its *concavity* is what
+   makes `K` convex (with concavity of the least-eigenvalue function);
+   (b) assembling the two boundary cases into ODE-invariance of `K`;
+   (c) the time-dependent `K_t` form of `thm:max-tensor` for the improved
+   estimate. Note (b) is not a Grönwall argument — do not reach for the
+   helpers at the top of the file.
 2. **The manifold trace lemma** `X(tr_g B) = tr_g(∇_X B)` (was Next 1, still
    the gate for every Laplacian identity here), then contracted second
    Bianchi and `∂ₜ scal = Δ scal + 2|Ric|²`.

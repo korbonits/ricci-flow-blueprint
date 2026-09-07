@@ -4,7 +4,9 @@ Hamilton's curvature ODE in dimension three, and its invariant sets.
 Under Ricci flow the curvature operator evolves by `∂ₜ Rm = Δ Rm + Rm² + Rm^#`
 (Hamilton 1982, §7–8; in an evolving orthonormal frame, Uhlenbeck's trick). In
 dimension three the curvature operator is determined by its three eigenvalues
-`λ ≥ μ ≥ ν`, the Ricci eigenvalues are `μ + ν, λ + ν, λ + μ`, and the reaction
+`λ ≥ μ ≥ ν` — twice the sectional curvatures, so that the scalar curvature is the
+trace `R = λ + μ + ν` and the Ricci eigenvalues are `(μ + ν)/2, (λ + ν)/2, (λ + μ)/2`
+(Cao--Zhu §2.4) — and the reaction
 term `Rm² + Rm^#` is diagonal in the same eigenframe with entries
 
     λ² + μν,   μ² + λν,   ν² + λμ.
@@ -182,7 +184,7 @@ theorem IsCurvatureODE.le_preserved_mn (h : IsCurvatureODE l m n T) (hT : 0 ≤ 
   linarith [this t ht]
 
 -- BENCH: pinching-ricci-pos
-/-- **Positive Ricci curvature is preserved.** The smallest Ricci eigenvalue is `μ + ν`, and
+/-- **Positive Ricci curvature is preserved.** The smallest Ricci eigenvalue is `(μ + ν)/2`, and
 `(μ + ν)˙ = μ² + ν² + λ(μ + ν) ≥ λ(μ + ν)`. -/
 theorem IsCurvatureODE.ricci_pos_preserved (h : IsCurvatureODE l m n T) (hT : 0 ≤ T)
     (h0 : 0 < m 0 + n 0) : ∀ t ∈ Icc 0 T, 0 < m t + n t :=
@@ -282,6 +284,110 @@ theorem IsCurvatureODE.pinching_antitone (h : IsCurvatureODE l m n T) (hT : 0 �
     rw [interior_Icc] at ht
     rw [(hd t (Ioo_subset_Icc_self ht)).deriv]
     exact hneg t (Ioo_subset_Icc_self ht)
+
+/-! ### The Hamilton--Ivey pinching estimate
+
+Hamilton 1995 §4 / Ivey 1993; the presentation is Cao--Zhu, *Hamilton--Perelman's proof*,
+Theorem 2.4.1. In the normalisation of `IsCurvatureODE` the scalar curvature is the trace
+`R = λ + μ + ν`, and the estimate says: if `ν ≥ -1` everywhere at `t = 0`, then
+
+    R ≥ (-ν) (log(-ν) - 3)   wherever `ν < 0`.
+
+Negative curvature is dominated by the scalar curvature at a rate that degenerates only
+logarithmically, so every blow-up limit of a three-dimensional flow has `ν ≥ 0`. That is the
+standing hypothesis on a `κ`-solution, and nothing else supplies it.
+
+Hamilton's proof runs the tensor maximum principle on the closed convex set
+
+    K : λ + μ + ν ≥ -3   and   ν + f⁻¹(λ + μ + ν) ≥ 0,   f(x) = x (log x - 3) on `[e², ∞)`,
+
+so the whole content at the ODE level is that `K` is preserved. The first inequality is
+`le_scal` below: `R` is nondecreasing, full stop. The second is checked on the boundary,
+where the defining relation eliminates the logarithm and leaves a polynomial inequality in
+nonnegative reals — `hamiltonIvey_boundary_of_nonneg` and `hamiltonIvey_boundary_of_neg`,
+Cao--Zhu's Case (i) and Case (ii).
+
+Still to come: `f⁻¹` and its concavity, hence convexity of `K`; the assembly of the two
+boundary cases into invariance of `K` under the ODE; and the time-dependent form of
+`thm:max-tensor` needed for Hamilton's later improvement `R ≥ (-ν)(log(-ν) + log(1+t) - 3)`.
+-/
+
+/-- The trace of the curvature operator is the scalar curvature, and it evolves by
+`Ṙ = λ² + μ² + ν² + λμ + λν + μν = ½[(λ+μ)² + (λ+ν)² + (μ+ν)²]`. -/
+theorem IsCurvatureODE.hasDerivAt_scal (h : IsCurvatureODE l m n T) {t : ℝ} (ht : t ∈ Icc 0 T) :
+    HasDerivAt (fun t ↦ l t + m t + n t)
+      (((l t + m t) ^ 2 + (l t + n t) ^ 2 + (m t + n t) ^ 2) / 2) t := by
+  have key := ((h.hl t ht).add (h.hm t ht)).add (h.hn t ht)
+  have hrw : ((l t + m t) ^ 2 + (l t + n t) ^ 2 + (m t + n t) ^ 2) / 2
+      = (l t ^ 2 + m t * n t) + (m t ^ 2 + l t * n t) + (n t ^ 2 + l t * m t) := by ring
+  rw [hrw]
+  exact key
+
+-- BENCH: pinching-scal-monotone
+/-- **A lower bound on the scalar curvature is preserved.** `Ṙ = ½[(λ+μ)² + (λ+ν)² + (μ+ν)²] ≥ 0`,
+so `R` is nondecreasing along the curvature ODE. This is the first of the two inequalities
+cutting out Hamilton's pinching set `K`, with `c = -3`. -/
+theorem IsCurvatureODE.le_scal (h : IsCurvatureODE l m n T) (hT : 0 ≤ T) {c : ℝ}
+    (h0 : c ≤ l 0 + m 0 + n 0) : ∀ t ∈ Icc 0 T, c ≤ l t + m t + n t := by
+  have key := nonpos_of_deriv_le_mul (f := fun t ↦ c - (l t + m t + n t))
+    (f' := fun t ↦ -(((l t + m t) ^ 2 + (l t + n t) ^ 2 + (m t + n t) ^ 2) / 2))
+    (a := fun _ ↦ 0) hT
+    (fun t ht ↦ (h.hasDerivAt_scal ht).const_sub c)
+    continuousOn_const
+    (fun t _ ↦ by
+      have hS : (0:ℝ) ≤ ((l t + m t) ^ 2 + (l t + n t) ^ 2 + (m t + n t) ^ 2) / 2 := by positivity
+      show -(((l t + m t) ^ 2 + (l t + n t) ^ 2 + (m t + n t) ^ 2) / 2)
+        ≤ 0 * (c - (l t + m t + n t))
+      linarith)
+    (by simpa using h0)
+  intro t ht
+  linarith [key t ht]
+
+-- BENCH: pinching-ivey-boundary
+/-- **Hamilton--Ivey, boundary case `μ ≥ 0`** (Cao--Zhu, Theorem 2.4.1, Case (i)).
+
+On the boundary of the pinching set the defining relation is `λ + μ = (-ν)(log(-ν) - 2)`;
+writing `N = -ν` and `L = log N`, that is the hypothesis `hb`. What has to be checked is
+`λ̇ + μ̇ ≥ (L - 1) (-ν)˙`, and substituting `hb` clears the logarithm: after multiplying
+through by `N > 0` the claim is
+
+    N(λ² + μ²) + N³ + λμ(λ + μ + N) ≥ 0,
+
+every term of which is a product of nonnegatives. -/
+theorem hamiltonIvey_boundary_of_nonneg {l m N L : ℝ}
+    (hm : 0 ≤ m) (hml : m ≤ l) (hN : 0 < N) (hb : l + m = N * (L - 2)) :
+    (L - 1) * (-(N ^ 2 + l * m)) ≤ (l ^ 2 - m * N) + (m ^ 2 - l * N) := by
+  have hl : 0 ≤ l := hm.trans hml
+  have hNL : N * (L - 1) = l + m + N := by linear_combination -hb
+  refine le_of_mul_le_mul_left ?_ hN
+  have hrw : N * ((L - 1) * (-(N ^ 2 + l * m))) = (N * (L - 1)) * (-(N ^ 2 + l * m)) := by ring
+  rw [hrw, hNL]
+  nlinarith [mul_nonneg hN.le (add_nonneg (sq_nonneg l) (sq_nonneg m)),
+    mul_nonneg (mul_nonneg hl hm) (by linarith : (0:ℝ) ≤ l + m + N),
+    pow_pos hN 3]
+
+/-- **Hamilton--Ivey, boundary case `μ < 0`** (Cao--Zhu, Theorem 2.4.1, Case (ii)).
+
+With `P = -μ > 0` and `N = -ν`, the ordering `ν ≤ μ` reads `P ≤ N`, and the boundary relation
+is `λ = P + N(L - 2)`. The inequality to check is `λ̇ ≥ (-μ)˙ + (L - 1)(-ν)˙`, and after
+substituting and multiplying by `N > 0` it becomes
+
+    (λ² - λP + P²)(N - P) + P³ + N³ ≥ 0,
+
+with `λ² - λP + P² = (λ - P/2)² + 3P²/4 ≥ 0` and `N - P ≥ 0`. (On the boundary one also has
+`λ ≥ 0`, as Cao--Zhu note, but the inequality does not need it.) -/
+theorem hamiltonIvey_boundary_of_neg {l P N L : ℝ}
+    (hP : 0 < P) (hPN : P ≤ N) (hb : l = P + N * (L - 2)) :
+    (l * N - P ^ 2) + (L - 1) * (l * P - N ^ 2) ≤ l ^ 2 + P * N := by
+  have hN : 0 < N := hP.trans_le hPN
+  have hNL : N * (L - 1) = l - P + N := by linear_combination -hb
+  refine le_of_mul_le_mul_left ?_ hN
+  have hrw : N * ((l * N - P ^ 2) + (L - 1) * (l * P - N ^ 2))
+      = N * (l * N - P ^ 2) + (N * (L - 1)) * (l * P - N ^ 2) := by ring
+  rw [hrw, hNL]
+  nlinarith [mul_nonneg (by nlinarith [sq_nonneg (2 * l - P), sq_nonneg P] :
+      (0:ℝ) ≤ l ^ 2 - l * P + P ^ 2) (by linarith : (0:ℝ) ≤ N - P),
+    pow_pos hP 3, pow_pos hN 3]
 
 end CurvatureODE
 
