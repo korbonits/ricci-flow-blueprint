@@ -488,6 +488,38 @@ gives the road, and the one thing it does not give yet.
   node.
 \end{definition}
 
+\begin{theorem}[Ricci is symmetric]
+  \label{thm:ricci-symm}
+  \lean{CovariantDerivative.ricci_symm, CovariantDerivative.ricciAt_symm,
+    CovariantDerivative.ricciForm_symm, CovariantDerivative.curvatureEndoAt,
+    CovariantDerivative.trace_curvatureEndoAt_eq_zero}
+  \leanok
+  \uses{lem:trace-bianchi, def:ricci-form, thm:levi-civita}
+  For a metric torsion-free connection --- in particular for the Levi-Civita
+  connection --- $\Ric(X,Y) = \Ric(Y,X)$ at every point of a general manifold,
+  with no further hypothesis.
+
+  \textbf{Torsion-freeness alone is not enough.} Lemma \ref{lem:trace-bianchi}
+  says the antisymmetric part of $\Ric$ is exactly $-\operatorname{tr}(v \mapsto
+  \Riem(X,Y)v)$, and that trace vanishes because the connection is \emph{metric}.
+  Symmetry is a corollary of skew-adjointness, not of the first Bianchi identity.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  Lemma \ref{lem:trace-bianchi} carried two hypotheses it could not then
+  discharge: that global $C^2$ fields realise every tangent vector, and that the
+  endomorphism $v \mapsto \Riem(X,Y)v$ exists at all. Both are now theorems ---
+  Lemma \ref{lem:global-extension} and Lemma \ref{lem:curvature-pointwise} ---
+  so \texttt{curvatureEndoAt} is an unconditional linear endomorphism of
+  $T_x\M$, its linearity being tensoriality of the curvature's third slot on
+  global extensions. Its trace over an orthonormal basis is $\sum_i \langle e_i,
+  \Riem(X,Y)e_i \rangle$, and each term vanishes because $\Riem(X,Y)$ is
+  skew-adjoint for a metric connection (\texttt{inner\_curvature\_self\_right}).
+  Transporting through Definition \ref{def:ricci-form} gives symmetry of the
+  Ricci form itself.
+\end{proof}
+
 \begin{definition}[Scalar curvature]
   \label{def:scalar}
   \lean{CovariantDerivative.scalarCurvatureAt,
