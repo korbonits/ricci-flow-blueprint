@@ -467,27 +467,53 @@ gives the road, and the one thing it does not give yet.
   asserted symmetry from torsion-freeness alone. That is false.
 \end{proof}
 
+\begin{definition}[The Ricci form]
+  \label{def:ricci-form}
+  \lean{CovariantDerivative.ricciForm, CovariantDerivative.ricciForm_apply_field,
+    CovariantDerivative.ricciAt_add_left, CovariantDerivative.ricciAt_smul_left,
+    CovariantDerivative.ricciAt_add_right, CovariantDerivative.ricciAt_smul_right}
+  \leanok
+  \uses{def:ricci, lem:curvature-pointwise, lem:global-extension}
+  $\Ric$ as an honest continuous bilinear form $\Ric_x : T_x\M \times T_x\M \to
+  \R$ on a general manifold.
+
+  \textbf{Proved} (\texttt{RicciForm.lean}). Lemma
+  \ref{lem:curvature-pointwise} makes $\Ric(X,Y)(x)$ depend on $X_x$ and $Y_x$
+  alone, so $\Ric_x$ is a well-defined \emph{function} of two tangent vectors
+  (\texttt{ricciAt}); each of its four linearity laws is the corresponding
+  field-level law (\texttt{ricci\_add\_left} and friends) applied to global
+  $C^2$ extensions, which exist by Lemma \ref{lem:global-extension}.
+  Continuity is automatic in finite dimension. Two years' worth of the
+  ``$\Ric$ is not a tensor here'' caveats in this blueprint dissolve at this
+  node.
+\end{definition}
+
 \begin{definition}[Scalar curvature]
   \label{def:scalar}
-  \lean{CovariantDerivative.scalarCurvature}
+  \lean{CovariantDerivative.scalarCurvatureAt,
+    CovariantDerivative.scalarCurvatureAt_eq_sum_basis,
+    CovariantDerivative.scalarCurvatureWith_congr',
+    CovariantDerivative.scalarCurvature}
   \leanok
-  \uses{def:ricci}
-  $\scal = \operatorname{tr}_\g \Ric$, the metric trace of the Ricci tensor.
+  \uses{def:ricci, def:ricci-form}
+  $\scal = \operatorname{tr}_\g \Ric$, the metric trace of the Ricci tensor:
+  $\scal(x) = \sum_i \Ric(e_i, e_i)$ over an orthonormal basis of $T_x\M$.
 
-  \textbf{Not simply a trace on a general manifold.} That description presumes
-  $\Ric$ descends to a bilinear form on the fibre, and it does not: only the
-  \emph{first} slot of $\Ric$ is tensorial. The second is the curvature's third
-  slot, which $\nab$ differentiates, so the trace demands a globally $C^2$ field
-  there while the canonical extension of a tangent vector is smooth only
-  \emph{near} the point. What is missing on a general $\M$ is global $C^2$
-  extensions --- bump-function sections --- and third-slot pointwiseness.
+  \textbf{Now a genuine trace on a general manifold}
+  (\texttt{scalarCurvatureAt}), and frame-independence is \emph{free}:
+  $\sum_i B(e_i,e_i)$ is basis-independent for any bilinear $B$, and by
+  Definition \ref{def:ricci-form} $\Ric_x$ is one
+  (\texttt{scalarCurvatureAt\_eq\_sum\_basis}, no hypotheses).
 
-  So the general-manifold object is frame-relative
-  (\texttt{scalarCurvatureWith}), independent of the frame modulo one
-  hypothesis (\texttt{scalarCurvatureWith\_congr}); the canonical
-  hypothesis-free $\scal$ lives on the model space, where both missing
-  ingredients are theorems. The same architecture as
-  Lemma~\ref{lem:trace-bianchi}.
+  This supersedes the earlier architecture, which is kept for the
+  correspondence: the frame-relative \texttt{scalarCurvatureWith}, whose
+  frame-independence \texttt{scalarCurvatureWith\_congr} had to assume
+  pointwise dependence of the curvature's third slot in a form
+  (\texttt{MDiffAt} in the first slot) that Lemma
+  \ref{lem:curvature-pointwise} does not supply, and the hypothesis-free
+  \texttt{scalarCurvature} on the model space. Going through the bilinear form
+  discharges the hypothesis on any manifold
+  (\texttt{scalarCurvatureWith\_congr'}).
 \end{definition}
 
 \begin{lemma}[Ricci as an orthonormal-frame sum]
@@ -901,9 +927,10 @@ target actually requires.
   \lean{CovariantDerivative.mvfderiv_sum_eq_sum_covBilin,
     CovariantDerivative.mvfderiv_sum_eq_sum_covBilin_of_frame,
     CovariantDerivative.inner_cov_antisymm,
-    CovariantDerivative.sum_bilin_of_antisymm}
+    CovariantDerivative.sum_bilin_of_antisymm,
+    CovariantDerivative.mvfderiv_scalarCurvatureAt_eq_sum_covBilin}
   \leanok
-  \uses{def:laplacian, thm:levi-civita}
+  \uses{def:laplacian, thm:levi-civita, def:ricci-form}
   Let $\nab$ be a metric connection, $B$ a bilinear form field on $TM$ and
   $e_1, \dots, e_n$ a local orthonormal frame near $x$. Then
   \[
@@ -928,6 +955,16 @@ target actually requires.
   A local orthonormal frame is supplied by \texttt{OrthonormalFrame.lean}, and
   \texttt{exists\_orthonormalBasis\_of\_isOrthonormalFrameOn} turns it into
   an orthonormal basis of each fibre over its base set.
+
+  \textbf{First consequence}, and the reason for the node:
+  $X(\scal) = \operatorname{tr}_\g(\nab_X \Ric)$
+  (\texttt{mvfderiv\_scalarCurvatureAt\_eq\_sum\_covBilin}), taking $B$ to be
+  the Ricci form of Definition \ref{def:ricci-form}. The scalar curvature is the
+  frame sum at \emph{every} point of the frame's base set, so the two sides are
+  germ-equal at $x$ and the trace lemma applies verbatim. Its one remaining
+  hypothesis is genuine regularity --- $y \mapsto \Ric(e_i,e_i)(y)$ must be
+  differentiable, which asks the connection for one derivative more than
+  $\texttt{ContMDiffCovariantDerivative}\ 1$ gives.
 \end{lemma}
 
 \begin{proof}
