@@ -201,7 +201,46 @@ theorem isClosed_iveyPinchedSet : IsClosed iveyPinchedSet := by
     isClosed_le (continuous_iveyG.comp (hp 2)) (((hp 0).add (hp 1)).add (hp 2))
   exact (h1.inter (h2.inter (h3.inter h4)))
 
+theorem mem_iveyPinchedSet_of {v : EuclideanSpace ℝ (Fin 3)}
+    (h1 : v 2 ≤ v 1) (h2 : v 1 ≤ v 0) (h3 : IsIveyPinched (v 0) (v 1) (v 2)) :
+    v ∈ iveyPinchedSet :=
+  (mem_iveyPinchedSet_iff v).mpr ⟨h1, h2, h3⟩
+
 end PinchedSet
+
+section Invariance
+
+variable {l m n : ℝ → ℝ} {T : ℝ}
+
+-- BENCH: ivey-ode-in-set
+/-- **The curvature ODE keeps an ordered normalised solution in `K`.** Both conditions:
+`R` is nondecreasing (`le_scal`) and starts at `≥ 3ν(0) ≥ -3`; and where `ν < 0` the
+Hamilton–Ivey estimate is the second condition verbatim, while where `ν ≥ 0` the first
+disjunct `-ν ≤ e²` is free. -/
+theorem IsCurvatureODE.isIveyPinched (h : IsCurvatureODE l m n T) (hT : 0 ≤ T)
+    (h0lm : m 0 ≤ l 0) (h0mn : n 0 ≤ m 0) (h0n : -1 ≤ n 0) :
+    ∀ t ∈ Icc 0 T, IsIveyPinched (l t) (m t) (n t) := by
+  intro t ht
+  have hR : (-3 : ℝ) ≤ l t + m t + n t :=
+    h.le_scal hT (c := -3) (by linarith) t ht
+  refine ⟨hR, ?_⟩
+  rcases lt_or_ge (n t) 0 with hneg | hpos
+  · exact Or.inr (h.hamiltonIvey hT h0lm h0mn h0n t ht hneg)
+  · exact Or.inl (by linarith [Real.exp_pos (2:ℝ)])
+
+-- BENCH: ivey-ode-in-set-euclidean
+/-- The same, as membership of `iveyPinchedSet` — the form `thm:max-tensor` consumes. -/
+theorem IsCurvatureODE.mem_iveyPinchedSet (h : IsCurvatureODE l m n T) (hT : 0 ≤ T)
+    (h0lm : m 0 ≤ l 0) (h0mn : n 0 ≤ m 0) (h0n : -1 ≤ n 0)
+    {t : ℝ} (ht : t ∈ Icc 0 T) {v : EuclideanSpace ℝ (Fin 3)}
+    (hv0 : v 0 = l t) (hv1 : v 1 = m t) (hv2 : v 2 = n t) :
+    v ∈ iveyPinchedSet := by
+  refine mem_iveyPinchedSet_of ?_ ?_ ?_
+  · rw [hv1, hv2]; exact h.le_preserved_mn hT h0mn t ht
+  · rw [hv0, hv1]; exact h.le_preserved_lm hT h0lm t ht
+  · rw [hv0, hv1, hv2]; exact h.isIveyPinched hT h0lm h0mn h0n t ht
+
+end Invariance
 
 end Pinching
 end RicciFlowBlueprint

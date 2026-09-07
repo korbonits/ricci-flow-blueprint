@@ -1808,12 +1808,15 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   \]
   and the whole content at the ODE level is that $K$ is preserved.
   \emph{(Cao--Zhu, Theorem 2.4.1.)} \textbf{The ODE half is done} ---
-  Lemma~\ref{lem:ivey-ode}. What remains is the transport to the flow: $f^{-1}$
-  on $[-e^2,\infty)$ and its concavity, which together with concavity of the
-  least-eigenvalue function make $K$ convex, and that convexity is exactly what
-  Theorem~\ref{thm:max-tensor} consumes. For Hamilton's later improvement with
-  the $\log(1+t)$ term one additionally needs a form of
-  Theorem~\ref{thm:max-tensor} for a \emph{time-dependent} family $\{K_t\}$.
+  Lemma~\ref{lem:ivey-ode} --- \textbf{and so is everything
+  Theorem~\ref{thm:max-tensor} asks of $K$}: it is closed, convex, and
+  invariant under the ODE (Lemma~\ref{lem:ivey-convex}). An earlier version of
+  this node said the transport still needed $f^{-1}$ on $[-e^2,\infty)$ and its
+  concavity; it does not, and never did. What remains is the flow itself,
+  $\partial_t \Rm = \Delta \Rm + Q$ (Lemma~\ref{lem:evolution-rm}). For
+  Hamilton's later improvement with the $\log(1+t)$ term one additionally needs
+  a form of Theorem~\ref{thm:max-tensor} for a \emph{time-dependent} family
+  $\{K_t\}$; that is a separate, still-open item.
 \end{theorem}
 
 \begin{lemma}[The scalar curvature is nondecreasing along the curvature ODE]
@@ -1901,7 +1904,9 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
         RicciFlowBlueprint.Pinching.isIveyPinched_iff_iveyG,
         RicciFlowBlueprint.Pinching.iveyPinchedSet,
         RicciFlowBlueprint.Pinching.convex_iveyPinchedSet,
-        RicciFlowBlueprint.Pinching.isClosed_iveyPinchedSet}
+        RicciFlowBlueprint.Pinching.isClosed_iveyPinchedSet,
+        RicciFlowBlueprint.Pinching.IsCurvatureODE.isIveyPinched,
+        RicciFlowBlueprint.Pinching.IsCurvatureODE.mem_iveyPinchedSet}
   \leanok
   \uses{lem:ivey-set, thm:max-tensor}
   $K$ is a closed convex subset of $\R^3$ --- which is what
@@ -1934,6 +1939,18 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   --- $\nu \le \mu$, $\mu \le \lambda$, $\lambda+\mu+\nu \ge -3$ --- and the
   single convex inequality $G(\nu) \le \lambda+\mu+\nu$, hence is convex; and
   closed, $G$ being continuous.
+
+  \emph{Invariance, in the same language.} An ordered solution of the curvature
+  ODE normalised by $\nu(0) \ge -1$ stays in $K$ for all time
+  (\texttt{IsCurvatureODE.isIveyPinched}, and
+  \texttt{IsCurvatureODE.mem\_iveyPinchedSet} as membership of the subset of
+  $\R^3$): $R$ is nondecreasing and starts at $\ge 3\nu(0) \ge -3$, and where
+  $\nu < 0$ the second condition is Lemma \ref{lem:ivey-ode} verbatim, while
+  where $\nu \ge 0$ the branch $-\nu \le e^2$ is free. So both of the inputs
+  Theorem \ref{thm:max-tensor} needs about $K$ --- closed convex, and invariant
+  under the ODE --- are now available; what is still missing for the transport
+  is the flow itself, $\partial_t \Rm = \Delta \Rm + Q$
+  (Lemma \ref{lem:evolution-rm}).
 \end{proof}
 
 \begin{lemma}[Hamilton--Ivey for the curvature ODE]
