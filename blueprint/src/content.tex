@@ -1081,6 +1081,30 @@ target actually requires.
   the link is the second-derivative test, Lemma \ref{lem:second-derivative-test}.
 \end{definition}
 
+\begin{lemma}[$\nab \Rm$ is tensorial in its direction]
+  \label{lem:cov-curvature-direction}
+  \lean{CovariantDerivative.covCurvature_smul_dir,
+    CovariantDerivative.covCurvature_add_dir,
+    CovariantDerivative.cov_smul_dir}
+  \leanok
+  \uses{lem:bianchi-second, def:curvature}
+  $(\nab_{fX} \Riem)(Y,Z)W = f\,(\nab_X \Riem)(Y,Z)W$, and likewise additively.
+
+  \textbf{Proved} (\texttt{CurvatureDeriv.lean}). Each of the four terms of
+  $\nab\Riem$ picks up exactly one factor of $f(x)$, for the same reason:
+  $\nab_{fX}$ is $f\nab_X$ on the nose, and the last three terms feed that into
+  a slot of $\Riem$ in which $\Riem$ is already tensorial --- the first two
+  cheaply, the third by Lemma \ref{lem:curvature-pointwise}.
+
+  This is what makes the \emph{divergence}
+  $\operatorname{div}\Rm(Y,Z,W) = \sum_i \langle (\nab_{e_i}\Riem)(Y,Z)W, e_i
+  \rangle$ well defined, the trace being over the direction slot; and the
+  divergence is what the contracted second Bianchi identity, and hence $\Delta
+  \scal$, are about. The other three slots are not done: $Y$ and $Z$ should go
+  the same way, and $W$ needs the frame-and-globalise argument of
+  Lemma \ref{lem:curvature-pointwise} one level up.
+\end{lemma}
+
 \begin{lemma}[The metric trace commutes with $\nab$]
   \label{lem:metric-trace-cov}
   \lean{CovariantDerivative.mvfderiv_sum_eq_sum_covBilin,
