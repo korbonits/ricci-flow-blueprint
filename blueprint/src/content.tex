@@ -557,12 +557,16 @@ gives the road, and the one thing it does not give yet.
              - \langle X,Z\rangle\langle Y,W\rangle\big).
   \]
 
-  \textbf{Proved} (\texttt{ConstantCurvature.lean}). This is the bridge between
-  the two ways the conclusion of Theorem \ref{thm:hamilton} gets stated. Ours,
-  \texttt{AdmitsConstPositiveSecMetric}, fixes the sectional curvatures;
-  Chow--Liao--Qin's \texttt{admitsConstantPositiveSectionalCurvature} fixes the
-  full $(0,4)$ tensor. The lemma says they are the same hypothesis, so the
-  divergence recorded in \texttt{notes/hamilton-statement-comparison.md} closes.
+  \textbf{Proved} (\texttt{ConstantCurvature.lean}). This is a strengthening,
+  not a parity fix. Chow--Liao--Qin's
+  \texttt{admitsConstantPositiveSectionalCurvature} is the multiplied-out
+  \emph{sectional} identity $\Rm(X,Y,Y,X) = c(\g(X,X)\g(Y,Y) - \g(X,Y)^2)$,
+  which \texttt{hasConstSecLC\_iff\_mul} already matches; the divergence
+  recorded in \texttt{notes/hamilton-statement-comparison.md} was closed before
+  this lemma existed. What the lemma adds is that the sectional identity pins
+  down the \emph{whole} $(0,4)$ tensor, so everything downstream of constant
+  curvature --- the spherical space form conclusion above all --- can use $\Rm$
+  directly instead of re-deriving it.
 
   \textbf{Corollaries}, by tracing once and twice
   (\texttt{ricci\_eq\_of\_const\_sec},

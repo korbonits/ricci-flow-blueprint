@@ -116,6 +116,27 @@ use. `sectionalCurvature_congr'` also discharges the `h3` hypothesis that
 **Both statement-level divergences are now closed.** What remains between the two
 projects is that they have a proof of Hamilton 1982 and we have `proof_wanted`.
 
+## Update: what constant curvature buys, beyond parity
+
+`inner_curvature_eq_of_const_sec` (`ConstantCurvature.lean`, 2026-09-07) proves that
+constant sectional curvature `k` at `x` forces
+
+    ⟪R(X,Y)Z, W⟫ = k (⟪Y,Z⟫⟪X,W⟫ − ⟪X,Z⟫⟪Y,W⟫)
+
+for *all four* arguments, by polarising the defect `Rm − k·(model)` twice against the
+symmetries in `CurvatureSymm.lean`. Corollaries: `Ric = (n−1)k g`, `scal = n(n−1)k`.
+
+**This is not a divergence closure and should not be recorded as one.** Their
+`admitsConstantPositiveSectionalCurvature` is the multiplied-out *sectional* identity
+`Rm04(X,Y,Y,X) = c(g(X,X)g(Y,Y) − g(X,Y)²)` — the same slots we use — and
+`hasConstSecLC_iff_mul` already matched it, which is exactly what closed divergence 2
+above. The new lemma is a strengthening on top of parity: it says the sectional
+identity determines the whole `(0,4)` tensor, so the spherical-space-form direction
+(divergence 4, still open) can consume `Rm` directly rather than re-deriving it. An
+earlier draft of this session's commit message and blueprint node claimed it closed a
+class-(b) divergence; that was wrong, and the claim has been corrected in
+`CLAUDE.md` and `blueprint/src/content.tex`.
+
 ## What I would take from their design
 
 1. Make Ricci and the curvature identity **pointwise in tangent vectors**. This is
