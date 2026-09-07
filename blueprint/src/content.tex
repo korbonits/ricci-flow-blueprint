@@ -266,7 +266,7 @@ gives the road, and the one thing it does not give yet.
 
 \begin{lemma}[Curvature and Ricci are pointwise in the last slot]
   \label{lem:curvature-pointwise}
-  \lean{CovariantDerivative.curvature_congr_third, CovariantDerivative.ricci_congr_snd_of_eq, CovariantDerivative.ricciAt, RicciFlowBlueprint.hasPositiveRicciLC_iff_tangent}
+  \lean{CovariantDerivative.curvature_congr_third, CovariantDerivative.ricci_congr_snd_of_eq, CovariantDerivative.ricciAt, CovariantDerivative.inner_curvature_eq_zero_of_dep, RicciFlowBlueprint.hasPositiveRicciLC_iff_tangent, RicciFlowBlueprint.hasConstSecLC_iff_mul}
   \leanok
   \uses{lem:global-extension, def:curvature, def:ricci}
   $\Riem(X,Y)Z$ at $x$ depends only on $Z(x)$, and hence $\Ric(X,Y)(x)$ depends
@@ -290,6 +290,21 @@ gives the road, and the one thing it does not give yet.
   Only \emph{pointwise} regularity of the first two slots is needed, which is
   what makes the result applicable to \texttt{FiberBundle.extend} and hence to
   the trace defining $\Ric$.
+
+  The same machinery gives the well-definedness of the sectional curvature on a
+  general manifold (\texttt{sectionalCurvature\_congr'}, whose hypothesis
+  \texttt{h3} was previously assumed), and, with the vanishing of
+  $\langle \Riem(X,Y)Y, X\rangle$ on a linearly dependent pair
+  (\texttt{inner\_curvature\_eq\_zero\_of\_dep}, by the equality case of
+  Cauchy--Schwarz and antisymmetry in the first two slots), the
+  \emph{multiplied-out} form of constant sectional curvature
+  (\texttt{hasConstSecLC\_iff\_mul}):
+  \[
+    \langle \Riem(X,Y)Y, X\rangle
+      = k\,\bigl(|X|^2|Y|^2 - \langle X,Y\rangle^2\bigr),
+  \]
+  with no division and no nondegeneracy hypothesis, which is how Chow--Liao--Qin
+  state it.
 
   This is the form Chow--Liao--Qin's \texttt{positiveRicciMetric} takes
   (arXiv 2608.21502), where it comes from a tensor-bundle construction; here it
