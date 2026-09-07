@@ -488,13 +488,65 @@ gives the road, and the one thing it does not give yet.
   node.
 \end{definition}
 
+\begin{lemma}[Symmetries of the Riemann tensor]
+  \label{lem:curvature-symmetries}
+  \lean{CovariantDerivative.inner_curvature_pair_symm,
+    CovariantDerivative.inner_bianchi_first,
+    CovariantDerivative.inner_curvature_left_skew,
+    CovariantDerivative.inner_curvature_right_skew'}
+  \leanok
+  \uses{def:curvature, lem:bianchi-first, thm:levi-civita}
+  Write $\Rm(X,Y,Z,W) = \langle \Riem(X,Y)Z, W\rangle$ for a metric torsion-free
+  connection. Then
+  \[
+    \Rm(X,Y,Z,W) = -\Rm(Y,X,Z,W), \qquad
+    \Rm(X,Y,Z,W) = -\Rm(X,Y,W,Z),
+  \]
+  \[
+    \Rm(X,Y,Z,W) + \Rm(Y,Z,X,W) + \Rm(Z,X,Y,W) = 0, \qquad
+    \Rm(X,Y,Z,W) = \Rm(Z,W,X,Y).
+  \]
+
+  \textbf{Proved} (\texttt{CurvatureSymm.lean}). The first three were already
+  here: antisymmetry in the first pair needs no hypothesis at all
+  (\texttt{curvature\_antisymm}), antisymmetry in the second pair is metric
+  compatibility (\texttt{inner\_curvature\_right\_skew}), and the cyclic
+  identity is Lemma \ref{lem:bianchi-first} paired against a vector --- note the
+  fourth slot needs no regularity, the identity being a vector identity.
+
+  \textbf{Pair symmetry} is the new one, and it is what makes $\Riem$ a
+  symmetric operator on $\Lambda^2 T_x\M$ --- the form Hamilton's pinching
+  estimates and Uhlenbeck's trick are stated in --- and what the second
+  contraction of the second Bianchi identity will need.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  The classical octahedron argument. In the six unknowns
+  \[
+    p = \Rm(X,Y,Z,W),\ q = \Rm(Z,W,X,Y),\ r = \Rm(Y,Z,W,X),
+  \]
+  \[
+    s = \Rm(X,Z,W,Y),\ t = \Rm(Y,W,X,Z),\ u = \Rm(W,X,Y,Z),
+  \]
+  the four cyclic identities on $(X,Y,Z;W)$, $(Y,Z,W;X)$, $(Z,W,X;Y)$ and
+  $(W,X,Y;Z)$, after every term has been brought to one of these six by the two
+  antisymmetries, read
+  \[
+    p - r + s = 0,\quad r - q + t = 0,\quad q - u + s = 0,\quad u - p + t = 0 .
+  \]
+  Adding the first two and the last two gives $p - q + s + t = 0$ and
+  $q - p + s + t = 0$; subtracting, $2(p-q) = 0$. In Lean the six links are
+  supplied as hypotheses and \texttt{linarith} does the elimination.
+\end{proof}
+
 \begin{theorem}[Ricci is symmetric]
   \label{thm:ricci-symm}
   \lean{CovariantDerivative.ricci_symm, CovariantDerivative.ricciAt_symm,
     CovariantDerivative.ricciForm_symm, CovariantDerivative.curvatureEndoAt,
     CovariantDerivative.trace_curvatureEndoAt_eq_zero}
   \leanok
-  \uses{lem:trace-bianchi, def:ricci-form, thm:levi-civita}
+  \uses{lem:trace-bianchi, def:ricci-form, thm:levi-civita, lem:curvature-symmetries}
   For a metric torsion-free connection --- in particular for the Levi-Civita
   connection --- $\Ric(X,Y) = \Ric(Y,X)$ at every point of a general manifold,
   with no further hypothesis.
