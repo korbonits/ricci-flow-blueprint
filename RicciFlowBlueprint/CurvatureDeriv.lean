@@ -20,12 +20,11 @@ The other three slots are not done here, and they are not the same problem.
 matching term from `R(∇_X(f•Y), Z)W`. Applying Leibniz there needs
 `y ↦ R(Y,Z)W y` to be a *differentiable section*, which nothing in this project
 establishes — `covCurvature` is well defined without it, since `cov` is total.
-The missing lemma is smoothness of the curvature section, and it is reachable:
-the two `∇∇` terms are `contMDiff_cov_apply` twice, and the bracket term needs
-smoothness of `mlieBracket`, which Mathlib has as
-`ContMDiffAt.mlieBracket_vectorField` (`Mathlib/Geometry/Manifold/VectorField/
-LieBracket.lean`). Expect to spend the regularity budget: `C^{k+2}` fields for a
-`C^k` curvature section.
+That lemma is `contMDiff_curvature`, proved below: the two `∇∇` terms are
+`contMDiff_cov_apply` twice and the bracket term is the same fed Mathlib's
+`ContMDiffAt.mlieBracket_vectorField`. The regularity is what one expects —
+`C³` fields for a `C¹` curvature section — so the `Y`/`Z` slots will cost one
+more derivative than the direction slot did.
 
 `W` is the analogue of the curvature's third slot and will need the same
 frame-and-globalise argument as `CurvaturePointwise.lean`.
@@ -50,6 +49,50 @@ variable
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
   (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
   [ContMDiffCovariantDerivative cov 1] [ContMDiffCovariantDerivative cov 2]
+
+section Smoothness
+
+omit [FiniteDimensional ℝ E] in
+-- BENCH: contMDiff-curvature-section
+/-- **The curvature of `C³` fields is a `C¹` section.** This is the lemma the `Y` and `Z`
+slots of `∇R` need: without it there is no Leibniz rule for `∇_X(f • R(Y,Z)W)`.
+
+`R(Y,Z)W = ∇_Y ∇_Z W − ∇_Z ∇_Y W − ∇_{[Y,Z]} W`, so the two iterated terms are
+`contMDiff_cov_apply` twice and the bracket term is `contMDiff_cov_apply` fed the smoothness
+of `mlieBracket`, which Mathlib supplies. The regularity is what one expects: two derivatives
+are spent on `W`, one on the directions. -/
+theorem contMDiff_curvature {Y Z W : Π y : M, TangentSpace I y}
+    (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z)) (hW : CMDiff 3 (T% W)) :
+    CMDiff 1 (T% (fun y ↦ cov.curvature Y Z W y)) := by
+  have hW3 : CMDiff ((2 : ℕ∞ω) + 1) (T% W) := by
+    rw [show ((2 : ℕ∞ω) + 1) = 3 by norm_num]; exact hW
+  have hW2 : CMDiff ((1 : ℕ∞ω) + 1) (T% W) := by
+    rw [show ((1 : ℕ∞ω) + 1) = 2 by norm_num]; exact hW.of_le (by norm_num)
+  have hY1 : CMDiff 1 (T% Y) := hY.of_le (by norm_num)
+  have hZ1 : CMDiff 1 (T% Z) := hZ.of_le (by norm_num)
+  -- `∇_Z W` and `∇_Y W` are `C²`
+  have hZW : CMDiff ((1 : ℕ∞ω) + 1) (T% (fun u ↦ cov W u (Z u))) := by
+    rw [show ((1 : ℕ∞ω) + 1) = 2 by norm_num]
+    exact cov.contMDiff_cov_apply hW3 hZ
+  have hYW : CMDiff ((1 : ℕ∞ω) + 1) (T% (fun u ↦ cov W u (Y u))) := by
+    rw [show ((1 : ℕ∞ω) + 1) = 2 by norm_num]
+    exact cov.contMDiff_cov_apply hW3 hY
+  -- the three terms
+  have t1 : CMDiff 1 (T% (fun y ↦ cov (fun u ↦ cov W u (Z u)) y (Y y))) :=
+    cov.contMDiff_cov_apply hZW hY1
+  have t2 : CMDiff 1 (T% (fun y ↦ cov (fun u ↦ cov W u (Y u)) y (Z y))) :=
+    cov.contMDiff_cov_apply hYW hZ1
+  have hb : CMDiff 1 (T% (mlieBracket I Y Z)) := fun y ↦
+    (hY y).mlieBracket_vectorField (n := 2) (m := 1) (hZ y) (by norm_num)
+  have t3 : CMDiff 1 (T% (fun y ↦ cov W y (mlieBracket I Y Z y))) :=
+    cov.contMDiff_cov_apply hW2 hb
+  -- `T%` wraps the section, so `rw` cannot see the definition of `curvature`; `show` can
+  show CMDiff 1 (T% (((fun y ↦ cov (fun u ↦ cov W u (Z u)) y (Y y))
+    - (fun y ↦ cov (fun u ↦ cov W u (Y u)) y (Z y)))
+    - (fun y ↦ cov W y (mlieBracket I Y Z y))))
+  exact (t1.sub_section t2).sub_section t3
+
+end Smoothness
 
 section Direction
 

@@ -1085,7 +1085,8 @@ target actually requires.
   \label{lem:cov-curvature-direction}
   \lean{CovariantDerivative.covCurvature_smul_dir,
     CovariantDerivative.covCurvature_add_dir,
-    CovariantDerivative.cov_smul_dir}
+    CovariantDerivative.cov_smul_dir,
+    CovariantDerivative.contMDiff_curvature}
   \leanok
   \uses{lem:bianchi-second, def:curvature}
   $(\nab_{fX} \Riem)(Y,Z)W = f\,(\nab_X \Riem)(Y,Z)W$, and likewise additively.
@@ -1100,9 +1101,22 @@ target actually requires.
   $\operatorname{div}\Rm(Y,Z,W) = \sum_i \langle (\nab_{e_i}\Riem)(Y,Z)W, e_i
   \rangle$ well defined, the trace being over the direction slot; and the
   divergence is what the contracted second Bianchi identity, and hence $\Delta
-  \scal$, are about. The other three slots are not done: $Y$ and $Z$ should go
-  the same way, and $W$ needs the frame-and-globalise argument of
-  Lemma \ref{lem:curvature-pointwise} one level up.
+  \scal$, are about.
+
+  \textbf{The other three slots are not done, and are not the same problem.}
+  Under $Y \mapsto fY$ the \emph{first} term picks up a Leibniz term,
+  $\nab_X(f\,\Riem(Y,Z)W) = f\nab_X(\Riem(Y,Z)W) + (Xf)\Riem(Y,Z)W$, cancelled
+  by the matching term from $\Riem(\nab_X(fY),Z)W$ --- so the direction slot was
+  the easy one precisely because it has none. Applying Leibniz needs $y \mapsto
+  \Riem(Y,Z)W(y)$ to be a \emph{differentiable section}, which
+  \texttt{covCurvature} does not require to be well defined. That is
+  \texttt{contMDiff\_curvature}, also proved here: a $C^3$ triple has a $C^1$
+  curvature section, the two $\nab\nab$ terms by
+  \texttt{contMDiff\_cov\_apply} twice and the bracket term by the same fed
+  Mathlib's \texttt{ContMDiffAt.mlieBracket\_vectorField}. So $Y$ and $Z$ are
+  now unblocked, at one more derivative than the direction slot. $W$ still needs
+  the frame-and-globalise argument of Lemma \ref{lem:curvature-pointwise} one
+  level up.
 \end{lemma}
 
 \begin{lemma}[The metric trace commutes with $\nab$]
