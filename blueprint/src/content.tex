@@ -1200,8 +1200,10 @@ shrinks to a round point.
   \lean{RicciFlowBlueprint.Pinching.IsCurvatureODE.pinching_antitone}
   \leanok
   In dimension three the curvature operator has three eigenvalues
-  $\lambda \ge \mu \ge \nu$, the Ricci eigenvalues are
-  $\mu+\nu, \lambda+\nu, \lambda+\mu$, and the reaction term
+  $\lambda \ge \mu \ge \nu$ --- twice the sectional curvatures, normalised so
+  that the scalar curvature is the trace $\scal = \lambda+\mu+\nu$ and the
+  Ricci eigenvalues are
+  $\tfrac12(\mu+\nu), \tfrac12(\lambda+\nu), \tfrac12(\lambda+\mu)$ --- and the reaction term
   $\Rm^2 + \Rm^\#$ of the evolution equation \ref{lem:evolution-rm} is
   diagonal in the same frame. The associated ODE is
   \[
@@ -1471,12 +1473,68 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   \textbf{Structurally this is Lemma~\ref{lem:pinching-ode} again} --- a closed
   convex set of curvature operators preserved by the ODE
   $\dot{\Rm} = \Rm^2 + \Rm^{\#}$, transported to the flow by the tensor
-  maximum principle. Two things are new. The set is \emph{time-dependent}, so
-  Theorem~\ref{thm:max-tensor} has to be restated for a family
-  $\{K_t\}$ moving with the flow; and the defining function involves
-  $\log$, so the Gr\"onwall comparisons of \texttt{Pinching.lean} are replaced
-  by a differential inequality for $\scal + |\nu|\log|\nu|$.
+  maximum principle. Hamilton's set is
+  \[
+    K : \quad \lambda+\mu+\nu \ge -3
+    \quad\text{and}\quad
+    \nu + f^{-1}(\lambda+\mu+\nu) \ge 0,
+    \qquad f(x) = x(\log x - 3) \ \text{on}\ [e^2,\infty),
+  \]
+  and the whole content at the ODE level is that $K$ is preserved.
+  \emph{(Cao--Zhu, Theorem 2.4.1.)} What remains is $f^{-1}$ and its
+  concavity, hence convexity of $K$; the assembly of
+  Lemma~\ref{lem:ivey-boundary} into invariance of $K$; and, for Hamilton's
+  later improvement with the $\log(1+t)$ term, a form of
+  Theorem~\ref{thm:max-tensor} for a \emph{time-dependent} family $\{K_t\}$.
 \end{theorem}
+
+\begin{lemma}[The scalar curvature is nondecreasing along the curvature ODE]
+  \label{lem:ivey-scal}
+  \lean{RicciFlowBlueprint.Pinching.IsCurvatureODE.le_scal}
+  \leanok
+  \uses{lem:pinching-ode}
+  Along Hamilton's curvature ODE,
+  \[
+    \tfrac{d}{dt}(\lambda+\mu+\nu)
+    = \lambda^2+\mu^2+\nu^2+\lambda\mu+\lambda\nu+\mu\nu
+    = \tfrac12\bigl[(\lambda+\mu)^2+(\lambda+\nu)^2+(\mu+\nu)^2\bigr] \ge 0,
+  \]
+  so every lower bound $\lambda+\mu+\nu \ge c$ is preserved. With $c = -3$ this
+  is the first of the two inequalities cutting out $K$.
+\end{lemma}
+
+\begin{lemma}[The Hamilton--Ivey boundary inequality]
+  \label{lem:ivey-boundary}
+  \lean{RicciFlowBlueprint.Pinching.hamiltonIvey_boundary_of_nonneg,
+        RicciFlowBlueprint.Pinching.hamiltonIvey_boundary_of_neg}
+  \leanok
+  \uses{lem:pinching-ode}
+  The second inequality cutting out $K$ reads
+  $\lambda+\mu \ge (-\nu)[\log(-\nu)-2]$ whenever $\nu \le -e^2$, and need only
+  be checked on the boundary. There the defining relation eliminates the
+  logarithm and what is left is polynomial. Writing $N = -\nu > 0$ and
+  $L = \log N$:
+  \begin{itemize}
+    \item if $\mu \ge 0$, the boundary relation is $\lambda + \mu = N(L-2)$ and
+      the required inequality
+      $\dot\lambda + \dot\mu \ge (L-1)\,\dot{\overparen{(-\nu)}}$ becomes,
+      after multiplying by $N$,
+      \[
+        N(\lambda^2+\mu^2) + N^3 + \lambda\mu(\lambda+\mu+N) \ge 0 ;
+      \]
+    \item if $\mu < 0$, put $P = -\mu$, so the ordering $\nu \le \mu$ is
+      $P \le N$ and the boundary relation is $\lambda = P + N(L-2)$; the
+      required inequality becomes
+      \[
+        (\lambda^2 - \lambda P + P^2)(N - P) + P^3 + N^3 \ge 0 .
+      \]
+  \end{itemize}
+  Both hold because every factor is nonnegative --- in the second,
+  $\lambda^2-\lambda P+P^2 = (\lambda - P/2)^2 + \tfrac34 P^2$.
+  \emph{(Cao--Zhu, Theorem 2.4.1, Cases (i) and (ii); in Lean
+  \texttt{hamiltonIvey\_boundary\_of\_nonneg} and
+  \texttt{hamiltonIvey\_boundary\_of\_neg}.)}
+\end{lemma}
 
 \begin{theorem}[Geometric convergence of manifolds and of flows]
   \label{thm:compactness}
