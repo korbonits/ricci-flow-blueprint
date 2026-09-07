@@ -540,6 +540,50 @@ gives the road, and the one thing it does not give yet.
   supplied as hypotheses and \texttt{linarith} does the elimination.
 \end{proof}
 
+\begin{lemma}[Constant sectional curvature determines $\Rm$]
+  \label{lem:const-sec-determines-rm}
+  \lean{CovariantDerivative.inner_curvature_eq_of_const_sec,
+    CovariantDerivative.inner_curvature_eq_of_const_sec_norm,
+    CovariantDerivative.curvatureDefect}
+  \leanok
+  \uses{def:sectional, lem:curvature-symmetries, lem:bianchi-first}
+  If every sectional curvature at $x$ equals $k$, then for \emph{all} four
+  arguments
+  \[
+    \langle \Riem(X,Y)Z, W\rangle
+      = k\big(\langle Y,Z\rangle\langle X,W\rangle
+             - \langle X,Z\rangle\langle Y,W\rangle\big).
+  \]
+
+  \textbf{Proved} (\texttt{ConstantCurvature.lean}). This is the bridge between
+  the two ways the conclusion of Theorem \ref{thm:hamilton} gets stated. Ours,
+  \texttt{AdmitsConstPositiveSecMetric}, fixes the sectional curvatures;
+  Chow--Liao--Qin's \texttt{admitsConstantPositiveSectionalCurvature} fixes the
+  full $(0,4)$ tensor. The lemma says they are the same hypothesis, so the
+  divergence recorded in \texttt{notes/hamilton-statement-comparison.md} closes.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  Polarisation, twice. Let
+  \[
+    T(A,B,C,D) = \langle \Riem(A,B)C, D\rangle
+      - k\big(\langle B,C\rangle\langle A,D\rangle
+             - \langle A,C\rangle\langle B,D\rangle\big)
+  \]
+  (\texttt{curvatureDefect}). The model term has every symmetry the curvature
+  has, so by Lemma \ref{lem:curvature-symmetries} $T$ is antisymmetric in each
+  pair, symmetric under exchanging the pairs, and satisfies the first Bianchi
+  identity; and the hypothesis says exactly $T(A,B,B,A) = 0$.
+
+  Expanding $T(A+C, B, B, A+C) = 0$ and using $T(C,B,B,A) = T(A,B,B,C)$ --- pair
+  symmetry followed by the two antisymmetries --- gives $2T(A,B,B,C) = 0$, so
+  $T(A,B,B,C) = 0$ for all $A,B,C$. Expanding $T(A, B+C, B+C, D) = 0$ then gives
+  $T(A,B,C,D) + T(A,C,B,D) = 0$: $T$ is antisymmetric in its middle two slots as
+  well. A tensor antisymmetric in three consecutive slots has all three terms of
+  the first Bianchi identity equal, so $3T(X,Y,Z,W) = 0$.
+\end{proof}
+
 \begin{theorem}[Ricci is symmetric]
   \label{thm:ricci-symm}
   \lean{CovariantDerivative.ricci_symm, CovariantDerivative.ricciAt_symm,
