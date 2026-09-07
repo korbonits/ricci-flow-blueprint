@@ -49,6 +49,7 @@
 import RicciFlowBlueprint.Sectional
 import RicciFlowBlueprint.LeviCivitaSmooth
 import RicciFlowBlueprint.GlobalExtension
+import RicciFlowBlueprint.CurvaturePointwise
 import Batteries.Util.ProofWanted
 open Bundle CovariantDerivative
 open scoped Manifold ContDiff
@@ -174,6 +175,26 @@ theorem hasConstSecLC_tested_at {k : ℝ} (h : HasConstSecLC I M k) {x : M}
   refine ⟨X, Y, hX, hY, hXv, hYw, hasConstSecLC_iff.mp h x X Y hX hY ?_⟩
   rw [hXv, hYw]
   exact hvw
+
+-- BENCH: positive-ricci-pointwise
+/-- **Positive Ricci, stated pointwise in a tangent vector.** The predicate quantifying over
+globally `C²` fields is equivalent to the pointwise statement about `ricciAt`, which is a
+genuine function of tangent vectors. This is the form Chow-Liao-Qin's `positiveRicciMetric`
+takes (arXiv 2608.21502), reached here without a tensor bundle; see
+`notes/hamilton-statement-comparison.md`. -/
+theorem hasPositiveRicciLC_iff_tangent :
+    HasPositiveRicciLC I M ↔
+      ∀ (x : M) (v : TangentSpace I x), v ≠ 0 →
+        0 < (leviCivitaConnection I M).ricciAt x v v := by
+  rw [hasPositiveRicciLC_iff]
+  constructor
+  · intro h x v hv
+    obtain ⟨X, hX, hXv⟩ := exists_contMDiff_two_extension v
+    rw [← hXv, (leviCivitaConnection I M).ricciAt_eq hX hX]
+    exact h x X hX (hXv ▸ hv)
+  · intro h x X hX hx
+    rw [← (leviCivitaConnection I M).ricciAt_eq hX hX]
+    exact h x (X x) hx
 
 end Nonvacuous
 

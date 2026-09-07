@@ -264,6 +264,42 @@ gives the road, and the one thing it does not give yet.
   sections.
 \end{proof}
 
+\begin{lemma}[Curvature and Ricci are pointwise in the last slot]
+  \label{lem:curvature-pointwise}
+  \lean{CovariantDerivative.curvature_congr_third, CovariantDerivative.ricci_congr_snd_of_eq, CovariantDerivative.ricciAt, RicciFlowBlueprint.hasPositiveRicciLC_iff_tangent}
+  \leanok
+  \uses{lem:global-extension, def:curvature, def:ricci}
+  $\Riem(X,Y)Z$ at $x$ depends only on $Z(x)$, and hence $\Ric(X,Y)(x)$ depends
+  only on $X(x)$ and $Y(x)$. Consequently Ricci curvature is a genuine function
+  of tangent vectors, $\texttt{ricciAt}\ x : T_x\M \to T_x\M \to \R$, and
+  positivity of Ricci can be stated pointwise:
+  \[
+    \forall x,\ \forall v \in T_x\M,\ v \ne 0 \implies 0 < \Ric_x(v,v).
+  \]
+
+  \textbf{Proved.} Expand $Z$ in a local frame, valid near $x$
+  (\texttt{OrthonormalFrame.lean}); globalise the frame fields and the
+  coefficient functions by Lemma \ref{lem:global-extension}; apply
+  $C^\infty(\M)$-linearity in the third slot
+  (\texttt{curvature\_sum\_smul\_third}, whose twelve side conditions are
+  discharged from globally $C^2$ data in \texttt{curvature\_smul\_third}); the
+  coefficients at $x$ are determined by $Z(x)$. Locality in the third slot
+  (Lemma \ref{lem:global-extension}) is what lets the frame expansion, which
+  holds only near $x$, be used at all.
+
+  Only \emph{pointwise} regularity of the first two slots is needed, which is
+  what makes the result applicable to \texttt{FiberBundle.extend} and hence to
+  the trace defining $\Ric$.
+
+  This is the form Chow--Liao--Qin's \texttt{positiveRicciMetric} takes
+  (arXiv 2608.21502), where it comes from a tensor-bundle construction; here it
+  is derived instead from the frame and a bump function. It closes the last
+  statement-level divergence recorded in
+  \texttt{notes/hamilton-statement-comparison.md}. Note the result is a
+  congruence, not \texttt{TensorialAt}: that structure demands its identities
+  for merely differentiable sections, which the third slot cannot satisfy.
+\end{lemma}
+
 \begin{lemma}[Global extension of a tangent vector]
   \label{lem:global-extension}
   \lean{RicciFlowBlueprint.exists_contMDiff_eventuallyEq, RicciFlowBlueprint.exists_contMDiff_extension, RicciFlowBlueprint.forall_contMDiff_iff_forall_tangent, CovariantDerivative.curvature_congr_third_of_eventuallyEq}
@@ -294,17 +330,7 @@ gives the road, and the one thing it does not give yet.
   at $x$ depends only on $Z$ \emph{near} $x$, since $\nab$ is local on
   differentiable sections.
 
-  What these do \emph{not} yet give is that $\Riem(X,Y)Z$ at $x$ depends only on
-  $Z(x)$. The route is now short and unobstructed: expand $Z$ in the smooth
-  orthonormal local frame of \texttt{OrthonormalFrame.lean}, which holds near
-  $x$; globalise the frame fields and the coefficient functions by the two lemmas
-  above (both are now available); and apply $C^\infty(\M)$-linearity in the third slot
-  (\texttt{curvature\_sum\_right}, \texttt{curvature\_smul\_right}). The
-  coefficients at $x$ depend only on $Z(x)$, so the value does too. That is the
-  one remaining step to stating positive Ricci pointwise in $v$, as
-  Chow--Liao--Qin do; note it is genuinely a congruence statement and not
-  \texttt{TensorialAt}, which demands the identities for merely differentiable
-  sections and so cannot hold in the third slot.
+  These two are what the pointwise statement below is built from.
 \end{lemma}
 
 \begin{theorem}[Curvature is well defined]

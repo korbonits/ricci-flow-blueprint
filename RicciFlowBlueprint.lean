@@ -5,6 +5,7 @@ import RicciFlowBlueprint.LeviCivita
 import RicciFlowBlueprint.LeviCivitaSmooth
 import RicciFlowBlueprint.Ricci
 import RicciFlowBlueprint.GlobalExtension
+import RicciFlowBlueprint.CurvaturePointwise
 import RicciFlowBlueprint.Homogeneous
 import RicciFlowBlueprint.Milnor
 import RicciFlowBlueprint.MilnorFrame
