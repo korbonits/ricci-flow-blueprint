@@ -389,6 +389,90 @@ theorem hamiltonIvey_boundary_of_neg {l P N L : ℝ}
       (0:ℝ) ≤ l ^ 2 - l * P + P ^ 2) (by linarith : (0:ℝ) ≤ N - P),
     pow_pos hP 3, pow_pos hN 3]
 
+/-! #### Hamilton's pinching function and his pinching set
+
+`f(x) = x(log x - 3)` is increasing and convex on `[e², ∞)` (where `f'(x) = log x - 2 ≥ 0`),
+with `f(e²) = -e²`, so it is a bijection onto `[-e², ∞)`. Hamilton's set is
+
+    K : λ + μ + ν ≥ -3   and   ν + f⁻¹(λ + μ + ν) ≥ 0.
+
+Since `f⁻¹` takes values in `[e², ∞)`, the second condition holds automatically when
+`-ν ≤ e²` and is `f(-ν) ≤ λ + μ + ν` otherwise — which is how `IsIveyPinched` states it,
+with no inverse function. (`f⁻¹` is still wanted for the *convexity* of `K`, which is what
+the tensor maximum principle consumes; it is not needed for anything below.) -/
+
+/-- **Hamilton's pinching function** `f(x) = x (log x - 3)`. -/
+noncomputable def iveyF (x : ℝ) : ℝ := x * (Real.log x - 3)
+
+@[simp] theorem iveyF_one : iveyF 1 = -3 := by simp [iveyF]
+
+/-- `f'(x) = log x - 2`, so `f` decreases on `(0, e²)` and increases on `(e², ∞)`. -/
+theorem hasDerivAt_iveyF {x : ℝ} (hx : 0 < x) : HasDerivAt iveyF (Real.log x - 2) x := by
+  have h : HasDerivAt (fun y : ℝ ↦ y * (Real.log y - 3))
+      (1 * (Real.log x - 3) + x * x⁻¹) x :=
+    (hasDerivAt_id' (x := x)).mul ((Real.hasDerivAt_log hx.ne').sub_const 3)
+  have heq : 1 * (Real.log x - 3) + x * x⁻¹ = Real.log x - 2 := by
+    rw [mul_inv_cancel₀ hx.ne']; ring
+  rw [heq] at h
+  exact h
+
+/-- `f` is antitone on `[1, e²]`, where `f' = log x - 2 ≤ 0`, so `f ≤ f(1) = -3` there.
+This is what makes the first inequality of `K` do the work in the middle range. -/
+theorem iveyF_le_neg_three {N : ℝ} (h1 : 1 ≤ N) (h2 : N ≤ Real.exp 2) : iveyF N ≤ -3 := by
+  have h1e : (1:ℝ) ≤ Real.exp 2 := Real.one_le_exp (by norm_num)
+  have hanti : AntitoneOn iveyF (Icc 1 (Real.exp 2)) := by
+    refine antitoneOn_of_hasDerivWithinAt_nonpos (f' := fun x ↦ Real.log x - 2)
+      (convex_Icc _ _)
+      (fun x hx ↦
+        (hasDerivAt_iveyF (lt_of_lt_of_le zero_lt_one hx.1)).continuousAt.continuousWithinAt)
+      (fun x hx ↦ ?_) (fun x hx ↦ ?_)
+    · rw [interior_Icc] at hx
+      exact (hasDerivAt_iveyF (lt_trans zero_lt_one hx.1)).hasDerivWithinAt
+    · rw [interior_Icc] at hx
+      have hx0 : (0:ℝ) < x := lt_trans zero_lt_one hx.1
+      have : Real.log x ≤ 2 := (Real.log_le_iff_le_exp hx0).2 hx.2.le
+      linarith
+  simpa using hanti ⟨le_refl 1, h1e⟩ ⟨h1, h2⟩ h1
+
+/-- **Hamilton's pinching set**, stated without the inverse function (see the discussion above):
+`λ+μ+ν ≥ -3`, and either `-ν ≤ e²` or `f(-ν) ≤ λ+μ+ν`. -/
+def IsIveyPinched (l m n : ℝ) : Prop :=
+  -3 ≤ l + m + n ∧ (-n ≤ Real.exp 2 ∨ iveyF (-n) ≤ l + m + n)
+
+/-- **The normalisation `ν ≥ -1` puts an ordered triple in `K`.** Both conditions are immediate:
+`λ+μ+ν ≥ 3ν ≥ -3` by the ordering, and `-ν ≤ 1 ≤ e²`. This is the entry point of Hamilton's
+argument — the hypothesis at `t = 0`, which for a closed manifold is arranged by scaling. -/
+theorem isIveyPinched_of_neg_one_le {l m n : ℝ} (hml : m ≤ l) (hnm : n ≤ m) (hn : -1 ≤ n) :
+    IsIveyPinched l m n :=
+  ⟨by linarith, Or.inl (le_trans (by linarith) (Real.one_le_exp (by norm_num)))⟩
+
+-- BENCH: pinching-ivey-unpack
+/-- **The pinching set encodes the Hamilton--Ivey estimate.** For an ordered triple in `K` with
+`ν < 0`, `R = λ+μ+ν ≥ (-ν)(log(-ν) - 3)`.
+
+Three ranges of `N = -ν`. If `N > e²` this is the second condition of `K` verbatim. If `N ≤ 1`
+then `log N ≤ 0`, so `f(N) ≤ -3N`, and the ordering `λ ≥ μ ≥ ν` gives `λ+μ+ν ≥ 3ν = -3N`. If
+`1 ≤ N ≤ e²` then `f(N) ≤ f(1) = -3` by `iveyF_le_neg_three`, and the *first* condition of `K`
+finishes it. The middle range is why `K` carries the seemingly unrelated bound
+`λ+μ+ν ≥ -3` at all. -/
+theorem le_of_isIveyPinched {l m n : ℝ} (hml : m ≤ l) (hnm : n ≤ m)
+    (h : IsIveyPinched l m n) (hneg : n < 0) :
+    iveyF (-n) ≤ l + m + n := by
+  obtain ⟨hR, hcase⟩ := h
+  rcases hcase with hsmall | hdone
+  · have hN0 : (0:ℝ) < -n := by linarith
+    rcases le_total (-n) 1 with h1 | h1
+    · have hlog : Real.log (-n) ≤ 0 := Real.log_nonpos hN0.le h1
+      have hord : -3 * (-n) ≤ l + m + n := by linarith
+      have hf : iveyF (-n) ≤ -3 * (-n) :=
+        calc iveyF (-n) = (-n) * (Real.log (-n) - 3) := rfl
+          _ ≤ (-n) * (0 - 3) := by
+              nlinarith [mul_nonneg hN0.le (neg_nonneg.2 hlog)]
+          _ = -3 * (-n) := by ring
+      linarith
+    · exact le_trans (iveyF_le_neg_three h1 hsmall) hR
+  · exact hdone
+
 end CurvatureODE
 
 end Pinching

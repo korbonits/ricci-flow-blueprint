@@ -1481,10 +1481,13 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
     \qquad f(x) = x(\log x - 3) \ \text{on}\ [e^2,\infty),
   \]
   and the whole content at the ODE level is that $K$ is preserved.
-  \emph{(Cao--Zhu, Theorem 2.4.1.)} What remains is $f^{-1}$ and its
-  concavity, hence convexity of $K$; the assembly of
-  Lemma~\ref{lem:ivey-boundary} into invariance of $K$; and, for Hamilton's
-  later improvement with the $\log(1+t)$ term, a form of
+  \emph{(Cao--Zhu, Theorem 2.4.1.)} Both \emph{ends} of the argument are done:
+  Lemma~\ref{lem:ivey-set} puts the normalised initial data into $K$ and reads
+  the estimate back off it. What remains is the middle --- assembling
+  Lemma~\ref{lem:ivey-scal} and Lemma~\ref{lem:ivey-boundary} into invariance
+  of $K$ under the ODE; then $f^{-1}$ and its concavity, which is what makes
+  $K$ convex and so is what Theorem~\ref{thm:max-tensor} consumes; and, for
+  Hamilton's later improvement with the $\log(1+t)$ term, a form of
   Theorem~\ref{thm:max-tensor} for a \emph{time-dependent} family $\{K_t\}$.
 \end{theorem}
 
@@ -1534,6 +1537,36 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   \emph{(Cao--Zhu, Theorem 2.4.1, Cases (i) and (ii); in Lean
   \texttt{hamiltonIvey\_boundary\_of\_nonneg} and
   \texttt{hamiltonIvey\_boundary\_of\_neg}.)}
+\end{lemma}
+
+\begin{lemma}[Hamilton's pinching set, and what it encodes]
+  \label{lem:ivey-set}
+  \lean{RicciFlowBlueprint.Pinching.IsIveyPinched,
+        RicciFlowBlueprint.Pinching.isIveyPinched_of_neg_one_le,
+        RicciFlowBlueprint.Pinching.le_of_isIveyPinched,
+        RicciFlowBlueprint.Pinching.iveyF_le_neg_three}
+  \leanok
+  \uses{lem:ivey-scal, lem:ivey-boundary}
+  Because $f^{-1}$ takes values in $[e^2,\infty)$, the second condition cutting out $K$ holds
+  automatically when $-\nu \le e^2$ and is $f(-\nu) \le \lambda+\mu+\nu$ otherwise. So $K$ can
+  be written with no inverse function at all:
+  \[
+    K : \quad \lambda+\mu+\nu \ge -3
+    \quad\text{and}\quad
+    \bigl(\, -\nu \le e^2 \ \text{ or } \ f(-\nu) \le \lambda+\mu+\nu \,\bigr).
+  \]
+  In that form both ends of Hamilton's argument are elementary.
+
+  \emph{Entry.} An ordered triple with $\nu \ge -1$ lies in $K$: the ordering gives
+  $\lambda+\mu+\nu \ge 3\nu \ge -3$, and $-\nu \le 1 \le e^2$.
+
+  \emph{Exit.} An ordered triple in $K$ with $\nu < 0$ satisfies
+  $\scal \ge (-\nu)(\log(-\nu) - 3)$. Write $N = -\nu$. For $N > e^2$ this is the second
+  condition verbatim. For $N \le 1$ we have $\log N \le 0$, so $f(N) \le -3N$, and the ordering
+  gives $\scal \ge 3\nu = -3N$. For $1 \le N \le e^2$ the function $f$ is antitone --- there
+  $f' = \log N - 2 \le 0$ --- so $f(N) \le f(1) = -3$, and the \emph{first} condition of $K$
+  finishes it. That middle range is the whole reason $K$ carries the otherwise unmotivated
+  bound $\lambda+\mu+\nu \ge -3$.
 \end{lemma}
 
 \begin{theorem}[Geometric convergence of manifolds and of flows]
