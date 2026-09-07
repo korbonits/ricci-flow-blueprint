@@ -196,6 +196,31 @@ theorem hasPositiveRicciLC_iff_tangent :
     rw [← (leviCivitaConnection I M).ricciAt_eq hX hX]
     exact h x (X x) hx
 
+omit [T2Space M] in
+-- BENCH: const-sec-multiplied
+/-- **Constant sectional curvature, multiplied out.** Equivalent to the quotient form, but with
+no division and no nondegeneracy hypothesis: on a linearly dependent pair both sides vanish
+(`inner_curvature_eq_zero_of_dep`). This is the shape Chow-Liao-Qin use
+(`constantPositiveSectionalCurvatureMetric`, arXiv 2608.21502) and it is the better encoding,
+since the guard no longer has to be carried by every consumer. -/
+theorem hasConstSecLC_iff_mul {k : ℝ} :
+    HasConstSecLC I M k ↔
+      ∀ (x : M) (X Y : Π y : M, TangentSpace I y), CMDiff 2 (T% X) → CMDiff 2 (T% Y) →
+        ⟪(leviCivitaConnection I M).curvature X Y Y x, X x⟫
+          = k * (‖X x‖ ^ 2 * ‖Y x‖ ^ 2 - ⟪X x, Y x⟫ ^ 2) := by
+  rw [hasConstSecLC_iff]
+  constructor
+  · intro h x X Y hX hY
+    rcases eq_or_ne (‖X x‖ ^ 2 * ‖Y x‖ ^ 2 - ⟪X x, Y x⟫ ^ 2) 0 with hg | hg
+    · rw [hg, mul_zero]
+      exact (leviCivitaConnection I M).inner_curvature_eq_zero_of_dep hX hY hg
+    · have hs := h x X Y hX hY hg
+      rw [sectionalCurvature, div_eq_iff hg] at hs
+      rw [hs, mul_comm]
+  · intro h x X Y hX hY hg
+    rw [sectionalCurvature, h x X Y hX hY]
+    field_simp
+
 end Nonvacuous
 
 /-- `M` admits a metric of strictly positive Ricci curvature. -/

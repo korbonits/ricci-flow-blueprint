@@ -15,9 +15,10 @@ import RicciFlowBlueprint.GlobalExtension
 import RicciFlowBlueprint.OrthonormalFrame
 import RicciFlowBlueprint.LeviCivitaSmooth
 import RicciFlowBlueprint.Scalar
+import RicciFlowBlueprint.Sectional
 
 open Bundle Filter Module
-open scoped Manifold ContDiff Topology
+open scoped Manifold ContDiff Topology RealInnerProductSpace
 
 namespace CovariantDerivative
 
@@ -185,6 +186,69 @@ theorem ricciAt_eq {X Y : Π y : M, TangentSpace I y} {x : M}
   obtain ⟨hXc, hXv⟩ := (RicciFlowBlueprint.exists_contMDiff_two_extension (X x)).choose_spec
   obtain ⟨hYc, hYv⟩ := (RicciFlowBlueprint.exists_contMDiff_two_extension (Y x)).choose_spec
   exact cov.ricci_congr_of_eq hXc hX hYc hY hXv hYv
+
+omit [CompleteSpace E] in
+-- BENCH: curvature-third-slot-h3
+/-- The third-slot pointwise hypothesis that `Sectional.lean`'s `sectionalCurvature_congr`
+and `Scalar.lean`'s `ricci_congr_snd` take as `h3`, now a theorem on a general manifold. -/
+theorem curvature_pointwise_third {X Y : Π y : M, TangentSpace I y} {x : M}
+    (hX : CMDiffAt 2 (T% X) x) (hY : CMDiffAt 2 (T% Y) x) :
+    ∀ W W' : Π y : M, TangentSpace I y, CMDiff 2 (T% W) → CMDiff 2 (T% W') →
+      W x = W' x → cov.curvature X Y W x = cov.curvature X Y W' x :=
+  fun _ _ hW hW' hval ↦ cov.curvature_congr_third hX hY hW hW' hval
+
+-- BENCH: sectional-well-defined-manifold
+/-- **Well-definedness of the sectional curvature on a general manifold**: it depends only on
+the plane spanned by the values at `x`. `sectionalCurvature_congr` had to assume this slot's
+pointwise dependence; it is now discharged. -/
+theorem sectionalCurvature_congr' [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
+    (hcov : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    {X Y X' Y' : Π y : M, TangentSpace I y} {x : M}
+    (hX : CMDiff 2 (T% X)) (hY : CMDiff 2 (T% Y))
+    (hX' : CMDiff 2 (T% X')) (hY' : CMDiff 2 (T% Y'))
+    {a b c d : ℝ} (hdet : a * d - b * c ≠ 0)
+    (hXx : X' x = a • X x + b • Y x) (hYx : Y' x = c • X x + d • Y x) :
+    sectionalCurvature cov X' Y' x = sectionalCurvature cov X Y x := by
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  exact cov.sectionalCurvature_congr hcov hX hY hX' hY' hdet hXx hYx
+    (cov.curvature_pointwise_third (hX' x) (hY' x))
+
+omit [CompleteSpace E] [T2Space M] [IsContMDiffRiemannianBundle I 2 E (fun (x : M) ↦ TangentSpace I x)] in
+-- BENCH: curvature-degenerate
+/-- **`⟪R(X,Y)Y, X⟫` vanishes on a linearly dependent pair.** Either a value is `0`, or
+`Y x = r • X x`; then the middle slot becomes a multiple of `X` and the curvature vanishes by
+antisymmetry in the first two slots. -/
+theorem inner_curvature_eq_zero_of_dep
+    [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
+    {X Y : Π y : M, TangentSpace I y} {x : M}
+    (hX : CMDiff 2 (T% X)) (hY : CMDiff 2 (T% Y))
+    (hdep : ‖X x‖ ^ 2 * ‖Y x‖ ^ 2 - (inner ℝ (X x) (Y x) : ℝ) ^ 2 = 0) :
+    (inner ℝ (cov.curvature X Y Y x) (X x) : ℝ) = 0 := by
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  have hXm : MDiffAt (T% X) x := (hX.mdifferentiable h2) x
+  have hYm : MDiffAt (T% Y) x := (hY.mdifferentiable h2) x
+  rcases eq_or_ne (X x) 0 with hx0 | hx0
+  · simp [hx0]
+  rcases eq_or_ne (Y x) 0 with hy0 | hy0
+  · have hz : CMDiff 2 (T% (0 : Π y : M, TangentSpace I y)) := contMDiff_zeroSection _ _
+    rw [cov.curvature_congr_snd hY hYm (hz.mdifferentiable h2 x) (by simpa using hy0)]
+    have : (0 : Π y : M, TangentSpace I y) = (0 : ℝ) • Y := by funext z; simp
+    rw [this, cov.curvature_smul_const_snd (0 : ℝ) hYm hY]
+    simp
+  -- equality case of Cauchy-Schwarz gives `Y x = r • X x`
+  have hcs : ‖(inner ℝ (X x) (Y x) : ℝ)‖ = ‖X x‖ * ‖Y x‖ := by
+    have hsq : (inner ℝ (X x) (Y x) : ℝ) ^ 2 = (‖X x‖ * ‖Y x‖) ^ 2 := by nlinarith [hdep]
+    calc ‖(inner ℝ (X x) (Y x) : ℝ)‖
+        = Real.sqrt ((inner ℝ (X x) (Y x) : ℝ) ^ 2) := by
+          rw [Real.sqrt_sq_eq_abs, Real.norm_eq_abs]
+      _ = Real.sqrt ((‖X x‖ * ‖Y x‖) ^ 2) := by rw [hsq]
+      _ = ‖X x‖ * ‖Y x‖ := Real.sqrt_sq (by positivity)
+  obtain ⟨r, _, hr⟩ := (norm_inner_eq_norm_iff hx0 hy0).mp hcs
+  -- replace the middle slot by `r • X`, pull out `r`, and use antisymmetry
+  have hrX : CMDiff 2 (T% (r • X)) := hX.const_smul_section
+  rw [cov.curvature_congr_snd hY hYm (hrX.mdifferentiable h2 x) (by simpa using hr),
+    cov.curvature_smul_const_snd r hXm hY, cov.curvature_self_left]
+  simp
 
 end Pointwise
 
