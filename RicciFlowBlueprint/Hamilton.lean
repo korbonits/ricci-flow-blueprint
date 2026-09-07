@@ -48,6 +48,7 @@
    above sidesteps it rather than fixing it. A cleaner idiom would be welcome. -/
 import RicciFlowBlueprint.Sectional
 import RicciFlowBlueprint.LeviCivitaSmooth
+import RicciFlowBlueprint.GlobalExtension
 import Batteries.Util.ProofWanted
 open Bundle CovariantDerivative
 open scoped Manifold ContDiff
@@ -136,6 +137,46 @@ theorem hasConstSecLC_iff {k : ℝ} :
 
 end Canonical
 
+section Nonvacuous
+
+variable [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+  [IsContMDiffRiemannianBundle I 2 E (fun (x : M) ↦ TangentSpace I x)]
+  [T2Space M]
+
+-- BENCH: positive-ricci-nonvacuous
+/-- **The positive-Ricci predicate tests every tangent vector**, hence is not vacuous.
+
+Without this the predicate could hold merely because no globally `C²` field exists:
+`∀ X, CMDiff 2 (T% X) → X x ≠ 0 → 0 < ricci X X x` is contentless if the antecedent
+is never satisfiable, and `ChartedSpace + IsManifold + CompactSpace` do not supply
+such fields (`T2Space`, `SecondCountableTopology` and `Nonempty` are all underivable
+from them). `exists_contMDiff_two_extension` supplies one through every tangent
+vector, so the quantifier ranges over a family reaching every direction at every
+point. This is the vacuity hazard recorded in
+`notes/hamilton-statement-comparison.md`, closed. -/
+theorem hasPositiveRicciLC_tested_at (h : HasPositiveRicciLC I M) {x : M}
+    (v : TangentSpace I x) (hv : v ≠ 0) :
+    ∃ X : Π y : M, TangentSpace I y, CMDiff 2 (T% X) ∧ X x = v ∧
+      0 < (leviCivitaConnection I M).ricci X X x := by
+  obtain ⟨X, hX, hXv⟩ := exists_contMDiff_two_extension v
+  exact ⟨X, hX, hXv, hasPositiveRicciLC_iff.mp h x X hX (hXv ▸ hv)⟩
+
+-- BENCH: const-sec-nonvacuous
+/-- **The constant-sectional-curvature predicate tests every plane.** Given a linearly
+independent pair of tangent vectors it is realised by a pair of globally `C²` fields,
+so the predicate is not vacuous either. -/
+theorem hasConstSecLC_tested_at {k : ℝ} (h : HasConstSecLC I M k) {x : M}
+    (v w : TangentSpace I x) (hvw : ‖v‖ ^ 2 * ‖w‖ ^ 2 - ⟪v, w⟫ ^ 2 ≠ 0) :
+    ∃ X Y : Π y : M, TangentSpace I y, CMDiff 2 (T% X) ∧ CMDiff 2 (T% Y) ∧
+      X x = v ∧ Y x = w ∧ sectionalCurvature (leviCivitaConnection I M) X Y x = k := by
+  obtain ⟨X, hX, hXv⟩ := exists_contMDiff_two_extension v
+  obtain ⟨Y, hY, hYw⟩ := exists_contMDiff_two_extension w
+  refine ⟨X, Y, hX, hY, hXv, hYw, hasConstSecLC_iff.mp h x X Y hX hY ?_⟩
+  rw [hXv, hYw]
+  exact hvw
+
+end Nonvacuous
+
 /-- `M` admits a metric of strictly positive Ricci curvature. -/
 def AdmitsPositiveRicciMetric (I : ModelWithCorners ℝ E H) (M : Type*)
     [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
@@ -181,13 +222,20 @@ theorem admitsConstPositiveSecMetric_iff :
   simp only [← real_inner_self_eq_norm_sq]
   exact Iff.rfl
 
-/-- **Hamilton's theorem (1982).** -/
+/-- **Hamilton's theorem (1982).**
+
+`[T2Space M]` is not decoration. Without it nothing supplies a globally `C²` vector
+field through a given tangent vector, so both predicates can be satisfied vacuously
+and the implication is trivially true; with it, `exists_contMDiff_two_extension`
+makes them assertions about every direction at every point
+(`hasPositiveRicciLC_tested_at`, `hasConstSecLC_tested_at`). Chow-Liao-Qin assume
+`T2Space` for the same reason. -/
 proof_wanted hamilton_1982
     {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
       [FiniteDimensional ℝ E]
     {H : Type*} [TopologicalSpace H] (I : ModelWithCorners ℝ E H)
     (M : Type*) [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
-    [CompactSpace M] [I.Boundaryless]
+    [CompactSpace M] [I.Boundaryless] [T2Space M]
     [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
     (hdim : Module.finrank ℝ E = 3) :
     AdmitsPositiveRicciMetric I M → AdmitsConstPositiveSecMetric I M
