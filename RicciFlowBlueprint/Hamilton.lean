@@ -50,6 +50,7 @@ import RicciFlowBlueprint.Sectional
 import RicciFlowBlueprint.LeviCivitaSmooth
 import RicciFlowBlueprint.GlobalExtension
 import RicciFlowBlueprint.CurvaturePointwise
+import RicciFlowBlueprint.ConstantCurvature
 import Batteries.Util.ProofWanted
 open Bundle CovariantDerivative
 open scoped Manifold ContDiff
@@ -220,6 +221,56 @@ theorem hasConstSecLC_iff_mul {k : ℝ} :
   · intro h x X Y hX hY hg
     rw [sectionalCurvature, h x X Y hX hY]
     field_simp
+
+omit [T2Space M] in
+-- BENCH: const-sec-tensor-form
+/-- **Constant sectional curvature delivers the full `(0,4)` curvature tensor.** Chow--Liao--Qin
+state the conclusion of Hamilton's theorem as the multiplied-out sectional identity, which
+`hasConstSecLC_iff_mul` already matches; this says our predicate gives more, namely the value of
+`⟪R(X,Y)Z, W⟫` on *all four* arguments. Everything downstream of constant curvature --- the
+spherical space form direction above all --- can consume it directly. -/
+theorem hasConstSecLC_tensor {k : ℝ} (h : HasConstSecLC I M k)
+    {x : M} {X Y Z W : Π y : M, TangentSpace I y}
+    (hX : CMDiff 2 (T% X)) (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z))
+    (hW : CMDiff 2 (T% W)) :
+    ⟪(leviCivitaConnection I M).curvature X Y Z x, W x⟫
+      = k * (⟪Y x, Z x⟫ * ⟪X x, W x⟫ - ⟪X x, Z x⟫ * ⟪Y x, W x⟫) :=
+  (leviCivitaConnection I M).inner_curvature_eq_of_const_sec_norm
+    (isMetricCompatible_leviCivitaConnection I) (torsion_leviCivitaConnection_eq_zero I)
+    (fun A B hA hB ↦ hasConstSecLC_iff_mul.mp h x A B hA hB) hX hY hZ hW
+
+-- BENCH: const-sec-ricci-scalar
+/-- **Constant sectional curvature makes the metric Einstein**, `Ric = (n-1)k g`, and pins the
+scalar curvature at `n(n-1)k`. -/
+theorem hasConstSecLC_ricci {k : ℝ} (h : HasConstSecLC I M k)
+    {x : M} {X Y : Π y : M, TangentSpace I y}
+    (hX : CMDiff 2 (T% X)) (hY : CMDiff 2 (T% Y))
+    {ι : Type*} [Fintype ι] (b : OrthonormalBasis ι ℝ (TangentSpace I x)) :
+    (leviCivitaConnection I M).ricci X Y x
+      = ((Fintype.card ι : ℝ) - 1) * k * ⟪X x, Y x⟫ :=
+  (leviCivitaConnection I M).ricci_eq_of_const_sec
+    (isMetricCompatible_leviCivitaConnection I) (torsion_leviCivitaConnection_eq_zero I)
+    (fun A B hA hB ↦ by
+      have e := hasConstSecLC_iff_mul.mp h x A B hA hB
+      have e1 : ⟪A x, A x⟫ = ‖A x‖ ^ 2 := real_inner_self_eq_norm_sq _
+      have e2 : ⟪B x, B x⟫ = ‖B x‖ ^ 2 := real_inner_self_eq_norm_sq _
+      have e3 : ⟪B x, A x⟫ = ⟪A x, B x⟫ := real_inner_comm _ _
+      rw [e, e1, e2, e3]; ring)
+    hX hY b
+
+theorem hasConstSecLC_scalar {k : ℝ} (h : HasConstSecLC I M k) {x : M}
+    {ι : Type*} [Fintype ι] (b : OrthonormalBasis ι ℝ (TangentSpace I x)) :
+    (leviCivitaConnection I M).scalarCurvatureAt x
+      = (Fintype.card ι : ℝ) * ((Fintype.card ι : ℝ) - 1) * k :=
+  (leviCivitaConnection I M).scalarCurvatureAt_eq_of_const_sec
+    (isMetricCompatible_leviCivitaConnection I) (torsion_leviCivitaConnection_eq_zero I)
+    (fun A B hA hB ↦ by
+      have e := hasConstSecLC_iff_mul.mp h x A B hA hB
+      have e1 : ⟪A x, A x⟫ = ‖A x‖ ^ 2 := real_inner_self_eq_norm_sq _
+      have e2 : ⟪B x, B x⟫ = ‖B x‖ ^ 2 := real_inner_self_eq_norm_sq _
+      have e3 : ⟪B x, A x⟫ = ⟪A x, B x⟫ := real_inner_comm _ _
+      rw [e, e1, e2, e3]; ring)
+    b
 
 end Nonvacuous
 

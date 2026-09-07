@@ -546,7 +546,10 @@ gives the road, and the one thing it does not give yet.
     CovariantDerivative.inner_curvature_eq_of_const_sec_norm,
     CovariantDerivative.curvatureDefect,
     CovariantDerivative.ricci_eq_of_const_sec,
-    CovariantDerivative.scalarCurvatureAt_eq_of_const_sec}
+    CovariantDerivative.scalarCurvatureAt_eq_of_const_sec,
+    RicciFlowBlueprint.hasConstSecLC_tensor,
+    RicciFlowBlueprint.hasConstSecLC_ricci,
+    RicciFlowBlueprint.hasConstSecLC_scalar}
   \leanok
   \uses{def:sectional, lem:curvature-symmetries, lem:bianchi-first, def:ricci-form, def:scalar}
   If every sectional curvature at $x$ equals $k$, then for \emph{all} four
@@ -581,6 +584,14 @@ gives the road, and the one thing it does not give yet.
   $\sum_i \langle X, e_i\rangle \langle e_i, Y\rangle = \langle X, Y\rangle$;
   the first slot of $\Ric$ is fed the global $C^2$ extensions of the basis
   vectors, which is what \texttt{extendTwo} is for.
+
+  \textbf{Applied to the predicate.} \texttt{hasConstSecLC\_tensor},
+  \texttt{hasConstSecLC\_ricci} and \texttt{hasConstSecLC\_scalar} instantiate
+  all three at \texttt{HasConstSecLC I M k} and the canonical Levi-Civita
+  connection, via \texttt{hasConstSecLC\_iff\_mul}. So the conclusion of
+  Theorem \ref{thm:hamilton} delivers the full $(0,4)$ tensor, and the metric it
+  produces is Einstein with $\scal = n(n-1)k$ --- which is what the spherical
+  space form direction will want to consume.
 \end{lemma}
 
 \begin{proof}
