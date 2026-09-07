@@ -1,3 +1,5 @@
+import RicciFlowBlueprint.GramSchmidtOrtho
+import RicciFlowBlueprint.OrthonormalFrame
 import RicciFlowBlueprint.Curvature
 import RicciFlowBlueprint.LeviCivita
 import RicciFlowBlueprint.LeviCivitaSmooth

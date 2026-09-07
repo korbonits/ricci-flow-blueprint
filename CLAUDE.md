@@ -21,6 +21,7 @@ in `lake-manifest.json`) on Lean `v4.34.0-rc2`, because mathlib4 #36845
 | `Flow.lean` | `IsRicciFlowAt/On`, `isRicciFlowAt_const_iff`, `isRicciFlowAt_iff_of_isLeviCivita`, `isRicciFlowOn_iff_ricciOfMetric` — **the flow is `∂g/∂t = -2 Ric(g t)` with `Ric` a function of `g`**; `ricciFlow_shortTime_existence` (`proof_wanted`); the analytic-frontier survey lives in its header |
 | `Hamilton.lean` | `hamilton_1982` — **stated**, `proof_wanted`, no sorry, no axiom. Predicates require a `C¹` witness and `C²` test fields (corrected 2026-09-04: the old `HasConstSecLC` quantified over arbitrary fields, i.e. over junk). `admitsPositiveRicciMetric_iff` / `admitsConstPositiveSecMetric_iff` restate them via `ricciOfMetric` / `sectionalCurvatureOfMetric` |
 | `Pinching.lean` | Hamilton's curvature ODE in dimension 3 — ordering, positive Ricci, `λ ≤ C(μ+ν)` preserved; `pinching_antitone` (Hamilton Thm 10.1, ODE half). Linear Grönwall helpers `nonpos_of_deriv_le_mul` etc. No manifold. **Reopened for Hamilton–Ivey**: `iveyF` (= `x(log x - 3)`), `hasDerivAt_iveyF`, `iveyF_le_neg_three`, `IsIveyPinched` (Hamilton's set with no `f⁻¹`), `isIveyPinched_of_neg_one_le`, `le_of_isIveyPinched`, `iveyE`/`iveyE_nonneg` (the unified boundary polynomial), `iveyPsi`/`iveyPsi_nonneg` (the Grönwall), `nonneg_preserved`, `shift`, `restrict`, `neg_of_neg`, and **`hamiltonIvey`** (the ODE half, complete); `hasDerivAt_scal`, `le_scal` (`Ṙ = ½[(λ+μ)²+(λ+ν)²+(μ+ν)²] ≥ 0`, so any lower bound on `R` is preserved — the first inequality of Hamilton's set `K`), `hamiltonIvey_boundary_of_nonneg`/`_of_neg` (the boundary check with the log eliminated; pure polynomial, Cao–Zhu Cases (i)/(ii)). **Normalisation**: `λ,μ,ν` are *twice* the sectional curvatures, `R = λ+μ+ν`, Ricci eigenvalues `(μ+ν)/2` etc. — the header said `μ+ν`, off by 2; every proved statement is a sign or ratio claim so none moved |
+| `GramSchmidtOrtho.lean`, `OrthonormalFrame.lean` | **Not ours.** Ported from unmerged mathlib PR #26221 (grunweg), Apache-2.0, see `NOTICE.md`. Gives `Module.Basis.orthonormalFrame` and `contMDiffAt_orthonormalFrame_of_mem`: a `C^k` **orthonormal** local frame of a Riemannian bundle, by pointwise Gram–Schmidt on `Trivialization.localFrame`. Mathlib has `IsLocalFrameOn` but no orthonormal version; it names the planned file in `LocalFrame.lean`'s header. **Delete when #26221 lands.** Upstream's one `sorry` (`contMDiffOn_iff_coeff'`, marked unused) was dropped |
 | `Hessian.lean` | `hessian` (∇²), `hessian_sub_hessian_swap` (Ricci identity), tensoriality + `hessianAt`, `hessianFun` + `hessianFun_symm`, `laplacian` + `laplacian_eq_sum` (basis-independent metric trace, `OrthonormalBasis.sum_apply_self_eq`) |
 | `SecondDerivativeTest.lean` | **proved**: `deriv2_nonneg_of_isLocalMin`, `fderiv2_nonneg_of_isLocalMin`, `fderiv_fderiv_apply_nonneg_of_isLocalMin` (chart-side core), `hessianFun_nonneg_of_isLocalMin` and `laplacianFun_nonneg_of_isLocalMin` on a **boundaryless manifold** (transport through `extChartAt`, same pattern as `mlieBracket_apply_fun`), plus the `*_model` versions. The connection term `(∇_X X) f` dies at a critical point, so any `cov` works |
 | `MaximumPrinciple.lean` | **proved**: the scalar maximum principle on a compact space with the differential inequality assumed at spatial minima (`le_of_deriv_ge_at_min`, `le_of_deriv_le_at_max`). ε-perturbation `φ − ε e^{(2K+1)t}` + first touching time. No Laplacian |
@@ -140,9 +141,15 @@ Now `thm:hamilton-ivey` at the head of `chap:kappa`, with a
    Watch out: `Real.log (-n) = Real.log n` is a simp lemma
    (`Real.log_neg_eq_log`), so `simpa [iveyF]` rewrites under you — use a
    `calc` with `rfl`, or `set L := Real.log (-n t)` before `field_simp`.
-2. **The manifold trace lemma** `X(tr_g B) = tr_g(∇_X B)` (was Next 1, still
-   the gate for every Laplacian identity here), then contracted second
-   Bianchi and `∂ₜ scal = Δ scal + 2|Ric|²`.
+2. **The manifold trace lemma** `X(tr_g B) = tr_g(∇_X B)` — the gate for every
+   Laplacian identity here, and hence for `lem:evolution-rm`, `lem:pinching`
+   and the flow half of Hamilton–Ivey. **Now unblocked**: it needs a smooth
+   orthonormal local frame, which `OrthonormalFrame.lean` supplies (smoke-
+   tested on `TangentSpace I`, `C^ω`). The proof does *not* need a parallel
+   frame: with any orthonormal frame, write `∇_X eᵢ = Σⱼ aᵢⱼ eⱼ`; metric
+   compatibility makes `a` antisymmetric, the correction terms are
+   `Σᵢⱼ aᵢⱼ[B(eⱼ,eᵢ) + B(eᵢ,eⱼ)]`, and antisymmetric against symmetric is 0.
+   Then contracted second Bianchi and `∂ₜ scal = Δ scal + 2|Ric|²`.
 3. **`∂ₜ Rm = Δ Rm + Q`** (Uhlenbeck's trick) — needed to state (1) on the
    flow rather than on the ODE alone.
 4. **Perelman's `L`-geometry** (`def:reduced-volume`,
