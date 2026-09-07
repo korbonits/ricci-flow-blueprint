@@ -1086,7 +1086,8 @@ target actually requires.
   \lean{CovariantDerivative.covCurvature_smul_dir,
     CovariantDerivative.covCurvature_add_dir,
     CovariantDerivative.cov_smul_dir,
-    CovariantDerivative.contMDiff_curvature}
+    CovariantDerivative.contMDiff_curvature,
+    CovariantDerivative.covCurvature_antisymm}
   \leanok
   \uses{lem:bianchi-second, def:curvature}
   $(\nab_{fX} \Riem)(Y,Z)W = f\,(\nab_X \Riem)(Y,Z)W$, and likewise additively.
@@ -1114,9 +1115,12 @@ target actually requires.
   curvature section, the two $\nab\nab$ terms by
   \texttt{contMDiff\_cov\_apply} twice and the bracket term by the same fed
   Mathlib's \texttt{ContMDiffAt.mlieBracket\_vectorField}. So $Y$ and $Z$ are
-  now unblocked, at one more derivative than the direction slot. $W$ still needs
-  the frame-and-globalise argument of Lemma \ref{lem:curvature-pointwise} one
-  level up.
+  now unblocked, at one more derivative than the direction slot --- and
+  \texttt{covCurvature\_antisymm} halves what is left of them, since
+  $\nab\Riem$ inherits the antisymmetry of $\Riem$ in those two slots, so
+  whatever is proved for $Y$ transfers to $Z$. $W$ still needs the
+  frame-and-globalise argument of Lemma \ref{lem:curvature-pointwise} one level
+  up.
 \end{lemma}
 
 \begin{lemma}[The metric trace commutes with $\nab$]

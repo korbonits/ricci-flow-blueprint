@@ -193,6 +193,30 @@ theorem covCurvature_add_dir {X' : Π y : M, TangentSpace I y}
     cov.curvature_add_right hDW hDW' hYm hZm]
   module
 
+omit [CompleteSpace E] in
+-- BENCH: cov-curvature-antisymm
+/-- **`∇R` inherits the antisymmetry of `R` in the two curvature slots**:
+`(∇_X R)(Y,Z)W = -(∇_X R)(Z,Y)W`. Every term of `covCurvature` flips sign — the first
+because `∇` negates a differentiable section (`neg_apply`, which is where
+`contMDiff_curvature` is needed), the other three by `curvature_antisymm`.
+
+Halves the remaining work: whatever is proved about the `Y` slot transfers to `Z`. -/
+theorem covCurvature_antisymm (X : Π y : M, TangentSpace I y)
+    {Y Z W : Π y : M, TangentSpace I y} {x : M}
+    (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z)) (hW : CMDiff 3 (T% W)) :
+    cov.covCurvature X Y Z W x = -cov.covCurvature X Z Y W x := by
+  have h1 : (1 : ℕ∞ω) ≠ 0 := by norm_num
+  have hc : MDiffAt (T% (fun y ↦ cov.curvature Y Z W y)) x :=
+    ((cov.contMDiff_curvature hY hZ hW).mdifferentiable h1) x
+  have hneg : (fun y ↦ cov.curvature Z Y W y) = -(fun y ↦ cov.curvature Y Z W y) := by
+    funext y
+    exact cov.curvature_antisymm Z Y W y
+  simp only [covCurvature, hneg, cov.neg_apply hc, _root_.neg_apply,
+    cov.curvature_antisymm (fun y ↦ cov Z y (X y)) Y W x,
+    cov.curvature_antisymm Z (fun y ↦ cov Y y (X y)) W x,
+    cov.curvature_antisymm Z Y (fun y ↦ cov W y (X y)) x]
+  module
+
 end Direction
 
 end CovariantDerivative
