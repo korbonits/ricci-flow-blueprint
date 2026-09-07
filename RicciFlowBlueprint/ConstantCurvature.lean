@@ -234,4 +234,76 @@ theorem inner_curvature_eq_of_const_sec_norm
 
 end ConstantCurvature
 
+section RicciScalar
+
+variable [T2Space M]
+variable {k : ℝ} {X Y : Π y : M, TangentSpace I y} {x : M}
+
+-- BENCH: ricci-of-const-sec
+/-- **Ricci of a constant-curvature metric is `(n-1)k` times the metric.** -/
+theorem ricci_eq_of_const_sec
+    (hmetric : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    (htor : cov.torsion = 0)
+    (hsec : ∀ A B : Π y : M, TangentSpace I y, CMDiff 2 (T% A) → CMDiff 2 (T% B) →
+      ⟪cov.curvature A B B x, A x⟫
+        = k * (⟪B x, B x⟫ * ⟪A x, A x⟫ - ⟪A x, B x⟫ * ⟪B x, A x⟫))
+    (hX : CMDiff 2 (T% X)) (hY : CMDiff 2 (T% Y))
+    {ι : Type*} [Fintype ι] (b : OrthonormalBasis ι ℝ (TangentSpace I x)) :
+    cov.ricci X Y x = ((Fintype.card ι : ℝ) - 1) * k * ⟪X x, Y x⟫ := by
+  classical
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  have md : ∀ {U : Π y : M, TangentSpace I y}, CMDiff 2 (T% U) → MDiffAt (T% U) x :=
+    fun hU ↦ (hU.mdifferentiable h2) x
+  -- the trace, over `b`, of the first-slot endomorphism, tested on global `C²` extensions
+  have key : cov.ricci X Y x
+      = ∑ i, ⟪b i, cov.curvature (extendTwo (I := I) (b i)) X Y x⟫ := by
+    rw [cov.ricci_eq_trace hY x, LinearMap.trace_eq_sum_inner _ b]
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    congr 1
+    conv_lhs => rw [← extendTwo_apply_self (I := I) (b i)]
+    exact cov.mkHom_curvature_fst_apply hY (md (contMDiff_extendTwo (b i)))
+  -- each term, by the constant-curvature formula
+  have term : ∀ i, ⟪b i, cov.curvature (extendTwo (I := I) (b i)) X Y x⟫
+      = k * (⟪X x, Y x⟫ - ⟪X x, b i⟫ * ⟪b i, Y x⟫) := by
+    intro i
+    have hEic : CMDiff 2 (T% (extendTwo (I := I) (b i))) := contMDiff_extendTwo (b i)
+    have hEiv : extendTwo (I := I) (b i) x = b i := extendTwo_apply_self (b i)
+    have e := cov.inner_curvature_eq_of_const_sec hmetric htor hsec hEic hX hY hEic
+    rw [hEiv] at e
+    have hbb : (⟪b i, b i⟫ : ℝ) = 1 := by simp
+    have ecomm : ⟪b i, cov.curvature (extendTwo (I := I) (b i)) X Y x⟫
+        = ⟪cov.curvature (extendTwo (I := I) (b i)) X Y x, b i⟫ := real_inner_comm _ _
+    rw [ecomm, e, hbb]
+    ring
+  rw [key, Finset.sum_congr rfl fun i _ ↦ term i, ← Finset.mul_sum,
+    Finset.sum_sub_distrib, b.sum_inner_mul_inner, Finset.sum_const, Finset.card_univ,
+    nsmul_eq_mul]
+  ring
+
+-- BENCH: scalar-of-const-sec
+/-- **Scalar curvature of a constant-curvature metric is `n(n-1)k`.** -/
+theorem scalarCurvatureAt_eq_of_const_sec
+    (hmetric : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    (htor : cov.torsion = 0)
+    (hsec : ∀ A B : Π y : M, TangentSpace I y, CMDiff 2 (T% A) → CMDiff 2 (T% B) →
+      ⟪cov.curvature A B B x, A x⟫
+        = k * (⟪B x, B x⟫ * ⟪A x, A x⟫ - ⟪A x, B x⟫ * ⟪B x, A x⟫))
+    {ι : Type*} [Fintype ι] (b : OrthonormalBasis ι ℝ (TangentSpace I x)) :
+    cov.scalarCurvatureAt x = (Fintype.card ι : ℝ) * ((Fintype.card ι : ℝ) - 1) * k := by
+  classical
+  rw [cov.scalarCurvatureAt_eq_sum_basis b]
+  have term : ∀ i, cov.ricciAt x (b i) (b i) = ((Fintype.card ι : ℝ) - 1) * k := by
+    intro i
+    have hEic : CMDiff 2 (T% (extendTwo (I := I) (b i))) := contMDiff_extendTwo (b i)
+    have hEiv : extendTwo (I := I) (b i) x = b i := extendTwo_apply_self (b i)
+    have e := cov.ricci_eq_of_const_sec hmetric htor hsec hEic hEic b
+    rw [hEiv] at e
+    have hbb : (⟪b i, b i⟫ : ℝ) = 1 := by simp
+    rw [← hEiv, cov.ricciAt_eq hEic hEic, e, hbb]
+    ring
+  rw [Finset.sum_congr rfl fun i _ ↦ term i, Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+  ring
+
+end RicciScalar
+
 end CovariantDerivative

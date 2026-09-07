@@ -544,9 +544,11 @@ gives the road, and the one thing it does not give yet.
   \label{lem:const-sec-determines-rm}
   \lean{CovariantDerivative.inner_curvature_eq_of_const_sec,
     CovariantDerivative.inner_curvature_eq_of_const_sec_norm,
-    CovariantDerivative.curvatureDefect}
+    CovariantDerivative.curvatureDefect,
+    CovariantDerivative.ricci_eq_of_const_sec,
+    CovariantDerivative.scalarCurvatureAt_eq_of_const_sec}
   \leanok
-  \uses{def:sectional, lem:curvature-symmetries, lem:bianchi-first}
+  \uses{def:sectional, lem:curvature-symmetries, lem:bianchi-first, def:ricci-form, def:scalar}
   If every sectional curvature at $x$ equals $k$, then for \emph{all} four
   arguments
   \[
@@ -561,6 +563,20 @@ gives the road, and the one thing it does not give yet.
   Chow--Liao--Qin's \texttt{admitsConstantPositiveSectionalCurvature} fixes the
   full $(0,4)$ tensor. The lemma says they are the same hypothesis, so the
   divergence recorded in \texttt{notes/hamilton-statement-comparison.md} closes.
+
+  \textbf{Corollaries}, by tracing once and twice
+  (\texttt{ricci\_eq\_of\_const\_sec},
+  \texttt{scalarCurvatureAt\_eq\_of\_const\_sec}):
+  \[
+    \Ric = (n-1)k\,\g, \qquad \scal = n(n-1)k .
+  \]
+  Both are stated over an arbitrary orthonormal basis of $T_x\M$, with $n$ its
+  cardinality, so no identification of $\operatorname{finrank}$ with the
+  dimension of the model is needed. Tracing uses Parseval
+  (\texttt{OrthonormalBasis.sum\_inner\_mul\_inner}) exactly once, on
+  $\sum_i \langle X, e_i\rangle \langle e_i, Y\rangle = \langle X, Y\rangle$;
+  the first slot of $\Ric$ is fed the global $C^2$ extensions of the basis
+  vectors, which is what \texttt{extendTwo} is for.
 \end{lemma}
 
 \begin{proof}
