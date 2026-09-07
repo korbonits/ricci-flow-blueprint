@@ -284,7 +284,9 @@ gives the road, and the one thing it does not give yet.
   \texttt{notes/hamilton-statement-comparison.md}.
 
   The general form is \texttt{exists\_contMDiff\_eventuallyEq}: a section that is
-  $C^k$ on a neighbourhood of $x$ agrees near $x$ with a globally $C^k$ section.
+  $C^k$ on a neighbourhood of $x$ agrees near $x$ with a globally $C^k$ section,
+  with \texttt{exists\_contMDiff\_eventuallyEq\_fun} the scalar companion for
+  functions.
   This closes the long-standing gap "no global $C^2$ extension of a tangent
   vector".
 
@@ -295,8 +297,8 @@ gives the road, and the one thing it does not give yet.
   What these do \emph{not} yet give is that $\Riem(X,Y)Z$ at $x$ depends only on
   $Z(x)$. The route is now short and unobstructed: expand $Z$ in the smooth
   orthonormal local frame of \texttt{OrthonormalFrame.lean}, which holds near
-  $x$; globalise the frame fields and the coefficient functions by the lemma
-  above; and apply $C^\infty(\M)$-linearity in the third slot
+  $x$; globalise the frame fields and the coefficient functions by the two lemmas
+  above (both are now available); and apply $C^\infty(\M)$-linearity in the third slot
   (\texttt{curvature\_sum\_right}, \texttt{curvature\_smul\_right}). The
   coefficients at $x$ depend only on $Z(x)$, so the value does too. That is the
   one remaining step to stating positive Ricci pointwise in $v$, as
