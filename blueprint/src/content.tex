@@ -1890,6 +1890,48 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   bound $\lambda+\mu+\nu \ge -3$.
 \end{lemma}
 
+\begin{lemma}[The pinching set is closed and convex]
+  \label{lem:ivey-convex}
+  \lean{RicciFlowBlueprint.Pinching.iveyG,
+        RicciFlowBlueprint.Pinching.convexOn_iveyG,
+        RicciFlowBlueprint.Pinching.isIveyPinched_iff_iveyG,
+        RicciFlowBlueprint.Pinching.iveyPinchedSet,
+        RicciFlowBlueprint.Pinching.convex_iveyPinchedSet,
+        RicciFlowBlueprint.Pinching.isClosed_iveyPinchedSet}
+  \leanok
+  \uses{lem:ivey-set, thm:max-tensor}
+  $K$ is a closed convex subset of $\R^3$ --- which is what
+  Theorem \ref{thm:max-tensor} requires of it, and the one thing missing before
+  Lemma \ref{lem:ivey-ode} can be carried from the ODE to the flow.
+
+  \textbf{Proved} (\texttt{IveyConvex.lean}), and \textbf{without building
+  $f^{-1}$.} The literature restores convexity by rewriting the second condition
+  as $-\nu \le f^{-1}(\lambda+\mu+\nu)$ and invoking concavity of $f^{-1}$; an
+  earlier version of these notes recorded that inverse, and its concavity, as
+  the remaining obstacle. It is not needed. The disjunction of
+  Lemma \ref{lem:ivey-set} collapses to a single inequality against
+  \[
+    G(\nu) \;=\; f\bigl(\max(-\nu,\, e^2)\bigr),
+  \]
+  because $f$ is increasing on $[e^2,\infty)$: when $-\nu \le e^2$ we get
+  $G(\nu) = f(e^2) = -e^2 \le -3$, which the first condition of $K$ already
+  supplies, and otherwise $G(\nu) = f(-\nu)$ on the nose
+  (\texttt{isIveyPinched\_iff\_iveyG}).
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  $f$ is convex on $[e^2,\infty)$ because $f' = \log x - 2$ is monotone there,
+  and increasing there because $f' \ge 0$; $\nu \mapsto \max(-\nu, e^2)$ is
+  convex, being a pointwise maximum of two affine functions, and its image is
+  exactly $[e^2,\infty)$. A convex function composed with a convex function that
+  lands where the outer one is monotone is convex, so $G$ is convex on all of
+  $\R$ (\texttt{convexOn\_iveyG}). The set is then cut out by three half-spaces
+  --- $\nu \le \mu$, $\mu \le \lambda$, $\lambda+\mu+\nu \ge -3$ --- and the
+  single convex inequality $G(\nu) \le \lambda+\mu+\nu$, hence is convex; and
+  closed, $G$ being continuous.
+\end{proof}
+
 \begin{lemma}[Hamilton--Ivey for the curvature ODE]
   \label{lem:ivey-ode}
   \lean{RicciFlowBlueprint.Pinching.IsCurvatureODE.hamiltonIvey,
@@ -1897,7 +1939,7 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
         RicciFlowBlueprint.Pinching.iveyE_nonneg,
         RicciFlowBlueprint.Pinching.IsCurvatureODE.nonneg_preserved}
   \leanok
-  \uses{lem:pinching-ode, lem:ivey-scal, lem:ivey-set}
+  \uses{lem:pinching-ode, lem:ivey-scal, lem:ivey-set, lem:ivey-convex}
   Let $\lambda \ge \mu \ge \nu$ solve Hamilton's curvature ODE on $[0,T]$ with
   $\nu(0) \ge -1$. Then at every time at which $\nu < 0$,
   \[
