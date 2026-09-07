@@ -22,6 +22,8 @@ in `lake-manifest.json`) on Lean `v4.34.0-rc2`, because mathlib4 #36845
 | `Hamilton.lean` | `hamilton_1982` — **stated**, `proof_wanted`, no sorry, no axiom. Predicates require a `C¹` witness and `C²` test fields (corrected 2026-09-04: the old `HasConstSecLC` quantified over arbitrary fields, i.e. over junk). `admitsPositiveRicciMetric_iff` / `admitsConstPositiveSecMetric_iff` restate them via `ricciOfMetric` / `sectionalCurvatureOfMetric` |
 | `Pinching.lean` | Hamilton's curvature ODE in dimension 3 — ordering, positive Ricci, `λ ≤ C(μ+ν)` preserved; `pinching_antitone` (Hamilton Thm 10.1, ODE half). Linear Grönwall helpers `nonpos_of_deriv_le_mul` etc. No manifold. **Reopened for Hamilton–Ivey**: `iveyF` (= `x(log x - 3)`), `hasDerivAt_iveyF`, `iveyF_le_neg_three`, `IsIveyPinched` (Hamilton's set with no `f⁻¹`), `isIveyPinched_of_neg_one_le`, `le_of_isIveyPinched`, `iveyE`/`iveyE_nonneg` (the unified boundary polynomial), `iveyPsi`/`iveyPsi_nonneg` (the Grönwall), `nonneg_preserved`, `shift`, `restrict`, `neg_of_neg`, and **`hamiltonIvey`** (the ODE half, complete); `hasDerivAt_scal`, `le_scal` (`Ṙ = ½[(λ+μ)²+(λ+ν)²+(μ+ν)²] ≥ 0`, so any lower bound on `R` is preserved — the first inequality of Hamilton's set `K`), `hamiltonIvey_boundary_of_nonneg`/`_of_neg` (the boundary check with the log eliminated; pure polynomial, Cao–Zhu Cases (i)/(ii)). **Normalisation**: `λ,μ,ν` are *twice* the sectional curvatures, `R = λ+μ+ν`, Ricci eigenvalues `(μ+ν)/2` etc. — the header said `μ+ν`, off by 2; every proved statement is a sign or ratio claim so none moved |
 | `GramSchmidtOrtho.lean`, `OrthonormalFrame.lean` | **Not ours.** Ported from unmerged mathlib PR #26221 (grunweg), Apache-2.0, see `NOTICE.md`. Gives `Module.Basis.orthonormalFrame` and `contMDiffAt_orthonormalFrame_of_mem`: a `C^k` **orthonormal** local frame of a Riemannian bundle, by pointwise Gram–Schmidt on `Trivialization.localFrame`. Mathlib has `IsLocalFrameOn` but no orthonormal version; it names the planned file in `LocalFrame.lean`'s header. **Delete when #26221 lands.** Upstream's one `sorry` (`contMDiffOn_iff_coeff'`, marked unused) was dropped |
+| `GlobalExtension.lean` | **proved**: `exists_contMDiff_extension` (a global `C^k` section through any prescribed `v ∈ T_xM`, via `FiberBundle.exists_contMDiffOn_extend` plus a bump), `exists_contMDiff_two_extension`, and `forall_contMDiff_iff_forall_tangent` — quantifying over globally `C²` fields **is** quantifying over tangent vectors. This is what makes the `Hamilton.lean` predicates non-vacuous |
+| `CurvaturePointwise.lean` | **proved**: `curvature_smul_third`, `curvature_sum_smul_third`, `curvature_congr_third`, `curvature_pointwise_third` (curvature depends on the third slot only through its value at the point), `ricci_congr_of_eq`, **`ricciAt`** (Ricci as a genuine function of two tangent vectors) + `ricciAt_eq`, `sectionalCurvature_congr'`, `inner_curvature_eq_zero_of_dep` |
 | `Hessian.lean` | `hessian` (∇²), `hessian_sub_hessian_swap` (Ricci identity), tensoriality + `hessianAt`, `hessianFun` + `hessianFun_symm`, `laplacian` + `laplacian_eq_sum` (basis-independent metric trace, `OrthonormalBasis.sum_apply_self_eq`) |
 | `SecondDerivativeTest.lean` | **proved**: `deriv2_nonneg_of_isLocalMin`, `fderiv2_nonneg_of_isLocalMin`, `fderiv_fderiv_apply_nonneg_of_isLocalMin` (chart-side core), `hessianFun_nonneg_of_isLocalMin` and `laplacianFun_nonneg_of_isLocalMin` on a **boundaryless manifold** (transport through `extChartAt`, same pattern as `mlieBracket_apply_fun`), plus the `*_model` versions. The connection term `(∇_X X) f` dies at a critical point, so any `cov` works |
 | `MaximumPrinciple.lean` | **proved**: the scalar maximum principle on a compact space with the differential inequality assumed at spatial minima (`le_of_deriv_ge_at_min`, `le_of_deriv_le_at_max`). ε-perturbation `φ − ε e^{(2K+1)t}` + first touching time. No Laplacian |
@@ -72,7 +74,14 @@ that constant under `letI := ⟨g.toRiemannianMetric⟩`. See `Hamilton.lean`'s 
 **Corollary:** converse lemmas must be iffs between existentials. Ten variants
 were tested to establish this. It is a workaround, not a fix — open Zulip question.
 
-## Roadmap (revised 2026-09-06)
+## Roadmap (revised 2026-09-07)
+
+**Statement audit against Chow–Liao–Qin**: `notes/hamilton-statement-comparison.md`
+(nine divergences, classified). The two class-(c) hazards — vacuity of the test
+class, and the junk branch in the sectional quotient — are **closed** (PRs #16–#19).
+What remains are class-(b) genuine differences: connectedness absent, conclusion
+stops at metric existence (no Killing–Hopf), `ω` vs `∞`, `C²` vs smooth, and
+Ricci as a raw section rather than a tensor-bundle element.
 
 The dated diary that used to sit here is condensed; the Lean-level lessons it
 carried are now in "Lean gotchas". Chronology, for the record: mathlib bump and
@@ -206,15 +215,20 @@ theirs is imported here.
   the deciding fact in build-versus-import.
 - Mathlib has **no maximal-solution ODE theory** — hence germ uniqueness in
   `Homogeneous.lean`.
-- **No global `C²` extension of a tangent vector** (bump function times
-  `FiberBundle.extend`, or any section through a given `v ∈ T_xM` that is
-  `C²` everywhere). `ricci`'s second slot needs one, so Ricci is not a
-  pointwise bilinear form on a general manifold, and the scalar curvature
-  (`Scalar.lean`) and `∂ₜ R` (`RicciVariation.lean`) are on the model space
-  only. First bites when the trace lemma (Next 1) is applied to `Ric`.
+- ~~No global `C²` extension of a tangent vector.~~ **Closed 2026-09-07**
+  (`GlobalExtension.lean`, PR #16). It was the worst hazard in the repo, not
+  merely a gap: `Hamilton.lean`'s predicates quantify over globally `C²`
+  fields, so on an `M` carrying no such nonvanishing field they were
+  *vacuously true* and `hamilton_1982` was trivially provable and asserted
+  nothing. `forall_contMDiff_iff_forall_tangent` is the bridge; the
+  predicates are now also stated pointwise
+  (`hasPositiveRicciLC_iff_tangent`, `hasConstSecLC_iff_mul`). Scalar
+  curvature (`Scalar.lean`) and `∂ₜ R` (`RicciVariation.lean`) are still on
+  the model space only — that part was never about the extension.
 - ~~The metric trace does not yet commute with `∇` on the manifold.~~ Closed
-  by `TraceCov.lean`. What still waits is the *contraction*: rewriting the
-  traced second Bianchi identity as `ΔR`, and the analogous step for `Δ Rm`.
+  2026-09-07 by `TraceCov.lean` (PR #20). What still waits is the
+  *contraction*: rewriting the traced second Bianchi identity as `ΔR`, and
+  the analogous step for `Δ Rm`.
 
 ## Lean gotchas
 
