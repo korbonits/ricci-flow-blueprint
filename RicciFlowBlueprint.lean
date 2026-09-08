@@ -40,3 +40,4 @@ import RicciFlowBlueprint.BilinLaplacian
 import RicciFlowBlueprint.OneForm
 import RicciFlowBlueprint.KoszulSecondDeriv
 import RicciFlowBlueprint.FlowKoszul
+import RicciFlowBlueprint.ScalarEvolution

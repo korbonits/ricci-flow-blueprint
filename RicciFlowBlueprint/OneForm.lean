@@ -207,7 +207,60 @@ theorem hessianFun_eq_covOneForm (f : M → ℝ) (X Y : Π y : M, TangentSpace I
     cov.hessianFun f X Y x
       = cov.covOneForm (fun y ↦ (mvfderiv I f y : TangentSpace I y →L[ℝ] ℝ)) X Y x := rfl
 
+omit [CompleteSpace E] [FiniteDimensional ℝ E]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] in
+/-- `∇ω` is linear in `ω` under a constant rescaling. -/
+theorem covOneForm_smul_form (c : ℝ) (v : M → E →L[ℝ] ℝ)
+    {X Y : Π y : M, TangentSpace I y} {x : M} (hv : MDiffAt (fun y ↦ v y (Y y)) x) :
+    cov.covOneForm (fun y ↦ (c • v y : E →L[ℝ] ℝ)) X Y x = c * cov.covOneForm v X Y x := by
+  have hfun : (fun y ↦ (c • v y : E →L[ℝ] ℝ) (Y y)) = fun y ↦ c * v y (Y y) := by
+    funext y; rfl
+  have hd : mvfderiv I (fun y ↦ c * v y (Y y)) x (X x)
+      = c * mvfderiv I (fun y ↦ v y (Y y)) x (X x) := by
+    rw [mvfderiv_fun_mul mdifferentiableAt_const hv, mvfderiv_const]
+    simp
+  have hval : (c • v x : E →L[ℝ] ℝ) (cov Y x (X x)) = c * v x (cov Y x (X x)) := rfl
+  simp only [covOneForm, hfun]
+  rw [hd, hval]
+  show _ = c * (mvfderiv I (fun y ↦ v y (Y y)) x (X x) - v x (cov Y x (X x)))
+  ring
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] in
+/-- **`∇ω` only depends on the germ of `ω`.** -/
+theorem covOneForm_congr_of_eventuallyEq {v v' : M → E →L[ℝ] ℝ}
+    {X Y : Π y : M, TangentSpace I y} {x : M} (hvv' : v =ᶠ[𝓝 x] v') :
+    cov.covOneForm v X Y x = cov.covOneForm v' X Y x := by
+  have hfun : (fun y ↦ v y (Y y)) =ᶠ[𝓝 x] fun y ↦ v' y (Y y) := by
+    filter_upwards [hvv'] with y hy
+    rw [hy]
+  simp only [covOneForm, hfun.mvfderiv_eq, hvv'.eq_of_nhds]
+
 end Divergence
+
+section OneFormTrace
+
+variable [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+
+omit [CompleteSpace E] in
+/-- `div` is linear in `ω` under a constant rescaling. -/
+theorem divOneForm_smul (c : ℝ) (v : M → E →L[ℝ] ℝ) {x : M}
+    (hv : IsMDiffOneFormAt (I := I) v x) :
+    cov.divOneForm (fun y ↦ (c • v y : E →L[ℝ] ℝ)) x = c * cov.divOneForm v x := by
+  have hfin : FiniteDimensional ℝ (TangentSpace I x) := VectorBundle.finiteDimensional ℝ E _ x
+  rw [divOneForm, divOneForm, Finset.mul_sum]
+  exact Finset.sum_congr rfl fun i _ ↦
+    cov.covOneForm_smul_form c v (hv _ (FiberBundle.mdifferentiableAt_extend ..))
+
+omit [CompleteSpace E] in
+/-- **`div ω` only depends on the germ of `ω`.** -/
+theorem divOneForm_congr {v v' : M → E →L[ℝ] ℝ} {x : M} (hvv' : v =ᶠ[𝓝 x] v') :
+    cov.divOneForm v x = cov.divOneForm v' x := by
+  have hfin : FiniteDimensional ℝ (TangentSpace I x) := VectorBundle.finiteDimensional ℝ E _ x
+  exact Finset.sum_congr rfl fun i _ ↦ cov.covOneForm_congr_of_eventuallyEq hvv'
+
+end OneFormTrace
+
 
 section FunctionTrace
 

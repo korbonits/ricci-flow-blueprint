@@ -1648,6 +1648,10 @@ target actually requires.
     CovariantDerivative.divDivBilin,
     CovariantDerivative.covOneForm_divBilinOneForm_eq_sum,
     CovariantDerivative.divDivBilin_eq_sum,
+    CovariantDerivative.divOneForm_smul,
+    CovariantDerivative.divOneForm_congr,
+    CovariantDerivative.divBilin_ricciForm_eq,
+    CovariantDerivative.divDivBilin_ricciForm_eq,
     CovariantDerivative.hessianFun_eq_covOneForm,
     CovariantDerivative.laplacianFun_eq_divOneForm,
     CovariantDerivative.laplacianFun_eq_sum_frame,
@@ -1718,6 +1722,16 @@ target actually requires.
   \ref{def:bilin-laplacian}, plus one $\texttt{Finset.sum\_comm}$. So the
   second of the two canonical double traces of $\nab^2h$ is the Laplacian of a
   function.
+  \textbf{For $h = \Ric$ the double divergence is $\tfrac12\Delta\scal$}
+  (\texttt{divDivBilin\_ricciForm\_eq}), which is the second contraction of the
+  second Bianchi identity with the divergence taken once more:
+  $\operatorname{div}\Ric$ \emph{is} the one-form $\tfrac12\,\mathrm{d}\scal$
+  (\texttt{divBilin\_ricciForm\_eq}, Theorem \ref{thm:div-ricci} read as an
+  identity of one-forms rather than a frame sum), and the divergence of
+  $\mathrm{d}f$ is $\Delta f$. The two steps in between are that $\operatorname{div}$
+  is linear in $\omega$ and depends only on its germ
+  (\texttt{divOneForm\_smul}, \texttt{divOneForm\_congr}).
+
   With $\Delta_\g h$ from Definition \ref{def:bilin-laplacian}, both traces in
   \[
     \operatorname{tr}_\g(\partial_t \Ric)

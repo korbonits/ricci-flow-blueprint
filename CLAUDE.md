@@ -246,7 +246,21 @@ Now `thm:hamilton-ivey` at the head of `chap:kappa`, with a
    everything downstream of `chap:kappa` consumes. Pure comparison geometry +
    ODE, no parabolic theory — but it needs an exponential-map / Jacobi-field /
    second-variation substrate this repo does not have and theirs does.
-   Decide before starting whether to build it or to build on their library.
+   **Decided 2026-09-08: build it ourselves.** The reason is not licensing
+   (theirs is Apache-2.0 and `NOTICE.md` already sets the vendoring precedent)
+   and not pride — it is that **`L`-geometry does not consume Riemannian
+   comparison geometry off the shelf; it redoes it.** `L`-geodesics,
+   `L`-Jacobi fields, the `L`-index form and the `L`-exponential map are their
+   own objects with their own ODEs and their own second-variation formula.
+   Bishop, Toponogov and the injectivity radius — the parts of their
+   `Comparison/` that look most valuable — are largely *not* what
+   `thm:reduced-volume-monotone` needs. So the reusable surface is much
+   narrower than 1.9M lines suggests, while the costs (their mathlib pin
+   against our post-#36845 requirement, their build time, their breakage) are
+   not. **Build narrowly**: the exponential map, the Jacobi equation as an ODE,
+   and enough second-variation scaffolding to imitate on the `L`-side. If a
+   specific file turns out to be worth taking, vendor it narrowly with
+   attribution as `GramSchmidtOrtho.lean` does — do not take a dependency.
 
 
 **Upstream candidates** (Mathlib-general, no dependence on the curvature
