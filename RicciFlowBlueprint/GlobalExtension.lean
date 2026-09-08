@@ -98,6 +98,11 @@ theorem exists_contMDiff_two_extension {x : M} (v : TangentSpace I x) :
     ∃ X : Π y : M, TangentSpace I y, CMDiff 2 (T% X) ∧ X x = v := by
   simpa using exists_contMDiff_extension (n := 2) v
 
+/-- The `C³` case, which is what the second derivative of the curvature uses. -/
+theorem exists_contMDiff_three_extension {x : M} (v : TangentSpace I x) :
+    ∃ X : Π y : M, TangentSpace I y, CMDiff 3 (T% X) ∧ X x = v := by
+  simpa using exists_contMDiff_extension (n := 3) v
+
 -- BENCH: pointwise-iff
 /-- **Quantifying over globally `C²` fields is the same as quantifying over tangent
 vectors.** This is what makes the `Hamilton.lean` predicates say what they are meant to

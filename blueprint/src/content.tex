@@ -1066,20 +1066,76 @@ target actually requires.
 
 \begin{definition}[Laplacian]
   \label{def:laplacian}
-  \lean{CovariantDerivative.laplacian}
+  \lean{CovariantDerivative.laplacian, CovariantDerivative.laplacian_eq_sum_frame}
   \leanok
   \uses{def:hessian}
   The rough Laplacian of a $C^2$ vector field is the metric trace of its
   Hessian, $\Delta Z = \sum_i \nab^2_{e_i,e_i} Z$ over an orthonormal basis of
   $T_xM$; it does not depend on the basis (\texttt{laplacian\_eq\_sum}, via
   \texttt{OrthonormalBasis.sum\_apply\_self\_eq}, the statement that
-  $\sum_i B(e_i,e_i)$ is basis-independent for any bilinear $B$).
+  $\sum_i B(e_i,e_i)$ is basis-independent for any bilinear $B$ --- and note
+  that this holds for bilinear maps into any normed space, so no pairing
+  against a covector is needed and the trace comes out vector-valued
+  directly). \texttt{laplacian\_eq\_sum\_frame} reads the same sum off a
+  frame of honest vector fields, which is the form frame computations
+  (\texttt{Divergence.lean}) use.
 
   This is the operator the evolution equations below are written in, and it
   is what supplies the differential inequality at a spatial minimum that the
   abstract maximum principle \ref{thm:max-scalar} takes as its hypothesis;
   the link is the second-derivative test, Lemma \ref{lem:second-derivative-test}.
 \end{definition}
+
+\begin{theorem}[The Bochner identity]
+  \label{thm:bochner}
+  \lean{CovariantDerivative.hessianFun_inner_eq,
+    CovariantDerivative.laplacianFun_inner_eq,
+    CovariantDerivative.laplacianFun_inner_self_eq,
+    CovariantDerivative.two_mul_inner_laplacian_le,
+    CovariantDerivative.sum_inner_cov_congr}
+  \leanok
+  \uses{def:laplacian, def:hessian, thm:levi-civita}
+  For a metric connection,
+  \[
+    \Delta \langle \sigma, \tau\rangle
+      = \langle \Delta\sigma, \tau\rangle + \langle \sigma, \Delta\tau\rangle
+        + 2\sum_i \langle \nab_{e_i}\sigma, \nab_{e_i}\tau\rangle,
+  \]
+  and in particular $\Delta |\sigma|^2 = 2\langle \Delta\sigma,\sigma\rangle +
+  2\sum_i |\nab_{e_i}\sigma|^2 \ \ge\ 2\langle \Delta\sigma,\sigma\rangle$.
+
+  \textbf{Proved} (\texttt{Bochner.lean}). The pointwise statement behind it is
+  the Hessian form,
+  \[
+    \nab^2\langle\sigma,\tau\rangle(X,Y)
+      = \langle \nab^2_{X,Y}\sigma, \tau\rangle
+      + \langle \sigma, \nab^2_{X,Y}\tau\rangle
+      + \langle \nab_Y\sigma, \nab_X\tau\rangle
+      + \langle \nab_X\sigma, \nab_Y\tau\rangle,
+  \]
+  which is metric compatibility applied twice --- once to differentiate
+  $\langle\sigma,\tau\rangle$ along $Y$, once to differentiate the result along
+  $X$. The Hessian's correction term $-(\nab_X Y)\langle\sigma,\tau\rangle$ is
+  what turns the two iterated derivatives into $\nab^2\sigma$ and
+  $\nab^2\tau$; expanded, again by metric compatibility, it supplies exactly
+  the two corrections needed.
+
+  The trace is taken over the frame $\Delta$ and $\Delta_{\text{fun}}$ are
+  themselves defined on, the canonical extensions of the standard orthonormal
+  basis of $T_x\M$, so no frame-independence is needed as an input, and the
+  factor $2$ comes from the two cross terms coinciding at $X = Y$.
+
+  \textbf{The gradient term is frame-independent on its own}
+  (\texttt{sum\_inner\_cov\_congr}), and this needs neither metric
+  compatibility nor the identity above: $(v,w) \mapsto \langle \nab_v\sigma,
+  \nab_w\tau\rangle$ is a continuous bilinear form, because $\nab\sigma$ and
+  $\nab\tau$ are continuous linear maps at each point, so its trace is
+  basis-independent for the usual reason.
+
+  The inequality $\Delta|\sigma|^2 \ge 2\langle\Delta\sigma,\sigma\rangle$ is
+  the form the maximum principle \ref{thm:max-scalar} consumes: the discarded
+  term is a sum of squares.
+\end{theorem}
 
 \begin{lemma}[$\nab \Rm$ is tensorial in all four slots]
   \label{lem:cov-curvature-direction}
@@ -1141,6 +1197,111 @@ target actually requires.
   divergence is what the contracted second Bianchi identity, and hence $\Delta
   \scal$, are about.
 \end{lemma}
+
+\begin{lemma}[$\nab \Rm$ is pointwise in all four slots]
+  \label{lem:cov-curvature-pointwise}
+  \lean{CovariantDerivative.covCurvature_congr_snd,
+    CovariantDerivative.covCurvature_congr_thd,
+    CovariantDerivative.covCurvature_congr_fth,
+    CovariantDerivative.covCurvature_zero_snd,
+    CovariantDerivative.covCurvature_sum_smul_snd,
+    CovariantDerivative.covCurvature_congr_snd_of_eventuallyEq,
+    CovariantDerivative.covCurvature_zero_fth,
+    CovariantDerivative.covCurvature_sum_smul_fth,
+    CovariantDerivative.covCurvature_congr_fth_of_eventuallyEq,
+    CovariantDerivative.contMDiff_curvature_two,
+    CovariantDerivative.contMDiff_covCurvature}
+  \leanok
+  \uses{lem:cov-curvature-direction, lem:curvature-pointwise, lem:global-extension}
+  $(\nab_X\Riem)(Y,Z)W$ at $x$ depends only on the four values $X(x)$, $Y(x)$,
+  $Z(x)$, $W(x)$. Together with Lemma \ref{lem:cov-curvature-direction} this
+  makes $\nab\Riem$ a genuine tensor, not merely an operator on fields.
+
+  \textbf{Proved} (\texttt{CurvatureDeriv.lean}). The direction slot was free
+  (Definition \ref{def:div-curvature}). The other three are the
+  frame-and-globalise argument of Lemma \ref{lem:curvature-pointwise} one level
+  up: expand the field in a local frame, globalise the frame fields and the
+  coefficients, apply tensoriality, and read off that the coefficients at $x$
+  depend only on the value at $x$. Locality --- the input that argument needs
+  --- is cheap in each case, because every term of $\nab\Riem$ other than the
+  leading one is $\Riem$ in a slot where $\Riem$ is already tensorial, hence
+  pointwise; only $\nab_X(\Riem(Y,Z)W)$ needs the germ.
+
+  Two asymmetries are worth recording. The $Z$ slot is free from the $Y$ slot by
+  \texttt{covCurvature\_antisymm}, as with tensoriality. And the $W$ slot runs
+  at one derivative higher: \texttt{covCurvature\_smul\_fth} asks its
+  coefficient for three derivatives, so the frame fields and the coefficient
+  functions must be globalised at $C^3$ rather than $C^2$, and the frame comes
+  from \texttt{IsOrthonormalFrameOn}\ $\ldots 3$.
+
+  Also proved here, as the first step towards $\Delta\Rm$:
+  \texttt{contMDiff\_curvature\_two} (the curvature of $C^4$ fields is a $C^2$
+  section) and \texttt{contMDiff\_covCurvature} ($\nab\Riem$ of $C^3$ fields,
+  $C^4$ in the last slot, is a $C^1$ section) --- what is needed to
+  differentiate $\nab\Riem$ a second time.
+\end{lemma}
+
+\begin{definition}[$\nab^2 \Rm$ and the Laplacian of the curvature tensor]
+  \label{def:cov2-curvature}
+  \lean{CovariantDerivative.cov2Curvature,
+    CovariantDerivative.cov2Curvature_congr_dir,
+    CovariantDerivative.cov2Curvature_smul_dir,
+    CovariantDerivative.cov2Curvature_add_dir,
+    CovariantDerivative.cov2Curvature_smul_snd,
+    CovariantDerivative.cov2Curvature_add_snd,
+    CovariantDerivative.cov2Curvature_congr_snd,
+    CovariantDerivative.cov2CurvatureAt,
+    CovariantDerivative.cov2CurvatureBilin,
+    CovariantDerivative.curvatureLaplacian,
+    CovariantDerivative.curvatureLaplacian_eq_sum_basis,
+    CovariantDerivative.curvatureLaplacian_eq_sum_frame}
+  \leanok
+  \uses{lem:cov-curvature-pointwise, lem:cov-curvature-direction, lem:global-extension}
+  \[
+    (\nab^2_{X,Y}\Riem)(A,B)C
+      = \nab_X\big((\nab_Y\Riem)(A,B)C\big)
+        - (\nab_{\nab_X Y}\Riem)(A,B)C
+        - (\nab_Y\Riem)(\nab_X A,B)C
+        - (\nab_Y\Riem)(A,\nab_X B)C
+        - (\nab_Y\Riem)(A,B)(\nab_X C),
+  \]
+  one correction for each of $\nab\Riem$'s four slots, and
+  \[
+    \Delta\Rm(A,B)C \;=\; \sum_i (\nab^2_{e_i,e_i}\Riem)(A,B)C .
+  \]
+
+  \textbf{Defined and proved frame-independent} (\texttt{CurvatureLaplacian.lean}).
+
+  The outer derivative slot is free, and this is where the four-slot work of
+  Lemma \ref{lem:cov-curvature-pointwise} is cashed in: every term is either a
+  continuous linear map evaluated at $X(x)$, or $\nab\Riem$ in a slot where it
+  is pointwise, applied to a field whose value at $x$ is determined by $X(x)$.
+  So \texttt{cov2Curvature\_congr\_dir} needs no frame argument at all.
+
+  The inner slot is the familiar cancellation --- the Leibniz term of
+  $\nab_X\big(f\,(\nab_Y\Riem)(A,B)C\big)$ is matched by the one
+  $\nab_X(fY) = f\nab_X Y + (Xf)Y$ produces in the second term --- and its
+  pointwise statement is the frame-and-globalise argument once more, at $C^3$,
+  since the coefficient must be $C^3$ for $(Xf)$ to be $C^2$.
+
+  With both derivative slots pointwise and bilinear, $\nab^2\Riem$ is a
+  continuous bilinear map $T_x\M \times T_x\M \to T_x\M$ and $\Delta\Rm$ is its
+  trace; frame-independence is then \texttt{OrthonormalBasis.sum\_apply\_self\_eq},
+  which traces bilinear maps into any normed space, so the result is
+  vector-valued directly with no pairing against a covector.
+
+  Regularity: $X, Y, A, B$ are $C^3$ and $C$ is $C^4$. The last slot is the
+  expensive one at every level of this tower --- $C$ needs four derivatives
+  because \texttt{covCurvature\_congr\_fth} needs $C^3$ coefficients because
+  \texttt{curvature\_smul\_third} needs $C^2$ ones.
+
+  \textbf{What this is for.} $\Delta\Rm$ is the right-hand side of Hamilton's
+  evolution equation $\partial_t \Rm = \Delta\Rm + Q(\Rm)$, which is what
+  carries Hamilton--Ivey pinching from the ODE (Theorem
+  \ref{thm:hamilton-ivey}) to the flow. The geometry side of that equation is
+  now in place; the analytic side, $\partial_t\Rm$, still lives on the model
+  space (\texttt{CurvatureVariation.lean}).
+\end{definition}
 
 \begin{definition}[The divergence of the curvature tensor]
   \label{def:div-curvature}
