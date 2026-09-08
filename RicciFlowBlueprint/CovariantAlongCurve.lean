@@ -735,6 +735,79 @@ theorem repr_covAlong_eq
   simp only [Finset.mem_univ, ↓reduceIte]
   rw [add_comm]
 
+
+-- BENCH: cov-along-curve-frame-open
+/-- **A frame valid on an open set**, not merely a germ. Globalising the local frame one point
+at a time gives sections agreeing with it only near that point; intersecting the finitely many
+agreement sets and taking the interior gives an open `U` on which they agree identically. That
+is what an ODE needs: a single family of global sections good along a whole arc of the
+curve. -/
+theorem exists_frame_on_open
+    {e : Trivialization E (TotalSpace.proj : TotalSpace E (fun (x : M) ↦ TangentSpace I x) → M)}
+    [MemTrivializationAtlas e] {ι : Type*} [Finite ι] (b : Module.Basis ι ℝ E)
+    {y₀ : M} (hy₀ : y₀ ∈ e.baseSet) :
+    ∃ (U : Set M) (W : ι → Π y : M, TangentSpace I y),
+      IsOpen U ∧ y₀ ∈ U ∧ U ⊆ e.baseSet ∧ (∀ i, CMDiff (1 : ℕ∞ω) (T% (W i))) ∧
+      ∀ i, ∀ y ∈ U, W i y = e.localFrame b i y := by
+  classical
+  have hloc : ∀ i, ∃ τ : Π y : M, TangentSpace I y,
+      CMDiff (1 : ℕ∞ω) (T% τ) ∧ τ =ᶠ[𝓝 y₀] e.localFrame b i := fun i ↦
+    RicciFlowBlueprint.exists_contMDiff_eventuallyEq (n := 1)
+      (e.open_baseSet.mem_nhds hy₀) (e.contMDiffOn_localFrame_baseSet 1 b i)
+  choose W hW hWeq using hloc
+  refine ⟨interior {y | ∀ i, W i y = e.localFrame b i y} ∩ e.baseSet, W,
+    isOpen_interior.inter e.open_baseSet, ⟨?_, hy₀⟩, Set.inter_subset_right, hW,
+    fun i y hy ↦ (interior_subset hy.1) i⟩
+  rw [mem_interior_iff_mem_nhds]
+  exact Filter.eventually_all.mpr hWeq
+
+/-- `covAlong_eq_sum_of_frame` with the frame hypothesis read off an open set. -/
+theorem covAlong_eq_sum_of_frame_on
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+    {e : Trivialization E (TotalSpace.proj : TotalSpace E (fun (x : M) ↦ TangentSpace I x) → M)}
+    [MemTrivializationAtlas e] {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ E)
+    {W : ι → Π y : M, TangentSpace I y} {U : Set M} (hU : IsOpen U) (hUe : U ⊆ e.baseSet)
+    (hW : ∀ i, CMDiff 1 (T% (W i))) (hWU : ∀ i, ∀ y ∈ U, W i y = e.localFrame b i y)
+    (hγU : γ t ∈ U) (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t) (hV : MDiffAlongAt γ V t) :
+    covAlong cov γ V t
+      = ∑ i, (b.repr (e ⟨γ t, V t⟩).2 i • cov (W i) (γ t) (velocity γ t)
+          + deriv (fun u ↦ b.repr (e ⟨γ u, V u⟩).2 i) t • W i (γ t)) :=
+  covAlong_eq_sum_of_frame cov b hW
+    (Filter.eventually_of_mem (hU.mem_nhds hγU) fun y hy i ↦ hWU i y hy)
+    (hUe hγU) hγ hV
+
+
+/-- **The Christoffel symbols of `cov`** in a trivialisation `e`, relative to a frame `W` and a
+basis `b` of the model fibre: the coordinate correction `Γ(y)(v)(c) = ∑ᵢ cⁱ (∇_v Wᵢ)` that
+turns `c'` into `D/dt`. -/
+noncomputable def christoffel
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+    (e : Trivialization E (TotalSpace.proj : TotalSpace E (fun (x : M) ↦ TangentSpace I x) → M))
+    {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ E) (W : ι → Π y : M, TangentSpace I y)
+    (y : M) (v : TangentSpace I y) (c : E) : E :=
+  ∑ i, b.repr c i • (e ⟨y, cov (W i) y v⟩).2
+
+-- BENCH: cov-along-curve-christoffel
+/-- **The coordinate equation**: `(D/dt V) = c' + Γ(γ(t))(γ'(t))(c(t))` in the coordinates of
+any trivialisation around `γ t`. Setting `V = γ'` and the left side to zero is the geodesic
+equation; the remaining work is the regularity of `Γ` in `y`, which is what
+Picard--Lindelöf consumes. -/
+theorem repr_covAlong_eq_christoffel
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+    {e : Trivialization E (TotalSpace.proj : TotalSpace E (fun (x : M) ↦ TangentSpace I x) → M)}
+    [MemTrivializationAtlas e] {ι : Type*} [Fintype ι] [DecidableEq ι] (b : Module.Basis ι ℝ E)
+    {W : ι → Π y : M, TangentSpace I y} {U : Set M} (hU : IsOpen U) (hUe : U ⊆ e.baseSet)
+    (hW : ∀ i, CMDiff 1 (T% (W i))) (hWU : ∀ i, ∀ y ∈ U, W i y = e.localFrame b i y)
+    (hγU : γ t ∈ U) (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t) (hV : MDiffAlongAt γ V t) (k : ι) :
+    b.repr (e ⟨γ t, covAlong cov γ V t⟩).2 k
+      = deriv (fun u ↦ b.repr (e ⟨γ u, V u⟩).2 k) t
+        + b.repr (christoffel cov e b W (γ t) (velocity γ t) (e ⟨γ t, V t⟩).2) k := by
+  rw [repr_covAlong_eq cov b hW
+    (Filter.eventually_of_mem (hU.mem_nhds hγU) fun y hy i ↦ hWU i y hy) (hUe hγU) hγ hV k,
+    christoffel, map_sum, Finset.sum_apply']
+  refine congrArg _ (Finset.sum_congr rfl fun i _ ↦ ?_)
+  rw [map_smul, Finsupp.smul_apply, smul_eq_mul]
+
 /-! ### Parallel sections and geodesics -/
 
 /-- **A section is parallel along `γ`** when its covariant derivative along `γ` vanishes. -/

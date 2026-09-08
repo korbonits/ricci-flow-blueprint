@@ -2759,7 +2759,11 @@ Perelman's monotone functionals are what rule it out.
     CovariantDerivative.isGeodesicOn_iff_forall,
     CovariantDerivative.covAlong_eq_sum_of_frame,
     CovariantDerivative.repr_apply_localFrame,
-    CovariantDerivative.repr_covAlong_eq}
+    CovariantDerivative.repr_covAlong_eq,
+    CovariantDerivative.exists_frame_on_open,
+    CovariantDerivative.covAlong_eq_sum_of_frame_on,
+    CovariantDerivative.christoffel,
+    CovariantDerivative.repr_covAlong_eq_christoffel}
   \leanok
   \uses{def:cov-along-curve, lem:cov-along-curve-unique, lem:cov-along-curve-exists}
   A section along $\gamma$ is \emph{parallel} when $\frac{D}{dt}V = 0$, and $\gamma$ is a
@@ -2790,10 +2794,24 @@ Perelman's monotone functionals are what rule it out.
   defined through, is \texttt{IsCovDerivAlong.eq\_sum\_of\_expansion} --- the
   reusable half of the uniqueness proof.
 
-  \textbf{What is still needed to \emph{solve} the equation} is to make
-  $\Gamma$ a function of the point with enough regularity, turning
-  $\nab_{\gamma'}\gamma' = 0$ into $c'' = -\Gamma(c')(c')$, an ODE to which
-  Picard--Lindel\"of applies.
+  The correction is packaged as \texttt{christoffel}, $\Gamma(y)(v)(c) =
+  \sum_i c^i\,\nab_v W_i$, so the coordinate equation reads
+  $\frac{D}{dt}V = c' + \Gamma(\gamma(t))(\gamma'(t))(c(t))$
+  (\texttt{repr\_covAlong\_eq\_christoffel}); setting $V = \gamma'$ and the left
+  side to zero is the geodesic equation.
+
+  \textbf{A frame on an open set, not a germ.} Globalising the local frame one
+  point at a time gives sections agreeing with it only \emph{near} that point,
+  which is useless for an ODE along an arc. Intersecting the finitely many
+  agreement sets and taking the interior gives an open $U$ on which a single
+  family of global sections agrees identically
+  (\texttt{exists\_frame\_on\_open}), and
+  \texttt{covAlong\_eq\_sum\_of\_frame\_on} reads the coordinate formula off it.
+
+  \textbf{What is still needed to \emph{solve} the equation} is the regularity
+  of $\Gamma$ in $y$ --- which needs the connection itself to be $C^k$, a
+  hypothesis nothing above uses --- after which
+  $\nab_{\gamma'}\gamma' = 0$ is an ODE to which Picard--Lindel\"of applies.
 \end{definition}
 
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
