@@ -295,20 +295,22 @@ theorem IsCovDerivAlong.sum (h : IsCovDerivAlong cov γ D s)
       (MDiffAlongAt.sum hγ a fun i hi ↦ hV i (Finset.mem_insert_of_mem hi)) ht,
       ih fun i hi ↦ hV i (Finset.mem_insert_of_mem hi), Finset.sum_insert hc]
 
--- BENCH: cov-along-curve-unique
-/-- **`D/dt` is determined by the ambient connection.** Two operators satisfying the three
-axioms agree on every section differentiable along `γ`.
+omit [FiniteDimensional ℝ E] [T2Space M] in
+-- BENCH: cov-along-curve-expansion-value
+/-- **`D/dt` is computed by any local expansion.** If `V = ∑ᵢ fᵢ · (Wᵢ ∘ γ)` near `t` with `Wᵢ`
+global `C¹` sections and `fᵢ` differentiable, then
+`D V t = ∑ᵢ (fᵢ(t)·∇_{γ'}Wᵢ + fᵢ'(t)·Wᵢ(γ t))`, an expression in which `D` no longer occurs.
 
-This is the frame expansion cashed in: near `t`, `V = ∑ᵢ fᵢ · (Wᵢ ∘ γ)` with `Wᵢ` global and
-`fᵢ` differentiable, so locality replaces `V` by that sum, additivity splits it, Leibniz
-evaluates each term, and `restrict` turns `D(Wᵢ ∘ γ)` into `∇_{γ'}Wᵢ` — an expression in which
-`D` no longer occurs. -/
-theorem IsCovDerivAlong.eq_of_isCovDerivAlong (h : IsCovDerivAlong cov γ D s)
-    (h' : IsCovDerivAlong cov γ D' s) (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t)
-    (hV : MDiffAlongAt γ V t) (ht : t ∈ s) :
-    D V t = D' V t := by
+Locality replaces `V` by the sum, additivity splits it, Leibniz evaluates each term, and
+`restrict` turns `D(Wᵢ ∘ γ)` into `∇_{γ'}Wᵢ`. Uniqueness is the immediate corollary; the
+lemma itself is what computes `D/dt` in a chart. -/
+theorem IsCovDerivAlong.eq_sum_of_expansion (h : IsCovDerivAlong cov γ D s)
+    (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t) (hV : MDiffAlongAt γ V t) (ht : t ∈ s)
+    {ι : Type*} [Fintype ι] {W : ι → Π y : M, TangentSpace I y} {f : ι → ℝ → ℝ}
+    (hW : ∀ i, CMDiff 1 (T% (W i))) (hf : ∀ i, DifferentiableAt ℝ (f i) t)
+    (hexp : V =ᶠ[𝓝 t] fun u ↦ ∑ i, f i u • W i (γ u)) :
+    D V t = ∑ i, (f i t • cov (W i) (γ t) (velocity γ t) + deriv (f i) t • W i (γ t)) := by
   classical
-  obtain ⟨ι, _, W, f, hW, hf, hexp⟩ := exists_frame_expansion hγ hV
   set Vs : ι → Π u : ℝ, TangentSpace I (γ u) := fun i ↦ (f i) • fun u ↦ W i (γ u) with hVs
   have hexp' : V =ᶠ[𝓝 t] fun u ↦ ∑ i ∈ Finset.univ, Vs i u := hexp
   have hWγ : ∀ i, MDiffAlongAt γ (fun u ↦ W i (γ u)) t := fun i ↦
@@ -316,15 +318,21 @@ theorem IsCovDerivAlong.eq_of_isCovDerivAlong (h : IsCovDerivAlong cov γ D s)
   have hterm : ∀ i, MDiffAlongAt γ (Vs i) t := fun i ↦ (hWγ i).smul hγ (hf i)
   have hsum : MDiffAlongAt γ (fun u ↦ ∑ i ∈ Finset.univ, Vs i u) t :=
     MDiffAlongAt.sum hγ Finset.univ fun i _ ↦ hterm i
-  have key : ∀ (Dd : (Π t : ℝ, TangentSpace I (γ t)) → Π t : ℝ, TangentSpace I (γ t)),
-      IsCovDerivAlong cov γ Dd s → Dd V t
-        = ∑ i, (f i t • cov (W i) (γ t) (velocity γ t) + deriv (f i) t • W i (γ t)) := by
-    intro Dd hd
-    rw [hd.congr_of_eventuallyEq hV hsum ht hexp', hd.sum hγ ht Finset.univ fun i _ ↦ hterm i]
-    refine Finset.sum_congr rfl fun i _ ↦ ?_
-    rw [hVs, hd.leibniz (hWγ i) (hf i) ht,
-      hd.restrict ((hW i).mdifferentiable (by norm_num) (γ t)) hγ ht]
-  rw [key D h, key D' h']
+  rw [h.congr_of_eventuallyEq hV hsum ht hexp', h.sum hγ ht Finset.univ fun i _ ↦ hterm i]
+  refine Finset.sum_congr rfl fun i _ ↦ ?_
+  rw [hVs, h.leibniz (hWγ i) (hf i) ht,
+    h.restrict ((hW i).mdifferentiable (by norm_num) (γ t)) hγ ht]
+
+-- BENCH: cov-along-curve-unique
+/-- **`D/dt` is determined by the ambient connection.** Two operators satisfying the three
+axioms agree on every section differentiable along `γ`: both are computed by the frame
+expansion of `exists_frame_expansion`, which mentions neither. -/
+theorem IsCovDerivAlong.eq_of_isCovDerivAlong (h : IsCovDerivAlong cov γ D s)
+    (h' : IsCovDerivAlong cov γ D' s) (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t)
+    (hV : MDiffAlongAt γ V t) (ht : t ∈ s) :
+    D V t = D' V t := by
+  obtain ⟨ι, _, W, f, hW, hf, hexp⟩ := exists_frame_expansion hγ hV
+  rw [h.eq_sum_of_expansion hγ hV ht hW hf hexp, h'.eq_sum_of_expansion hγ hV ht hW hf hexp]
 
 end Frame
 
@@ -649,6 +657,46 @@ theorem eq_covAlong {cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace
     D V t = covAlong cov γ V t :=
   h.eq_of_isCovDerivAlong
     (((isCovDerivAlong_covAlong cov γ).mono hs)) hγ hV ht
+
+
+/-! ### Parallel sections and geodesics -/
+
+/-- **A section is parallel along `γ`** when its covariant derivative along `γ` vanishes. -/
+def IsParallelAlong (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+    (γ : ℝ → M) (V : Π t : ℝ, TangentSpace I (γ t)) (s : Set ℝ) : Prop :=
+  ∀ t ∈ s, covAlong cov γ V t = 0
+
+/-- **A curve is a geodesic** when its velocity is parallel along it: `∇_{γ'}γ' = 0`. -/
+def IsGeodesicOn (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+    (γ : ℝ → M) (s : Set ℝ) : Prop :=
+  IsParallelAlong cov γ (velocity (I := I) γ) s
+
+-- BENCH: cov-along-curve-parallel-iff
+/-- **Being parallel does not depend on the construction.** Every operator satisfying the three
+axioms sees the same parallel sections, and — because `covAlong` is one of them — the
+quantified form is not vacuous. This is what gives the geodesic equation content. -/
+theorem isParallelAlong_iff_forall {cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)}
+    {s : Set ℝ} (hs : s ⊆ {t | MDifferentiableAt 𝓘(ℝ, ℝ) I γ t})
+    (hV : ∀ t ∈ s, MDiffAlongAt γ V t) :
+    IsParallelAlong cov γ V s ↔
+      ∀ D : (Π t : ℝ, TangentSpace I (γ t)) → Π t : ℝ, TangentSpace I (γ t),
+        IsCovDerivAlong cov γ D s → ∀ t ∈ s, D V t = 0 := by
+  constructor
+  · intro h D hD t ht
+    rw [eq_covAlong hD hs (hs ht) (hV t ht) ht]
+    exact h t ht
+  · intro h t ht
+    exact h (covAlong cov γ) ((isCovDerivAlong_covAlong cov γ).mono hs) t ht
+
+/-- **The geodesic equation does not depend on the construction.** -/
+theorem isGeodesicOn_iff_forall
+    {cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)} {s : Set ℝ}
+    (hs : s ⊆ {t | MDifferentiableAt 𝓘(ℝ, ℝ) I γ t})
+    (hv : ∀ t ∈ s, MDiffAlongAt γ (velocity (I := I) γ) t) :
+    IsGeodesicOn cov γ s ↔
+      ∀ D : (Π t : ℝ, TangentSpace I (γ t)) → Π t : ℝ, TangentSpace I (γ t),
+        IsCovDerivAlong cov γ D s → ∀ t ∈ s, D (velocity (I := I) γ) t = 0 :=
+  isParallelAlong_iff_forall hs hv
 
 end Existence
 

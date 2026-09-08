@@ -2663,6 +2663,7 @@ Perelman's monotone functionals are what rule it out.
     CovariantDerivative.MDiffAlongAt.sum,
     CovariantDerivative.exists_frame_expansion,
     CovariantDerivative.IsCovDerivAlong.sum,
+    CovariantDerivative.IsCovDerivAlong.eq_sum_of_expansion,
     CovariantDerivative.IsCovDerivAlong.eq_of_isCovDerivAlong}
   \leanok
   \uses{def:cov-along-curve, lem:global-extension}
@@ -2749,6 +2750,39 @@ Perelman's monotone functionals are what rule it out.
   $\frac{d}{dt}(a\circ\gamma) = \mathrm{d}a(\gamma'(t))$
   (\texttt{deriv\_comp\_curve}).
 \end{lemma}
+
+\begin{definition}[Parallel sections and geodesics]
+  \label{def:geodesic}
+  \lean{CovariantDerivative.IsParallelAlong,
+    CovariantDerivative.IsGeodesicOn,
+    CovariantDerivative.isParallelAlong_iff_forall,
+    CovariantDerivative.isGeodesicOn_iff_forall}
+  \leanok
+  \uses{def:cov-along-curve, lem:cov-along-curve-unique, lem:cov-along-curve-exists}
+  A section along $\gamma$ is \emph{parallel} when $\frac{D}{dt}V = 0$, and $\gamma$ is a
+  \emph{geodesic} when its own velocity is parallel: $\nab_{\gamma'}\gamma' = 0$.
+
+  \textbf{Proved} (\texttt{CovariantAlongCurve.lean}): both notions are
+  independent of the construction ---
+  \texttt{isParallelAlong\_iff\_forall} and
+  \texttt{isGeodesicOn\_iff\_forall} say that being parallel is equivalent to
+  vanishing under \emph{every} operator satisfying the axioms of Definition
+  \ref{def:cov-along-curve}. The forward direction is uniqueness (Lemma
+  \ref{lem:cov-along-curve-unique}); the backward direction is existence
+  (Lemma \ref{lem:cov-along-curve-exists}), and without it the quantified form
+  would be vacuously true and the geodesic equation would assert nothing. That
+  is the same hazard as the one Lemma \ref{lem:global-extension} closed for the
+  hypotheses of Theorem \ref{thm:hamilton}, and it is worth stating
+  explicitly rather than trusting.
+
+  \textbf{What is still needed to \emph{solve} the equation} is the second-order
+  content: in the fibre coordinates of a trivialisation, $\frac{D}{dt}V$ is
+  $c' + \Gamma(\gamma')c$, so $\nab_{\gamma'}\gamma' = 0$ becomes $c'' =
+  -\Gamma(c')(c')$, an ODE to which Picard--Lindel\"of applies. The tool for
+  extracting it is \texttt{IsCovDerivAlong.eq\_sum\_of\_expansion}: $D/dt$ is
+  computed by \emph{any} local expansion $V = \sum_i f_i\,(W_i\circ\gamma)$, so
+  in particular by the coordinate frame.
+\end{definition}
 
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
