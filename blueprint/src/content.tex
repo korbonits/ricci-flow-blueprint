@@ -2763,7 +2763,10 @@ Perelman's monotone functionals are what rule it out.
     CovariantDerivative.exists_frame_on_open,
     CovariantDerivative.covAlong_eq_sum_of_frame_on,
     CovariantDerivative.christoffel,
-    CovariantDerivative.repr_covAlong_eq_christoffel}
+    CovariantDerivative.repr_covAlong_eq_christoffel,
+    CovariantDerivative.christoffelCoord,
+    CovariantDerivative.contMDiffAt_christoffelCoord,
+    CovariantDerivative.christoffel_eq_sum}
   \leanok
   \uses{def:cov-along-curve, lem:cov-along-curve-unique, lem:cov-along-curve-exists}
   A section along $\gamma$ is \emph{parallel} when $\frac{D}{dt}V = 0$, and $\gamma$ is a
@@ -2808,10 +2811,22 @@ Perelman's monotone functionals are what rule it out.
   (\texttt{exists\_frame\_on\_open}), and
   \texttt{covAlong\_eq\_sum\_of\_frame\_on} reads the coordinate formula off it.
 
-  \textbf{What is still needed to \emph{solve} the equation} is the regularity
-  of $\Gamma$ in $y$ --- which needs the connection itself to be $C^k$, a
-  hypothesis nothing above uses --- after which
-  $\nab_{\gamma'}\gamma' = 0$ is an ODE to which Picard--Lindel\"of applies.
+  \textbf{$\Gamma$ is as regular as the connection.} Contracting both slots
+  against the frame gives the classical symbols $\Gamma_{ij}(y)$, the
+  $e$-coordinates of $\nab_{W_j}W_i$ (\texttt{christoffelCoord}), and
+  $\Gamma$ is bilinear in them (\texttt{christoffel\_eq\_sum}), both slots
+  expanding because $\nab_{(\cdot)}W_i$ is a continuous linear map. Then
+  \texttt{contMDiffAt\_christoffelCoord}: for a $C^k$ connection and a
+  $C^{k+1}$ frame the symbols are $C^k$, by \texttt{contMDiff\_cov\_apply}
+  followed by Mathlib's \texttt{contMDiffAt\_section\_iff}. This is the
+  \emph{first} statement in the file that uses any regularity of $\nab$ ---
+  everything before it holds for a bare covariant derivative --- and it is
+  what an ODE solver consumes.
+
+  \textbf{What is still needed to \emph{solve} the equation} is to identify
+  the tangent-bundle trivialisation with the chart it comes from, turning
+  $\nab_{\gamma'}\gamma' = 0$ into $c'' = -\Gamma(c')(c')$ on an open subset of
+  the model space, where Picard--Lindel\"of applies.
 \end{definition}
 
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]

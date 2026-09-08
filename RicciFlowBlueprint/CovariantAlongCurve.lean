@@ -18,6 +18,7 @@ A section along `γ` is a lift of `γ` to `TM`, so its regularity is ordinary
 -/
 import RicciFlowBlueprint.Curvature
 import RicciFlowBlueprint.GlobalExtension
+import RicciFlowBlueprint.Bianchi
 import Mathlib.Analysis.Calculus.BumpFunction.InnerProduct
 
 open Bundle
@@ -807,6 +808,60 @@ theorem repr_covAlong_eq_christoffel
     christoffel, map_sum, Finset.sum_apply']
   refine congrArg _ (Finset.sum_congr rfl fun i _ ↦ ?_)
   rw [map_smul, Finsupp.smul_apply, smul_eq_mul]
+
+
+/-- **The Christoffel symbols in coordinates**: `Γᵢⱼ(y)`, the `e`-coordinates of `∇_{Wⱼ}Wᵢ`.
+Fully contracted against the model basis these are the classical `Γᵏᵢⱼ`. -/
+noncomputable def christoffelCoord
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+    (e : Trivialization E (TotalSpace.proj : TotalSpace E (fun (x : M) ↦ TangentSpace I x) → M))
+    {ι : Type*} (W : ι → Π y : M, TangentSpace I y) (i j : ι) (y : M) : E :=
+  (e ⟨y, cov (W i) y (W j y)⟩).2
+
+-- BENCH: cov-along-curve-christoffel-regularity
+omit [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
+  [FiniteDimensional ℝ E] [T2Space M] in
+/-- **The Christoffel symbols are as regular as the connection.** This is the first statement in
+the file that uses any regularity of `cov` at all — everything up to here holds for a bare
+`CovariantDerivative` — and it is what an ODE solver consumes. -/
+theorem contMDiffAt_christoffelCoord
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)) {k : ℕ∞ω}
+    [ContMDiffCovariantDerivative cov k]
+    {e : Trivialization E (TotalSpace.proj : TotalSpace E (fun (x : M) ↦ TangentSpace I x) → M)}
+    [MemTrivializationAtlas e] {ι : Type*} {W : ι → Π y : M, TangentSpace I y}
+    (hW : ∀ i, CMDiff (k + 1) (T% (W i))) {y : M} (hy : y ∈ e.baseSet) (i j : ι) :
+    ContMDiffAt I 𝓘(ℝ, E) k (christoffelCoord cov e W i j) y :=
+  (e.contMDiffAt_section_iff hy).mp
+    (cov.contMDiff_cov_apply (hW i) ((hW j).of_le le_self_add) y)
+
+omit [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
+  [FiniteDimensional ℝ E] [T2Space M] in
+/-- **`Γ` fully in coordinates**: bilinear in the velocity and the section, with the classical
+symbols as coefficients. Both slots expand in the frame because `cov (W i) y` is a continuous
+linear map. -/
+theorem christoffel_eq_sum
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+    {e : Trivialization E (TotalSpace.proj : TotalSpace E (fun (x : M) ↦ TangentSpace I x) → M)}
+    [MemTrivializationAtlas e] {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ E)
+    {W : ι → Π y : M, TangentSpace I y} {y : M} (hy : y ∈ e.baseSet)
+    (hWy : ∀ i, W i y = e.localFrame b i y) (v : TangentSpace I y) (c : E) :
+    christoffel cov e b W y v c
+      = ∑ i, ∑ j, (b.repr c i * b.repr (e ⟨y, v⟩).2 j) • christoffelCoord cov e W i j y := by
+  have hv : v = ∑ j, b.repr (e ⟨y, v⟩).2 j • W j y := by
+    refine (sum_repr_smul_localFrame b hy v).symm.trans (Finset.sum_congr rfl fun j _ ↦ ?_)
+    rw [hWy j]
+  have hlin : ∀ w : TangentSpace I y, (e ⟨y, w⟩).2
+      = e.continuousLinearEquivAt ℝ y hy w := fun _ ↦ rfl
+  rw [christoffel]
+  refine Finset.sum_congr rfl fun i _ ↦ ?_
+  have hcov : cov (W i) y v = ∑ j, b.repr (e ⟨y, v⟩).2 j • cov (W i) y (W j y) := by
+    nth_rewrite 1 [hv]
+    rw [map_sum]
+    exact Finset.sum_congr rfl fun j _ ↦ map_smul _ _ _
+  rw [hcov, hlin, map_sum, Finset.smul_sum]
+  refine Finset.sum_congr rfl fun j _ ↦ ?_
+  rw [map_smul, smul_smul, christoffelCoord]
+  rfl
 
 /-! ### Parallel sections and geodesics -/
 
