@@ -659,6 +659,82 @@ theorem eq_covAlong {cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace
     (((isCovDerivAlong_covAlong cov γ).mono hs)) hγ hV ht
 
 
+
+-- BENCH: cov-along-curve-frame-formula
+/-- **`D/dt` read in a fixed trivialisation.** For any globally `C¹` sections `Wᵢ` agreeing
+near `γ t` with the local frame of a trivialisation `e` around `γ t`,
+`D/dt V = ∑ᵢ (cᵢ ∇_{γ'}Wᵢ + cᵢ' Wᵢ)` with `cᵢ` the fibre coordinates of `V` in `e`.
+
+`covAlong` is defined through the *preferred* trivialisation at `γ t`; this says the answer is
+the same in any other, which is what lets the geodesic equation be read in a chart of one's
+choosing. It is `eq_sum_of_expansion` applied to the coordinate expansion. -/
+theorem covAlong_eq_sum_of_frame
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+    {e : Trivialization E (TotalSpace.proj : TotalSpace E (fun (x : M) ↦ TangentSpace I x) → M)}
+    [MemTrivializationAtlas e] {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ E)
+    {W : ι → Π y : M, TangentSpace I y} (hW : ∀ i, CMDiff 1 (T% (W i)))
+    (hWfr : ∀ᶠ y in 𝓝 (γ t), ∀ i, W i y = e.localFrame b i y) (hmem : γ t ∈ e.baseSet)
+    (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t) (hV : MDiffAlongAt γ V t) :
+    covAlong cov γ V t
+      = ∑ i, (b.repr (e ⟨γ t, V t⟩).2 i • cov (W i) (γ t) (velocity γ t)
+          + deriv (fun u ↦ b.repr (e ⟨γ u, V u⟩).2 i) t • W i (γ t)) := by
+  have hf : ∀ i, DifferentiableAt ℝ (fun u ↦ b.repr (e ⟨γ u, V u⟩).2 i) t := fun i ↦
+    ((b.coord i).toContinuousLinearMap.differentiableAt).comp t
+      ((mdiffAlongAt_iff_of_mem hγ hmem).mp hV)
+  have hexp : V =ᶠ[𝓝 t] fun u ↦ ∑ i, b.repr (e ⟨γ u, V u⟩).2 i • W i (γ u) := by
+    filter_upwards [hγ.continuousAt (e.open_baseSet.mem_nhds hmem),
+      hγ.continuousAt.eventually hWfr] with u hu hWu
+    refine Eq.trans (sum_repr_smul_localFrame b hu (V u)).symm
+      (Finset.sum_congr rfl fun i _ ↦ ?_)
+    rw [hWu i]
+  exact (isCovDerivAlong_covAlong cov γ).eq_sum_of_expansion hγ hV hγ hW hf hexp
+
+
+omit [FiniteDimensional ℝ E] [T2Space M] in
+omit [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I] in
+/-- Applying the trivialisation to a frame vector returns the model basis vector. -/
+theorem repr_apply_localFrame
+    {e : Trivialization E (TotalSpace.proj : TotalSpace E (fun (x : M) ↦ TangentSpace I x) → M)}
+    [MemTrivializationAtlas e] {ι : Type*} (b : Module.Basis ι ℝ E) {y : M} (hy : y ∈ e.baseSet)
+    (i : ι) :
+    (e ⟨y, e.localFrame b i y⟩).2 = b i := by
+  rw [e.localFrame_apply_of_mem_baseSet b hy]
+  simp only [Trivialization.basisAt, Module.Basis.map_apply]
+  exact (e.continuousLinearEquivAt ℝ y hy).apply_symm_apply (b i)
+
+-- BENCH: cov-along-curve-coordinates
+/-- **`D/dt` in coordinates**: `(D/dt V)ᵏ = (cᵏ)' + ∑ᵢ cⁱ Γᵏᵢ`, with `Γᵏᵢ` the `k`-th
+coordinate of `∇_{γ'}Wᵢ`. This is the shape the geodesic ODE is solved in. -/
+theorem repr_covAlong_eq
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+    {e : Trivialization E (TotalSpace.proj : TotalSpace E (fun (x : M) ↦ TangentSpace I x) → M)}
+    [MemTrivializationAtlas e] {ι : Type*} [Fintype ι] [DecidableEq ι] (b : Module.Basis ι ℝ E)
+    {W : ι → Π y : M, TangentSpace I y} (hW : ∀ i, CMDiff 1 (T% (W i)))
+    (hWfr : ∀ᶠ y in 𝓝 (γ t), ∀ i, W i y = e.localFrame b i y) (hmem : γ t ∈ e.baseSet)
+    (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t) (hV : MDiffAlongAt γ V t) (k : ι) :
+    b.repr (e ⟨γ t, covAlong cov γ V t⟩).2 k
+      = deriv (fun u ↦ b.repr (e ⟨γ u, V u⟩).2 k) t
+        + ∑ i, b.repr (e ⟨γ t, V t⟩).2 i
+            * b.repr (e ⟨γ t, cov (W i) (γ t) (velocity γ t)⟩).2 k := by
+  have hWt : ∀ i, W i (γ t) = e.localFrame b i (γ t) := hWfr.self_of_nhds
+  have hlin : ∀ v : TangentSpace I (γ t), (e ⟨γ t, v⟩).2
+      = e.continuousLinearEquivAt ℝ (γ t) hmem v := fun _ ↦ rfl
+  rw [covAlong_eq_sum_of_frame cov b hW hWfr hmem hγ hV, hlin, map_sum, map_sum,
+    Finset.sum_apply']
+  have hterm : ∀ i, b.repr ((e.continuousLinearEquivAt ℝ (γ t) hmem)
+      (b.repr (e ⟨γ t, V t⟩).2 i • cov (W i) (γ t) (velocity γ t)
+        + deriv (fun u ↦ b.repr (e ⟨γ u, V u⟩).2 i) t • W i (γ t))) k
+      = b.repr (e ⟨γ t, V t⟩).2 i * b.repr (e ⟨γ t, cov (W i) (γ t) (velocity γ t)⟩).2 k
+        + deriv (fun u ↦ b.repr (e ⟨γ u, V u⟩).2 i) t * (if i = k then 1 else 0) := by
+    intro i
+    rw [map_add, map_smul, map_smul, map_add, map_smul, map_smul, hWt i]
+    simp only [Finsupp.add_apply, Finsupp.smul_apply, smul_eq_mul, ← hlin,
+      repr_apply_localFrame b hmem i, Module.Basis.repr_self, Finsupp.single_apply]
+  simp only [hterm, Finset.sum_add_distrib, mul_ite, mul_one, mul_zero,
+    Finset.sum_ite_eq' Finset.univ k]
+  simp only [Finset.mem_univ, ↓reduceIte]
+  rw [add_comm]
+
 /-! ### Parallel sections and geodesics -/
 
 /-- **A section is parallel along `γ`** when its covariant derivative along `γ` vanishes. -/

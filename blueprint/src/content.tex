@@ -2756,7 +2756,10 @@ Perelman's monotone functionals are what rule it out.
   \lean{CovariantDerivative.IsParallelAlong,
     CovariantDerivative.IsGeodesicOn,
     CovariantDerivative.isParallelAlong_iff_forall,
-    CovariantDerivative.isGeodesicOn_iff_forall}
+    CovariantDerivative.isGeodesicOn_iff_forall,
+    CovariantDerivative.covAlong_eq_sum_of_frame,
+    CovariantDerivative.repr_apply_localFrame,
+    CovariantDerivative.repr_covAlong_eq}
   \leanok
   \uses{def:cov-along-curve, lem:cov-along-curve-unique, lem:cov-along-curve-exists}
   A section along $\gamma$ is \emph{parallel} when $\frac{D}{dt}V = 0$, and $\gamma$ is a
@@ -2775,13 +2778,22 @@ Perelman's monotone functionals are what rule it out.
   hypotheses of Theorem \ref{thm:hamilton}, and it is worth stating
   explicitly rather than trusting.
 
-  \textbf{What is still needed to \emph{solve} the equation} is the second-order
-  content: in the fibre coordinates of a trivialisation, $\frac{D}{dt}V$ is
-  $c' + \Gamma(\gamma')c$, so $\nab_{\gamma'}\gamma' = 0$ becomes $c'' =
-  -\Gamma(c')(c')$, an ODE to which Picard--Lindel\"of applies. The tool for
-  extracting it is \texttt{IsCovDerivAlong.eq\_sum\_of\_expansion}: $D/dt$ is
-  computed by \emph{any} local expansion $V = \sum_i f_i\,(W_i\circ\gamma)$, so
-  in particular by the coordinate frame.
+  \textbf{The coordinate form is proved} (\texttt{covAlong\_eq\_sum\_of\_frame},
+  \texttt{repr\_covAlong\_eq}): in the fibre coordinates of \emph{any}
+  trivialisation around $\gamma(t)$,
+  \[
+    \Bigl(\tfrac{D}{dt}V\Bigr)^{k} \;=\; (c^{k})' \;+\; \sum_i c^{i}\,\Gamma^{k}_{i},
+    \qquad \Gamma^{k}_{i} := \bigl(\nab_{\gamma'}W_i\bigr)^{k},
+  \]
+  with $c^i$ the coordinates of $V$ and $W_i$ the local frame. That $D/dt$ is
+  computed by \emph{any} expansion, not just the preferred trivialisation it is
+  defined through, is \texttt{IsCovDerivAlong.eq\_sum\_of\_expansion} --- the
+  reusable half of the uniqueness proof.
+
+  \textbf{What is still needed to \emph{solve} the equation} is to make
+  $\Gamma$ a function of the point with enough regularity, turning
+  $\nab_{\gamma'}\gamma' = 0$ into $c'' = -\Gamma(c')(c')$, an ODE to which
+  Picard--Lindel\"of applies.
 \end{definition}
 
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
