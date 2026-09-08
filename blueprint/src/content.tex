@@ -1742,7 +1742,11 @@ target actually requires.
 
 \begin{lemma}[First variations of the Ricci and scalar curvatures]
   \label{lem:variation-scalar}
-  \lean{RicciFlowBlueprint.hasDerivAt_ricciOfMetric, RicciFlowBlueprint.hasDerivAt_scalarCurvatureOfMetric'_of_isRicciFlowAt}
+  \lean{RicciFlowBlueprint.hasDerivAt_ricciOfMetric,
+    RicciFlowBlueprint.hasDerivAt_scalarCurvatureOfMetric'_of_isRicciFlowAt,
+    RicciFlowBlueprint.ricciFormOfMetric,
+    RicciFlowBlueprint.ricciFormOfMetric_apply_field,
+    RicciFlowBlueprint.innerE_deriv_eq_of_isRicciFlowAt'}
   \leanok
   \uses{lem:variation-curvature, lem:metric-trace-variation, def:ricci-of-metric, def:scalar, def:ricci-flow}
   Along a family of metrics $\g(t)$ with $\partial_t \g = h$,
@@ -1761,14 +1765,24 @@ target actually requires.
   \emph{metric} trace of the Ricci form, and Lemma
   \ref{lem:metric-trace-variation} supplies the correction $-\langle h,
   \Ric\rangle_\g$, which is $2|\Ric|^2_\g = 2\sum_{i,j} \Ric(e_i,e_j)\Ric(e_j,e_i)$
-  under the flow. The scalar statement is on the model space $M = E$, where
-  Definition \ref{def:scalar} lives: constant fields are global smooth
-  sections there, which the second slot of $\Ric$ requires
-  (\texttt{ricciE}, \texttt{ricci\_add\_right\_const}). What remains for
-  $\partial_t R = \Delta R + 2|\Ric|^2$ is $\operatorname{tr}_\g(\partial_t
-  \Ric) = \Delta R$ under the flow, the contracted second Bianchi identity.
-  The trace lemma it needs is now available (Lemma
-  \ref{lem:metric-trace-cov}); what is left is the contraction itself.
+  under the flow.
+
+  The \emph{scalar} statement is still on the model space $M = E$, where
+  Definition \ref{def:scalar} used to live: it is phrased through
+  \texttt{ricciE}, the Ricci form built on \emph{constant} fields, which only
+  exist globally when $M = E$. That restriction is now removable, and the first
+  step is taken here: \texttt{ricciFormOfMetric} is the Ricci form of a metric
+  on \emph{any} manifold --- Definition \ref{def:ricci-form} for the
+  Levi-Civita connection of $\g$, built on the global $C^2$ extensions of Lemma
+  \ref{lem:global-extension} instead of constant fields --- and
+  \texttt{innerE\_deriv\_eq\_of\_isRicciFlowAt'} carries the flow equation
+  $\partial_t \g = -2\Ric$ across to it, by instantiating the flow on those
+  extensions and using uniqueness of derivatives.
+
+  The other ingredient, $\operatorname{tr}_\g(\partial_t\Ric) = \Delta R$,
+  rests on the contracted second Bianchi identity, and \emph{that} is now
+  proved in both contractions (Theorems \ref{thm:contracted-bianchi} and
+  \ref{thm:div-ricci}) rather than pending.
 \end{lemma}
 
 \begin{proof}

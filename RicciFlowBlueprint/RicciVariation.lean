@@ -28,6 +28,7 @@ import RicciFlowBlueprint.MetricTrace
 import RicciFlowBlueprint.CurvatureVariation
 import RicciFlowBlueprint.Scalar
 import RicciFlowBlueprint.Flow
+import RicciFlowBlueprint.RicciForm
 
 open Bundle CovariantDerivative
 open scoped Manifold ContDiff
@@ -164,6 +165,60 @@ theorem hasDerivAt_ricciOfMetric
   exact traceCLM.hasFDerivAt.comp_hasDerivAt t₀ (hasDerivAt_curvatureEndoE hg hcomm hcov hX hY)
 
 end Ricci
+
+section FlowMetric
+
+variable [T2Space M]
+
+/-- **The Ricci form of a metric on a general manifold**: `RicciForm.lean`'s `ricciForm` for
+the Levi-Civita connection of `g`. The model-space `ricciE` below is this evaluated on
+constant fields; here the fields are the global `C²` extensions that `ricciAt` uses, so no
+`M = E` is needed. -/
+noncomputable def ricciFormOfMetric
+    (g : ContMDiffRiemannianMetric I 2 E (fun (x : M) ↦ TangentSpace I x)) (x : M) :
+    E →L[ℝ] E →L[ℝ] ℝ :=
+  letI : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨g.toRiemannianMetric⟩
+  (leviCivitaConnection I M).ricciForm x
+
+omit [CompleteSpace E] in
+/-- `ricciFormOfMetric` computes `ricciOfMetric` on any globally `C²` fields. -/
+theorem ricciFormOfMetric_apply_field
+    (g : ContMDiffRiemannianMetric I 2 E (fun (x : M) ↦ TangentSpace I x)) {x : M}
+    {X Y : Π y : M, TangentSpace I y} (hX : CMDiff 2 (T% X)) (hY : CMDiff 2 (T% Y)) :
+    ricciFormOfMetric g x (X x) (Y x) = ricciOfMetric g X Y x := by
+  let _ : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨g.toRiemannianMetric⟩
+  exact (leviCivitaConnection I M).ricciForm_apply_field hX hY
+
+variable {g : ℝ → ContMDiffRiemannianMetric I 2 E (fun (x : M) ↦ TangentSpace I x)}
+  {h : M → E →L[ℝ] E →L[ℝ] ℝ} {t₀ : ℝ}
+
+-- BENCH: flow-metric-derivative-manifold
+/-- **Under the flow, `∂ₜ g = −2 Ric` as bilinear forms**, on a general manifold. The
+model-space version instantiates the flow equation on constant fields; here it is
+instantiated on global `C²` extensions, which exist by `exists_contMDiff_two_extension`. -/
+theorem innerE_deriv_eq_of_isRicciFlowAt'
+    (hg : ∀ y, HasDerivAt (fun t ↦ innerE (g t) y) (h y) t₀) (x : M)
+    (hflow : letI : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) :=
+        ⟨(g t₀).toRiemannianMetric⟩
+      IsRicciFlowAt I M g t₀) :
+    h x = (-2 : ℝ) • ricciFormOfMetric (g t₀) x := by
+  let _ : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨(g t₀).toRiemannianMetric⟩
+  ext v w
+  obtain ⟨V, hV, hVv⟩ :=
+    exists_contMDiff_two_extension (x := x) (show TangentSpace I x from v)
+  obtain ⟨W, hW, hWw⟩ :=
+    exists_contMDiff_two_extension (x := x) (show TangentSpace I x from w)
+  have h2 := (isRicciFlowAt_iff_leviCivita (I := I) (M := M)).mp hflow x V W hV hW
+  rw [hVv, hWw] at h2
+  have huniq := (hasDerivAt_inner_apply hg x v w).unique h2
+  have hform : ricciFormOfMetric (g t₀) x v w
+      = (leviCivitaConnection I M).ricci V W x := by
+    rw [← hVv, ← hWw]
+    exact ricciFormOfMetric_apply_field (g t₀) hV hW
+  simp only [smul_apply, smul_eq_mul]
+  rw [huniq, hform]
+
+end FlowMetric
 
 /-! ### Scalar curvature on the model space
 
