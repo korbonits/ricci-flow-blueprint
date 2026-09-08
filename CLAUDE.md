@@ -181,16 +181,24 @@ Now `thm:hamilton-ivey` at the head of `chap:kappa`, with a
    `tr_g Ṙic = Δ scal` under the flow, and hence `∂ₜ scal = Δ scal + 2|Ric|²`;
    `RicciVariation.lean` already has `∂ₜ R = tr_g Ṙic + 2|Ric|²`, so only
    `tr_g Ṙic = Δ R` is missing.
-3. **`∂ₜ Rm = Δ Rm + Q`** (Uhlenbeck's trick) — **now the single gate**, for
-   both (1) and (2): the Hamilton–Ivey transport needs the flow written in the
-   form `thm:max-tensor` consumes, and `∂ₜ scal = Δ scal + 2|Ric|²` needs the
-   contraction of the same identity. Everything else either side of it is done.
-   The prerequisite `∇Rm` **as a tensor** is largely built: `CurvatureDeriv.lean`
-   has `C^∞(M)`-linearity in **all four slots**, plus pointwise dependence on
-   the direction slot, which together give `div Rm` (`Divergence.lean`). Left
-   on that line: pointwise dependence in the *other three* slots, which is what
-   would make `∇Rm` a section of a tensor bundle rather than an operator on
-   fields. `div Rm` does not need it.
+3. **`∂ₜ Rm = Δ Rm + Q`** (Uhlenbeck's trick) — still the single gate for both
+   (1) and (2), but **both sides now exist on a general manifold**.
+   *Geometry side*: `Δ Rm` is built (`CurvatureLaplacian.lean`), on top of
+   `∇Rm` being tensorial **and pointwise** in all four slots
+   (`CurvatureDeriv.lean`, `Divergence.lean`) — so `∇Rm` and `∇²Rm` are genuine
+   tensors, not operators on fields.
+   *Analytic side*: **`∂ₜ Rm` is NOT model-space-only.** Do not re-scope this
+   wrongly: `hasDerivAt_curvatureE_leviCivitaOfMetric` (`CurvatureVariation.lean`,
+   `section Metric`) is stated for a general `M`, as is `hasDerivAt_ricciOfMetric`
+   (`RicciVariation.lean`, `section Ricci`). What *is* model-space-only is the
+   **scalar** curvature variation alone — `ricciE`, `scalarCurvatureOfMetric'`,
+   `hasDerivAt_scalarCurvatureOfMetric'` and the flow corollary, all in
+   `RicciVariation.lean`'s `section ModelSpace`.
+   **So what is left here is not a port but an identification.** `∂ₜ Rm` is
+   currently delivered as `(∇_X Ȧ)(Y,Z) − (∇_Y Ȧ)(X,Z)` with `Ȧ = ∂ₜ∇` the
+   derivative of the difference tensor; under the flow (`h = −2 Ric`) that has
+   to be shown equal to `Δ Rm + Q(Rm)`. That is the standard several-page
+   computation, and it is the real remaining work on this line.
 4. **Perelman's `L`-geometry** (`def:reduced-volume`,
    `thm:reduced-volume-monotone`). The deepest genuinely-open node and the one
    everything downstream of `chap:kappa` consumes. Pure comparison geometry +
