@@ -1736,7 +1736,11 @@ target actually requires.
     CovariantDerivative.covBilin_symm,
     CovariantDerivative.cov2Bilin_symm,
     CovariantDerivative.sum_inner_covTwoTensor_eq,
-    CovariantDerivative.sum_inner_covTwoTensor_eq_divDiv}
+    CovariantDerivative.sum_inner_covTwoTensor_eq_divDiv,
+    CovariantDerivative.covEnd_eq_covTwoTensor_flip,
+    RicciFlowBlueprint.derivDifferenceTensor,
+    RicciFlowBlueprint.isKoszulOf_derivDifference,
+    RicciFlowBlueprint.hasDerivAt_curvatureE_covTwoTensor}
   \leanok
   \uses{def:bilin-laplacian, lem:variation-connection, lem:metric-trace-cov}
   Let $\nab$ be a metric connection and $A$ a $(1,2)$-tensor field satisfying the Koszul
@@ -1787,11 +1791,26 @@ target actually requires.
   $\texttt{Finset.sum\_comm}$, folding the two copies of
   $\operatorname{tr}_\g(\Delta_\g h)$ together.
 
-  $\Rm_A$ is what $\partial_t\Rm$ equals along a family of metrics, so with
-  $h = \partial_t \g$ this is $\operatorname{tr}_\g(\partial_t\Ric)$; under
-  the Ricci flow $h = -2\Ric$ and the two contracted Bianchi identities
-  (Theorems \ref{thm:contracted-bianchi}, \ref{thm:div-ricci}) turn the
-  right-hand side into $\Delta\scal$.
+  \textbf{$\Rm_A$ \emph{is} $\partial_t\Rm$}, and this is now a theorem rather
+  than a remark (\texttt{FlowKoszul.lean}). Two conventions had to be lined up:
+  \texttt{covEnd}, which the first variation of the curvature is phrased in,
+  takes a $(1,2)$-tensor with its argument first and its direction second
+  (matching \texttt{differenceE}), while \texttt{covTwoTensor} takes the
+  direction first --- so the two agree on \emph{flipped} tensors, term for term
+  (\texttt{covEnd\_eq\_covTwoTensor\_flip}, a \texttt{rfl}). With
+  \texttt{derivDifferenceTensor} the flip of $\partial_t\nab$,
+  \texttt{isKoszulOf\_derivDifference} says it is Koszul for $h = \partial_t \g$
+  --- Lemma \ref{lem:variation-connection} states that on the
+  constant-in-a-trivialisation extensions of the two vectors, and the
+  \texttt{covBilin} congr lemmas transfer it to arbitrary differentiable fields
+  --- and \texttt{hasDerivAt\_curvatureE\_covTwoTensor} delivers $\partial_t\Rm$
+  as $\Rm_A$ for that tensor.
+
+  So with $h = \partial_t \g$ the double trace above is
+  $\operatorname{tr}_\g(\partial_t\Ric)$; under the Ricci flow $h = -2\Ric$
+  and the two contracted Bianchi identities (Theorems
+  \ref{thm:contracted-bianchi}, \ref{thm:div-ricci}) turn the right-hand side
+  into $\Delta\scal$.
 \end{lemma}
 
 \begin{lemma}[The metric trace commutes with $\nab$]
