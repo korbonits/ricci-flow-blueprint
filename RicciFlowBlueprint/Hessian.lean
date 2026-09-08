@@ -228,4 +228,18 @@ theorem laplacian_eq_sum {Z : Π y : M, TangentSpace I y} (hZ : CMDiff 2 (T% Z))
   have : FiniteDimensional ℝ (TangentSpace I x) := VectorBundle.finiteDimensional ℝ E _ x
   exact OrthonormalBasis.sum_apply_self_eq _ b _
 
+omit [CompleteSpace E] in
+/-- **The rough Laplacian read off a frame of vector fields** whose values at `x` are
+orthonormal: `ΔZ = ∑ᵢ ∇²_{eᵢ,eᵢ}Z`. `laplacian_eq_sum` gives the sum over an
+`OrthonormalBasis` of the fibre; frame computations need it over honest fields, which is
+what `hessianAt_apply` converts. -/
+theorem laplacian_eq_sum_frame {Z : Π y : M, TangentSpace I y} (hZ : CMDiff 2 (T% Z)) {x : M}
+    {ι : Type*} [Fintype ι] {fr : ι → Π y : M, TangentSpace I y}
+    (hfr : ∀ i, MDiffAt (T% (fr i)) x) (b : OrthonormalBasis ι ℝ (TangentSpace I x))
+    (hb : ∀ i, fr i x = b i) :
+    cov.laplacian hZ x = ∑ i, cov.hessian (fr i) (fr i) Z x := by
+  rw [cov.laplacian_eq_sum hZ b]
+  refine Finset.sum_congr rfl fun i _ ↦ ?_
+  rw [← hb i, cov.hessianAt_apply hZ (hfr i) (hfr i)]
+
 end CovariantDerivative

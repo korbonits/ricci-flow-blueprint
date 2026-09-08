@@ -1066,14 +1066,19 @@ target actually requires.
 
 \begin{definition}[Laplacian]
   \label{def:laplacian}
-  \lean{CovariantDerivative.laplacian}
+  \lean{CovariantDerivative.laplacian, CovariantDerivative.laplacian_eq_sum_frame}
   \leanok
   \uses{def:hessian}
   The rough Laplacian of a $C^2$ vector field is the metric trace of its
   Hessian, $\Delta Z = \sum_i \nab^2_{e_i,e_i} Z$ over an orthonormal basis of
   $T_xM$; it does not depend on the basis (\texttt{laplacian\_eq\_sum}, via
   \texttt{OrthonormalBasis.sum\_apply\_self\_eq}, the statement that
-  $\sum_i B(e_i,e_i)$ is basis-independent for any bilinear $B$).
+  $\sum_i B(e_i,e_i)$ is basis-independent for any bilinear $B$ --- and note
+  that this holds for bilinear maps into any normed space, so no pairing
+  against a covector is needed and the trace comes out vector-valued
+  directly). \texttt{laplacian\_eq\_sum\_frame} reads the same sum off a
+  frame of honest vector fields, which is the form frame computations
+  (\texttt{Divergence.lean}) use.
 
   This is the operator the evolution equations below are written in, and it
   is what supplies the differential inequality at a spatial minimum that the
