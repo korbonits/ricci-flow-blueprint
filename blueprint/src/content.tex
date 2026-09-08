@@ -1241,16 +1241,22 @@ target actually requires.
   differentiate $\nab\Riem$ a second time.
 \end{lemma}
 
-\begin{definition}[The second covariant derivative of the curvature tensor]
+\begin{definition}[$\nab^2 \Rm$ and the Laplacian of the curvature tensor]
   \label{def:cov2-curvature}
   \lean{CovariantDerivative.cov2Curvature,
     CovariantDerivative.cov2Curvature_congr_dir,
     CovariantDerivative.cov2Curvature_smul_dir,
     CovariantDerivative.cov2Curvature_add_dir,
     CovariantDerivative.cov2Curvature_smul_snd,
-    CovariantDerivative.cov2Curvature_add_snd}
+    CovariantDerivative.cov2Curvature_add_snd,
+    CovariantDerivative.cov2Curvature_congr_snd,
+    CovariantDerivative.cov2CurvatureAt,
+    CovariantDerivative.cov2CurvatureBilin,
+    CovariantDerivative.curvatureLaplacian,
+    CovariantDerivative.curvatureLaplacian_eq_sum_basis,
+    CovariantDerivative.curvatureLaplacian_eq_sum_frame}
   \leanok
-  \uses{lem:cov-curvature-pointwise, lem:cov-curvature-direction}
+  \uses{lem:cov-curvature-pointwise, lem:cov-curvature-direction, lem:global-extension}
   \[
     (\nab^2_{X,Y}\Riem)(A,B)C
       = \nab_X\big((\nab_Y\Riem)(A,B)C\big)
@@ -1259,31 +1265,42 @@ target actually requires.
         - (\nab_Y\Riem)(A,\nab_X B)C
         - (\nab_Y\Riem)(A,B)(\nab_X C),
   \]
-  one correction for each of $\nab\Riem$'s four slots.
+  one correction for each of $\nab\Riem$'s four slots, and
+  \[
+    \Delta\Rm(A,B)C \;=\; \sum_i (\nab^2_{e_i,e_i}\Riem)(A,B)C .
+  \]
 
-  \textbf{Defined, and tensorial in both derivative slots}
-  (\texttt{CurvatureLaplacian.lean}). The outer slot $X$ is free, exactly as it
-  was for $\nab\Riem$: every term is either a continuous linear map evaluated at
-  $X(x)$, or $\nab\Riem$ in a slot where it is now known to be pointwise
-  (Lemma \ref{lem:cov-curvature-pointwise}), applied to a field whose value at
-  $x$ is determined by $X(x)$. So \texttt{cov2Curvature\_congr\_dir} needs no
-  frame argument at all --- it is the four-slot pointwise lemma cashed in.
+  \textbf{Defined and proved frame-independent} (\texttt{CurvatureLaplacian.lean}).
 
-  The inner slot $Y$ is the familiar cancellation: the Leibniz term of
-  $\nab_X\big(f\,(\nab_Y\Riem)(A,B)C\big)$ is matched by the one that
-  $\nab_X(fY) = f\nab_X Y + (Xf)Y$ produces in the second term. As in the
-  fourth slot of $\nab\Riem$, the coefficient is asked for three derivatives,
-  because $(Xf)$ must itself be $C^2$ for the tensoriality it is fed to.
+  The outer derivative slot is free, and this is where the four-slot work of
+  Lemma \ref{lem:cov-curvature-pointwise} is cashed in: every term is either a
+  continuous linear map evaluated at $X(x)$, or $\nab\Riem$ in a slot where it
+  is pointwise, applied to a field whose value at $x$ is determined by $X(x)$.
+  So \texttt{cov2Curvature\_congr\_dir} needs no frame argument at all.
 
-  Regularity throughout: $X, Y, A, B$ are $C^3$ and $C$ is $C^4$ --- the last
-  slot is the expensive one at every level, and here it is what
-  \texttt{covCurvature\_congr\_fth} costs.
+  The inner slot is the familiar cancellation --- the Leibniz term of
+  $\nab_X\big(f\,(\nab_Y\Riem)(A,B)C\big)$ is matched by the one
+  $\nab_X(fY) = f\nab_X Y + (Xf)Y$ produces in the second term --- and its
+  pointwise statement is the frame-and-globalise argument once more, at $C^3$,
+  since the coefficient must be $C^3$ for $(Xf)$ to be $C^2$.
 
-  \textbf{What remains for $\Delta\Rm$} is pointwise dependence in $Y$ --- the
-  frame-and-globalise argument once more, at $C^3$ --- after which
-  $\nab^2\Riem$ is a bilinear map $T_x\M \times T_x\M \to T_x\M$ and
-  $\Delta\Rm(A,B)C = \sum_i (\nab^2_{e_i,e_i}\Riem)(A,B)C$ is its trace, with
-  frame-independence free by \texttt{OrthonormalBasis.sum\_apply\_self\_eq}.
+  With both derivative slots pointwise and bilinear, $\nab^2\Riem$ is a
+  continuous bilinear map $T_x\M \times T_x\M \to T_x\M$ and $\Delta\Rm$ is its
+  trace; frame-independence is then \texttt{OrthonormalBasis.sum\_apply\_self\_eq},
+  which traces bilinear maps into any normed space, so the result is
+  vector-valued directly with no pairing against a covector.
+
+  Regularity: $X, Y, A, B$ are $C^3$ and $C$ is $C^4$. The last slot is the
+  expensive one at every level of this tower --- $C$ needs four derivatives
+  because \texttt{covCurvature\_congr\_fth} needs $C^3$ coefficients because
+  \texttt{curvature\_smul\_third} needs $C^2$ ones.
+
+  \textbf{What this is for.} $\Delta\Rm$ is the right-hand side of Hamilton's
+  evolution equation $\partial_t \Rm = \Delta\Rm + Q(\Rm)$, which is what
+  carries Hamilton--Ivey pinching from the ODE (Theorem
+  \ref{thm:hamilton-ivey}) to the flow. The geometry side of that equation is
+  now in place; the analytic side, $\partial_t\Rm$, still lives on the model
+  space (\texttt{CurvatureVariation.lean}).
 \end{definition}
 
 \begin{definition}[The divergence of the curvature tensor]
