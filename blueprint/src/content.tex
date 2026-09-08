@@ -1189,6 +1189,38 @@ target actually requires.
   through that identity the object $\Delta \scal$ is about.
 \end{definition}
 
+\begin{lemma}[The traced second Bianchi identity]
+  \label{lem:traced-bianchi}
+  \lean{CovariantDerivative.divCurvature_eq_sub_sum}
+  \leanok
+  \uses{def:div-curvature, lem:bianchi-second}
+  \[
+    \operatorname{div}\Rm(Y,Z,W)
+      \;=\; \sum_i \big\langle (\nab_Y\Riem)(e_i,Z)W, e_i\big\rangle
+          \;-\; \sum_i \big\langle (\nab_Z\Riem)(e_i,Y)W, e_i\big\rangle .
+  \]
+
+  \textbf{Proved} (\texttt{Divergence.lean}). Take the second Bianchi identity
+  with $e_i$ in the direction slot,
+  \[
+    (\nab_{e_i}\Riem)(Y,Z)W + (\nab_Y\Riem)(Z,e_i)W + (\nab_Z\Riem)(e_i,Y)W = 0,
+  \]
+  pair with $e_i$, and sum. The middle term is turned round by antisymmetry of
+  $\nab\Riem$ in its second and third slots
+  (\texttt{covCurvature\_antisymm}). Nothing is differentiated along the frame:
+  the identity is pointwise in $e_i$ and is only summed, so no derivative of
+  $e_i$ appears and no orthonormality is used beyond what
+  Definition \ref{def:div-curvature} already needs.
+
+  \textbf{What is left to reach $\operatorname{div}\Ric = \tfrac12 d\scal$} is a
+  single further identity: the two sums on the right are $(\nab_Y\Ric)(Z,W)$ and
+  $(\nab_Z\Ric)(Y,W)$. That is the trace commuting with $\nab$ for the curvature
+  endomorphism --- the analogue for $\Riem$ of Lemma
+  \ref{lem:metric-trace-cov}, and like it a statement about a frame that is not
+  parallel, so the coefficients $\langle \nab_X e_i, e_j\rangle$ enter and are
+  killed by antisymmetry. It is not proved yet.
+\end{lemma}
+
 \begin{lemma}[The metric trace commutes with $\nab$]
   \label{lem:metric-trace-cov}
   \lean{CovariantDerivative.mvfderiv_sum_eq_sum_covBilin,

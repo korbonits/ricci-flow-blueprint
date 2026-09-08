@@ -157,4 +157,41 @@ theorem divCurvature_eq_sum_frame {Y Z W : Π y : M, TangentSpace I y} {x : M}
 
 end Divergence
 
+section ContractedBianchi
+
+-- BENCH: traced-bianchi-second
+/-- **The traced second Bianchi identity**, in the form the metric contraction leaves it:
+`div Rm(Y,Z,W) = ∑ᵢ ⟪(∇_Y Rm)(eᵢ,Z)W, eᵢ⟫ − ∑ᵢ ⟪(∇_Z Rm)(eᵢ,Y)W, eᵢ⟫`.
+
+Trace the second Bianchi identity `(∇_{eᵢ}Rm)(Y,Z)W + (∇_Y Rm)(Z,eᵢ)W + (∇_Z Rm)(eᵢ,Y)W
+= 0` against `eᵢ`, using antisymmetry of `∇Rm` in its second and third slots to turn the
+middle term round. No derivative of the frame appears: the identity is pointwise in `eᵢ`,
+and it is summed, not differentiated.
+
+The two sums on the right are `(∇_Y Ric)(Z,W)` and `(∇_Z Ric)(Y,W)` — that is the trace
+commuting with `∇` for the curvature endomorphism, which is a separate theorem and is not
+proved here. -/
+theorem divCurvature_eq_sub_sum (hcov : cov.torsion = 0)
+    {Y Z W : Π y : M, TangentSpace I y} {x : M}
+    (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z)) (hW : CMDiff 3 (T% W))
+    {ι : Type*} [Fintype ι] {b : ι → Π y : M, TangentSpace I y}
+    (hb : ∀ i, CMDiff 2 (T% (b i))) (v : OrthonormalBasis ι ℝ (TangentSpace I x))
+    (hbv : ∀ i, b i x = v i) :
+    cov.divCurvature Y Z W x
+      = (∑ i, ⟪cov.covCurvature Y (b i) Z W x, b i x⟫)
+        - ∑ i, ⟪cov.covCurvature Z (b i) Y W x, b i x⟫ := by
+  rw [cov.divCurvature_eq_sum_frame hY hZ hW hb v hbv, ← Finset.sum_sub_distrib]
+  refine Finset.sum_congr rfl fun i _ ↦ ?_
+  have hbi := hb i
+  have hbianchi := cov.bianchi_second hcov hbi hY hZ hW (x := x)
+  have hanti : cov.covCurvature Y Z (b i) W x = -cov.covCurvature Y (b i) Z W x :=
+    cov.covCurvature_antisymm Y hZ hbi hW
+  rw [hanti] at hbianchi
+  have key : cov.covCurvature (b i) Y Z W x
+      = cov.covCurvature Y (b i) Z W x - cov.covCurvature Z (b i) Y W x := by
+    linear_combination (norm := module) hbianchi
+  rw [key, inner_sub_left]
+
+end ContractedBianchi
+
 end CovariantDerivative
