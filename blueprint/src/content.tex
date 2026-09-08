@@ -1694,6 +1694,45 @@ target actually requires.
   side into $2\Delta\scal - \Delta\scal = \Delta\scal$.
 \end{definition}
 
+\begin{lemma}[Differentiating the Koszul combination]
+  \label{lem:koszul-second-derivative}
+  \lean{CovariantDerivative.covTwoTensor,
+    CovariantDerivative.IsKoszulOf,
+    CovariantDerivative.inner_covTwoTensor_eq}
+  \leanok
+  \uses{def:bilin-laplacian, lem:variation-connection, lem:metric-trace-cov}
+  Let $\nab$ be a metric connection and $A$ a $(1,2)$-tensor field satisfying the Koszul
+  characterisation of Lemma \ref{lem:variation-connection},
+  \[
+    \langle A(P,Q), R\rangle
+      = \tfrac12\big[(\nab_P h)(Q,R) + (\nab_Q h)(R,P) - (\nab_R h)(P,Q)\big].
+  \]
+  Then $\nab A$ satisfies \emph{the same combination one level up}, with $\nab h$
+  replaced by $\nab^2 h$ and \textbf{no curvature terms}:
+  \[
+    \langle (\nab_U A)(P,Q), R\rangle
+      = \tfrac12\big[(\nab^2_{U,P} h)(Q,R) + (\nab^2_{U,Q} h)(R,P)
+        - (\nab^2_{U,R} h)(P,Q)\big].
+  \]
+
+  \textbf{Proved} (\texttt{KoszulSecondDeriv.lean}). Metric compatibility moves
+  $\nab_U$ onto the pairing, turning $\langle \nab_U(A(P,Q)), R\rangle$ into
+  $U\langle A(P,Q),R\rangle - \langle A(P,Q), \nab_U R\rangle$; the first term
+  differentiates the germ identity, producing the three $\nab^2h$-terms
+  \emph{plus} nine corrections, and those nine regroup --- three by three, one
+  group per differentiated field --- into exactly the three Koszul combinations
+  $\langle A(\nab_U P, Q),R\rangle$, $\langle A(P,\nab_U Q),R\rangle$,
+  $\langle A(P,Q),\nab_U R\rangle$ that $\nab_U A$ and the pairing subtract. The
+  regrouping is linear, so once the four expansions are in hand it is
+  \texttt{linarith}.
+
+  This is what turns $\partial_t \Rm = (\nab \dot A)(\cdot,\cdot) - (\nab
+  \dot A)(\cdot,\cdot)$ (Lemma \ref{lem:variation-curvature}) into a statement
+  about $\nab^2 h$ alone, and hence $\operatorname{tr}_\g(\partial_t\Ric)$ into
+  $\operatorname{div}\operatorname{div} h - \Delta(\operatorname{tr}_\g h)$
+  (Definitions \ref{def:bilin-laplacian}, \ref{def:one-form-divergence}).
+\end{lemma}
+
 \begin{lemma}[The metric trace commutes with $\nab$]
   \label{lem:metric-trace-cov}
   \lean{CovariantDerivative.mvfderiv_sum_eq_sum_covBilin,
