@@ -1086,6 +1086,57 @@ target actually requires.
   the link is the second-derivative test, Lemma \ref{lem:second-derivative-test}.
 \end{definition}
 
+\begin{theorem}[The Bochner identity]
+  \label{thm:bochner}
+  \lean{CovariantDerivative.hessianFun_inner_eq,
+    CovariantDerivative.laplacianFun_inner_eq,
+    CovariantDerivative.laplacianFun_inner_self_eq,
+    CovariantDerivative.two_mul_inner_laplacian_le,
+    CovariantDerivative.sum_inner_cov_congr}
+  \leanok
+  \uses{def:laplacian, def:hessian, thm:levi-civita}
+  For a metric connection,
+  \[
+    \Delta \langle \sigma, \tau\rangle
+      = \langle \Delta\sigma, \tau\rangle + \langle \sigma, \Delta\tau\rangle
+        + 2\sum_i \langle \nab_{e_i}\sigma, \nab_{e_i}\tau\rangle,
+  \]
+  and in particular $\Delta |\sigma|^2 = 2\langle \Delta\sigma,\sigma\rangle +
+  2\sum_i |\nab_{e_i}\sigma|^2 \ \ge\ 2\langle \Delta\sigma,\sigma\rangle$.
+
+  \textbf{Proved} (\texttt{Bochner.lean}). The pointwise statement behind it is
+  the Hessian form,
+  \[
+    \nab^2\langle\sigma,\tau\rangle(X,Y)
+      = \langle \nab^2_{X,Y}\sigma, \tau\rangle
+      + \langle \sigma, \nab^2_{X,Y}\tau\rangle
+      + \langle \nab_Y\sigma, \nab_X\tau\rangle
+      + \langle \nab_X\sigma, \nab_Y\tau\rangle,
+  \]
+  which is metric compatibility applied twice --- once to differentiate
+  $\langle\sigma,\tau\rangle$ along $Y$, once to differentiate the result along
+  $X$. The Hessian's correction term $-(\nab_X Y)\langle\sigma,\tau\rangle$ is
+  what turns the two iterated derivatives into $\nab^2\sigma$ and
+  $\nab^2\tau$; expanded, again by metric compatibility, it supplies exactly
+  the two corrections needed.
+
+  The trace is taken over the frame $\Delta$ and $\Delta_{\text{fun}}$ are
+  themselves defined on, the canonical extensions of the standard orthonormal
+  basis of $T_x\M$, so no frame-independence is needed as an input, and the
+  factor $2$ comes from the two cross terms coinciding at $X = Y$.
+
+  \textbf{The gradient term is frame-independent on its own}
+  (\texttt{sum\_inner\_cov\_congr}), and this needs neither metric
+  compatibility nor the identity above: $(v,w) \mapsto \langle \nab_v\sigma,
+  \nab_w\tau\rangle$ is a continuous bilinear form, because $\nab\sigma$ and
+  $\nab\tau$ are continuous linear maps at each point, so its trace is
+  basis-independent for the usual reason.
+
+  The inequality $\Delta|\sigma|^2 \ge 2\langle\Delta\sigma,\sigma\rangle$ is
+  the form the maximum principle \ref{thm:max-scalar} consumes: the discarded
+  term is a sum of squares.
+\end{theorem}
+
 \begin{lemma}[$\nab \Rm$ is tensorial in all four slots]
   \label{lem:cov-curvature-direction}
   \lean{CovariantDerivative.covCurvature_smul_dir,
