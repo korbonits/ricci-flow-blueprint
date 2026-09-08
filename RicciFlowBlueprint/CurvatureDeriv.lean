@@ -458,4 +458,52 @@ theorem covCurvature_add_fth {W' : Π y : M, TangentSpace I y}
 
 end Direction
 
+section Pointwise
+
+variable {X Y Z W : Π y : M, TangentSpace I y} {x : M}
+variable [T2Space M] [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+  [IsContMDiffRiemannianBundle I 2 E (fun (x : M) ↦ TangentSpace I x)]
+
+omit [CompleteSpace E] in
+-- BENCH: cov-curvature-congr-dir
+/-- **`(∇_X Rm)(Y,Z)W` at `x` depends only on `X x`.** No new frame argument: each of the
+four terms is separately pointwise in `X`. The first is a continuous linear map evaluated
+at `X x`; the next two are `Rm` in a slot where it is tensorial, applied to `∇_X Y` and
+`∇_X Z`, whose values at `x` are `∇_{X x} Y` and `∇_{X x} Z`; the last is `Rm`'s third
+slot, applied to `∇_X W`, and that is Lemma `curvature_congr_third`.
+
+Together with tensoriality in the direction slot this is what makes the trace
+`div Rm(Y,Z,W) = ∑ᵢ ⟪(∇_{eᵢ}Rm)(Y,Z)W, eᵢ⟫` an honest endomorphism trace. -/
+theorem covCurvature_congr_dir {X X' : Π y : M, TangentSpace I y}
+    (hX : CMDiff 2 (T% X)) (hX' : CMDiff 2 (T% X'))
+    (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z)) (hW : CMDiff 3 (T% W))
+    (hval : X x = X' x) :
+    cov.covCurvature X Y Z W x = cov.covCurvature X' Y Z W x := by
+  have h1 : (1 : ℕ∞ω) ≠ 0 := by norm_num
+  have hW2 : CMDiff 2 (T% W) := hW.of_le (by norm_num)
+  have hX1 : CMDiff 1 (T% X) := hX.of_le (by norm_num)
+  have hX'1 : CMDiff 1 (T% X') := hX'.of_le (by norm_num)
+  have hDY : CMDiff 1 (T% (fun y ↦ cov Y y (X y))) := cov.contMDiff_cov_apply hY hX1
+  have hDY' : CMDiff 1 (T% (fun y ↦ cov Y y (X' y))) := cov.contMDiff_cov_apply hY hX'1
+  have hDZ : CMDiff 1 (T% (fun y ↦ cov Z y (X y))) := cov.contMDiff_cov_apply hZ hX1
+  have hDZ' : CMDiff 1 (T% (fun y ↦ cov Z y (X' y))) := cov.contMDiff_cov_apply hZ hX'1
+  have hDW : CMDiff 2 (T% (fun y ↦ cov W y (X y))) := cov.contMDiff_cov_apply hW hX
+  have hDW' : CMDiff 2 (T% (fun y ↦ cov W y (X' y))) := cov.contMDiff_cov_apply hW hX'
+  have vY : (fun y ↦ cov Y y (X y)) x = (fun y ↦ cov Y y (X' y)) x := by
+    show cov Y x (X x) = cov Y x (X' x); rw [hval]
+  have vZ : (fun y ↦ cov Z y (X y)) x = (fun y ↦ cov Z y (X' y)) x := by
+    show cov Z x (X x) = cov Z x (X' x); rw [hval]
+  have vW : (fun y ↦ cov W y (X y)) x = (fun y ↦ cov W y (X' y)) x := by
+    show cov W x (X x) = cov W x (X' x); rw [hval]
+  have e1 : cov (fun y ↦ cov.curvature Y Z W y) x (X x)
+      = cov (fun y ↦ cov.curvature Y Z W y) x (X' x) := by rw [hval]
+  have e2 := (cov.tensorialAt_curvature_fst (V := Z) hW2 x).pointwise
+    ((hDY.mdifferentiable h1) x) ((hDY'.mdifferentiable h1) x) vY
+  have e3 := (cov.tensorialAt_curvature_snd (V := Y) hW2 x).pointwise
+    ((hDZ.mdifferentiable h1) x) ((hDZ'.mdifferentiable h1) x) vZ
+  have e4 := cov.curvature_congr_third (hY x) (hZ x) hDW hDW' vW
+  simp only [covCurvature, e1, e2, e3, e4]
+
+end Pointwise
+
 end CovariantDerivative

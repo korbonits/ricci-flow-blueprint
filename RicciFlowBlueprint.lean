@@ -32,3 +32,4 @@ import RicciFlowBlueprint.CurvatureSymm
 import RicciFlowBlueprint.ConstantCurvature
 import RicciFlowBlueprint.IveyConvex
 import RicciFlowBlueprint.CurvatureDeriv
+import RicciFlowBlueprint.Divergence

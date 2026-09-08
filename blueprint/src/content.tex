@@ -1142,6 +1142,53 @@ target actually requires.
   \scal$, are about.
 \end{lemma}
 
+\begin{definition}[The divergence of the curvature tensor]
+  \label{def:div-curvature}
+  \lean{CovariantDerivative.covCurvature_congr_dir,
+    CovariantDerivative.covCurvatureAt,
+    CovariantDerivative.covCurvatureEndo,
+    CovariantDerivative.divCurvature,
+    CovariantDerivative.divCurvature_eq_sum_basis,
+    CovariantDerivative.divCurvature_eq_sum_frame}
+  \leanok
+  \uses{lem:cov-curvature-direction, lem:global-extension}
+  \[
+    \operatorname{div}\Rm(Y,Z,W)(x)
+      \;=\; \sum_i \big\langle (\nab_{e_i}\Riem)(Y,Z)W,\ e_i \big\rangle,
+  \]
+  the trace of $\nab\Riem$ over its direction slot against its fourth.
+
+  \textbf{Defined and proved frame-independent} (\texttt{Divergence.lean}). Two
+  facts make this well posed, and neither is free.
+
+  First, $(\nab_X\Riem)(Y,Z)W$ at $x$ depends only on $X(x)$
+  (\texttt{covCurvature\_congr\_dir}). This costs no new frame argument, unlike
+  Lemma \ref{lem:curvature-pointwise}: each of the four terms is separately
+  pointwise in $X$. The first is a continuous linear map evaluated at $X(x)$;
+  the next two are $\Riem$ in a slot where it is tensorial, applied to
+  $\nab_X Y$ and $\nab_X Z$, whose values at $x$ are $\nab_{X(x)}Y$ and
+  $\nab_{X(x)}Z$; the last is $\Riem$'s third slot applied to $\nab_X W$, which
+  is Lemma \ref{lem:curvature-pointwise} itself.
+
+  Second, it is $C^\infty(\M)$-linear there
+  (Lemma \ref{lem:cov-curvature-direction}). So
+  $v \mapsto (\nab_v\Riem)(Y,Z)W$ is a genuine endomorphism of $T_x\M$ ---
+  \texttt{covCurvatureEndo}, built on globally $C^2$ extensions of $v$ as
+  \texttt{ricciAt} is --- and $\operatorname{div}\Rm$ is its trace.
+
+  \textbf{Frame-independence is then algebraic}, not a computation: it is
+  \texttt{LinearMap.trace\_eq\_sum\_inner}, valid for any orthonormal basis of
+  $T_x\M$ (\texttt{divCurvature\_eq\_sum\_basis}), and
+  \texttt{divCurvature\_eq\_sum\_frame} reads it off any $C^2$ frame whose
+  values at $x$ are orthonormal. Note the contrast with the scalar curvature:
+  there the object traced is a bilinear form and the trace is metric; here it
+  is an endomorphism and no metric enters the trace at all --- the metric
+  appears only in writing it as $\sum_i \langle \cdot, e_i\rangle$.
+
+  This is the object the contracted second Bianchi identity is about, and
+  through that identity the object $\Delta \scal$ is about.
+\end{definition}
+
 \begin{lemma}[The metric trace commutes with $\nab$]
   \label{lem:metric-trace-cov}
   \lean{CovariantDerivative.mvfderiv_sum_eq_sum_covBilin,
