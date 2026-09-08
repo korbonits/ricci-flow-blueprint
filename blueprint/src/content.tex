@@ -266,7 +266,7 @@ gives the road, and the one thing it does not give yet.
 
 \begin{lemma}[Curvature and Ricci are pointwise in the last slot]
   \label{lem:curvature-pointwise}
-  \lean{CovariantDerivative.curvature_congr_third, CovariantDerivative.ricci_congr_snd_of_eq, CovariantDerivative.ricciAt, CovariantDerivative.inner_curvature_eq_zero_of_dep, RicciFlowBlueprint.hasPositiveRicciLC_iff_tangent, RicciFlowBlueprint.hasConstSecLC_iff_mul}
+  \lean{CovariantDerivative.curvature_congr_third, CovariantDerivative.curvature_smul_third, CovariantDerivative.curvature_smul_third', CovariantDerivative.ricci_congr_snd_of_eq, CovariantDerivative.ricciAt, CovariantDerivative.inner_curvature_eq_zero_of_dep, RicciFlowBlueprint.hasPositiveRicciLC_iff_tangent, RicciFlowBlueprint.hasConstSecLC_iff_mul}
   \leanok
   \uses{lem:global-extension, def:curvature, def:ricci}
   $\Riem(X,Y)Z$ at $x$ depends only on $Z(x)$, and hence $\Ric(X,Y)(x)$ depends
@@ -1081,7 +1081,7 @@ target actually requires.
   the link is the second-derivative test, Lemma \ref{lem:second-derivative-test}.
 \end{definition}
 
-\begin{lemma}[$\nab \Rm$ is tensorial in three of its four slots]
+\begin{lemma}[$\nab \Rm$ is tensorial in all four slots]
   \label{lem:cov-curvature-direction}
   \lean{CovariantDerivative.covCurvature_smul_dir,
     CovariantDerivative.covCurvature_add_dir,
@@ -1091,25 +1091,26 @@ target actually requires.
     CovariantDerivative.covCurvature_smul_snd,
     CovariantDerivative.covCurvature_add_snd,
     CovariantDerivative.covCurvature_smul_thd,
-    CovariantDerivative.covCurvature_add_thd}
+    CovariantDerivative.covCurvature_add_thd,
+    CovariantDerivative.covCurvature_smul_fth,
+    CovariantDerivative.covCurvature_add_fth}
   \leanok
-  \uses{lem:bianchi-second, def:curvature}
-  $(\nab_{fX} \Riem)(Y,Z)W = f\,(\nab_X \Riem)(Y,Z)W$, and likewise additively.
+  \uses{lem:bianchi-second, def:curvature, lem:curvature-pointwise}
+  $(\nab_X \Riem)(Y,Z)W$ is $C^\infty(M)$-linear in each of $X$, $Y$, $Z$ and
+  $W$ separately: replacing any one of them by $fV$ multiplies the value at $x$
+  by $f(x)$, and replacing it by a sum splits the value.
 
-  \textbf{Proved} (\texttt{CurvatureDeriv.lean}). Each of the four terms of
+  \textbf{Proved} (\texttt{CurvatureDeriv.lean}). Three different mechanisms,
+  not one repeated.
+
+  \emph{The direction slot} is the cheap one. Each of the four terms of
   $\nab\Riem$ picks up exactly one factor of $f(x)$, for the same reason:
   $\nab_{fX}$ is $f\nab_X$ on the nose, and the last three terms feed that into
   a slot of $\Riem$ in which $\Riem$ is already tensorial --- the first two
   cheaply, the third by Lemma \ref{lem:curvature-pointwise}.
 
-  This is what makes the \emph{divergence}
-  $\operatorname{div}\Rm(Y,Z,W) = \sum_i \langle (\nab_{e_i}\Riem)(Y,Z)W, e_i
-  \rangle$ well defined, the trace being over the direction slot; and the
-  divergence is what the contracted second Bianchi identity, and hence $\Delta
-  \scal$, are about.
-
-  \textbf{The other three slots are not done, and are not the same problem.}
-  Under $Y \mapsto fY$ the \emph{first} term picks up a Leibniz term,
+  \emph{The $Y$ and $Z$ slots} are a cancellation instead. Under $Y \mapsto fY$
+  the \emph{first} term picks up a Leibniz term,
   $\nab_X(f\,\Riem(Y,Z)W) = f\nab_X(\Riem(Y,Z)W) + (Xf)\Riem(Y,Z)W$, cancelled
   by the matching term from $\Riem(\nab_X(fY),Z)W$ --- so the direction slot was
   the easy one precisely because it has none. Applying Leibniz needs $y \mapsto
@@ -1118,16 +1119,27 @@ target actually requires.
   \texttt{contMDiff\_curvature}, also proved here: a $C^3$ triple has a $C^1$
   curvature section, the two $\nab\nab$ terms by
   \texttt{contMDiff\_cov\_apply} twice and the bracket term by the same fed
-  Mathlib's \texttt{ContMDiffAt.mlieBracket\_vectorField}. With it,
-  \texttt{covCurvature\_smul\_snd} and \texttt{covCurvature\_add\_snd} give
-  the $Y$ slot, and \texttt{covCurvature\_antisymm} hands over the $Z$ slot for
-  nothing. So $\nab\Riem$ is tensorial in three of its four slots.
+  Mathlib's \texttt{ContMDiffAt.mlieBracket\_vectorField}. Once $Y$ is done,
+  \texttt{covCurvature\_antisymm} hands over $Z$ for nothing.
 
-  \textbf{What is left is the $W$ slot}, which is the analogue of the
-  curvature's third and needs the frame-and-globalise argument of
-  Lemma \ref{lem:curvature-pointwise} one level up. After that, the trace over
-  the direction slot against the fourth is $\operatorname{div}\Rm$, and the
-  contracted second Bianchi identity is in reach.
+  \emph{The $W$ slot} is the same cancellation with the other pairing:
+  $\Riem(Y,Z)(fW) = f\,\Riem(Y,Z)W$ as \emph{sections}, so the leading $\nab_X$
+  contributes $(Xf)\Riem(Y,Z)W$, and the last term contributes the matching one
+  through $\nab_X(fW) = f\nab_X W + (Xf)W$. It costs one derivative more of $f$
+  than the others, and that is not slack: the second Leibniz term is
+  $\Riem(Y,Z)\big((Xf)W\big)$, and tensoriality in $\Riem$'s third slot wants
+  its coefficient $Xf$ to be $C^2$, hence $f \in C^3$. Stating this needed
+  \texttt{curvature\_smul\_third'}, Lemma \ref{lem:curvature-pointwise}'s
+  third-slot linearity restated asking of the first two slots only the $C^1$
+  regularity its proof actually uses --- the fields landing in them here are
+  $\nab_X Y$ and $\nab_X Z$, which are one derivative worse than $Y$ and $Z$.
+
+  With all four slots, the \emph{divergence}
+  $\operatorname{div}\Rm(Y,Z,W) = \sum_i \langle (\nab_{e_i}\Riem)(Y,Z)W, e_i
+  \rangle$ is well defined --- the trace is over the direction slot, and
+  tensoriality is what makes the sum independent of the orthonormal frame. The
+  divergence is what the contracted second Bianchi identity, and hence $\Delta
+  \scal$, are about.
 \end{lemma}
 
 \begin{lemma}[The metric trace commutes with $\nab$]

@@ -31,31 +31,41 @@ variable
   [ContMDiffCovariantDerivative cov 1]
 
 omit [CompleteSpace E] in
+-- BENCH: curvature-smul-third-c1
+/-- **`C^∞(M)`-linearity in the third slot**, asking of the first two slots only what the
+proof uses: `C¹` at the point. The third slot is the expensive one — the two directional
+derivatives of `f` have to be differentiable, so `f` is `C²` and the direction fields lose
+one derivative to `mvfderiv`. -/
+theorem curvature_smul_third' {f : M → ℝ} {X Y Z : Π y : M, TangentSpace I y} {x : M}
+    (hf : ContMDiff I 𝓘(ℝ, ℝ) 2 f)
+    (hX : CMDiffAt 1 (T% X) x) (hY : CMDiffAt 1 (T% Y) x) (hZ : CMDiff 2 (T% Z)) :
+    cov.curvature X Y (f • Z) x = f x • cov.curvature X Y Z x := by
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  have h12 : (1 : ℕ∞ω) + 1 ≤ 2 := by norm_num
+  have hXm : MDiffAt (T% X) x := hX.mdifferentiableAt one_ne_zero
+  have hYm : MDiffAt (T% Y) x := hY.mdifferentiableAt one_ne_zero
+  have hZm : MDiff (T% Z) := hZ.mdifferentiable h2
+  have hfm : MDiff f := hf.mdifferentiable h2
+  -- the two directional derivatives of `f`, `C¹` hence differentiable
+  have hYf : MDiffAt (fun y ↦ d% f y (Y y)) x :=
+    (RicciFlowBlueprint.contMDiffAt_mvfderiv_apply (hf x) hY h12).mdifferentiableAt one_ne_zero
+  have hXf : MDiffAt (fun y ↦ d% f y (X y)) x :=
+    (RicciFlowBlueprint.contMDiffAt_mvfderiv_apply (hf x) hX h12).mdifferentiableAt one_ne_zero
+  have hYZ : MDiffAt (T% (fun y ↦ cov Z y (Y y))) x := cov.mdiffAt_cov_apply hZ hYm
+  have hXZ : MDiffAt (T% (fun y ↦ cov Z y (X y))) x := cov.mdiffAt_cov_apply hZ hXm
+  exact cov.curvature_smul_right f X Y Z hfm (hf x) hXm hYm hZm hYZ hXZ hYf hXf
+    ((hfm x).smul_section hYZ) ((hfm x).smul_section hXZ)
+    (hYf.smul_section (hZm x)) (hXf.smul_section (hZm x))
+
+omit [CompleteSpace E] in
 -- BENCH: curvature-smul-third-global
 /-- **`C^∞(M)`-linearity in the third slot**, with every side condition discharged from
 globally `C²` data: `R(X,Y)(f • Z) = f(x) • R(X,Y)Z`. -/
 theorem curvature_smul_third {f : M → ℝ} {X Y Z : Π y : M, TangentSpace I y} {x : M}
     (hf : ContMDiff I 𝓘(ℝ, ℝ) 2 f)
     (hX : CMDiffAt 2 (T% X) x) (hY : CMDiffAt 2 (T% Y) x) (hZ : CMDiff 2 (T% Z)) :
-    cov.curvature X Y (f • Z) x = f x • cov.curvature X Y Z x := by
-  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
-  have h12 : (1 : ℕ∞ω) + 1 ≤ 2 := by norm_num
-  have hXm : MDiffAt (T% X) x := hX.mdifferentiableAt h2
-  have hYm : MDiffAt (T% Y) x := hY.mdifferentiableAt h2
-  have hZm : MDiff (T% Z) := hZ.mdifferentiable h2
-  have hfm : MDiff f := hf.mdifferentiable h2
-  -- the two directional derivatives of `f`, `C¹` hence differentiable
-  have hYf : MDiffAt (fun y ↦ d% f y (Y y)) x :=
-    (RicciFlowBlueprint.contMDiffAt_mvfderiv_apply (hf x) (hY.of_le (by norm_num)) h12).mdifferentiableAt
-      one_ne_zero
-  have hXf : MDiffAt (fun y ↦ d% f y (X y)) x :=
-    (RicciFlowBlueprint.contMDiffAt_mvfderiv_apply (hf x) (hX.of_le (by norm_num)) h12).mdifferentiableAt
-      one_ne_zero
-  have hYZ : MDiffAt (T% (fun y ↦ cov Z y (Y y))) x := cov.mdiffAt_cov_apply hZ hYm
-  have hXZ : MDiffAt (T% (fun y ↦ cov Z y (X y))) x := cov.mdiffAt_cov_apply hZ hXm
-  exact cov.curvature_smul_right f X Y Z hfm (hf x) hXm hYm hZm hYZ hXZ hYf hXf
-    ((hfm x).smul_section hYZ) ((hfm x).smul_section hXZ)
-    (hYf.smul_section (hZm x)) (hXf.smul_section (hZm x))
+    cov.curvature X Y (f • Z) x = f x • cov.curvature X Y Z x :=
+  cov.curvature_smul_third' hf (hX.of_le (by norm_num)) (hY.of_le (by norm_num)) hZ
 
 omit [CompleteSpace E] in
 -- BENCH: curvature-sum-smul-third

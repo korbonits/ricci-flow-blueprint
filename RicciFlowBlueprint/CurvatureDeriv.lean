@@ -342,6 +342,120 @@ theorem covCurvature_add_thd {Z' : Π y : M, TangentSpace I y}
     cov.covCurvature_antisymm X hZ' hY hW]
   module
 
+omit [CompleteSpace E] in
+-- BENCH: cov-curvature-smul-fth
+/-- **`∇R` is `C^∞(M)`-linear in its fourth slot**: `(∇_X R)(Y,Z)(f•W) = f(x)·(∇_X R)(Y,Z)W`.
+
+Like the second slot and unlike the direction, this is a cancellation rather than four
+independent rescalings. `R(Y,Z)(f•W) = f·R(Y,Z)W` as *sections*, so the leading
+`∇_X` produces a Leibniz term `(Xf)·R(Y,Z)W`; the last term produces the matching one,
+because `∇_X(f•W) = f·∇_X W + (Xf)·W` and `R` is tensorial in the slot that lands in.
+
+`f` is asked for one derivative more than elsewhere, and that is not slack: the second of
+those Leibniz terms is `R(Y,Z)((Xf)•W)`, and tensoriality in the third slot needs its
+coefficient `Xf` to be `C²`, which costs `f ∈ C³`. -/
+theorem covCurvature_smul_fth
+    (hf : ContMDiff I 𝓘(ℝ, ℝ) 3 f)
+    (hX : CMDiff 2 (T% X)) (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z))
+    (hW : CMDiff 3 (T% W)) :
+    cov.covCurvature X Y Z (f • W) x = f x • cov.covCurvature X Y Z W x := by
+  have h1 : (1 : ℕ∞ω) ≠ 0 := by norm_num
+  have hf2 : ContMDiff I 𝓘(ℝ, ℝ) 2 f := hf.of_le (by norm_num)
+  have hW2 : CMDiff 2 (T% W) := hW.of_le (by norm_num)
+  have hX1 : CMDiff 1 (T% X) := hX.of_le (by norm_num)
+  have hY1 : CMDiff 1 (T% Y) := hY.of_le (by norm_num)
+  have hZ1 : CMDiff 1 (T% Z) := hZ.of_le (by norm_num)
+  have hfm : ∀ y, MDiffAt f y := hf2.mdifferentiable two_ne_zero₃
+  have hWm : ∀ y, MDiffAt (T% W) y := hW2.mdifferentiable two_ne_zero₃
+  have hYm : MDiffAt (T% Y) x := (hY1.mdifferentiable h1) x
+  have hZm : MDiffAt (T% Z) x := (hZ1.mdifferentiable h1) x
+  -- `Xf` is `C²` here, one better than in the other slots: this is what `f ∈ C³` buys
+  have hg : ContMDiff I 𝓘(ℝ, ℝ) 2 (fun y ↦ d% f y (X y)) := fun y ↦
+    RicciFlowBlueprint.contMDiffAt_mvfderiv_apply (hf y) (hX y) (by norm_num)
+  have hDY : CMDiff 1 (T% (fun y ↦ cov Y y (X y))) := cov.contMDiff_cov_apply hY hX1
+  have hDZ : CMDiff 1 (T% (fun y ↦ cov Z y (X y))) := cov.contMDiff_cov_apply hZ hX1
+  have hDW : CMDiff 2 (T% (fun y ↦ cov W y (X y))) := cov.contMDiff_cov_apply hW hX
+  have hcs : MDiffAt (T% (fun y ↦ cov.curvature Y Z W y)) x :=
+    ((cov.contMDiff_curvature hY hZ hW).mdifferentiable h1) x
+  have e1 : (fun y ↦ cov.curvature Y Z (f • W) y) = f • (fun y ↦ cov.curvature Y Z W y) := by
+    funext y
+    exact cov.curvature_smul_third hf2 (hY y) (hZ y) hW2
+  have t1 : cov (fun y ↦ cov.curvature Y Z (f • W) y) x (X x)
+      = f x • cov (fun y ↦ cov.curvature Y Z W y) x (X x)
+        + (d% f x (X x)) • cov.curvature Y Z W x := by
+    rw [e1, cov.isCovariantDerivativeOn.leibniz hcs (hfm x)]
+    simp only [add_apply, smul_apply, ContinuousLinearMap.smulRight_apply]
+  have t2 : cov.curvature (fun y ↦ cov Y y (X y)) Z (f • W) x
+      = f x • cov.curvature (fun y ↦ cov Y y (X y)) Z W x :=
+    cov.curvature_smul_third' hf2 (hDY x) (hZ1 x) hW2
+  have t3 : cov.curvature Y (fun y ↦ cov Z y (X y)) (f • W) x
+      = f x • cov.curvature Y (fun y ↦ cov Z y (X y)) W x :=
+    cov.curvature_smul_third' hf2 (hY1 x) (hDZ x) hW2
+  have e2 : (fun y ↦ cov (f • W) y (X y))
+      = f • (fun y ↦ cov W y (X y)) + ((fun y ↦ d% f y (X y)) • W) := by
+    funext y
+    rw [cov.isCovariantDerivativeOn.leibniz (hWm y) (hfm y)]
+    simp only [add_apply, smul_apply, ContinuousLinearMap.smulRight_apply]
+    rfl
+  have t4 : cov.curvature Y Z (fun y ↦ cov (f • W) y (X y)) x
+      = f x • cov.curvature Y Z (fun y ↦ cov W y (X y)) x
+        + (d% f x (X x)) • cov.curvature Y Z W x := by
+    rw [e2, cov.curvature_add_right (hf2.smul_section hDW) (hg.smul_section hW2) hYm hZm,
+      cov.curvature_smul_third' hf2 (hY1 x) (hZ1 x) hDW,
+      cov.curvature_smul_third' hg (hY1 x) (hZ1 x) hW2]
+  simp only [covCurvature, t1, t2, t3, t4]
+  module
+
+omit [CompleteSpace E] in
+-- BENCH: cov-curvature-add-fth
+/-- **`∇R` is additive in its fourth slot.** -/
+theorem covCurvature_add_fth {W' : Π y : M, TangentSpace I y}
+    (hX : CMDiff 2 (T% X)) (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z))
+    (hW : CMDiff 3 (T% W)) (hW' : CMDiff 3 (T% W')) :
+    cov.covCurvature X Y Z (W + W') x
+      = cov.covCurvature X Y Z W x + cov.covCurvature X Y Z W' x := by
+  have h1 : (1 : ℕ∞ω) ≠ 0 := by norm_num
+  have hW2 : CMDiff 2 (T% W) := hW.of_le (by norm_num)
+  have hW'2 : CMDiff 2 (T% W') := hW'.of_le (by norm_num)
+  have hX1 : CMDiff 1 (T% X) := hX.of_le (by norm_num)
+  have hY1 : CMDiff 1 (T% Y) := hY.of_le (by norm_num)
+  have hZ1 : CMDiff 1 (T% Z) := hZ.of_le (by norm_num)
+  have hWm : ∀ y, MDiffAt (T% W) y := hW2.mdifferentiable two_ne_zero₃
+  have hW'm : ∀ y, MDiffAt (T% W') y := hW'2.mdifferentiable two_ne_zero₃
+  have hYm : MDiffAt (T% Y) x := (hY1.mdifferentiable h1) x
+  have hZm : MDiffAt (T% Z) x := (hZ1.mdifferentiable h1) x
+  have hDY : CMDiff 1 (T% (fun y ↦ cov Y y (X y))) := cov.contMDiff_cov_apply hY hX1
+  have hDZ : CMDiff 1 (T% (fun y ↦ cov Z y (X y))) := cov.contMDiff_cov_apply hZ hX1
+  have hDW : CMDiff 2 (T% (fun y ↦ cov W y (X y))) := cov.contMDiff_cov_apply hW hX
+  have hDW' : CMDiff 2 (T% (fun y ↦ cov W' y (X y))) := cov.contMDiff_cov_apply hW' hX
+  have hcs : MDiffAt (T% (fun y ↦ cov.curvature Y Z W y)) x :=
+    ((cov.contMDiff_curvature hY hZ hW).mdifferentiable h1) x
+  have hcs' : MDiffAt (T% (fun y ↦ cov.curvature Y Z W' y)) x :=
+    ((cov.contMDiff_curvature hY hZ hW').mdifferentiable h1) x
+  have e1 : (fun y ↦ cov.curvature Y Z (W + W') y)
+      = (fun y ↦ cov.curvature Y Z W y) + (fun y ↦ cov.curvature Y Z W' y) := by
+    funext y
+    exact cov.curvature_add_right hW2 hW'2 (hY1.mdifferentiable h1 y) (hZ1.mdifferentiable h1 y)
+  have t1 : cov (fun y ↦ cov.curvature Y Z (W + W') y) x (X x)
+      = cov (fun y ↦ cov.curvature Y Z W y) x (X x)
+        + cov (fun y ↦ cov.curvature Y Z W' y) x (X x) := by
+    rw [e1, cov.isCovariantDerivativeOn.add hcs hcs']
+    simp only [add_apply]
+  have e2 : (fun y ↦ cov (W + W') y (X y))
+      = (fun y ↦ cov W y (X y)) + (fun y ↦ cov W' y (X y)) := by
+    funext y
+    rw [cov.isCovariantDerivativeOn.add (hWm y) (hW'm y)]
+    simp only [add_apply]
+    rfl
+  have t4 : cov.curvature Y Z (fun y ↦ cov (W + W') y (X y)) x
+      = cov.curvature Y Z (fun y ↦ cov W y (X y)) x
+        + cov.curvature Y Z (fun y ↦ cov W' y (X y)) x := by
+    rw [e2, cov.curvature_add_right hDW hDW' hYm hZm]
+  simp only [covCurvature, t1, t4,
+    cov.curvature_add_right hW2 hW'2 ((hDY.mdifferentiable h1) x) hZm,
+    cov.curvature_add_right hW2 hW'2 hYm ((hDZ.mdifferentiable h1) x)]
+  module
+
 end Direction
 
 end CovariantDerivative
