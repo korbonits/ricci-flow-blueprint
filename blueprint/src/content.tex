@@ -1273,6 +1273,64 @@ target actually requires.
   $Z(\scal)$.
 \end{theorem}
 
+\begin{theorem}[The contracted second Bianchi identity, second contraction]
+  \label{thm:div-ricci}
+  \lean{CovariantDerivative.inner_covCurvature_expand,
+    CovariantDerivative.inner_covCurvature_pair_symm,
+    CovariantDerivative.covBilin_ricciForm_eq_covRicci,
+    CovariantDerivative.covRicci_symm,
+    CovariantDerivative.two_mul_sum_covRicci_eq_mvfderiv_scalarCurvatureAt}
+  \leanok
+  \uses{thm:contracted-bianchi, lem:metric-trace-cov, lem:curvature-symmetries,
+    thm:ricci-symm}
+  For a Levi-Civita connection,
+  $\operatorname{div}\Ric = \tfrac12\, d\scal$; in the frame form the Lean
+  statement takes,
+  \[
+    2 \sum_i (\nab_{e_i}\Ric)(e_i, Y) \;=\; Y(\scal).
+  \]
+
+  \textbf{Proved} (\texttt{Divergence.lean}). Contract Theorem
+  \ref{thm:contracted-bianchi} over its remaining two slots: sum
+  \[
+    \operatorname{div}\Rm(Y,e_j,e_j) = (\nab_Y\Ric)(e_j,e_j) -
+    (\nab_{e_j}\Ric)(Y,e_j)
+  \]
+  over $j$. On the right the first sum is $Y(\scal)$ by Lemma
+  \ref{lem:metric-trace-cov}, and the second is $\operatorname{div}\Ric(Y)$
+  because $\nab\Ric$ is symmetric --- which it is because $\Ric$ is (Lemma
+  \ref{thm:ricci-symm}), so this step too needs the connection to be
+  metric. On the left, pair symmetry of $\nab\Riem$ turns $\langle
+  (\nab_{e_i}\Riem)(Y,e_j)e_j, e_i\rangle$ into $\langle
+  (\nab_{e_i}\Riem)(e_j,e_i)Y, e_j\rangle$, whose sum over $j$ is
+  $(\nab_{e_i}\Ric)(e_i,Y)$ by Theorem \ref{thm:contracted-bianchi}'s trace
+  lemma; summing over $i$ gives $\operatorname{div}\Ric(Y)$ back. So
+  $\operatorname{div}\Ric(Y) = Y(\scal) - \operatorname{div}\Ric(Y)$.
+
+  \textbf{Pair symmetry of $\nab\Riem$ is not inherited for free.} What Lemma
+  \ref{lem:curvature-symmetries} gives is a symmetry of the $(0,4)$ tensor
+  $\langle\Riem(A,B)C,D\rangle$, and $\nab\Riem$ is defined as an operator on
+  fields, not as the derivative of that tensor. The bridge is
+  \texttt{inner\_covCurvature\_expand}: for a \emph{metric} connection the
+  leading $\nab_X$ can be moved onto the pairing, so
+  \[
+    \langle (\nab_X\Riem)(A,B)C, D\rangle
+      = X\langle \Riem(A,B)C,D\rangle - \sum_{\text{4 slots}} \langle
+      \Riem(\ldots,\nab_X\cdot,\ldots),\cdot\rangle - \langle \Riem(A,B)C,
+      \nab_X D\rangle,
+  \]
+  five corrections rather than four --- the fifth is the metric one. Every term
+  on the right is the $(0,4)$ tensor evaluated somewhere, so the pointwise
+  symmetry transfers, and the two sides' corrections are the same five numbers
+  in a different order.
+
+  With this, roadmap item 2 is closed. The next link in the chain is
+  $\operatorname{tr}_g \partial_t \Ric = \Delta \scal$ under the flow; combined
+  with \texttt{RicciVariation.lean}'s $\partial_t \scal = \operatorname{tr}_g
+  \partial_t\Ric + 2|\Ric|^2$ that gives $\partial_t \scal = \Delta \scal +
+  2|\Ric|^2$.
+\end{theorem}
+
 \begin{lemma}[The metric trace commutes with $\nab$]
   \label{lem:metric-trace-cov}
   \lean{CovariantDerivative.mvfderiv_sum_eq_sum_covBilin,
