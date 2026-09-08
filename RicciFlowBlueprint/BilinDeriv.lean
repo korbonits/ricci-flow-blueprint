@@ -269,6 +269,26 @@ theorem covBilinForm_apply (hb : IsMDiffBilinAt (I := I) h x)
     cov.covBilinForm hb X (Y x) (Z x) = cov.covBilin h X Y Z x :=
   TensorialAt.mkHom₂_apply _ _ hY hZ
 
+omit [CompleteSpace E] in
+/-- **`∇h` is pointwise in its second slot** (among differentiable fields): `(∇_X h)(Y,Z)` at
+`x` depends on `Y` only through `Y x`. Immediate from `covBilinForm_apply`, no frame argument
+needed. -/
+theorem covBilin_congr_snd (hb : IsMDiffBilinAt (I := I) h x)
+    (X : Π y : M, TangentSpace I y) {Y Y' Z : Π y : M, TangentSpace I y}
+    (hY : MDiffAt (T% Y) x) (hY' : MDiffAt (T% Y') x) (hZ : MDiffAt (T% Z) x)
+    (hYY' : Y x = Y' x) :
+    cov.covBilin h X Y Z x = cov.covBilin h X Y' Z x := by
+  rw [← cov.covBilinForm_apply hb hY hZ, ← cov.covBilinForm_apply hb hY' hZ, hYY']
+
+omit [CompleteSpace E] in
+/-- **`∇h` is pointwise in its third slot** (among differentiable fields). -/
+theorem covBilin_congr_thd (hb : IsMDiffBilinAt (I := I) h x)
+    (X : Π y : M, TangentSpace I y) {Y Z Z' : Π y : M, TangentSpace I y}
+    (hY : MDiffAt (T% Y) x) (hZ : MDiffAt (T% Z) x) (hZ' : MDiffAt (T% Z') x)
+    (hZZ' : Z x = Z' x) :
+    cov.covBilin h X Y Z x = cov.covBilin h X Y Z' x := by
+  rw [← cov.covBilinForm_apply hb hY hZ, ← cov.covBilinForm_apply hb hY hZ', hZZ']
+
 end Tensor
 
 section Trace

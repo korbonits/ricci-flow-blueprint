@@ -1553,6 +1553,72 @@ target actually requires.
   slot is identical with the roles of $Y$ and $Z$ exchanged.
 \end{proof}
 
+\begin{definition}[$\nab^2 h$ and the connection Laplacian $\Delta_\g h$]
+  \label{def:bilin-laplacian}
+  \lean{CovariantDerivative.cov2Bilin,
+    CovariantDerivative.cov2Bilin_congr_dir,
+    CovariantDerivative.cov2Bilin_smul_dir,
+    CovariantDerivative.cov2Bilin_add_dir,
+    CovariantDerivative.cov2Bilin_smul_snd,
+    CovariantDerivative.cov2Bilin_add_snd,
+    CovariantDerivative.cov2Bilin_congr_snd,
+    CovariantDerivative.cov2BilinAt,
+    CovariantDerivative.cov2BilinForm,
+    CovariantDerivative.laplacianBilin,
+    CovariantDerivative.laplacianBilin_eq_sum_basis,
+    CovariantDerivative.laplacianBilin_eq_sum_frame}
+  \leanok
+  \uses{lem:cov-bilin-tensor, def:laplacian, def:cov2-curvature}
+  For a bilinear form field $h$,
+  \[
+    (\nab^2_{W,X} h)(Y,Z) = W\big((\nab_X h)(Y,Z)\big) - (\nab_{\nab_W X} h)(Y,Z)
+      - (\nab_X h)(\nab_W Y, Z) - (\nab_X h)(Y, \nab_W Z)
+  \]
+  --- one correction per slot of $\nab h$, so \emph{three}, against the five of
+  $\nab^2\Rm$ (Definition \ref{def:cov2-curvature}). The \textbf{connection
+  Laplacian} $\Delta_\g h$ is its metric trace in the two derivative slots,
+  $(\Delta_\g h)(Y,Z) = \sum_i (\nab^2_{e_i,e_i} h)(Y,Z)$.
+
+  \textbf{Proved} (\texttt{BilinLaplacian.lean}). $\nab^2 h$ is tensorial and
+  pointwise in both derivative slots, so $\Delta_\g h$ is well defined and
+  frame-independent. The two slots behave differently, as they do for
+  $\nab^2\Rm$:
+
+  \begin{itemize}
+    \item The \emph{outer} direction $W$ needs \textbf{no frame argument}. It is
+      Lemma \ref{lem:cov-bilin-tensor} cashed in: the leading term is a
+      continuous linear map at $W(x)$, and each of the three corrections is
+      $\nab h$ in a slot it is already pointwise in, applied to a field whose
+      value at $x$ is determined by $W(x)$.
+    \item The \emph{inner} direction $X$ is the Leibniz cancellation --- and the
+      cancellation is cheap, because every step other than the leading one uses
+      only the \emph{direction} slot of $\nab h$, which carries no hypotheses at
+      all. Pointwiseness there is the frame-and-globalise argument, but it runs
+      at $C^1$: \texttt{cov2Bilin\_smul\_snd} asks its coefficient for one
+      derivative, against the three that $\nab^2\Rm$ asks.
+  \end{itemize}
+
+  The one hypothesis beyond Lemma \ref{lem:cov-bilin-tensor}'s is
+  \texttt{IsMDiffCovBilinAt}: that $y \mapsto (\nab_V h)(Y,Z)$ is differentiable
+  at $x$ for $C^1$ fields $V$. Merely-differentiable $V$ cannot supply this ---
+  the leading term of $\nab h$ differentiates $h(Y,Z)$ in the direction $V$, so
+  it sees the germ of $V$ --- which is exactly why the inner slot needs the
+  frame argument and the outer one does not.
+
+  This is what $\operatorname{tr}_\g(\partial_t\Ric) = \Delta \scal$ is
+  assembled from. Tracing the first variation of $\Rm$ (Lemma
+  \ref{lem:variation-curvature}) twice against the Koszul formula for
+  $\partial_t\nab$ gives, with \emph{no} curvature terms,
+  \[
+    \operatorname{tr}_\g(\partial_t \Ric)
+      = \operatorname{div}\operatorname{div} h - \Delta(\operatorname{tr}_\g h),
+  \]
+  and under the flow $h = -2\Ric$, so $\operatorname{tr}_\g h = -2\scal$ and
+  $\operatorname{div}\operatorname{div} h = -2\operatorname{div}\operatorname{div}\Ric
+  = -\Delta \scal$ by the second contraction (Theorem \ref{thm:div-ricci}),
+  giving $2\Delta\scal - \Delta\scal = \Delta\scal$.
+\end{definition}
+
 \begin{lemma}[The metric trace commutes with $\nab$]
   \label{lem:metric-trace-cov}
   \lean{CovariantDerivative.mvfderiv_sum_eq_sum_covBilin,
