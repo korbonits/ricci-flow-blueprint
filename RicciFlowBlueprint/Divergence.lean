@@ -194,4 +194,149 @@ theorem divCurvature_eq_sub_sum (hcov : cov.torsion = 0)
 
 end ContractedBianchi
 
+section TraceDeriv
+
+open RicciFlowBlueprint
+
+variable {ι : Type*} [Fintype ι]
+
+/-- **The curvature as a continuous bilinear form** `(u,v) ↦ ⟪Rm(u,Z)W, v⟫` on `T_xM`.
+Linear in `u` because the curvature is tensorial in its first slot; this is the form the
+frame-derivative cancellation in `sum_inner_covCurvature_eq` is fed. -/
+noncomputable def curvatureBilinFst (Z W : Π y : M, TangentSpace I y) (x : M)
+    (hW : CMDiff 2 (T% W)) : E →L[ℝ] E →L[ℝ] ℝ :=
+  (innerSL ℝ (E := TangentSpace I x)).comp
+    (TensorialAt.mkHom (fun V ↦ cov.curvature V Z W x) x
+      (cov.tensorialAt_curvature_fst (V := Z) hW x) :
+        TangentSpace I x →L[ℝ] TangentSpace I x)
+
+omit [T2Space M] [IsContMDiffRiemannianBundle I 2 E (fun (x : M) ↦ TangentSpace I x)]
+  [ContMDiffCovariantDerivative cov 2] in
+theorem curvatureBilinFst_apply {Z W : Π y : M, TangentSpace I y} {x : M}
+    (hW : CMDiff 2 (T% W)) {σ : Π y : M, TangentSpace I y} (hσ : MDiffAt (T% σ) x)
+    (v : TangentSpace I x) :
+    cov.curvatureBilinFst Z W x hW (σ x) v = ⟪cov.curvature σ Z W x, v⟫ := by
+  show ⟪(TensorialAt.mkHom (fun V ↦ cov.curvature V Z W x) x
+      (cov.tensorialAt_curvature_fst (V := Z) hW x)) (σ x), v⟫ = _
+  rw [TensorialAt.mkHom_apply _ hσ]
+
+/-- **`(∇_X Ric)(Z,W)`**, written out: the covariant derivative of the Ricci tensor,
+in the same shape `Variation.lean`'s `covBilin` gives for a bilinear form field. Kept as
+its own definition because `Ric` is not carried here as a `M → E →L[ℝ] E →L[ℝ] ℝ`. -/
+noncomputable def covRicci (X Z W : Π y : M, TangentSpace I y) (x : M) : ℝ :=
+  mvfderiv I (fun y ↦ cov.ricci Z W y) x (X x)
+    - cov.ricci (fun y ↦ cov Z y (X y)) W x
+    - cov.ricci Z (fun y ↦ cov W y (X y)) x
+
+omit [T2Space M] in
+/-- **The first-slot trace commutes with `∇` for the curvature**:
+`∑ᵢ ⟪(∇_X Rm)(eᵢ,Z)W, eᵢ⟫ = X(Ric(Z,W)) − Ric(∇_X Z, W) − Ric(Z, ∇_X W)`,
+whose right-hand side is `(∇_X Ric)(Z,W)`.
+
+This is the analogue for the curvature endomorphism of `TraceCov.lean`'s metric-trace
+lemma, and has the same shape: the frame is not parallel, so the coefficients
+`⟪∇_X eᵢ, eⱼ⟫` appear, and they are antisymmetric (`inner_cov_antisymm`) against a
+symmetric pairing, hence sum to zero (`sum_bilin_of_antisymm`). The pairing is
+`curvatureBilinFst`. -/
+theorem sum_inner_covCurvature_eq
+    (hcov : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    {X Z W : Π y : M, TangentSpace I y} {x : M}
+    (hX : CMDiff 2 (T% X)) (hZ : CMDiff 2 (T% Z)) (hW : CMDiff 3 (T% W))
+    {fr : ι → Π y : M, TangentSpace I y} {u : Set M}
+    (hs : IsOrthonormalFrameOn I E 1 fr u) (hu : IsOpen u) (hx : x ∈ u)
+    (hfr : ∀ i, CMDiff 2 (T% (fr i))) :
+    ∑ i, ⟪cov.covCurvature X (fr i) Z W x, fr i x⟫ = cov.covRicci X Z W x := by
+  classical
+  rw [covRicci]
+  have h1 : (1 : ℕ∞ω) ≠ 0 := by norm_num
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  have hW2 : CMDiff 2 (T% W) := hW.of_le (by norm_num)
+  have hfrm : ∀ (y : M) (i : ι), MDiffAt (T% (fr i)) y := fun y i ↦ (hfr i).mdifferentiable h2 y
+  have hDW : CMDiff 2 (T% (fun y ↦ cov W y (X y))) := cov.contMDiff_cov_apply hW hX
+  have hcs : ∀ i, MDiffAt (T% (fun y ↦ cov.curvature (fr i) Z W y)) x := fun i ↦
+    ((cov.contMDiff_curvature (hfr i) hZ hW).mdifferentiable h1) x
+  obtain ⟨b, hb⟩ := exists_orthonormalBasis_of_isOrthonormalFrameOn hs hx
+  -- `Ric(Z,W)` is the frame sum on a neighbourhood of `x`
+  have hloc : (fun y ↦ cov.ricci Z W y)
+      =ᶠ[𝓝 x] fun y ↦ ∑ i, ⟪cov.curvature (fr i) Z W y, fr i y⟫ := by
+    filter_upwards [hu.mem_nhds hx] with y hy
+    obtain ⟨c, hc⟩ := exists_orthonormalBasis_of_isOrthonormalFrameOn hs hy
+    exact cov.ricci_eq_sum_inner_frame hW2 c (fun i ↦ hfrm y i) (fun i ↦ (hc i).symm)
+  -- differentiate it, term by term, by metric compatibility
+  have hinner : ∀ i, MDiffAt (fun y ↦ ⟪cov.curvature (fr i) Z W y, fr i y⟫) x := fun i ↦
+    (((cov.contMDiff_curvature (hfr i) hZ hW) x).inner_bundle'
+      (((hfr i).of_le (by norm_num : (1 : ℕ∞ω) ≤ 2)) x)).mdifferentiableAt h1
+  have hderiv : mvfderiv I (fun y ↦ cov.ricci Z W y) x (X x)
+      = ∑ i, (⟪cov (fun y ↦ cov.curvature (fr i) Z W y) x (X x), fr i x⟫
+          + ⟪cov.curvature (fr i) Z W x, cov (fr i) x (X x)⟫) := by
+    rw [hloc.mvfderiv_eq, mvfderiv_fun_sum (fun i _ ↦ hinner i), _root_.sum_apply]
+    exact Finset.sum_congr rfl fun i _ ↦
+      hcov.mvfderiv_inner_eq (V := fun y : M ↦ TangentSpace I y) X (hcs i) (hfrm x i)
+  -- the two `Ric` terms
+  have hC : ∑ i, ⟪cov.curvature (fr i) (fun y ↦ cov Z y (X y)) W x, fr i x⟫
+      = cov.ricci (fun y ↦ cov Z y (X y)) W x :=
+    (cov.ricci_eq_sum_inner_frame hW2 b (fun i ↦ hfrm x i) (fun i ↦ (hb i).symm)).symm
+  have hD : ∑ i, ⟪cov.curvature (fr i) Z (fun y ↦ cov W y (X y)) x, fr i x⟫
+      = cov.ricci Z (fun y ↦ cov W y (X y)) x :=
+    (cov.ricci_eq_sum_inner_frame hDW b (fun i ↦ hfrm x i) (fun i ↦ (hb i).symm)).symm
+  -- the frame-derivative terms cancel: antisymmetric coefficients against a symmetric pairing
+  have hDF : ∀ i j, ⟪cov (fr i) x (X x), b j⟫ = -⟪cov (fr j) x (X x), b i⟫ := by
+    intro i j
+    rw [hb i, hb j]
+    exact cov.inner_cov_antisymm (X := X) hcov (fun i ↦ hfrm x i)
+      (fun i j ↦ by
+        filter_upwards [hu.mem_nhds hx] with y hy
+        rw [orthonormal_iff_ite.mp (hs.orthonormal hy) i j,
+          orthonormal_iff_ite.mp (hs.orthonormal hx) i j]) i j
+  have hcancel : ∑ i, (⟪cov.curvature (fun y ↦ cov (fr i) y (X y)) Z W x, fr i x⟫
+      + ⟪cov.curvature (fr i) Z W x, cov (fr i) x (X x)⟫) = 0 := by
+    have hzero := sum_bilin_of_antisymm b (cov.curvatureBilinFst Z W x hW2)
+      (fun i ↦ cov (fr i) x (X x)) hDF
+    rw [← hzero]
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    have hDfr : MDiffAt (T% (fun y ↦ cov (fr i) y (X y))) x :=
+      cov.mdiffAt_cov_apply (hfr i) (hX.mdifferentiable h2 x)
+    have e1 := cov.curvatureBilinFst_apply (Z := Z) (W := W) (x := x) hW2 hDfr (fr i x)
+    have e2 := cov.curvatureBilinFst_apply (Z := Z) (W := W) (x := x) hW2 (hfrm x i)
+      (cov (fr i) x (X x))
+    rw [hb i, e1, e2]
+  -- expand the left-hand side and combine
+  have hexp : ∑ i, ⟪cov.covCurvature X (fr i) Z W x, fr i x⟫
+      = (∑ i, ⟪cov (fun y ↦ cov.curvature (fr i) Z W y) x (X x), fr i x⟫)
+        - (∑ i, ⟪cov.curvature (fun y ↦ cov (fr i) y (X y)) Z W x, fr i x⟫)
+        - (∑ i, ⟪cov.curvature (fr i) (fun y ↦ cov Z y (X y)) W x, fr i x⟫)
+        - ∑ i, ⟪cov.curvature (fr i) Z (fun y ↦ cov W y (X y)) x, fr i x⟫ := by
+    rw [← Finset.sum_sub_distrib, ← Finset.sum_sub_distrib, ← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    show ⟪cov (fun y ↦ cov.curvature (fr i) Z W y) x (X x)
+        - cov.curvature (fun y ↦ cov (fr i) y (X y)) Z W x
+        - cov.curvature (fr i) (fun y ↦ cov Z y (X y)) W x
+        - cov.curvature (fr i) Z (fun y ↦ cov W y (X y)) x, fr i x⟫ = _
+    rw [inner_sub_left, inner_sub_left, inner_sub_left]
+  rw [Finset.sum_add_distrib] at hderiv hcancel
+  rw [hexp, ← hC, ← hD]
+  linarith [hderiv, hcancel]
+
+/-- **The contracted second Bianchi identity, first contraction**:
+`div Rm(Y,Z,W) = (∇_Y Ric)(Z,W) − (∇_Z Ric)(Y,W)`.
+
+The traced second Bianchi identity with both of its sums identified as covariant
+derivatives of `Ric`. Needs the connection to be both torsion-free and metric --- i.e.
+Levi-Civita: torsion-freeness for the second Bianchi identity itself, metric
+compatibility for the trace to commute with `∇`. -/
+theorem divCurvature_eq_covRicci_sub (hcov : cov.torsion = 0)
+    (hmet : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    {Y Z W : Π y : M, TangentSpace I y} {x : M}
+    (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z)) (hW : CMDiff 3 (T% W))
+    {fr : ι → Π y : M, TangentSpace I y} {u : Set M}
+    (hs : IsOrthonormalFrameOn I E 1 fr u) (hu : IsOpen u) (hx : x ∈ u)
+    (hfr : ∀ i, CMDiff 2 (T% (fr i))) :
+    cov.divCurvature Y Z W x = cov.covRicci Y Z W x - cov.covRicci Z Y W x := by
+  obtain ⟨b, hb⟩ := exists_orthonormalBasis_of_isOrthonormalFrameOn hs hx
+  rw [cov.divCurvature_eq_sub_sum hcov hY hZ hW hfr b (fun i ↦ (hb i).symm),
+    cov.sum_inner_covCurvature_eq hmet hY hZ hW hs hu hx hfr,
+    cov.sum_inner_covCurvature_eq hmet hZ hY hW hs hu hx hfr]
+
+end TraceDeriv
+
 end CovariantDerivative

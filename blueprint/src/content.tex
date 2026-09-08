@@ -1221,6 +1221,58 @@ target actually requires.
   killed by antisymmetry. It is not proved yet.
 \end{lemma}
 
+\begin{theorem}[The contracted second Bianchi identity, first contraction]
+  \label{thm:contracted-bianchi}
+  \lean{CovariantDerivative.covRicci,
+    CovariantDerivative.curvatureBilinFst,
+    CovariantDerivative.sum_inner_covCurvature_eq,
+    CovariantDerivative.divCurvature_eq_covRicci_sub,
+    CovariantDerivative.ricci_eq_sum_inner_frame}
+  \leanok
+  \uses{lem:traced-bianchi, lem:metric-trace-cov, def:div-curvature}
+  For a Levi-Civita connection,
+  \[
+    \operatorname{div}\Rm(Y,Z,W) \;=\; (\nab_Y\Ric)(Z,W) - (\nab_Z\Ric)(Y,W).
+  \]
+
+  \textbf{Proved} (\texttt{Divergence.lean}). Lemma \ref{lem:traced-bianchi}
+  already gives this with the right-hand side written as two frame sums
+  $\sum_i \langle (\nab_X\Riem)(e_i,Z)W, e_i\rangle$. What is proved here is
+  that each such sum \emph{is} $(\nab_X\Ric)(Z,W)$ ---
+  \texttt{sum\_inner\_covCurvature\_eq}, the statement that the first-slot trace
+  commutes with $\nab$.
+
+  \textbf{Why that is not immediate.} $\Ric(Z,W)$ is a frame sum only where the
+  frame is orthonormal, so differentiating it in $X$ means differentiating the
+  frame too, and a $C^2$ orthonormal frame is not parallel. Expanding
+  $X\big(\sum_i \langle \Riem(e_i,Z)W, e_i\rangle\big)$ by metric compatibility
+  produces, besides the wanted terms, $\sum_i \langle \Riem(e_i,Z)W, \nab_X
+  e_i\rangle$; and $(\nab_X\Riem)(e_i,Z)W$ carries the matching $-\Riem(\nab_X
+  e_i, Z)W$. Their sum is
+  \[
+    \sum_i \Big[\,\beta(\nab_X e_i,\, e_i) + \beta(e_i,\, \nab_X e_i)\,\Big],
+    \qquad \beta(a,b) := \langle \Riem(a,Z)W,\, b\rangle,
+  \]
+  which vanishes because the coefficients $\langle \nab_X e_i, e_j\rangle$ are
+  antisymmetric (metric compatibility plus local constancy of $\langle e_i,
+  e_j\rangle$) while the bracket is symmetric in $i,j$. That is exactly the
+  mechanism of Lemma \ref{lem:metric-trace-cov}, and the same Lean lemma
+  \texttt{sum\_bilin\_of\_antisymm} does the work; what is new is that $\beta$
+  has to be produced as a genuine continuous bilinear form, which is
+  \texttt{curvatureBilinFst}, available only because $\Riem$ is tensorial in its
+  first slot.
+
+  Both hypotheses on the connection are used, and for different things:
+  torsion-freeness for the second Bianchi identity, metric compatibility for the
+  trace to commute with $\nab$.
+
+  \textbf{What is left} is the second contraction, $\operatorname{div}\Ric =
+  \tfrac12\, d\scal$: trace this identity again over $Y$ and $W$. That needs the
+  pair symmetry of $\Riem$ carried through $\nab$, and Lemma
+  \ref{lem:metric-trace-cov} to turn $\sum_j (\nab_Z\Ric)(e_j,e_j)$ into
+  $Z(\scal)$.
+\end{theorem}
+
 \begin{lemma}[The metric trace commutes with $\nab$]
   \label{lem:metric-trace-cov}
   \lean{CovariantDerivative.mvfderiv_sum_eq_sum_covBilin,
