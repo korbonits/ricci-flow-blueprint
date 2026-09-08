@@ -41,3 +41,5 @@ import RicciFlowBlueprint.OneForm
 import RicciFlowBlueprint.KoszulSecondDeriv
 import RicciFlowBlueprint.FlowKoszul
 import RicciFlowBlueprint.ScalarEvolution
+import RicciFlowBlueprint.ScalarFlow
+import RicciFlowBlueprint.CovariantAlongCurve

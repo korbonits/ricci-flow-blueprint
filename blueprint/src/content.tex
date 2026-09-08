@@ -2186,11 +2186,12 @@ target actually requires.
   model-space statements are kept: they are the same theorems where Definition
   \ref{def:scalar} was first phrased, and they need no extension lemma.
 
-  So the only ingredient still missing from $\partial_t R = \Delta R +
-  2|\Ric|^2$ is $\operatorname{tr}_\g(\partial_t\Ric) = \Delta R$. That
-  rests on the contracted second Bianchi identity, which is now proved in both
-  contractions (Theorems \ref{thm:contracted-bianchi} and
-  \ref{thm:div-ricci}) rather than pending.
+  The one ingredient this left, $\operatorname{tr}_\g(\partial_t\Ric) =
+  \Delta R$, is now proved as well: it rests on the contracted second Bianchi
+  identity in both contractions (Theorems \ref{thm:contracted-bianchi} and
+  \ref{thm:div-ricci}) together with Lemma
+  \ref{lem:koszul-second-derivative}, and the resulting evolution equation is
+  Theorem \ref{thm:evolution-scal}.
 \end{lemma}
 
 \begin{proof}
@@ -2207,6 +2208,47 @@ target actually requires.
   by definition of the flow and uniqueness of derivatives, and
   $\langle -2\Ric, \Ric\rangle_\g = -2|\Ric|^2_\g$.
 \end{proof}
+
+\begin{theorem}[Evolution of the scalar curvature]
+  \label{thm:evolution-scal}
+  \lean{RicciFlowBlueprint.metricTraceE_derivRicciFormOfMetric_eq_laplacian,
+    RicciFlowBlueprint.hasDerivAt_scalarCurvatureOfMetricAt_eq_laplacian_add}
+  \leanok
+  \uses{def:ricci-flow, lem:variation-scalar, lem:koszul-second-derivative,
+    def:one-form-divergence, def:bilin-laplacian, thm:div-ricci,
+    lem:metric-trace-cov}
+  Under the Ricci flow, on any manifold,
+  \[
+    \partial_t R \;=\; \Delta R \;+\; 2|\Ric|^2_\g .
+  \]
+
+  \textbf{Proved} (\texttt{ScalarFlow.lean}). This is the join of the two
+  halves built separately above, and the first evolution equation of the flow
+  to be formalised here in full.
+
+  The \emph{analytic} half is Lemma \ref{lem:koszul-second-derivative}: for the
+  actual flow, $\partial_t\nab$ is Koszul for $h = \partial_t\g$, $\partial_t
+  \Rm$ is the associated $\Rm_A$, and the double trace of that is
+  \[
+    \operatorname{tr}_\g(\partial_t \Ric)
+      = \operatorname{div}\operatorname{div} h
+        - \operatorname{tr}_\g(\Delta_\g h),
+  \]
+  with \textbf{no curvature terms} --- they cancel at the Koszul step, before
+  any Bianchi identity is used.
+
+  The \emph{geometric} half is Definition \ref{def:one-form-divergence}
+  evaluated at $h = -2\Ric$ (the flow equation, carried across by
+  \texttt{innerE\_deriv\_eq\_of\_isRicciFlowAt'}): the first double trace is
+  $-2\cdot\tfrac12\Delta R = -\Delta R$ by the second contraction of the second
+  Bianchi identity differentiated once more, the second is
+  $\Delta(\operatorname{tr}_\g h) = -2\Delta R$, and the difference is $\Delta
+  R$. That is
+  \texttt{metricTraceE\_derivRicciFormOfMetric\_eq\_laplacian}.
+
+  Composing with $\partial_t R = \operatorname{tr}_\g(\partial_t\Ric) +
+  2|\Ric|^2$ from Lemma \ref{lem:variation-scalar} gives the statement.
+\end{theorem}
 
 \begin{lemma}[Evolution of the curvature tensor]
   \label{lem:evolution-rm}
@@ -2572,6 +2614,43 @@ Perelman's monotone functionals are what rule it out.
   \uses{def:w-entropy, thm:f-monotone}
   $\mathcal{W}$ is nondecreasing along the coupled flow.
 \end{theorem}
+
+\begin{definition}[The covariant derivative along a curve]
+  \label{def:cov-along-curve}
+  \lean{CovariantDerivative.velocity,
+    CovariantDerivative.MDiffAlongAt,
+    CovariantDerivative.IsCovDerivAlong,
+    CovariantDerivative.MDiffAlongAt.zero_section,
+    CovariantDerivative.IsCovDerivAlong.zero,
+    CovariantDerivative.IsCovDerivAlong.congr_of_eventuallyEq}
+  \leanok
+  \uses{def:curvature}
+  For a curve $\gamma \colon \R \to M$, an operator $D$ on sections of $TM$
+  along $\gamma$ deserves the name $D/dt$ when it is additive, satisfies the
+  Leibniz rule over scalar functions of the parameter,
+  \[
+    \tfrac{D}{dt}(fV) = f\,\tfrac{D}{dt}V + f'\,V,
+  \]
+  and restricts the ambient connection: $\tfrac{D}{dt}(W \circ \gamma)(t) =
+  (\nab_{\gamma'(t)} W)(\gamma(t))$ for a global section $W$.
+
+  \textbf{Why this is the first brick.} Mathlib's connection acts on
+  \emph{global sections over $M$}; a curve's velocity is not one, so
+  $\nab_{\gamma'}\gamma' = 0$ cannot even be \emph{stated} with it. Everything
+  in comparison geometry --- geodesics, parallel transport, the Jacobi
+  equation, the first and second variation of length, and hence Definition
+  \ref{def:reduced-volume} --- rests on the pullback connection on
+  $\gamma^*TM$. A section along $\gamma$ is a lift of $\gamma$ to $TM$, so its
+  regularity is ordinary differentiability into the total space and no new
+  bundle structure is needed.
+
+  \textbf{Proved} (\texttt{CovariantAlongCurve.lean}): the predicate, that $D$
+  kills the zero section, and that $D$ is \textbf{local} --- it depends on a
+  section only through its germ. Locality is not an axiom: take a bump $f$
+  equal to $1$ near $t$ and supported where the two sections agree; then $fV =
+  fW$ globally, while Leibniz evaluates both sides at $t$ to $DV(t)$ and
+  $DW(t)$, since $f(t) = 1$ and $f'(t) = 0$.
+\end{definition}
 
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
