@@ -317,11 +317,23 @@ Now `thm:hamilton-ivey` at the head of `chap:kappa`, with a
    own Leibniz rule on the local frame expansion `W = ∑ᵢaᵢWᵢ` *is* the
    `restrict` axiom. An earlier plan here called for `Variation.lean`'s
    `differenceE` against a chart-flat connection; that was more machinery than
-   the job takes. **Next: `∇_{γ'}γ' = 0`** — geodesics as an ODE in the fibre
-   coordinates, then Picard–Lindelöf, then `exp`, then Jacobi fields. The
-   coordinate ODE is `c'' = −Γ(c')(c')`, and `Γ` *is* needed there (it is the
-   second-order content that `D/dt` alone does not expose), so build it then,
-   from `covAlong` applied to the coordinate frame.
+   the job takes. **Geodesics are stated** (`IsGeodesicOn`) and, crucially,
+   *non-vacuously*: `isGeodesicOn_iff_forall` says `∇_{γ'}γ' = 0` is equivalent
+   to vanishing under every operator satisfying the axioms, forward by
+   uniqueness and **backward by existence** — without the latter the quantified
+   form is vacuously true, the repo's worst class of error. **`Γ` is built and
+   is `C^k`** (`christoffelCoord`, `contMDiffAt_christoffelCoord`), so the
+   coordinate equation `D/dt V = c' + Γ(γ)(γ')(c)` is available with the
+   regularity Picard–Lindelöf wants.
+   **Next, and it is one identification, not a port**: the tangent-bundle
+   trivialisation *is* the chart. `TangentBundle.trivializationAt_apply` says
+   `(e_{x₀} ⟨y,v⟩).2 = fderivWithin (chart_{x₀} ∘ chart_y⁻¹) (range I)
+   (chart_y y) v` — i.e. `tangentCoordChange I y x₀ y v` — so with
+   `p t := extChartAt I x₀ (γ t)` the coordinate of `γ'(t)` is `p'(t)` and
+   `∇_{γ'}γ' = 0` becomes `p'' = −Γ(p')(p')` on an open subset of `E`. Then
+   mathlib's Picard–Lindelöf (`Analysis/ODE/`), then `exp`, then Jacobi fields.
+   Entry points: `TangentBundle.trivializationAt_apply`, `tangentCoordChange`,
+   `tangentCoordChange_self`, `hasFDerivWithinAt_tangentCoordChange`.
 
 
 **Upstream candidates** (Mathlib-general, no dependence on the curvature
