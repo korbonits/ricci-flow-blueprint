@@ -1647,7 +1647,11 @@ target actually requires.
     CovariantDerivative.divBilinForm,
     CovariantDerivative.divDivBilin,
     CovariantDerivative.covOneForm_divBilinOneForm_eq_sum,
-    CovariantDerivative.divDivBilin_eq_sum}
+    CovariantDerivative.divDivBilin_eq_sum,
+    CovariantDerivative.hessianFun_eq_covOneForm,
+    CovariantDerivative.laplacianFun_eq_divOneForm,
+    CovariantDerivative.laplacianFun_eq_sum_frame,
+    CovariantDerivative.laplacianFun_traceBilin_eq}
   \leanok
   \uses{lem:cov-bilin-tensor, def:bilin-laplacian, def:laplacian}
   For a one-form field $\omega$, $(\nab_X \omega)(Y) = X(\omega(Y)) -
@@ -1694,8 +1698,26 @@ target actually requires.
   that $\nab_W$ of a one-form subtracts, so the two cancel and no curvature
   term survives.
 
-  For $\omega = \mathrm{d}f$ these are the Hessian and Laplacian of a function
-  (Definition \ref{def:laplacian}); the general case is what the flow needs.
+  \textbf{For $\omega = \mathrm{d}f$ these \emph{are} the Hessian and Laplacian
+  of a function} (Definition \ref{def:laplacian}) --- not merely analogous:
+  $\nab^2 f(X,Y)$ and $(\nab_X \mathrm{d}f)(Y)$ are the same expression, so
+  \texttt{hessianFun\_eq\_covOneForm} and
+  \texttt{laplacianFun\_eq\_divOneForm} are \texttt{rfl}. That is worth more
+  than a remark: it hands the Hessian its bilinear packaging for free. $\nab^2
+  f$ on its own has no cheap route to one --- the analogue of
+  \texttt{TensorialAt} would need $y \mapsto \mathrm{d}f_y(Y_y)$ differentiable
+  for merely differentiable $Y$ --- but $\nab\omega$ has two terms and needs no
+  frame argument at all, so \texttt{laplacianFun\_eq\_sum\_frame} (that
+  $\Delta f$ may be read off any frame orthonormal at $x$) follows from
+  \texttt{divOneForm\_eq\_sum\_frame}.
+
+  \textbf{Consequence}, and the last identification the flow needs:
+  $\Delta(\operatorname{tr}_\g h) = \operatorname{tr}_\g(\Delta_\g h)$
+  (\texttt{laplacianFun\_traceBilin\_eq}). Both sides are read off the same
+  frame and the terms match by the second-order trace lemma of Definition
+  \ref{def:bilin-laplacian}, plus one $\texttt{Finset.sum\_comm}$. So the
+  second of the two canonical double traces of $\nab^2h$ is the Laplacian of a
+  function.
   With $\Delta_\g h$ from Definition \ref{def:bilin-laplacian}, both traces in
   \[
     \operatorname{tr}_\g(\partial_t \Ric)

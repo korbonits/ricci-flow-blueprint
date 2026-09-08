@@ -197,7 +197,82 @@ theorem divOneForm_eq_sum_frame (hw : IsMDiffOneFormAt (I := I) w x)
   refine Finset.sum_congr rfl fun i _ ↦ ?_
   rw [← hb i, cov.covOneFormAt_apply hw (hfr i) (hfr i)]
 
+omit [CompleteSpace E] [FiniteDimensional ℝ E]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] in
+/-- **The Hessian of a function is `∇` of its differential**: `∇²f(X,Y) = (∇_X \mathrm{d}f)(Y)`.
+The two definitions are the same expression, so this is `rfl`; the point is that `covOneFormAt`
+then packages `∇²f` as a bilinear form with **no frame argument**, which is what the Hessian on
+its own has no cheap route to. -/
+theorem hessianFun_eq_covOneForm (f : M → ℝ) (X Y : Π y : M, TangentSpace I y) (x : M) :
+    cov.hessianFun f X Y x
+      = cov.covOneForm (fun y ↦ (mvfderiv I f y : TangentSpace I y →L[ℝ] ℝ)) X Y x := rfl
+
 end Divergence
+
+section FunctionTrace
+
+variable [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+
+omit [CompleteSpace E] in
+/-- **The Laplacian of a function is the divergence of its differential.** -/
+theorem laplacianFun_eq_divOneForm (f : M → ℝ) (x : M) :
+    cov.laplacianFun f x
+      = cov.divOneForm (fun y ↦ (mvfderiv I f y : TangentSpace I y →L[ℝ] ℝ)) x := rfl
+
+omit [CompleteSpace E] in
+/-- **`Δf` read off any frame orthonormal at `x`**, and hence frame-independent. Free from
+`divOneForm_eq_sum_frame`: no packaging of the Hessian is needed, because `∇²f` *is* `∇` of the
+one-form `df`, and `∇ω` has only two terms. -/
+theorem laplacianFun_eq_sum_frame {f : M → ℝ} {x : M}
+    (hf : IsMDiffOneFormAt (I := I) (fun y ↦ (mvfderiv I f y : TangentSpace I y →L[ℝ] ℝ)) x)
+    {ι : Type*} [Fintype ι] {fr : ι → Π y : M, TangentSpace I y}
+    (hfr : ∀ i, MDiffAt (T% (fr i)) x) (b : OrthonormalBasis ι ℝ (TangentSpace I x))
+    (hb : ∀ i, fr i x = b i) :
+    cov.laplacianFun f x = ∑ i, cov.hessianFun f (fr i) (fr i) x := by
+  rw [cov.laplacianFun_eq_divOneForm f x, cov.divOneForm_eq_sum_frame hf hfr b hb]
+  exact Finset.sum_congr rfl fun i _ ↦ (cov.hessianFun_eq_covOneForm f (fr i) (fr i) x).symm
+
+variable [IsContMDiffRiemannianBundle I 1 E (fun (x : M) ↦ TangentSpace I x)]
+  [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
+  [VectorBundle ℝ E (fun (x : M) ↦ TangentSpace I x)] [T2Space M]
+  [ContMDiffCovariantDerivative cov 1]
+
+variable {h : M → E →L[ℝ] E →L[ℝ] ℝ}
+
+omit [CompleteSpace E] in
+-- BENCH: laplacian-metric-trace
+/-- **`Δ(tr_g h) = tr_g(Δ_g h)`.** The metric trace commutes with the Laplacian, which is the
+last identification the evolution of the scalar curvature needs: it turns the second of the two
+canonical double traces of `∇²h` into the Laplacian of a function. Both sides are read off the
+same frame --- the left by `laplacianFun_eq_sum_frame`, which is free because `∇²f` is `∇` of
+the one-form `df`, and the right by `laplacianBilin_eq_sum_frame` --- and then it is
+`hessianFun_traceBilin_eq` termwise plus one `Finset.sum_comm`. -/
+theorem laplacianFun_traceBilin_eq
+    (hcov : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    (hb : ∀ y : M, IsMDiffBilinAt (I := I) h y) {x : M}
+    (hf : IsMDiffOneFormAt (I := I)
+      (fun y ↦ (mvfderiv I (traceBilin (I := I) h) y : TangentSpace I y →L[ℝ] ℝ)) x)
+    {iota : Type*} [Fintype iota] {fr : iota → Π y : M, TangentSpace I y} {u : Set M}
+    (hs : IsOrthonormalFrameOn I E 1 fr u) (hu : IsOpen u) (hx : x ∈ u)
+    (b : OrthonormalBasis iota ℝ (TangentSpace I x)) (hbv : ∀ i, fr i x = b i)
+    (hfr2 : ∀ i, CMDiff 2 (T% (fr i)))
+    (hh : ∀ y ∈ u, ∀ i, MDiffAt (fun y' ↦ h y' (fr i y') (fr i y')) y)
+    (hd : ∀ i j, MDiffAt (fun y ↦ cov.covBilin h (fr i) (fr j) (fr j) y) x)
+    (hcb : ∀ j, cov.IsMDiffCovBilinAt h (fr j) (fr j) x) :
+    cov.laplacianFun (traceBilin (I := I) h) x
+      = ∑ j, cov.laplacianBilin h (fr j) (fr j) x := by
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  have hfr1 : ∀ i, MDiffAt (T% (fr i)) x := fun i ↦ (hfr2 i).mdifferentiable h2 x
+  have step : ∀ i, cov.hessianFun (traceBilin (I := I) h) (fr i) (fr i) x
+      = ∑ j, cov.cov2Bilin h (fr i) (fr i) (fr j) (fr j) x := fun i ↦
+    cov.hessianFun_traceBilin_eq hcov hb (hfr1 i) (hfr2 i) hs hu hx hfr2 hh (hd i)
+  rw [cov.laplacianFun_eq_sum_frame hf hfr1 b hbv,
+    Finset.sum_congr rfl fun i _ ↦ step i, Finset.sum_comm]
+  exact Finset.sum_congr rfl fun j _ ↦
+    (cov.laplacianBilin_eq_sum_frame (hb x) (hcb j) (hfr2 j) (hfr2 j) hfr2 b hbv).symm
+
+end FunctionTrace
+
 
 section BilinDivergence
 
