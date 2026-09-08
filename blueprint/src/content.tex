@@ -1740,7 +1740,11 @@ target actually requires.
     CovariantDerivative.covEnd_eq_covTwoTensor_flip,
     RicciFlowBlueprint.derivDifferenceTensor,
     RicciFlowBlueprint.isKoszulOf_derivDifference,
-    RicciFlowBlueprint.hasDerivAt_curvatureE_covTwoTensor}
+    RicciFlowBlueprint.hasDerivAt_curvatureE_covTwoTensor,
+    CovariantDerivative.covTwoTensor_congr_dir,
+    CovariantDerivative.IsMDiffTwoTensorAt,
+    CovariantDerivative.covTwoTensor_congr_snd,
+    RicciFlowBlueprint.derivCurvatureEndoE_apply_field}
   \leanok
   \uses{def:bilin-laplacian, lem:variation-connection, lem:metric-trace-cov}
   Let $\nab$ be a metric connection and $A$ a $(1,2)$-tensor field satisfying the Koszul
@@ -1805,6 +1809,21 @@ target actually requires.
   \texttt{covBilin} congr lemmas transfer it to arbitrary differentiable fields
   --- and \texttt{hasDerivAt\_curvatureE\_covTwoTensor} delivers $\partial_t\Rm$
   as $\Rm_A$ for that tensor.
+
+  \textbf{Reading the trace off a frame.} The variation formula delivers
+  $\partial_t[v \mapsto \Rm(v,X)Y]$ on the constant-in-a-trivialisation
+  extension of $v$, while the double trace above is taken over a local
+  orthonormal frame. Transferring between them is
+  \texttt{derivCurvatureEndoE\_apply\_field}, which needs $\nab A$ to be
+  pointwise in each of the two slots $v$ lands in: the \emph{direction} slot is
+  free (\texttt{covTwoTensor\_congr\_dir} --- all three terms are continuous
+  linear maps at $U(x)$), and the tensor's \emph{first argument} slot is the
+  Leibniz cancellation, so \texttt{TensorialAt} applies and
+  \texttt{covTwoTensor\_congr\_snd} follows with no frame argument. The one
+  hypothesis is \texttt{IsMDiffTwoTensorAt}: that $y \mapsto A_y(P_y,Q_y)$ is
+  differentiable for differentiable $P$, $Q$ --- for $A = \partial_t\nab$ a
+  regularity hypothesis on the first variation of the connection, carried
+  alongside the commutation hypotheses the variation already needs.
 
   So with $h = \partial_t \g$ the double trace above is
   $\operatorname{tr}_\g(\partial_t\Ric)$; under the Ricci flow $h = -2\Ric$

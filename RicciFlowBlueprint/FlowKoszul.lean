@@ -15,6 +15,7 @@ is `div div h − tr_g(Δ_g h)`. This file connects the two:
 Argument order follows `CovariantDerivative`: `cov σ x (X x)` is `(∇_X σ) x`.
 -/
 import RicciFlowBlueprint.CurvatureVariation
+import RicciFlowBlueprint.RicciVariation
 import RicciFlowBlueprint.KoszulSecondDeriv
 
 open Bundle Filter VectorField
@@ -134,6 +135,37 @@ theorem hasDerivAt_curvatureE_covTwoTensor
       ((leviCivitaOfMetric (g t₀)).covTwoTensor (derivDifferenceTensor g t₀) X Y Z x
         - (leviCivitaOfMetric (g t₀)).covTwoTensor (derivDifferenceTensor g t₀) Y X Z x) t₀ :=
   hasDerivAt_curvatureE_leviCivitaOfMetric hg hcomm hZ hX hY hXYZ hYXZ
+
+/-- **`∂ₜ[v ↦ Rm(v,X)Y]` on arbitrary differentiable fields.** `derivCurvatureEndoE_apply`
+states it on the constant-in-a-trivialisation extension of `v`; the direction slot of `∇A` is
+pointwise for free and its argument slot by `covTwoTensor_congr_snd`, so it transfers. -/
+theorem derivCurvatureEndoE_apply_field
+    (hg : ∀ y, HasDerivAt (fun t ↦ innerE (g t) y) (h y) t₀)
+    (hcomm : CommutesWithMvfderiv g h t₀) (hcov : CommutesWithCov g t₀)
+    {x : M} (hA : CovariantDerivative.IsMDiffTwoTensorAt (I := I) (derivDifferenceTensor g t₀) x)
+    {V X Y : Π y : M, TangentSpace I y}
+    (hV : MDiffAt (T% V) x) (hX : MDiffAt (T% X) x) (hY : CMDiff 2 (T% Y)) :
+    derivCurvatureEndoE g t₀ X hY x (V x)
+      = (leviCivitaOfMetric (g t₀)).covTwoTensor (derivDifferenceTensor g t₀) V X Y x
+        - (leviCivitaOfMetric (g t₀)).covTwoTensor (derivDifferenceTensor g t₀) X V Y x := by
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  have hY1 : MDiffAt (T% Y) x := hY.mdifferentiable h2 x
+  have hE : MDiffAt (T% (FiberBundle.extend E (show TangentSpace I x from V x))) x :=
+    FiberBundle.mdifferentiableAt_extend ..
+  have hEv : (FiberBundle.extend E (show TangentSpace I x from V x) : Π z : M,
+      TangentSpace I z) x = V x := FiberBundle.extend_apply_self ..
+  rw [derivCurvatureEndoE_apply hg hcomm hcov hX hY (V x)]
+  rw [show covEndE (leviCivitaOfMetric (g t₀)) (derivDifferenceE g t₀)
+      (FiberBundle.extend E (show TangentSpace I x from V x)) X Y x
+      = (leviCivitaOfMetric (g t₀)).covTwoTensor (derivDifferenceTensor g t₀)
+        (FiberBundle.extend E (show TangentSpace I x from V x)) X Y x from rfl,
+    show covEndE (leviCivitaOfMetric (g t₀)) (derivDifferenceE g t₀) X
+      (FiberBundle.extend E (show TangentSpace I x from V x)) Y x
+      = (leviCivitaOfMetric (g t₀)).covTwoTensor (derivDifferenceTensor g t₀) X
+        (FiberBundle.extend E (show TangentSpace I x from V x)) Y x from rfl,
+    (leviCivitaOfMetric (g t₀)).covTwoTensor_congr_dir (U' := V) hEv,
+    (leviCivitaOfMetric (g t₀)).covTwoTensor_congr_snd hA X hE hV hY1 hEv]
+  rfl
 
 end Flow
 
