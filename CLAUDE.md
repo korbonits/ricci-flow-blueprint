@@ -268,6 +268,28 @@ Now `thm:hamilton-ivey` at the head of `chap:kappa`, with a
    and enough second-variation scaffolding to imitate on the `L`-side. If a
    specific file turns out to be worth taking, vendor it narrowly with
    attribution as `GramSchmidtOrtho.lean` does — do not take a dependency.
+   **Survey, 2026-09-08 — the first brick is NOT `exp`.** Mathlib
+   `Geometry/Manifold/` has no geodesics, no pullback connection, no
+   Christoffel symbols and no covariant derivative along a curve;
+   `CovariantDerivative.toFun` acts only on **global sections over `M`**
+   (`(Π x : M, V x) → (Π x : M, T_xM →L V x)`), and its whole API — including
+   `IsCovariantDerivativeOn`'s two axioms `add`/`leibniz` — is phrased there.
+   It does have Picard–Lindelöf (`Analysis/ODE/`). So the missing primitive is
+   **`D/dt` along a curve**, the pullback connection on `γ*TM`: without it one
+   cannot even *state* `∇_{γ'}γ' = 0`, parallel transport, the Jacobi equation,
+   or the first/second variation of length — let alone their `L`-analogues.
+   **Design**: mirror mathlib's own `IsCovariantDerivativeOn` →
+   `CovariantDerivative` split. A predicate `IsCovDerivAlong cov γ D` with
+   three axioms — additive; Leibniz over `f : ℝ → ℝ` with `deriv f`; and
+   agreement with `cov` on restrictions of global sections,
+   `D (W ∘ γ) t = cov W (γ t) (γ' t)` — then uniqueness, then existence via
+   charts (the difference tensor against a chart-flat connection is the
+   Christoffel tensor, and `Variation.lean`'s `differenceE` already builds
+   exactly that comparison). A section along `γ` is a lift of `γ` to `TM`, so
+   its regularity is ordinary `MDifferentiableAt` into the total space — no
+   new bundle structure needed. **Do not do this model-space-first**: the repo
+   paid for that once with `∂ₜ scal`, which sat `M = E`-only and then cost a
+   full port.
 
 
 **Upstream candidates** (Mathlib-general, no dependence on the curvature
