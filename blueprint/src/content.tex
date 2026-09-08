@@ -1492,6 +1492,308 @@ target actually requires.
   2|\Ric|^2$.
 \end{theorem}
 
+\begin{lemma}[$\nab h$ is a tensor]
+  \label{lem:cov-bilin-tensor}
+  \lean{CovariantDerivative.covBilin_smul_dir,
+    CovariantDerivative.covBilin_add_dir,
+    CovariantDerivative.covBilin_congr_dir,
+    CovariantDerivative.covBilin_smul_snd,
+    CovariantDerivative.covBilin_add_snd,
+    CovariantDerivative.covBilin_smul_thd,
+    CovariantDerivative.covBilin_add_thd,
+    CovariantDerivative.covBilinDir,
+    CovariantDerivative.covBilinForm,
+    CovariantDerivative.covBilinForm_apply,
+    CovariantDerivative.sum_covBilin_congr}
+  \leanok
+  \uses{def:laplacian, lem:metric-trace-cov}
+  Let $h$ be a bilinear form field on $TM$ and $\nab$ a connection. Then
+  $(\nab_X h)(Y,Z) = X(h(Y,Z)) - h(\nab_X Y, Z) - h(Y, \nab_X Z)$ is
+  \emph{tensorial and pointwise in all three slots}: a continuous trilinear
+  form on $T_xM$, not merely an operation on fields. In particular
+  $\nab_X h$ is an honest bilinear form $\texttt{covBilinForm}$, and the
+  direction is an honest linear form $\texttt{covBilinDir}$.
+
+  \textbf{Proved} (\texttt{BilinDeriv.lean}). All three slots are cheap,
+  unlike the four slots of $\nab\Rm$ (Lemma \ref{lem:cov-curvature-direction}).
+  The \emph{direction} slot needs \emph{nothing}: each of the three terms is a
+  continuous linear map --- $\mathrm{d}(h(Y,Z))_x$, $(\nab Y)_x$, $(\nab Z)_x$
+  --- applied to $X(x)$, so linearity and pointwiseness hold by construction,
+  with no differentiability hypothesis whatever. The $Y$ and $Z$ slots are the
+  usual Leibniz cancellation: replacing $Y$ by $fY$ produces $(Xf)\,h(Y,Z)$
+  from the derivative term, and $-h(\nab_X(fY),Z)$ produces $-(Xf)\,h(Y,Z)$,
+  which cancels it; only $\mathrm{MDifferentiableAt}$ of the fields is used,
+  as in the Hessian's second slot, so no frame-and-globalise argument of the
+  kind $\Rm$'s third slot needs (Lemma \ref{lem:curvature-pointwise}) appears.
+  Hence \texttt{TensorialAt.mkHom} and \texttt{mkHom}$_2$ apply directly.
+
+  The one hypothesis carried is \texttt{IsMDiffBilinAt}: that $y \mapsto h_y(U_y,
+  V_y)$ is differentiable at $x$ for differentiable $U$, $V$. It is what makes
+  the Leibniz rule available and is implied by $h$ being $C^1$ into the space
+  of bilinear forms.
+
+  \textbf{Consequence.} $\operatorname{tr}_\g(\nab_X h)$ is frame-independent
+  on its own (\texttt{sum\_covBilin\_congr}), by the same trace-of-a-bilinear-map
+  argument that Definition \ref{def:ricci-form} uses for $\scal$; so both sides
+  of Lemma \ref{lem:metric-trace-cov} are frame-independent, not just equal for
+  each frame. This is the object the connection Laplacian $\Delta_\g h$ and the
+  double divergence $\operatorname{div}\operatorname{div} h$ are traces of, and
+  those are what $\operatorname{tr}_\g(\partial_t \Ric) = \Delta \scal$ needs.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  Direction: by construction, as above. Second slot: with
+  $\nab_X(fY) = f\nab_X Y + (Xf) Y$ and $h(fY,Z) = f\,h(Y,Z)$,
+  \[
+    (\nab_X h)(fY,Z) = (Xf)h(Y,Z) + f\,X(h(Y,Z)) - f\,h(\nab_XY,Z)
+      - (Xf)h(Y,Z) - f\,h(Y,\nab_XZ) = f\,(\nab_X h)(Y,Z),
+  \]
+  and additivity is the same computation without the coefficient. The third
+  slot is identical with the roles of $Y$ and $Z$ exchanged.
+\end{proof}
+
+\begin{definition}[$\nab^2 h$ and the connection Laplacian $\Delta_\g h$]
+  \label{def:bilin-laplacian}
+  \lean{CovariantDerivative.cov2Bilin,
+    CovariantDerivative.cov2Bilin_congr_dir,
+    CovariantDerivative.cov2Bilin_smul_dir,
+    CovariantDerivative.cov2Bilin_add_dir,
+    CovariantDerivative.cov2Bilin_smul_snd,
+    CovariantDerivative.cov2Bilin_add_snd,
+    CovariantDerivative.cov2Bilin_congr_snd,
+    CovariantDerivative.cov2BilinAt,
+    CovariantDerivative.cov2BilinForm,
+    CovariantDerivative.laplacianBilin,
+    CovariantDerivative.laplacianBilin_eq_sum_basis,
+    CovariantDerivative.laplacianBilin_eq_sum_frame,
+    CovariantDerivative.traceBilin,
+    CovariantDerivative.traceBilin_eq_sum_basis,
+    CovariantDerivative.hessianFun_traceBilin_eq}
+  \leanok
+  \uses{lem:cov-bilin-tensor, def:laplacian, def:cov2-curvature}
+  For a bilinear form field $h$,
+  \[
+    (\nab^2_{W,X} h)(Y,Z) = W\big((\nab_X h)(Y,Z)\big) - (\nab_{\nab_W X} h)(Y,Z)
+      - (\nab_X h)(\nab_W Y, Z) - (\nab_X h)(Y, \nab_W Z)
+  \]
+  --- one correction per slot of $\nab h$, so \emph{three}, against the five of
+  $\nab^2\Rm$ (Definition \ref{def:cov2-curvature}). The \textbf{connection
+  Laplacian} $\Delta_\g h$ is its metric trace in the two derivative slots,
+  $(\Delta_\g h)(Y,Z) = \sum_i (\nab^2_{e_i,e_i} h)(Y,Z)$.
+
+  \textbf{Proved} (\texttt{BilinLaplacian.lean}). $\nab^2 h$ is tensorial and
+  pointwise in both derivative slots, so $\Delta_\g h$ is well defined and
+  frame-independent. The two slots behave differently, as they do for
+  $\nab^2\Rm$:
+
+  \begin{itemize}
+    \item The \emph{outer} direction $W$ needs \textbf{no frame argument}. It is
+      Lemma \ref{lem:cov-bilin-tensor} cashed in: the leading term is a
+      continuous linear map at $W(x)$, and each of the three corrections is
+      $\nab h$ in a slot it is already pointwise in, applied to a field whose
+      value at $x$ is determined by $W(x)$.
+    \item The \emph{inner} direction $X$ is the Leibniz cancellation --- and the
+      cancellation is cheap, because every step other than the leading one uses
+      only the \emph{direction} slot of $\nab h$, which carries no hypotheses at
+      all. Pointwiseness there is the frame-and-globalise argument, but it runs
+      at $C^1$: \texttt{cov2Bilin\_smul\_snd} asks its coefficient for one
+      derivative, against the three that $\nab^2\Rm$ asks.
+  \end{itemize}
+
+  The one hypothesis beyond Lemma \ref{lem:cov-bilin-tensor}'s is
+  \texttt{IsMDiffCovBilinAt}: that $y \mapsto (\nab_V h)(Y,Z)$ is differentiable
+  at $x$ for $C^1$ fields $V$. Merely-differentiable $V$ cannot supply this ---
+  the leading term of $\nab h$ differentiates $h(Y,Z)$ in the direction $V$, so
+  it sees the germ of $V$ --- which is exactly why the inner slot needs the
+  frame argument and the outer one does not.
+
+  \textbf{The trace commutes with $\nab^2$ too}: $\nab^2(\operatorname{tr}_\g
+  h)(X,Y) = \sum_i (\nab^2_{X,Y}h)(e_i,e_i)$ (\texttt{traceBilin},
+  \texttt{hessianFun\_traceBilin\_eq}), by the same mechanism as the
+  divergence (Definition \ref{def:one-form-divergence}) one level up:
+  differentiating the frame sum twice produces $\nab^2h$ \emph{plus} exactly
+  the term $\operatorname{tr}_\g(\nab_{\nab_XY} h)$ that the Hessian's
+  connection correction subtracts. Tracing once more identifies
+  $\Delta(\operatorname{tr}_\g h)$ with $\operatorname{tr}_\g(\Delta_\g h)$.
+
+  This is what $\operatorname{tr}_\g(\partial_t\Ric) = \Delta \scal$ is
+  assembled from. Tracing the first variation of $\Rm$ (Lemma
+  \ref{lem:variation-curvature}) twice against the Koszul formula for
+  $\partial_t\nab$ gives, with \emph{no} curvature terms,
+  \[
+    \operatorname{tr}_\g(\partial_t \Ric)
+      = \operatorname{div}\operatorname{div} h - \Delta(\operatorname{tr}_\g h),
+  \]
+  and under the flow $h = -2\Ric$, so $\operatorname{tr}_\g h = -2\scal$ and
+  $\operatorname{div}\operatorname{div} h = -2\operatorname{div}\operatorname{div}\Ric
+  = -\Delta \scal$ by the second contraction (Theorem \ref{thm:div-ricci}),
+  giving $2\Delta\scal - \Delta\scal = \Delta\scal$.
+\end{definition}
+
+\begin{definition}[$\nab\omega$, $\operatorname{div}\omega$, and the double divergence of a bilinear form]
+  \label{def:one-form-divergence}
+  \lean{CovariantDerivative.covOneForm,
+    CovariantDerivative.covOneForm_smul_dir,
+    CovariantDerivative.covOneForm_smul_snd,
+    CovariantDerivative.covOneFormAt,
+    CovariantDerivative.divOneForm,
+    CovariantDerivative.divOneForm_eq_sum_basis,
+    CovariantDerivative.divOneForm_eq_sum_frame,
+    CovariantDerivative.covBilinFstSnd,
+    CovariantDerivative.divBilin,
+    CovariantDerivative.divBilin_eq_sum_basis,
+    CovariantDerivative.divBilin_eq_sum_frame,
+    CovariantDerivative.divBilinForm,
+    CovariantDerivative.divDivBilin,
+    CovariantDerivative.covOneForm_divBilinOneForm_eq_sum,
+    CovariantDerivative.divDivBilin_eq_sum,
+    CovariantDerivative.hessianFun_eq_covOneForm,
+    CovariantDerivative.laplacianFun_eq_divOneForm,
+    CovariantDerivative.laplacianFun_eq_sum_frame,
+    CovariantDerivative.laplacianFun_traceBilin_eq}
+  \leanok
+  \uses{lem:cov-bilin-tensor, def:bilin-laplacian, def:laplacian}
+  For a one-form field $\omega$, $(\nab_X \omega)(Y) = X(\omega(Y)) -
+  \omega(\nab_X Y)$, and $\operatorname{div}\omega = \sum_i (\nab_{e_i}
+  \omega)(e_i)$. For a bilinear form field $h$, $(\operatorname{div} h)(Z) =
+  \sum_i (\nab_{e_i} h)(e_i, Z)$, and the \textbf{double divergence} is
+  $\operatorname{div}\operatorname{div} h = \operatorname{div}
+  (\operatorname{div} h)$.
+
+  \textbf{Proved} (\texttt{OneForm.lean}). The point is that
+  $\operatorname{div}\operatorname{div} h$ --- the trace of $\nab^2 h$ pairing
+  slots $1\&3$ and $2\&4$ --- needs \emph{no four-linear packaging of $\nab^2h$
+  at all}. It factors into two cheap traces:
+
+  \begin{itemize}
+    \item $\operatorname{div} h$ is the trace of the $(0,3)$-tensor $\nab h$
+      (Lemma \ref{lem:cov-bilin-tensor}) in its first two slots, which is one
+      $\texttt{mkHom}_2$ over (direction, second slot): the direction slot is
+      tensorial with no hypotheses, and the second is the Leibniz cancellation.
+      It is tensorial in its remaining slot as a finite sum of third-slot
+      tensorialities, so it is an honest one-form field.
+    \item $\nab\omega$ has \emph{two} terms, against $\nab h$'s three and
+      $\nab\Rm$'s four, so \emph{both} of its slots are free of any frame
+      argument: the direction is a continuous linear map by construction, and
+      the $Y$ slot is the plain Leibniz cancellation on merely differentiable
+      fields. So $\texttt{TensorialAt.mkHom}_2$ applies directly and
+      $\operatorname{div}\omega$ is frame-independent for free.
+  \end{itemize}
+
+  \textbf{The two definitions agree.} $\operatorname{div}\operatorname{div} h$
+  is defined here as an \emph{iterated} divergence, while the evolution of the
+  scalar curvature produces the \emph{double trace} of $\nab^2h$. They are equal:
+  \[
+    (\nab_W(\operatorname{div} h))(Z) = \sum_i (\nab^2_{W,e_i}h)(e_i, Z),
+    \qquad
+    \operatorname{div}\operatorname{div} h
+      = \sum_{j}\sum_i (\nab^2_{e_j,e_i}h)(e_i, e_j)
+  \]
+  (\texttt{covOneForm\_divBilinOneForm\_eq\_sum},
+  \texttt{divDivBilin\_eq\_sum}) --- \emph{the divergence commutes with
+  $\nab$}. This is Lemma \ref{lem:metric-trace-cov} applied to the bilinear
+  form $(v,w) \mapsto (\nab_v h)(w,Z)$: differentiating the frame sum produces
+  $\nab^2h$ \emph{plus} exactly the term $(\operatorname{div} h)(\nab_W Z)$
+  that $\nab_W$ of a one-form subtracts, so the two cancel and no curvature
+  term survives.
+
+  \textbf{For $\omega = \mathrm{d}f$ these \emph{are} the Hessian and Laplacian
+  of a function} (Definition \ref{def:laplacian}) --- not merely analogous:
+  $\nab^2 f(X,Y)$ and $(\nab_X \mathrm{d}f)(Y)$ are the same expression, so
+  \texttt{hessianFun\_eq\_covOneForm} and
+  \texttt{laplacianFun\_eq\_divOneForm} are \texttt{rfl}. That is worth more
+  than a remark: it hands the Hessian its bilinear packaging for free. $\nab^2
+  f$ on its own has no cheap route to one --- the analogue of
+  \texttt{TensorialAt} would need $y \mapsto \mathrm{d}f_y(Y_y)$ differentiable
+  for merely differentiable $Y$ --- but $\nab\omega$ has two terms and needs no
+  frame argument at all, so \texttt{laplacianFun\_eq\_sum\_frame} (that
+  $\Delta f$ may be read off any frame orthonormal at $x$) follows from
+  \texttt{divOneForm\_eq\_sum\_frame}.
+
+  \textbf{Consequence}, and the last identification the flow needs:
+  $\Delta(\operatorname{tr}_\g h) = \operatorname{tr}_\g(\Delta_\g h)$
+  (\texttt{laplacianFun\_traceBilin\_eq}). Both sides are read off the same
+  frame and the terms match by the second-order trace lemma of Definition
+  \ref{def:bilin-laplacian}, plus one $\texttt{Finset.sum\_comm}$. So the
+  second of the two canonical double traces of $\nab^2h$ is the Laplacian of a
+  function.
+  With $\Delta_\g h$ from Definition \ref{def:bilin-laplacian}, both traces in
+  \[
+    \operatorname{tr}_\g(\partial_t \Ric)
+      = \operatorname{div}\operatorname{div} h - \Delta(\operatorname{tr}_\g h)
+  \]
+  now exist, and under the flow $h = -2\Ric$ the second contraction of the
+  second Bianchi identity (Theorem \ref{thm:div-ricci}) turns the right-hand
+  side into $2\Delta\scal - \Delta\scal = \Delta\scal$.
+\end{definition}
+
+\begin{lemma}[Differentiating the Koszul combination]
+  \label{lem:koszul-second-derivative}
+  \lean{CovariantDerivative.covTwoTensor,
+    CovariantDerivative.IsKoszulOf,
+    CovariantDerivative.inner_covTwoTensor_eq,
+    CovariantDerivative.covBilin_symm,
+    CovariantDerivative.cov2Bilin_symm,
+    CovariantDerivative.sum_inner_covTwoTensor_eq,
+    CovariantDerivative.sum_inner_covTwoTensor_eq_divDiv}
+  \leanok
+  \uses{def:bilin-laplacian, lem:variation-connection, lem:metric-trace-cov}
+  Let $\nab$ be a metric connection and $A$ a $(1,2)$-tensor field satisfying the Koszul
+  characterisation of Lemma \ref{lem:variation-connection},
+  \[
+    \langle A(P,Q), R\rangle
+      = \tfrac12\big[(\nab_P h)(Q,R) + (\nab_Q h)(R,P) - (\nab_R h)(P,Q)\big].
+  \]
+  Then $\nab A$ satisfies \emph{the same combination one level up}, with $\nab h$
+  replaced by $\nab^2 h$ and \textbf{no curvature terms}:
+  \[
+    \langle (\nab_U A)(P,Q), R\rangle
+      = \tfrac12\big[(\nab^2_{U,P} h)(Q,R) + (\nab^2_{U,Q} h)(R,P)
+        - (\nab^2_{U,R} h)(P,Q)\big].
+  \]
+
+  \textbf{Proved} (\texttt{KoszulSecondDeriv.lean}). Metric compatibility moves
+  $\nab_U$ onto the pairing, turning $\langle \nab_U(A(P,Q)), R\rangle$ into
+  $U\langle A(P,Q),R\rangle - \langle A(P,Q), \nab_U R\rangle$; the first term
+  differentiates the germ identity, producing the three $\nab^2h$-terms
+  \emph{plus} nine corrections, and those nine regroup --- three by three, one
+  group per differentiated field --- into exactly the three Koszul combinations
+  $\langle A(\nab_U P, Q),R\rangle$, $\langle A(P,\nab_U Q),R\rangle$,
+  $\langle A(P,Q),\nab_U R\rangle$ that $\nab_U A$ and the pairing subtract. The
+  regrouping is linear, so once the four expansions are in hand it is
+  \texttt{linarith}.
+
+  This is what turns $\partial_t \Rm = (\nab \dot A)(\cdot,\cdot) - (\nab
+  \dot A)(\cdot,\cdot)$ (Lemma \ref{lem:variation-curvature}) into a statement
+  about $\nab^2 h$ alone.
+
+  \textbf{The double trace.} Tracing it twice gives, for symmetric $h$,
+  \[
+    \sum_{i,j} \langle \Rm_A(e_i,e_j)e_j, e_i\rangle
+      \;=\; \operatorname{div}\operatorname{div} h
+        \;-\; \operatorname{tr}_\g(\Delta_\g h),
+    \qquad
+    \Rm_A(X,Y)Z := (\nab_X A)(Y,Z) - (\nab_Y A)(X,Z),
+  \]
+  with \textbf{no curvature terms at any stage}
+  (\texttt{sum\_inner\_covTwoTensor\_eq}, and
+  \texttt{sum\_inner\_covTwoTensor\_eq\_divDiv} with the two sums named as
+  Definitions \ref{def:one-form-divergence} and \ref{def:bilin-laplacian}).
+  Symmetry of $h$ is what collapses six double sums to two: it identifies
+  $(\nab^2_{U,a}h)(b,c)$ with $(\nab^2_{U,a}h)(c,b)$
+  (\texttt{cov2Bilin\_symm}, from \texttt{covBilin\_symm}), which merges the
+  first two terms of each Koszul combination. The remaining bookkeeping is one
+  $\texttt{Finset.sum\_comm}$, folding the two copies of
+  $\operatorname{tr}_\g(\Delta_\g h)$ together.
+
+  $\Rm_A$ is what $\partial_t\Rm$ equals along a family of metrics, so with
+  $h = \partial_t \g$ this is $\operatorname{tr}_\g(\partial_t\Ric)$; under
+  the Ricci flow $h = -2\Ric$ and the two contracted Bianchi identities
+  (Theorems \ref{thm:contracted-bianchi}, \ref{thm:div-ricci}) turn the
+  right-hand side into $\Delta\scal$.
+\end{lemma}
+
 \begin{lemma}[The metric trace commutes with $\nab$]
   \label{lem:metric-trace-cov}
   \lean{CovariantDerivative.mvfderiv_sum_eq_sum_covBilin,
@@ -1742,7 +2044,16 @@ target actually requires.
 
 \begin{lemma}[First variations of the Ricci and scalar curvatures]
   \label{lem:variation-scalar}
-  \lean{RicciFlowBlueprint.hasDerivAt_ricciOfMetric, RicciFlowBlueprint.hasDerivAt_scalarCurvatureOfMetric'_of_isRicciFlowAt}
+  \lean{RicciFlowBlueprint.hasDerivAt_ricciOfMetric,
+    RicciFlowBlueprint.hasDerivAt_scalarCurvatureOfMetric'_of_isRicciFlowAt,
+    RicciFlowBlueprint.ricciFormOfMetric,
+    RicciFlowBlueprint.ricciFormOfMetric_apply_field,
+    RicciFlowBlueprint.innerE_deriv_eq_of_isRicciFlowAt',
+    RicciFlowBlueprint.scalarCurvatureOfMetricAt,
+    RicciFlowBlueprint.scalarCurvatureOfMetricAt_eq_metricTraceE,
+    RicciFlowBlueprint.hasDerivAt_ricciFormOfMetric,
+    RicciFlowBlueprint.hasDerivAt_scalarCurvatureOfMetricAt,
+    RicciFlowBlueprint.hasDerivAt_scalarCurvatureOfMetricAt_of_isRicciFlowAt}
   \leanok
   \uses{lem:variation-curvature, lem:metric-trace-variation, def:ricci-of-metric, def:scalar, def:ricci-flow}
   Along a family of metrics $\g(t)$ with $\partial_t \g = h$,
@@ -1761,14 +2072,37 @@ target actually requires.
   \emph{metric} trace of the Ricci form, and Lemma
   \ref{lem:metric-trace-variation} supplies the correction $-\langle h,
   \Ric\rangle_\g$, which is $2|\Ric|^2_\g = 2\sum_{i,j} \Ric(e_i,e_j)\Ric(e_j,e_i)$
-  under the flow. The scalar statement is on the model space $M = E$, where
-  Definition \ref{def:scalar} lives: constant fields are global smooth
-  sections there, which the second slot of $\Ric$ requires
-  (\texttt{ricciE}, \texttt{ricci\_add\_right\_const}). What remains for
-  $\partial_t R = \Delta R + 2|\Ric|^2$ is $\operatorname{tr}_\g(\partial_t
-  \Ric) = \Delta R$ under the flow, the contracted second Bianchi identity.
-  The trace lemma it needs is now available (Lemma
-  \ref{lem:metric-trace-cov}); what is left is the contraction itself.
+  under the flow.
+
+  \textbf{The scalar statement now holds on any manifold.} It used to be
+  confined to the model space $M = E$, because it was phrased through
+  \texttt{ricciE}, the Ricci form built on \emph{constant} fields, and those
+  are global sections only when $M = E$. The restriction is removed by working
+  with the tensors of Definition \ref{def:ricci-form} instead:
+  \texttt{ricciFormOfMetric} is the Ricci form of $\g$ on any manifold ---
+  Definition \ref{def:ricci-form} for the Levi-Civita connection of $\g$,
+  built on the global $C^2$ extensions of Lemma \ref{lem:global-extension} ---
+  and \texttt{scalarCurvatureOfMetricAt} is $\operatorname{scal}$ likewise.
+  Three things then transfer verbatim.
+  \texttt{innerE\_deriv\_eq\_of\_isRicciFlowAt'} carries the flow equation
+  $\partial_t \g = -2\Ric$ across, by instantiating the flow on those
+  extensions and using uniqueness of derivatives;
+  \texttt{hasDerivAt\_ricciFormOfMetric} differentiates the Ricci form
+  coordinatewise, each value $\Ric_t(v,w)(x)$ being $\Ric_t(V,W)(x)$ for any
+  $C^2$ fields with $V(x) = v$, $W(x) = w$; and
+  \texttt{scalarCurvatureOfMetricAt\_eq\_metricTraceE} identifies
+  $\operatorname{scal}$ with $\operatorname{tr}_\g \Ric$, so Lemma
+  \ref{lem:metric-trace-variation} applies unchanged. The conclusions are
+  \texttt{hasDerivAt\_scalarCurvatureOfMetricAt} and, under the flow,
+  \texttt{hasDerivAt\_scalarCurvatureOfMetricAt\_of\_isRicciFlowAt}. The
+  model-space statements are kept: they are the same theorems where Definition
+  \ref{def:scalar} was first phrased, and they need no extension lemma.
+
+  So the only ingredient still missing from $\partial_t R = \Delta R +
+  2|\Ric|^2$ is $\operatorname{tr}_\g(\partial_t\Ric) = \Delta R$. That
+  rests on the contracted second Bianchi identity, which is now proved in both
+  contractions (Theorems \ref{thm:contracted-bianchi} and
+  \ref{thm:div-ricci}) rather than pending.
 \end{lemma}
 
 \begin{proof}

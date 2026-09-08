@@ -35,3 +35,7 @@ import RicciFlowBlueprint.IveyConvex
 import RicciFlowBlueprint.CurvatureDeriv
 import RicciFlowBlueprint.Divergence
 import RicciFlowBlueprint.CurvatureLaplacian
+import RicciFlowBlueprint.BilinDeriv
+import RicciFlowBlueprint.BilinLaplacian
+import RicciFlowBlueprint.OneForm
+import RicciFlowBlueprint.KoszulSecondDeriv
