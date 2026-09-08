@@ -2650,7 +2650,8 @@ Perelman's monotone functionals are what rule it out.
   equal to $1$ near $t$ and supported where the two sections agree; then $fV =
   fW$ globally, while Leibniz evaluates both sides at $t$ to $DV(t)$ and
   $DW(t)$, since $f(t) = 1$ and $f'(t) = 0$. Uniqueness is Lemma
-  \ref{lem:cov-along-curve-unique}.
+  \ref{lem:cov-along-curve-unique}, existence Lemma
+  \ref{lem:cov-along-curve-exists}.
 \end{definition}
 
 \begin{lemma}[Uniqueness of $D/dt$]
@@ -2694,6 +2695,59 @@ Perelman's monotone functionals are what rule it out.
   induction needs --- sections along $\gamma$ add, scale by differentiable
   functions of the parameter, and sum --- since a trivialisation is fibrewise
   linear.
+\end{lemma}
+
+\begin{lemma}[Existence of $D/dt$]
+  \label{lem:cov-along-curve-exists}
+  \lean{CovariantDerivative.canonFrame,
+    CovariantDerivative.coeffAlong,
+    CovariantDerivative.covAlong,
+    CovariantDerivative.sum_coeffAlong_smul_canonFrame,
+    CovariantDerivative.deriv_comp_curve,
+    CovariantDerivative.mdiffAt_sum_smul_section,
+    CovariantDerivative.cov_sum_smul_section_apply,
+    CovariantDerivative.isCovDerivAlong_covAlong,
+    CovariantDerivative.exists_isCovDerivAlong,
+    CovariantDerivative.eq_covAlong}
+  \leanok
+  \uses{def:cov-along-curve, lem:cov-along-curve-unique, lem:global-extension}
+  An operator satisfying the three axioms of Definition \ref{def:cov-along-curve}
+  exists, on the set where $\gamma$ is differentiable. With Lemma
+  \ref{lem:cov-along-curve-unique} it is unique there, so $D/dt$ is well
+  defined --- and, just as importantly, statements quantified over operators
+  satisfying the axioms (the geodesic equation $\nab_{\gamma'}\gamma' = 0$
+  among them) are not vacuous.
+
+  \textbf{Proved} (\texttt{CovariantAlongCurve.lean}). The construction is the
+  classical one, in the trivialisation at $\gamma(t)$: differentiate the fibre
+  coordinates of $V$ and add the connection's own contribution on the frame,
+  \[
+    \tfrac{D}{dt}V(t) \;=\; \sum_i \Bigl( c_i'(t)\, W_i(\gamma t)
+      + c_i(t)\, \nab_{\gamma'(t)}W_i \Bigr),
+  \]
+  with $W_i$ the globalised local frame (\texttt{canonFrame}) and $c_i$ the
+  coordinates (\texttt{coeffAlong}). Only the germ of $W_i$ at $\gamma(t)$
+  matters, since that is all $\nab$ sees, so the choice made in globalising is
+  harmless.
+
+  \textbf{Two of the three axioms are facts about \texttt{deriv}.} Additivity
+  and the Leibniz rule hold because the coordinates are additive in $V$ and
+  scale by $f$ --- a trivialisation is fibrewise linear --- so they reduce to
+  \texttt{deriv\_add} and \texttt{deriv\_mul}; the Leibniz rule's second term
+  is $f'(t)\sum_i c_i(t)W_i(\gamma t) = f'(t)\,V(t)$, the coordinates
+  reconstructing the section.
+
+  \textbf{The third axiom is the one with content.} For $V = W\circ\gamma$ with
+  $W$ a global section, the coordinates are $a_i \circ \gamma$ with $a_i$ the
+  frame coefficients of $W$, so the sum becomes
+  $\sum_i\bigl((\gamma' a_i)W_i(\gamma t) + a_i(\gamma t)\nab_{\gamma'}W_i\bigr)$
+  --- which is exactly $\nab$'s own Leibniz rule applied to the local expansion
+  $W = \sum_i a_i W_i$, transported to $W$ by the germ-locality of $\nab$
+  (Mathlib's \texttt{IsCovariantDerivativeOn.congr\_of\_eventuallyEq}). The two
+  ingredients are a finite-sum Leibniz rule for $\nab$
+  (\texttt{cov\_sum\_smul\_section\_apply}) and the chain rule along the curve,
+  $\frac{d}{dt}(a\circ\gamma) = \mathrm{d}a(\gamma'(t))$
+  (\texttt{deriv\_comp\_curve}).
 \end{lemma}
 
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
