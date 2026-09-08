@@ -19,7 +19,7 @@ in `lake-manifest.json`) on Lean `v4.34.0-rc2`, because mathlib4 #36845
 | `LeviCivita.lean` | `exists_leviCivita`, `leviCivita_unique` (on differentiable sections — the `∃!` form was never provable), `curvature_eq_of_isLeviCivita`, `ricci_eq_of_isLeviCivita`, `sectionalCurvature_eq_of_isLeviCivita` |
 | `LeviCivitaSmooth.lean` | `contMDiffCovariantDerivative_leviCivitaConnection` — **Levi-Civita is `C^k` for a `C^{k+1}` metric** (Mathlib leaves this to "future PRs"); criteria `contMDiffAt_clm_of_basis`, `contMDiffAt_section_of_inner_localFrame`, `contMDiffAt_mvfderiv_apply`, `contMDiffAt_koszul`; instance for `k = 1`; `ricciOfMetric`, `sectionalCurvatureOfMetric` |
 | `Flow.lean` | `IsRicciFlowAt/On`, `isRicciFlowAt_const_iff`, `isRicciFlowAt_iff_of_isLeviCivita`, `isRicciFlowOn_iff_ricciOfMetric` — **the flow is `∂g/∂t = -2 Ric(g t)` with `Ric` a function of `g`**; `ricciFlow_shortTime_existence` (`proof_wanted`); the analytic-frontier survey lives in its header |
-| `Hamilton.lean` | `hamilton_1982` — **stated**, `proof_wanted`, no sorry, no axiom. Predicates require a `C¹` witness and `C²` test fields (corrected 2026-09-04: the old `HasConstSecLC` quantified over arbitrary fields, i.e. over junk). `admitsPositiveRicciMetric_iff` / `admitsConstPositiveSecMetric_iff` restate them via `ricciOfMetric` / `sectionalCurvatureOfMetric` |
+| `Hamilton.lean` | `hasConstSecLC_tensor`/`_ricci`/`_scalar` — **constant sectional curvature delivers the full `(0,4)` tensor, `Ric = (n−1)k g` and `scal = n(n−1)k`** at the canonical Levi-Civita connection (`ConstantCurvature.lean` instantiated through `hasConstSecLC_iff_mul`); `hamilton_1982` — **stated**, `proof_wanted`, no sorry, no axiom. Predicates require a `C¹` witness and `C²` test fields (corrected 2026-09-04: the old `HasConstSecLC` quantified over arbitrary fields, i.e. over junk). `admitsPositiveRicciMetric_iff` / `admitsConstPositiveSecMetric_iff` restate them via `ricciOfMetric` / `sectionalCurvatureOfMetric` |
 | `Pinching.lean` | Hamilton's curvature ODE in dimension 3 — ordering, positive Ricci, `λ ≤ C(μ+ν)` preserved; `pinching_antitone` (Hamilton Thm 10.1, ODE half). Linear Grönwall helpers `nonpos_of_deriv_le_mul` etc. No manifold. **Reopened for Hamilton–Ivey**: `iveyF` (= `x(log x - 3)`), `hasDerivAt_iveyF`, `iveyF_le_neg_three`, `IsIveyPinched` (Hamilton's set with no `f⁻¹`), `isIveyPinched_of_neg_one_le`, `le_of_isIveyPinched`, `iveyE`/`iveyE_nonneg` (the unified boundary polynomial), `iveyPsi`/`iveyPsi_nonneg` (the Grönwall), `nonneg_preserved`, `shift`, `restrict`, `neg_of_neg`, and **`hamiltonIvey`** (the ODE half, complete); `hasDerivAt_scal`, `le_scal` (`Ṙ = ½[(λ+μ)²+(λ+ν)²+(μ+ν)²] ≥ 0`, so any lower bound on `R` is preserved — the first inequality of Hamilton's set `K`), `hamiltonIvey_boundary_of_nonneg`/`_of_neg` (the boundary check with the log eliminated; pure polynomial, Cao–Zhu Cases (i)/(ii)). **Normalisation**: `λ,μ,ν` are *twice* the sectional curvatures, `R = λ+μ+ν`, Ricci eigenvalues `(μ+ν)/2` etc. — the header said `μ+ν`, off by 2; every proved statement is a sign or ratio claim so none moved |
 | `GramSchmidtOrtho.lean`, `OrthonormalFrame.lean` | **Not ours.** Ported from unmerged mathlib PR #26221 (grunweg), Apache-2.0, see `NOTICE.md`. Gives `Module.Basis.orthonormalFrame` and `contMDiffAt_orthonormalFrame_of_mem`: a `C^k` **orthonormal** local frame of a Riemannian bundle, by pointwise Gram–Schmidt on `Trivialization.localFrame`. Mathlib has `IsLocalFrameOn` but no orthonormal version; it names the planned file in `LocalFrame.lean`'s header. **Delete when #26221 lands.** Upstream's one `sorry` (`contMDiffOn_iff_coeff'`, marked unused) was dropped |
 | `GlobalExtension.lean` | **proved**: `exists_contMDiff_extension` (a global `C^k` section through any prescribed `v ∈ T_xM`, via `FiberBundle.exists_contMDiffOn_extend` plus a bump), `exists_contMDiff_two_extension`, and `forall_contMDiff_iff_forall_tangent` — quantifying over globally `C²` fields **is** quantifying over tangent vectors. This is what makes the `Hamilton.lean` predicates non-vacuous |
@@ -32,7 +32,13 @@ in `lake-manifest.json`) on Lean `v4.34.0-rc2`, because mathlib4 #36845
 | `Variation.lean` | **proved**: `covBilin` (∇ of a bilinear form field), `koszul_bilin_eq` (Koszul combination of a symmetric `h` through a torsion-free `∇` is `∇h`-terms `+ 2h(∇_X Y,Z)`), `leviCivitaOfMetric`, `inner_leviCivitaOfMetric_eq` (Koszul in `g.inner`), `hasDerivAt_inner_leviCivitaOfMetric` (Koszul differentiated in `t`), `inner_deriv_leviCivitaOfMetric_eq` (**first variation of ∇**). Hypotheses: `∂ₜ` commutes with `X(g(Y,Z))` for the fields at hand; differentiability of `t ↦ ∇ᵗ_X Y` (vector form only) |
 | `CurvatureVariation.lean` | **proved**: `covEnd` (∇ of an `End`-valued one-form), `curvature_eq_add_covEnd` (curvature of `∇ + A`, `∇` torsion-free — algebraic), `hasDerivAt_curvatureE` (`∂ₜ Rᵗ = (∇_X Ȧ)(Y,Z) − (∇_Y Ȧ)(X,Z)` along `∇ᵗ = ∇ + Aᵗ`), `exists_hasDerivAt_clm_of_apply` (coordinatewise ⇒ CLM-valued derivative), `differenceE` (Mathlib's `difference` on `E`), `derivDifferenceE` (`Ȧ = ∂ₜ∇` as `deriv`, no existential), `inner_derivDifferenceE_eq`, `hasDerivAt_curvatureE_leviCivitaOfMetric` (**first variation of Rm along metrics**). Hypotheses: `CommutesWithMvfderiv` (the `Variation.lean` commutation, all fields) and `∂ₜ`/`∇_X` commuting on `Aᵗ(Y,Z)` |
 | `Bianchi.lean` | **proved**: `contMDiff_cov_apply` (`C^k` connection, `C^{k+1}` section, `C^k` field ⇒ `C^k` covariant derivative), `mlieBracket_sub_left'`, `covCurvature` (`(∇_X R)(Y,Z)W`), `bianchi_second` (**second Bianchi**, `C²` connection, `C²` fields, `C³` argument; no metric). The proof is the first-Bianchi pattern: split the sections, rewrite `∇_X Y − ∇_Y X` as `[X,Y]` in both the direction slot and as sections, `linear_combination (norm := module)` with Jacobi |
+| `CurvatureDeriv.lean` | **proved**: **`∇R` is tensorial in its direction slot** — `covCurvature_smul_dir`, `covCurvature_add_dir`, with `cov_smul_dir` (`∇_{f•X} σ = f • ∇_X σ`, pointwise). Each of the four terms of `∇R` picks up exactly one `f x`: the first by linearity of `∇` in the direction, the other three because `∇_{f•X} = f∇_X` and `R` is tensorial in the slot it lands in (the third via `curvature_smul_third`). This is what makes `div Rm(Y,Z,W) = ∑ᵢ ⟪(∇_{eᵢ}R)(Y,Z)W, eᵢ⟫` well defined. **Slots 2–4 are not done, and are not the same problem.** `Y`/`Z` pick up a Leibniz term in the first summand (`∇_X(f•R(Y,Z)W)`) that cancels against `R(∇_X(f•Y),Z)W` — but applying Leibniz needs `y ↦ R(Y,Z)W y` to be a *differentiable section*, which nothing here establishes (`covCurvature` is well defined without it, `cov` being total). That lemma is now **`contMDiff_curvature`**, proved in the same file: a `C³` triple has a `C¹` curvature section, by two `contMDiff_cov_apply` for the `∇∇` terms plus `ContMDiffAt.mlieBracket_vectorField` (mathlib) for the bracket. So `Y`/`Z` are unblocked, at one more derivative than the direction slot cost. Note `T%` wraps the section, so `rw` cannot see through `curvature`'s definition — use `show`. **`covCurvature_antisymm`** then halves what is left: `∇R` inherits `R`'s antisymmetry in the two curvature slots, so whatever is proved for `Y` transfers to `Z`. `W` needs the `CurvaturePointwise` frame argument one level up |
 | `MetricTrace.lean` | **proved**: `sharpE` (`g♯⁻¹ ∘ B♭`), `metricTraceE` (`tr(g♯⁻¹ B♭)`), `metricTraceE_eq_sum` (= `∑ᵢ B(eᵢ,eᵢ)` over any `g`-orthonormal basis, via `LinearMap.trace_eq_sum_inner`), `sharpE_apply_eq_sum`, `metricTraceE_comp_sharpE_eq_sum` (`⟨h,B⟩_g`), `hasDerivAt_inverse_innerE` (`∂ₜ g⁻¹ = −g⁻¹ h g⁻¹`, from `contDiffAt_map_inverse` plus differentiating `g ∘ g⁻¹ = id`), `hasDerivAt_metricTraceE` (**`∂ₜ tr_{g_t} B_t = tr Ḃ − ⟨h,B⟩`**). All at a point on `E`. `metricTraceE_innerE_comp`, `ricci_eq_metricTraceE` bridge to `ricci` |
+| `RicciForm.lean` | **proved**: **Ricci as an honest bilinear form and the scalar curvature on a general manifold**. `ricciAt_add_left`/`_smul_left`/`_add_right`/`_smul_right` (each field-level law applied to global `C²` extensions), `ricciForm x : E →L[ℝ] E →L[ℝ] ℝ` (`LinearMap.mk₂` + `toContinuousLinearMap` twice), `ricciForm_apply_field`; `scalarCurvatureAt` and `scalarCurvatureAt_eq_sum_basis` — **frame-independence is free** once `Ric` is bilinear (`OrthonormalBasis.sum_apply_self_eq`), so `scalarCurvatureWith_congr'` discharges the `h3` that `Scalar.lean` had to assume; `mvfderiv_scalarCurvatureAt_eq_sum_covBilin` = **`X(scal) = tr_g(∇_X Ric)`**, the trace lemma applied to `ricciForm` |
+| `RicciSymm.lean` | **proved**: **Ricci is symmetric on a general manifold** for a metric torsion-free connection, with no hypotheses. `extendTwo`/`contMDiff_extendTwo`/`extendTwo_apply_self` (a *named* global `C²` extension — the anonymous `Exists.choose` of two vectors prints identically and `rw` cannot target one), `curvatureEndoAt` (the `hL` of `ricci_sub_ricci_swap`, now constructed: well-definedness from `curvature_congr_third`, linearity from `curvature_add_right`/`curvature_smul_const_right`), `trace_curvatureEndoAt_eq_zero` (skew-adjointness, via `LinearMap.trace_eq_sum_inner`), `ricci_symm`, `ricciAt_symm`, `ricciForm_symm`. Both hypotheses of `ricci_sub_ricci_swap` are now theorems |
+| `CurvatureSymm.lean` | **proved**: **pair symmetry of the Riemann tensor** on a general manifold, `⟪R(X,Y)Z,W⟫ = ⟪R(Z,W)X,Y⟫` (`inner_curvature_pair_symm`) — the octahedron argument, four copies of first Bianchi linked by the two antisymmetries, closed by `linarith` in the six unknowns. `inner_bianchi_first` (first Bianchi paired against a vector; the fourth slot needs *no* regularity, the identity being a vector identity), `inner_curvature_left_skew`. This is what makes `R` an operator on `Λ²T_xM` — the form Hamilton's pinching and Uhlenbeck's trick need — and what the second contraction of second Bianchi will use |
+| `ConstantCurvature.lean` | **proved**: **constant sectional curvature determines the whole `(0,4)` tensor** — `⟪R(X,Y)Z,W⟫ = k(⟪Y,Z⟫⟪X,W⟫ − ⟪X,Z⟫⟪Y,W⟫)` (`inner_curvature_eq_of_const_sec`, and `_norm` for the `‖·‖` form `hasConstSecLC_iff_mul` produces). `curvatureDefect` = `Rm − k·(model)`, with its four symmetries and four additivity laws; polarising slots 1&4 gives `T(A,B,B,C) = 0`, polarising 2&3 gives antisymmetry there, and a tensor antisymmetric in three consecutive slots is killed by first Bianchi (`3T = 0`). **Not a parity fix — a strengthening.** Their `admitsConstantPositiveSectionalCurvature` is the multiplied-out *sectional* identity `Rm(X,Y,Y,X) = c(g(X,X)g(Y,Y) − g(X,Y)²)`, which `hasConstSecLC_iff_mul` already matched; divergence 2 in `notes/hamilton-statement-comparison.md` was closed before this. What this adds is that the sectional identity determines the *whole* `(0,4)` tensor, so everything downstream of constant curvature can use `Rm` directly. Corollaries by tracing once and twice: `ricci_eq_of_const_sec` (`Ric = (n−1)k g`) and `scalarCurvatureAt_eq_of_const_sec` (`scal = n(n−1)k`), both over an arbitrary orthonormal basis with `n = Fintype.card ι`, so no `finrank` identification is needed |
+| `IveyConvex.lean` | **proved**: **Hamilton's pinching set is closed and convex** — the input `thm:max-tensor` needs to carry Hamilton–Ivey from the ODE to the flow, and roadmap blocker (a). **`f⁻¹` is not needed and was never needed**: the disjunction in `IsIveyPinched` collapses to one inequality against `iveyG n = iveyF (max (-n) (e²))` (`isIveyPinched_iff_iveyG`), because `f` increases on `[e²,∞)` so the `-ν ≤ e²` branch gives `G = f(e²) = -e² ≤ -3`, which the *first* condition already supplies. `monotoneOn_iveyF`, `convexOn_iveyF` (via `MonotoneOn.convexOn_of_deriv` — `f' = log x − 2` is monotone), `convexOn_max_neg_exp_two`, `image_max_neg_exp_two`, `convexOn_iveyG` (`ConvexOn.comp`), `continuous_iveyG`; `iveyPinchedSet : Set (EuclideanSpace ℝ (Fin 3))` with `convex_iveyPinchedSet` and `isClosed_iveyPinchedSet` |
 | `TraceCov.lean` | **proved**: **the metric trace commutes with `∇`** (roadmap Next 1, the gate for every Laplacian identity). `mvfderiv_sum_eq_sum_covBilin`: for a metric connection, a bilinear form field `B` and a local orthonormal frame, `X(∑ᵢ B(eᵢ,eᵢ)) = ∑ᵢ (∇_X B)(eᵢ,eᵢ)`; `_of_frame` is the same with the hypotheses read off an `IsOrthonormalFrameOn`. `B` need not be symmetric and the frame need not be parallel: `inner_cov_antisymm` (metric compatibility + locally constant `⟪eᵢ,eⱼ⟫` ⟹ the coefficients `aᵢⱼ = ⟪∇_X eᵢ, eⱼ⟫` are antisymmetric) and `sum_bilin_of_antisymm` (antisymmetric against symmetric is `0`, by `Finset.sum_comm`). `exists_orthonormalBasis_of_isOrthonormalFrameOn` turns a frame into an `OrthonormalBasis` of each fibre. Two Mathlib gaps filled on the way: `Filter.EventuallyEq.mvfderiv_eq` and `mvfderiv_fun_sum`/`mdifferentiableAt_fun_sum` |
 | `RicciVariation.lean` | **proved**: `CommutesWithCov` (∂ₜ/∇_X commute on the difference-tensor sections, all fields), `curvatureEndoE` (`v ↦ R(v,X)Y` via `mkHom`, typed on `E` by ascription — an expected type `E →L E` on a bare `mkHom` leaves `?V x =?= E` unsolved), `hasDerivAt_ricciOfMetric` (**∂ₜ Ric = tr ∂ₜ[v ↦ R(v,X)Y]**, any manifold). Model space: `constField`, `ricci_add_right_const`/`ricci_smul_right_const` (second slot on constant fields), `ricciE` (Ricci form as `E →L E →L ℝ` via `LinearMap.mk₂`), `scalarCurvatureOfMetric'` (= `Scalar.lean`'s), `hasDerivAt_scalarCurvatureOfMetric'` (`∂ₜ R = tr_g Ṙic − ⟨h,Ric⟩`), `innerE_deriv_eq_of_isRicciFlowAt` (`h = −2 Ric` from the flow by uniqueness), `hasDerivAt_scalarCurvatureOfMetric'_of_isRicciFlowAt` (**∂ₜ R = tr_g Ṙic + 2\|Ric\|²**). Never `local notation` over a section variable: hygiene hides `E` and everything downstream is silently auto-bound |
 | `Homogeneous.lean` | **branch closed**: `koszul`, torsion/compat, Levi-Civita uniqueness, `contDiffAt_ricciField`, `ricciFlow_leftInvariant` |
@@ -53,7 +59,9 @@ in `lake-manifest.json`) on Lean `v4.34.0-rc2`, because mathlib4 #36845
 2. **Ricci is NOT symmetric for a general torsion-free connection.** Tracing
    first Bianchi gives `Ric(X,Y) − Ric(Y,X) = −tr R(X,Y)`; that vanishes for a
    *metric* connection, where `R(X,Y)` is skew-adjoint. Symmetry is the
-   corollary, not the theorem.
+   corollary, not the theorem — and it is now proved unconditionally on a
+   general manifold (`RicciSymm.lean`), both hypotheses of
+   `ricci_sub_ricci_swap` having become theorems.
 3. **The tangent-bundle "diamond" is not a diamond.** The fibre instances are
    definitionally equal (`rfl` succeeds for `AddCommGroup` and
    `TopologicalSpace`; `#synth` picks `instAddCommGroupTangentSpace`). What
@@ -143,11 +151,19 @@ Now `thm:hamilton-ivey` at the head of `chap:kappa`, with a
    `ν < 0` on all of `[0,t]` is free: `nonneg_preserved` (`ν̇ ≥ λν` under the
    ordering) plus `shift`/`restrict` (time translation of `IsCurvatureODE`)
    give `neg_of_neg`.
-   **Left:** (a) `f⁻¹` on `[-e²,∞)` and its **concavity** — needed only for
-   convexity of `K`, i.e. only for the transport to the PDE via
-   `thm:max-tensor`, not for anything at the ODE level. (b) the
-   time-dependent `K_t` form of `thm:max-tensor` for Hamilton 1999's
-   `log(1+t)` improvement.
+   **Left:** ~~(a) `f⁻¹` on `[-e²,∞)` and its concavity~~ — **closed, and it was
+   never needed**: `IveyConvex.lean` shows the disjunction cutting out `K` is a
+   single inequality against `iveyG n = f(max(-n, e²))`, which is convex because
+   `f` is convex and increasing on `[e²,∞)` and `n ↦ max(-n,e²)` is convex and
+   lands there. `K` is closed and convex (`convex_iveyPinchedSet`,
+   `isClosed_iveyPinchedSet`), which is exactly what `thm:max-tensor` consumes.
+   Invariance of `K` under the ODE is also packaged in that language
+   (`IsCurvatureODE.isIveyPinched`, `IsCurvatureODE.mem_iveyPinchedSet`), so
+   **both** things `thm:max-tensor` asks about `K` are proved.
+   **What is actually left is item 3 below** — `∂ₜ Rm = Δ Rm + Q`, the equation
+   the principle is applied to. (b) the time-dependent `K_t` form of
+   `thm:max-tensor` is needed only for Hamilton 1999's `log(1+t)` improvement,
+   not for the basic estimate; an earlier version of this list said otherwise.
    Watch out: `Real.log (-n) = Real.log n` is a simp lemma
    (`Real.log_neg_eq_log`), so `simpa [iveyF]` rewrites under you — use a
    `calc` with `rfl`, or `set L := Real.log (-n t)` before `field_simp`.
@@ -158,8 +174,16 @@ Now `thm:hamilton-ivey` at the head of `chap:kappa`, with a
    (`div Rm = d scal /2`), then `tr_g Ṙic = Δ scal` under the flow and hence
    `∂ₜ scal = Δ scal + 2|Ric|²`. `RicciVariation.lean` already has
    `∂ₜ R = tr_g Ṙic + 2|Ric|²`, so only `tr_g Ṙic = Δ R` is missing.
-3. **`∂ₜ Rm = Δ Rm + Q`** (Uhlenbeck's trick) — needed to state (1) on the
-   flow rather than on the ODE alone.
+3. **`∂ₜ Rm = Δ Rm + Q`** (Uhlenbeck's trick) — **now the single gate**, for
+   both (1) and (2): the Hamilton–Ivey transport needs the flow written in the
+   form `thm:max-tensor` consumes, and `∂ₜ scal = Δ scal + 2|Ric|²` needs the
+   contraction of the same identity. Everything else either side of it is done.
+   The prerequisite nobody has built here yet is `∇Rm` **as a tensor**:
+   `covCurvature` exists (`Bianchi.lean`) but is not known to be pointwise in
+   its slots, which is what `curvature_congr_third` did one level down. That is
+   the next concrete piece of work, and it is a build of the same shape as
+   `CurvaturePointwise.lean` — expand in a frame, globalise, use linearity —
+   but in four slots instead of one.
 4. **Perelman's `L`-geometry** (`def:reduced-volume`,
    `thm:reduced-volume-monotone`). The deepest genuinely-open node and the one
    everything downstream of `chap:kappa` consumes. Pure comparison geometry +
@@ -222,9 +246,15 @@ theirs is imported here.
   *vacuously true* and `hamilton_1982` was trivially provable and asserted
   nothing. `forall_contMDiff_iff_forall_tangent` is the bridge; the
   predicates are now also stated pointwise
-  (`hasPositiveRicciLC_iff_tangent`, `hasConstSecLC_iff_mul`). Scalar
-  curvature (`Scalar.lean`) and `∂ₜ R` (`RicciVariation.lean`) are still on
-  the model space only — that part was never about the extension.
+  (`hasPositiveRicciLC_iff_tangent`, `hasConstSecLC_iff_mul`).
+- ~~Ricci is not a pointwise bilinear form; the scalar curvature is
+  model-space only.~~ Closed the same day by `RicciForm.lean`, on top of the
+  extension and of `CurvaturePointwise.lean`'s pointwise third slot: `Ric` is
+  a continuous bilinear form (`ricciForm`) and `scal` a genuine metric trace
+  (`scalarCurvatureAt`) on any manifold, with frame-independence free.
+  **Still model-space only:** `∂ₜ R` (`RicciVariation.lean`), stated through
+  `ricciE`/`scalarCurvatureOfMetric'` and not yet ported to
+  `ricciForm`/`scalarCurvatureAt`.
 - ~~The metric trace does not yet commute with `∇` on the manifold.~~ Closed
   2026-09-07 by `TraceCov.lean` (PR #20). What still waits is the
   *contraction*: rewriting the traced second Bianchi identity as `ΔR`, and

@@ -467,27 +467,212 @@ gives the road, and the one thing it does not give yet.
   asserted symmetry from torsion-freeness alone. That is false.
 \end{proof}
 
+\begin{definition}[The Ricci form]
+  \label{def:ricci-form}
+  \lean{CovariantDerivative.ricciForm, CovariantDerivative.ricciForm_apply_field,
+    CovariantDerivative.ricciAt_add_left, CovariantDerivative.ricciAt_smul_left,
+    CovariantDerivative.ricciAt_add_right, CovariantDerivative.ricciAt_smul_right}
+  \leanok
+  \uses{def:ricci, lem:curvature-pointwise, lem:global-extension}
+  $\Ric$ as an honest continuous bilinear form $\Ric_x : T_x\M \times T_x\M \to
+  \R$ on a general manifold.
+
+  \textbf{Proved} (\texttt{RicciForm.lean}). Lemma
+  \ref{lem:curvature-pointwise} makes $\Ric(X,Y)(x)$ depend on $X_x$ and $Y_x$
+  alone, so $\Ric_x$ is a well-defined \emph{function} of two tangent vectors
+  (\texttt{ricciAt}); each of its four linearity laws is the corresponding
+  field-level law (\texttt{ricci\_add\_left} and friends) applied to global
+  $C^2$ extensions, which exist by Lemma \ref{lem:global-extension}.
+  Continuity is automatic in finite dimension. Two years' worth of the
+  ``$\Ric$ is not a tensor here'' caveats in this blueprint dissolve at this
+  node.
+\end{definition}
+
+\begin{lemma}[Symmetries of the Riemann tensor]
+  \label{lem:curvature-symmetries}
+  \lean{CovariantDerivative.inner_curvature_pair_symm,
+    CovariantDerivative.inner_bianchi_first,
+    CovariantDerivative.inner_curvature_left_skew,
+    CovariantDerivative.inner_curvature_right_skew'}
+  \leanok
+  \uses{def:curvature, lem:bianchi-first, thm:levi-civita}
+  Write $\Rm(X,Y,Z,W) = \langle \Riem(X,Y)Z, W\rangle$ for a metric torsion-free
+  connection. Then
+  \[
+    \Rm(X,Y,Z,W) = -\Rm(Y,X,Z,W), \qquad
+    \Rm(X,Y,Z,W) = -\Rm(X,Y,W,Z),
+  \]
+  \[
+    \Rm(X,Y,Z,W) + \Rm(Y,Z,X,W) + \Rm(Z,X,Y,W) = 0, \qquad
+    \Rm(X,Y,Z,W) = \Rm(Z,W,X,Y).
+  \]
+
+  \textbf{Proved} (\texttt{CurvatureSymm.lean}). The first three were already
+  here: antisymmetry in the first pair needs no hypothesis at all
+  (\texttt{curvature\_antisymm}), antisymmetry in the second pair is metric
+  compatibility (\texttt{inner\_curvature\_right\_skew}), and the cyclic
+  identity is Lemma \ref{lem:bianchi-first} paired against a vector --- note the
+  fourth slot needs no regularity, the identity being a vector identity.
+
+  \textbf{Pair symmetry} is the new one, and it is what makes $\Riem$ a
+  symmetric operator on $\Lambda^2 T_x\M$ --- the form Hamilton's pinching
+  estimates and Uhlenbeck's trick are stated in --- and what the second
+  contraction of the second Bianchi identity will need.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  The classical octahedron argument. In the six unknowns
+  \[
+    p = \Rm(X,Y,Z,W),\ q = \Rm(Z,W,X,Y),\ r = \Rm(Y,Z,W,X),
+  \]
+  \[
+    s = \Rm(X,Z,W,Y),\ t = \Rm(Y,W,X,Z),\ u = \Rm(W,X,Y,Z),
+  \]
+  the four cyclic identities on $(X,Y,Z;W)$, $(Y,Z,W;X)$, $(Z,W,X;Y)$ and
+  $(W,X,Y;Z)$, after every term has been brought to one of these six by the two
+  antisymmetries, read
+  \[
+    p - r + s = 0,\quad r - q + t = 0,\quad q - u + s = 0,\quad u - p + t = 0 .
+  \]
+  Adding the first two and the last two gives $p - q + s + t = 0$ and
+  $q - p + s + t = 0$; subtracting, $2(p-q) = 0$. In Lean the six links are
+  supplied as hypotheses and \texttt{linarith} does the elimination.
+\end{proof}
+
+\begin{lemma}[Constant sectional curvature determines $\Rm$]
+  \label{lem:const-sec-determines-rm}
+  \lean{CovariantDerivative.inner_curvature_eq_of_const_sec,
+    CovariantDerivative.inner_curvature_eq_of_const_sec_norm,
+    CovariantDerivative.curvatureDefect,
+    CovariantDerivative.ricci_eq_of_const_sec,
+    CovariantDerivative.scalarCurvatureAt_eq_of_const_sec,
+    RicciFlowBlueprint.hasConstSecLC_tensor,
+    RicciFlowBlueprint.hasConstSecLC_ricci,
+    RicciFlowBlueprint.hasConstSecLC_scalar}
+  \leanok
+  \uses{def:sectional, lem:curvature-symmetries, lem:bianchi-first, def:ricci-form, def:scalar}
+  If every sectional curvature at $x$ equals $k$, then for \emph{all} four
+  arguments
+  \[
+    \langle \Riem(X,Y)Z, W\rangle
+      = k\big(\langle Y,Z\rangle\langle X,W\rangle
+             - \langle X,Z\rangle\langle Y,W\rangle\big).
+  \]
+
+  \textbf{Proved} (\texttt{ConstantCurvature.lean}). This is a strengthening,
+  not a parity fix. Chow--Liao--Qin's
+  \texttt{admitsConstantPositiveSectionalCurvature} is the multiplied-out
+  \emph{sectional} identity $\Rm(X,Y,Y,X) = c(\g(X,X)\g(Y,Y) - \g(X,Y)^2)$,
+  which \texttt{hasConstSecLC\_iff\_mul} already matches; the divergence
+  recorded in \texttt{notes/hamilton-statement-comparison.md} was closed before
+  this lemma existed. What the lemma adds is that the sectional identity pins
+  down the \emph{whole} $(0,4)$ tensor, so everything downstream of constant
+  curvature --- the spherical space form conclusion above all --- can use $\Rm$
+  directly instead of re-deriving it.
+
+  \textbf{Corollaries}, by tracing once and twice
+  (\texttt{ricci\_eq\_of\_const\_sec},
+  \texttt{scalarCurvatureAt\_eq\_of\_const\_sec}):
+  \[
+    \Ric = (n-1)k\,\g, \qquad \scal = n(n-1)k .
+  \]
+  Both are stated over an arbitrary orthonormal basis of $T_x\M$, with $n$ its
+  cardinality, so no identification of $\operatorname{finrank}$ with the
+  dimension of the model is needed. Tracing uses Parseval
+  (\texttt{OrthonormalBasis.sum\_inner\_mul\_inner}) exactly once, on
+  $\sum_i \langle X, e_i\rangle \langle e_i, Y\rangle = \langle X, Y\rangle$;
+  the first slot of $\Ric$ is fed the global $C^2$ extensions of the basis
+  vectors, which is what \texttt{extendTwo} is for.
+
+  \textbf{Applied to the predicate.} \texttt{hasConstSecLC\_tensor},
+  \texttt{hasConstSecLC\_ricci} and \texttt{hasConstSecLC\_scalar} instantiate
+  all three at \texttt{HasConstSecLC I M k} and the canonical Levi-Civita
+  connection, via \texttt{hasConstSecLC\_iff\_mul}. So the conclusion of
+  Theorem \ref{thm:hamilton} delivers the full $(0,4)$ tensor, and the metric it
+  produces is Einstein with $\scal = n(n-1)k$ --- which is what the spherical
+  space form direction will want to consume.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  Polarisation, twice. Let
+  \[
+    T(A,B,C,D) = \langle \Riem(A,B)C, D\rangle
+      - k\big(\langle B,C\rangle\langle A,D\rangle
+             - \langle A,C\rangle\langle B,D\rangle\big)
+  \]
+  (\texttt{curvatureDefect}). The model term has every symmetry the curvature
+  has, so by Lemma \ref{lem:curvature-symmetries} $T$ is antisymmetric in each
+  pair, symmetric under exchanging the pairs, and satisfies the first Bianchi
+  identity; and the hypothesis says exactly $T(A,B,B,A) = 0$.
+
+  Expanding $T(A+C, B, B, A+C) = 0$ and using $T(C,B,B,A) = T(A,B,B,C)$ --- pair
+  symmetry followed by the two antisymmetries --- gives $2T(A,B,B,C) = 0$, so
+  $T(A,B,B,C) = 0$ for all $A,B,C$. Expanding $T(A, B+C, B+C, D) = 0$ then gives
+  $T(A,B,C,D) + T(A,C,B,D) = 0$: $T$ is antisymmetric in its middle two slots as
+  well. A tensor antisymmetric in three consecutive slots has all three terms of
+  the first Bianchi identity equal, so $3T(X,Y,Z,W) = 0$.
+\end{proof}
+
+\begin{theorem}[Ricci is symmetric]
+  \label{thm:ricci-symm}
+  \lean{CovariantDerivative.ricci_symm, CovariantDerivative.ricciAt_symm,
+    CovariantDerivative.ricciForm_symm, CovariantDerivative.curvatureEndoAt,
+    CovariantDerivative.trace_curvatureEndoAt_eq_zero}
+  \leanok
+  \uses{lem:trace-bianchi, def:ricci-form, thm:levi-civita, lem:curvature-symmetries}
+  For a metric torsion-free connection --- in particular for the Levi-Civita
+  connection --- $\Ric(X,Y) = \Ric(Y,X)$ at every point of a general manifold,
+  with no further hypothesis.
+
+  \textbf{Torsion-freeness alone is not enough.} Lemma \ref{lem:trace-bianchi}
+  says the antisymmetric part of $\Ric$ is exactly $-\operatorname{tr}(v \mapsto
+  \Riem(X,Y)v)$, and that trace vanishes because the connection is \emph{metric}.
+  Symmetry is a corollary of skew-adjointness, not of the first Bianchi identity.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  Lemma \ref{lem:trace-bianchi} carried two hypotheses it could not then
+  discharge: that global $C^2$ fields realise every tangent vector, and that the
+  endomorphism $v \mapsto \Riem(X,Y)v$ exists at all. Both are now theorems ---
+  Lemma \ref{lem:global-extension} and Lemma \ref{lem:curvature-pointwise} ---
+  so \texttt{curvatureEndoAt} is an unconditional linear endomorphism of
+  $T_x\M$, its linearity being tensoriality of the curvature's third slot on
+  global extensions. Its trace over an orthonormal basis is $\sum_i \langle e_i,
+  \Riem(X,Y)e_i \rangle$, and each term vanishes because $\Riem(X,Y)$ is
+  skew-adjoint for a metric connection (\texttt{inner\_curvature\_self\_right}).
+  Transporting through Definition \ref{def:ricci-form} gives symmetry of the
+  Ricci form itself.
+\end{proof}
+
 \begin{definition}[Scalar curvature]
   \label{def:scalar}
-  \lean{CovariantDerivative.scalarCurvature}
+  \lean{CovariantDerivative.scalarCurvatureAt,
+    CovariantDerivative.scalarCurvatureAt_eq_sum_basis,
+    CovariantDerivative.scalarCurvatureWith_congr',
+    CovariantDerivative.scalarCurvature}
   \leanok
-  \uses{def:ricci}
-  $\scal = \operatorname{tr}_\g \Ric$, the metric trace of the Ricci tensor.
+  \uses{def:ricci, def:ricci-form}
+  $\scal = \operatorname{tr}_\g \Ric$, the metric trace of the Ricci tensor:
+  $\scal(x) = \sum_i \Ric(e_i, e_i)$ over an orthonormal basis of $T_x\M$.
 
-  \textbf{Not simply a trace on a general manifold.} That description presumes
-  $\Ric$ descends to a bilinear form on the fibre, and it does not: only the
-  \emph{first} slot of $\Ric$ is tensorial. The second is the curvature's third
-  slot, which $\nab$ differentiates, so the trace demands a globally $C^2$ field
-  there while the canonical extension of a tangent vector is smooth only
-  \emph{near} the point. What is missing on a general $\M$ is global $C^2$
-  extensions --- bump-function sections --- and third-slot pointwiseness.
+  \textbf{Now a genuine trace on a general manifold}
+  (\texttt{scalarCurvatureAt}), and frame-independence is \emph{free}:
+  $\sum_i B(e_i,e_i)$ is basis-independent for any bilinear $B$, and by
+  Definition \ref{def:ricci-form} $\Ric_x$ is one
+  (\texttt{scalarCurvatureAt\_eq\_sum\_basis}, no hypotheses).
 
-  So the general-manifold object is frame-relative
-  (\texttt{scalarCurvatureWith}), independent of the frame modulo one
-  hypothesis (\texttt{scalarCurvatureWith\_congr}); the canonical
-  hypothesis-free $\scal$ lives on the model space, where both missing
-  ingredients are theorems. The same architecture as
-  Lemma~\ref{lem:trace-bianchi}.
+  This supersedes the earlier architecture, which is kept for the
+  correspondence: the frame-relative \texttt{scalarCurvatureWith}, whose
+  frame-independence \texttt{scalarCurvatureWith\_congr} had to assume
+  pointwise dependence of the curvature's third slot in a form
+  (\texttt{MDiffAt} in the first slot) that Lemma
+  \ref{lem:curvature-pointwise} does not supply, and the hypothesis-free
+  \texttt{scalarCurvature} on the model space. Going through the bilinear form
+  discharges the hypothesis on any manifold
+  (\texttt{scalarCurvatureWith\_congr'}).
 \end{definition}
 
 \begin{lemma}[Ricci as an orthonormal-frame sum]
@@ -896,14 +1081,57 @@ target actually requires.
   the link is the second-derivative test, Lemma \ref{lem:second-derivative-test}.
 \end{definition}
 
+\begin{lemma}[$\nab \Rm$ is tensorial in its direction]
+  \label{lem:cov-curvature-direction}
+  \lean{CovariantDerivative.covCurvature_smul_dir,
+    CovariantDerivative.covCurvature_add_dir,
+    CovariantDerivative.cov_smul_dir,
+    CovariantDerivative.contMDiff_curvature,
+    CovariantDerivative.covCurvature_antisymm}
+  \leanok
+  \uses{lem:bianchi-second, def:curvature}
+  $(\nab_{fX} \Riem)(Y,Z)W = f\,(\nab_X \Riem)(Y,Z)W$, and likewise additively.
+
+  \textbf{Proved} (\texttt{CurvatureDeriv.lean}). Each of the four terms of
+  $\nab\Riem$ picks up exactly one factor of $f(x)$, for the same reason:
+  $\nab_{fX}$ is $f\nab_X$ on the nose, and the last three terms feed that into
+  a slot of $\Riem$ in which $\Riem$ is already tensorial --- the first two
+  cheaply, the third by Lemma \ref{lem:curvature-pointwise}.
+
+  This is what makes the \emph{divergence}
+  $\operatorname{div}\Rm(Y,Z,W) = \sum_i \langle (\nab_{e_i}\Riem)(Y,Z)W, e_i
+  \rangle$ well defined, the trace being over the direction slot; and the
+  divergence is what the contracted second Bianchi identity, and hence $\Delta
+  \scal$, are about.
+
+  \textbf{The other three slots are not done, and are not the same problem.}
+  Under $Y \mapsto fY$ the \emph{first} term picks up a Leibniz term,
+  $\nab_X(f\,\Riem(Y,Z)W) = f\nab_X(\Riem(Y,Z)W) + (Xf)\Riem(Y,Z)W$, cancelled
+  by the matching term from $\Riem(\nab_X(fY),Z)W$ --- so the direction slot was
+  the easy one precisely because it has none. Applying Leibniz needs $y \mapsto
+  \Riem(Y,Z)W(y)$ to be a \emph{differentiable section}, which
+  \texttt{covCurvature} does not require to be well defined. That is
+  \texttt{contMDiff\_curvature}, also proved here: a $C^3$ triple has a $C^1$
+  curvature section, the two $\nab\nab$ terms by
+  \texttt{contMDiff\_cov\_apply} twice and the bracket term by the same fed
+  Mathlib's \texttt{ContMDiffAt.mlieBracket\_vectorField}. So $Y$ and $Z$ are
+  now unblocked, at one more derivative than the direction slot --- and
+  \texttt{covCurvature\_antisymm} halves what is left of them, since
+  $\nab\Riem$ inherits the antisymmetry of $\Riem$ in those two slots, so
+  whatever is proved for $Y$ transfers to $Z$. $W$ still needs the
+  frame-and-globalise argument of Lemma \ref{lem:curvature-pointwise} one level
+  up.
+\end{lemma}
+
 \begin{lemma}[The metric trace commutes with $\nab$]
   \label{lem:metric-trace-cov}
   \lean{CovariantDerivative.mvfderiv_sum_eq_sum_covBilin,
     CovariantDerivative.mvfderiv_sum_eq_sum_covBilin_of_frame,
     CovariantDerivative.inner_cov_antisymm,
-    CovariantDerivative.sum_bilin_of_antisymm}
+    CovariantDerivative.sum_bilin_of_antisymm,
+    CovariantDerivative.mvfderiv_scalarCurvatureAt_eq_sum_covBilin}
   \leanok
-  \uses{def:laplacian, thm:levi-civita}
+  \uses{def:laplacian, thm:levi-civita, def:ricci-form}
   Let $\nab$ be a metric connection, $B$ a bilinear form field on $TM$ and
   $e_1, \dots, e_n$ a local orthonormal frame near $x$. Then
   \[
@@ -928,6 +1156,16 @@ target actually requires.
   A local orthonormal frame is supplied by \texttt{OrthonormalFrame.lean}, and
   \texttt{exists\_orthonormalBasis\_of\_isOrthonormalFrameOn} turns it into
   an orthonormal basis of each fibre over its base set.
+
+  \textbf{First consequence}, and the reason for the node:
+  $X(\scal) = \operatorname{tr}_\g(\nab_X \Ric)$
+  (\texttt{mvfderiv\_scalarCurvatureAt\_eq\_sum\_covBilin}), taking $B$ to be
+  the Ricci form of Definition \ref{def:ricci-form}. The scalar curvature is the
+  frame sum at \emph{every} point of the frame's base set, so the two sides are
+  germ-equal at $x$ and the trace lemma applies verbatim. Its one remaining
+  hypothesis is genuine regularity --- $y \mapsto \Ric(e_i,e_i)(y)$ must be
+  differentiable, which asks the connection for one derivative more than
+  $\texttt{ContMDiffCovariantDerivative}\ 1$ gives.
 \end{lemma}
 
 \begin{proof}
@@ -1623,12 +1861,15 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   \]
   and the whole content at the ODE level is that $K$ is preserved.
   \emph{(Cao--Zhu, Theorem 2.4.1.)} \textbf{The ODE half is done} ---
-  Lemma~\ref{lem:ivey-ode}. What remains is the transport to the flow: $f^{-1}$
-  on $[-e^2,\infty)$ and its concavity, which together with concavity of the
-  least-eigenvalue function make $K$ convex, and that convexity is exactly what
-  Theorem~\ref{thm:max-tensor} consumes. For Hamilton's later improvement with
-  the $\log(1+t)$ term one additionally needs a form of
-  Theorem~\ref{thm:max-tensor} for a \emph{time-dependent} family $\{K_t\}$.
+  Lemma~\ref{lem:ivey-ode} --- \textbf{and so is everything
+  Theorem~\ref{thm:max-tensor} asks of $K$}: it is closed, convex, and
+  invariant under the ODE (Lemma~\ref{lem:ivey-convex}). An earlier version of
+  this node said the transport still needed $f^{-1}$ on $[-e^2,\infty)$ and its
+  concavity; it does not, and never did. What remains is the flow itself,
+  $\partial_t \Rm = \Delta \Rm + Q$ (Lemma~\ref{lem:evolution-rm}). For
+  Hamilton's later improvement with the $\log(1+t)$ term one additionally needs
+  a form of Theorem~\ref{thm:max-tensor} for a \emph{time-dependent} family
+  $\{K_t\}$; that is a separate, still-open item.
 \end{theorem}
 
 \begin{lemma}[The scalar curvature is nondecreasing along the curvature ODE]
@@ -1709,6 +1950,62 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   bound $\lambda+\mu+\nu \ge -3$.
 \end{lemma}
 
+\begin{lemma}[The pinching set is closed and convex]
+  \label{lem:ivey-convex}
+  \lean{RicciFlowBlueprint.Pinching.iveyG,
+        RicciFlowBlueprint.Pinching.convexOn_iveyG,
+        RicciFlowBlueprint.Pinching.isIveyPinched_iff_iveyG,
+        RicciFlowBlueprint.Pinching.iveyPinchedSet,
+        RicciFlowBlueprint.Pinching.convex_iveyPinchedSet,
+        RicciFlowBlueprint.Pinching.isClosed_iveyPinchedSet,
+        RicciFlowBlueprint.Pinching.IsCurvatureODE.isIveyPinched,
+        RicciFlowBlueprint.Pinching.IsCurvatureODE.mem_iveyPinchedSet}
+  \leanok
+  \uses{lem:ivey-set, thm:max-tensor}
+  $K$ is a closed convex subset of $\R^3$ --- which is what
+  Theorem \ref{thm:max-tensor} requires of it, and the one thing missing before
+  Lemma \ref{lem:ivey-ode} can be carried from the ODE to the flow.
+
+  \textbf{Proved} (\texttt{IveyConvex.lean}), and \textbf{without building
+  $f^{-1}$.} The literature restores convexity by rewriting the second condition
+  as $-\nu \le f^{-1}(\lambda+\mu+\nu)$ and invoking concavity of $f^{-1}$; an
+  earlier version of these notes recorded that inverse, and its concavity, as
+  the remaining obstacle. It is not needed. The disjunction of
+  Lemma \ref{lem:ivey-set} collapses to a single inequality against
+  \[
+    G(\nu) \;=\; f\bigl(\max(-\nu,\, e^2)\bigr),
+  \]
+  because $f$ is increasing on $[e^2,\infty)$: when $-\nu \le e^2$ we get
+  $G(\nu) = f(e^2) = -e^2 \le -3$, which the first condition of $K$ already
+  supplies, and otherwise $G(\nu) = f(-\nu)$ on the nose
+  (\texttt{isIveyPinched\_iff\_iveyG}).
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  $f$ is convex on $[e^2,\infty)$ because $f' = \log x - 2$ is monotone there,
+  and increasing there because $f' \ge 0$; $\nu \mapsto \max(-\nu, e^2)$ is
+  convex, being a pointwise maximum of two affine functions, and its image is
+  exactly $[e^2,\infty)$. A convex function composed with a convex function that
+  lands where the outer one is monotone is convex, so $G$ is convex on all of
+  $\R$ (\texttt{convexOn\_iveyG}). The set is then cut out by three half-spaces
+  --- $\nu \le \mu$, $\mu \le \lambda$, $\lambda+\mu+\nu \ge -3$ --- and the
+  single convex inequality $G(\nu) \le \lambda+\mu+\nu$, hence is convex; and
+  closed, $G$ being continuous.
+
+  \emph{Invariance, in the same language.} An ordered solution of the curvature
+  ODE normalised by $\nu(0) \ge -1$ stays in $K$ for all time
+  (\texttt{IsCurvatureODE.isIveyPinched}, and
+  \texttt{IsCurvatureODE.mem\_iveyPinchedSet} as membership of the subset of
+  $\R^3$): $R$ is nondecreasing and starts at $\ge 3\nu(0) \ge -3$, and where
+  $\nu < 0$ the second condition is Lemma \ref{lem:ivey-ode} verbatim, while
+  where $\nu \ge 0$ the branch $-\nu \le e^2$ is free. So both of the inputs
+  Theorem \ref{thm:max-tensor} needs about $K$ --- closed convex, and invariant
+  under the ODE --- are now available; what is still missing for the transport
+  is the flow itself, $\partial_t \Rm = \Delta \Rm + Q$
+  (Lemma \ref{lem:evolution-rm}).
+\end{proof}
+
 \begin{lemma}[Hamilton--Ivey for the curvature ODE]
   \label{lem:ivey-ode}
   \lean{RicciFlowBlueprint.Pinching.IsCurvatureODE.hamiltonIvey,
@@ -1716,7 +2013,7 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
         RicciFlowBlueprint.Pinching.iveyE_nonneg,
         RicciFlowBlueprint.Pinching.IsCurvatureODE.nonneg_preserved}
   \leanok
-  \uses{lem:pinching-ode, lem:ivey-scal, lem:ivey-set}
+  \uses{lem:pinching-ode, lem:ivey-scal, lem:ivey-set, lem:ivey-convex}
   Let $\lambda \ge \mu \ge \nu$ solve Hamilton's curvature ODE on $[0,T]$ with
   $\nu(0) \ge -1$. Then at every time at which $\nu < 0$,
   \[

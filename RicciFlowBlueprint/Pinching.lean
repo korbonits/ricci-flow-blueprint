@@ -307,7 +307,7 @@ where the defining relation eliminates the logarithm and leaves a polynomial ine
 nonnegative reals — `hamiltonIvey_boundary_of_nonneg` and `hamiltonIvey_boundary_of_neg`,
 Cao--Zhu's Case (i) and Case (ii).
 
-Still to come: `f⁻¹` and its concavity, hence convexity of `K`; the assembly of the two
+Still to come (convexity of `K` is now done, in `IveyConvex.lean`, and needed no `f⁻¹`): the assembly of the two
 boundary cases into invariance of `K` under the ODE; and the time-dependent form of
 `thm:max-tensor` needed for Hamilton's later improvement `R ≥ (-ν)(log(-ν) + log(1+t) - 3)`.
 -/
@@ -398,8 +398,9 @@ with `f(e²) = -e²`, so it is a bijection onto `[-e², ∞)`. Hamilton's set is
 
 Since `f⁻¹` takes values in `[e², ∞)`, the second condition holds automatically when
 `-ν ≤ e²` and is `f(-ν) ≤ λ + μ + ν` otherwise — which is how `IsIveyPinched` states it,
-with no inverse function. (`f⁻¹` is still wanted for the *convexity* of `K`, which is what
-the tensor maximum principle consumes; it is not needed for anything below.) -/
+with no inverse function. (`f⁻¹` was thought to be still wanted for the *convexity* of `K`,
+which is what the tensor maximum principle consumes. It is not: `IveyConvex.lean` shows the
+disjunction is a single inequality against `f(max(-ν, e²))`, which is convex.) -/
 
 /-- **Hamilton's pinching function** `f(x) = x (log x - 3)`. -/
 noncomputable def iveyF (x : ℝ) : ℝ := x * (Real.log x - 3)
@@ -644,7 +645,7 @@ supplies the hypothesis `iveyPsi_nonneg` needs, that `ν < 0` on the whole of `[
 non-negative curvature is preserved, so a later negative `ν` was negative all along.
 
 This is the ODE half. Transporting it to the flow is `thm:max-tensor` applied to `K`, which
-additionally wants `K` convex — and that is the one place `f⁻¹` is needed. -/
+additionally wants `K` convex — proved in `IveyConvex.lean`, with no inverse function. -/
 theorem IsCurvatureODE.hamiltonIvey (h : IsCurvatureODE l m n T) (hT : 0 ≤ T)
     (h0lm : m 0 ≤ l 0) (h0mn : n 0 ≤ m 0) (h0n : -1 ≤ n 0) :
     ∀ t ∈ Icc 0 T, n t < 0 → iveyF (-n t) ≤ l t + m t + n t := by
