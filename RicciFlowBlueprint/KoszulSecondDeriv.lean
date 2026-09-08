@@ -20,6 +20,7 @@ Argument order follows `CovariantDerivative`: `cov σ x (X x)` is `(∇_X σ) x`
 import RicciFlowBlueprint.BilinLaplacian
 import RicciFlowBlueprint.Bianchi
 import RicciFlowBlueprint.Bochner
+import RicciFlowBlueprint.OneForm
 
 open Bundle Filter VectorField
 open scoped Manifold ContDiff Topology RealInnerProductSpace
@@ -156,5 +157,102 @@ theorem inner_covTwoTensor_eq (hcov : cov.IsMetricCompatible (M := M) (V := Tang
         - cov.covBilin h R P (fun y ↦ cov Q y (U y)) x := rfl
   rw [hlhs]
   linarith [hmet, hsum, hder, k₁, k₂, k₃, e₁, e₂, e₃]
+
+omit [CompleteSpace E] in
+-- BENCH: koszul-double-trace
+/-- **The double trace of the Koszul curvature.** For a metric connection, a *symmetric* `h`
+and `A` Koszul for `h`, the object `Rm_A(X,Y)Z = (∇_X A)(Y,Z) − (∇_Y A)(X,Z)` --- which is what
+`∂ₜ Rm` equals along a family of metrics --- has Ricci-type double trace
+\[
+  ∑_{i,j} ⟪Rm_A(e_i,e_j)e_j, e_i⟫
+    = ∑_{i,j} (∇²_{e_i,e_j}h)(e_j,e_i) - ∑_{i,j} (∇²_{e_i,e_i}h)(e_j,e_j),
+\]
+the two canonical double traces of `∇²h`: `div div h` and `tr_g(Δ_g h)`. **No curvature terms
+appear at any stage.** Symmetry of `h` is what collapses the six sums to two: it identifies
+`(∇²_{U,a}h)(b,c)` with `(∇²_{U,a}h)(c,b)`, which merges the first two terms of each Koszul
+combination. -/
+theorem sum_inner_covTwoTensor_eq
+    (hcov : cov.IsMetricCompatible (M := M) (V := TangentSpace I)) (hA : cov.IsKoszulOf A h)
+    (hsymm : ∀ (y : M) (v w : E), h y v w = h y w v)
+    {iota : Type*} [Fintype iota] {fr : iota → Π y : M, TangentSpace I y} {x : M}
+    (hfr : ∀ i, CMDiff 2 (T% (fr i)))
+    (hAf : ∀ i j, MDiffAt (T% (fun y ↦ A y (fr i y) (fr j y))) x)
+    (hd : ∀ a b c, MDiffAt (fun y ↦ cov.covBilin h (fr a) (fr b) (fr c) y) x) :
+    ∑ i, ∑ j, (⟪cov.covTwoTensor A (fr i) (fr j) (fr j) x, fr i x⟫
+        - ⟪cov.covTwoTensor A (fr j) (fr i) (fr j) x, fr i x⟫)
+      = (∑ i, ∑ j, cov.cov2Bilin h (fr i) (fr j) (fr j) (fr i) x)
+        - ∑ i, ∑ j, cov.cov2Bilin h (fr i) (fr i) (fr j) (fr j) x := by
+  have hfr1 : ∀ i, CMDiff 1 (T% (fr i)) := fun i ↦ (hfr i).of_le (by norm_num)
+  -- the pointwise reduction: each pair of Koszul combinations collapses by symmetry
+  have key : ∀ i j, ⟪cov.covTwoTensor A (fr i) (fr j) (fr j) x, fr i x⟫
+      - ⟪cov.covTwoTensor A (fr j) (fr i) (fr j) x, fr i x⟫
+      = cov.cov2Bilin h (fr i) (fr j) (fr j) (fr i) x
+        - cov.cov2Bilin h (fr i) (fr i) (fr j) (fr j) x / 2
+        - cov.cov2Bilin h (fr j) (fr j) (fr i) (fr i) x / 2 := by
+    intro i j
+    have e₁ := cov.inner_covTwoTensor_eq hcov hA (hfr1 i) (hfr j) (hfr j) (hfr i)
+      (hAf j j) (hd j j i) (hd j i j) (hd i j j)
+    have e₂ := cov.inner_covTwoTensor_eq hcov hA (hfr1 j) (hfr i) (hfr j) (hfr i)
+      (hAf i j) (hd i j i) (hd j i i) (hd i i j)
+    have s₁ : cov.cov2Bilin h (fr i) (fr j) (fr i) (fr j) x
+        = cov.cov2Bilin h (fr i) (fr j) (fr j) (fr i) x :=
+      cov.cov2Bilin_symm hsymm _ _ _ _ x
+    have s₂ : cov.cov2Bilin h (fr j) (fr i) (fr j) (fr i) x
+        = cov.cov2Bilin h (fr j) (fr i) (fr i) (fr j) x :=
+      cov.cov2Bilin_symm hsymm _ _ _ _ x
+    rw [e₁, e₂, s₁, s₂]
+    ring
+  -- sum, and fold the two copies of `tr_g(Δ_g h)` together
+  have hswap : ∑ i, ∑ j, cov.cov2Bilin h (fr j) (fr j) (fr i) (fr i) x
+      = ∑ i, ∑ j, cov.cov2Bilin h (fr i) (fr i) (fr j) (fr j) x := Finset.sum_comm
+  calc ∑ i, ∑ j, (⟪cov.covTwoTensor A (fr i) (fr j) (fr j) x, fr i x⟫
+        - ⟪cov.covTwoTensor A (fr j) (fr i) (fr j) x, fr i x⟫)
+      = ∑ i, ∑ j, (cov.cov2Bilin h (fr i) (fr j) (fr j) (fr i) x
+          - cov.cov2Bilin h (fr i) (fr i) (fr j) (fr j) x / 2
+          - cov.cov2Bilin h (fr j) (fr j) (fr i) (fr i) x / 2) :=
+        Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ key i j
+    _ = (∑ i, ∑ j, cov.cov2Bilin h (fr i) (fr j) (fr j) (fr i) x)
+          - (∑ i, ∑ j, cov.cov2Bilin h (fr i) (fr i) (fr j) (fr j) x) / 2
+          - (∑ i, ∑ j, cov.cov2Bilin h (fr j) (fr j) (fr i) (fr i) x) / 2 := by
+        simp only [Finset.sum_sub_distrib, Finset.sum_div]
+    _ = (∑ i, ∑ j, cov.cov2Bilin h (fr i) (fr j) (fr j) (fr i) x)
+          - ∑ i, ∑ j, cov.cov2Bilin h (fr i) (fr i) (fr j) (fr j) x := by
+        rw [hswap]; ring
+
+section Named
+
+variable [VectorBundle ℝ E (fun (x : M) ↦ TangentSpace I x)] [T2Space M]
+
+omit [CompleteSpace E] in
+-- BENCH: koszul-double-trace-named
+/-- **`tr_g(∂ₜ Ric) = div div h − tr_g(Δ_g h)`, in the abstract.** The previous lemma's two
+canonical double traces of `∇²h` named: the first is the double divergence `divDivBilin`, the
+second the metric trace of the connection Laplacian `laplacianBilin`. Specialised to `A = ∂ₜ∇` and `h = ∂ₜ g` this
+is the first variation of the scalar curvature with no curvature terms; under the Ricci flow
+`h = −2 Ric` and the two contracted Bianchi identities turn the right-hand side into
+`Δ scal`. -/
+theorem sum_inner_covTwoTensor_eq_divDiv
+    (hcov : cov.IsMetricCompatible (M := M) (V := TangentSpace I)) (hA : cov.IsKoszulOf A h)
+    (hsymm : ∀ (y : M) (v w : E), h y v w = h y w v)
+    (hbg : IsMDiffBilin (I := I) h)
+    (hw : IsMDiffOneFormAt (I := I) (cov.divBilinOneForm h hbg) x)
+    {iota : Type*} [Fintype iota] {fr : iota → Π y : M, TangentSpace I y} {u : Set M}
+    (hs : IsOrthonormalFrameOn I E 1 fr u) (hu : IsOpen u) (hx : x ∈ u)
+    (b : OrthonormalBasis iota ℝ (TangentSpace I x)) (hbv : ∀ i, fr i x = b i)
+    (hfr : ∀ i, CMDiff 2 (T% (fr i)))
+    (hcb : ∀ i, cov.IsMDiffCovBilinAt h (fr i) (fr i) x)
+    (hAf : ∀ i j, MDiffAt (T% (fun y ↦ A y (fr i y) (fr j y))) x)
+    (hd : ∀ a b c, MDiffAt (fun y ↦ cov.covBilin h (fr a) (fr b) (fr c) y) x) :
+    ∑ i, ∑ j, (⟪cov.covTwoTensor A (fr i) (fr j) (fr j) x, fr i x⟫
+        - ⟪cov.covTwoTensor A (fr j) (fr i) (fr j) x, fr i x⟫)
+      = cov.divDivBilin h hbg x - ∑ j, cov.laplacianBilin h (fr j) (fr j) x := by
+  rw [cov.sum_inner_covTwoTensor_eq hcov hA hsymm hfr hAf hd,
+    cov.divDivBilin_eq_sum hcov hbg hw hs hu hx hfr (fun j i ↦ hd i i j) b hbv]
+  congr 1
+  rw [Finset.sum_comm]
+  exact Finset.sum_congr rfl fun j _ ↦
+    (cov.laplacianBilin_eq_sum_frame (hbg x) (hcb j) (hfr j) (hfr j) hfr b hbv).symm
+
+end Named
 
 end CovariantDerivative

@@ -529,4 +529,36 @@ theorem laplacianBilin_eq_sum_frame (hb : IsMDiffBilinAt (I := I) h x)
 
 end Laplacian
 
+section Symmetric
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E] [ContMDiffCovariantDerivative cov 1] in
+/-- **`∇h` inherits the symmetry of `h`.** -/
+theorem covBilin_symm (hsymm : ∀ (y : M) (v w : E), h y v w = h y w v)
+    (X Y Z : Π y : M, TangentSpace I y) (x : M) :
+    cov.covBilin h X Y Z x = cov.covBilin h X Z Y x := by
+  have hfun : (fun y ↦ h y (Y y) (Z y)) = fun y ↦ h y (Z y) (Y y) := by
+    funext y
+    exact hsymm y (Y y) (Z y)
+  simp only [covBilin, hfun]
+  rw [hsymm x (cov Y x (X x)) (Z x), hsymm x (Y x) (cov Z x (X x))]
+  ring
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E] [ContMDiffCovariantDerivative cov 1] in
+/-- **`∇²h` inherits the symmetry of `h`** in its last two slots: each of the four terms is
+`∇h` in a slot pair the previous lemma swaps. -/
+theorem cov2Bilin_symm (hsymm : ∀ (y : M) (v w : E), h y v w = h y w v)
+    (W X Y Z : Π y : M, TangentSpace I y) (x : M) :
+    cov.cov2Bilin h W X Y Z x = cov.cov2Bilin h W X Z Y x := by
+  have hfun : (fun y ↦ cov.covBilin h X Y Z y) = fun y ↦ cov.covBilin h X Z Y y := by
+    funext y
+    exact cov.covBilin_symm hsymm X Y Z y
+  simp only [cov2Bilin, hfun]
+  rw [cov.covBilin_symm hsymm (fun y ↦ cov X y (W y)) Y Z,
+    cov.covBilin_symm hsymm X (fun y ↦ cov Y y (W y)) Z,
+    cov.covBilin_symm hsymm X Y (fun y ↦ cov Z y (W y))]
+  ring
+
+end Symmetric
+
+
 end CovariantDerivative

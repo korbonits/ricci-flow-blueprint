@@ -1698,7 +1698,11 @@ target actually requires.
   \label{lem:koszul-second-derivative}
   \lean{CovariantDerivative.covTwoTensor,
     CovariantDerivative.IsKoszulOf,
-    CovariantDerivative.inner_covTwoTensor_eq}
+    CovariantDerivative.inner_covTwoTensor_eq,
+    CovariantDerivative.covBilin_symm,
+    CovariantDerivative.cov2Bilin_symm,
+    CovariantDerivative.sum_inner_covTwoTensor_eq,
+    CovariantDerivative.sum_inner_covTwoTensor_eq_divDiv}
   \leanok
   \uses{def:bilin-laplacian, lem:variation-connection, lem:metric-trace-cov}
   Let $\nab$ be a metric connection and $A$ a $(1,2)$-tensor field satisfying the Koszul
@@ -1728,9 +1732,32 @@ target actually requires.
 
   This is what turns $\partial_t \Rm = (\nab \dot A)(\cdot,\cdot) - (\nab
   \dot A)(\cdot,\cdot)$ (Lemma \ref{lem:variation-curvature}) into a statement
-  about $\nab^2 h$ alone, and hence $\operatorname{tr}_\g(\partial_t\Ric)$ into
-  $\operatorname{div}\operatorname{div} h - \Delta(\operatorname{tr}_\g h)$
-  (Definitions \ref{def:bilin-laplacian}, \ref{def:one-form-divergence}).
+  about $\nab^2 h$ alone.
+
+  \textbf{The double trace.} Tracing it twice gives, for symmetric $h$,
+  \[
+    \sum_{i,j} \langle \Rm_A(e_i,e_j)e_j, e_i\rangle
+      \;=\; \operatorname{div}\operatorname{div} h
+        \;-\; \operatorname{tr}_\g(\Delta_\g h),
+    \qquad
+    \Rm_A(X,Y)Z := (\nab_X A)(Y,Z) - (\nab_Y A)(X,Z),
+  \]
+  with \textbf{no curvature terms at any stage}
+  (\texttt{sum\_inner\_covTwoTensor\_eq}, and
+  \texttt{sum\_inner\_covTwoTensor\_eq\_divDiv} with the two sums named as
+  Definitions \ref{def:one-form-divergence} and \ref{def:bilin-laplacian}).
+  Symmetry of $h$ is what collapses six double sums to two: it identifies
+  $(\nab^2_{U,a}h)(b,c)$ with $(\nab^2_{U,a}h)(c,b)$
+  (\texttt{cov2Bilin\_symm}, from \texttt{covBilin\_symm}), which merges the
+  first two terms of each Koszul combination. The remaining bookkeeping is one
+  $\texttt{Finset.sum\_comm}$, folding the two copies of
+  $\operatorname{tr}_\g(\Delta_\g h)$ together.
+
+  $\Rm_A$ is what $\partial_t\Rm$ equals along a family of metrics, so with
+  $h = \partial_t \g$ this is $\operatorname{tr}_\g(\partial_t\Ric)$; under
+  the Ricci flow $h = -2\Ric$ and the two contracted Bianchi identities
+  (Theorems \ref{thm:contracted-bianchi}, \ref{thm:div-ricci}) turn the
+  right-hand side into $\Delta\scal$.
 \end{lemma}
 
 \begin{lemma}[The metric trace commutes with $\nab$]
