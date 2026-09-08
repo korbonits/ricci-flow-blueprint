@@ -92,6 +92,88 @@ theorem contMDiff_curvature {Y Z W : Π y : M, TangentSpace I y}
     - (fun y ↦ cov W y (mlieBracket I Y Z y))))
   exact (t1.sub_section t2).sub_section t3
 
+omit [FiniteDimensional ℝ E] [ContMDiffCovariantDerivative cov 1] in
+-- BENCH: contMDiff-curvature-section-two
+/-- **The curvature of `C⁴` fields is a `C²` section** --- `contMDiff_curvature` one level
+up, which is what differentiating `∇Rm` needs. The level is hard-coded rather than
+parametrised because Mathlib's `ContMDiffAt.mlieBracket_vectorField` indexes smoothness by
+`ℕ∞` while `ContMDiff` indexes it by `ℕ∞ω`, and carrying a variable level across that
+boundary costs more cast bookkeeping than the twin proof does. -/
+theorem contMDiff_curvature_two [ContMDiffCovariantDerivative cov 3]
+    {Y Z W : Π y : M, TangentSpace I y}
+    (hY : CMDiff 3 (T% Y)) (hZ : CMDiff 3 (T% Z)) (hW : CMDiff 4 (T% W)) :
+    CMDiff 2 (T% (fun y ↦ cov.curvature Y Z W y)) := by
+  have hW4 : CMDiff ((3 : ℕ∞ω) + 1) (T% W) := by
+    rw [show ((3 : ℕ∞ω) + 1) = 4 by norm_num]; exact hW
+  have hW3 : CMDiff ((2 : ℕ∞ω) + 1) (T% W) := by
+    rw [show ((2 : ℕ∞ω) + 1) = 3 by norm_num]; exact hW.of_le (by norm_num)
+  have hY2 : CMDiff 2 (T% Y) := hY.of_le (by norm_num)
+  have hZ2 : CMDiff 2 (T% Z) := hZ.of_le (by norm_num)
+  -- `∇_Z W` and `∇_Y W` are `C³`
+  have hZW : CMDiff ((2 : ℕ∞ω) + 1) (T% (fun u ↦ cov W u (Z u))) := by
+    rw [show ((2 : ℕ∞ω) + 1) = 3 by norm_num]
+    exact cov.contMDiff_cov_apply hW4 hZ
+  have hYW : CMDiff ((2 : ℕ∞ω) + 1) (T% (fun u ↦ cov W u (Y u))) := by
+    rw [show ((2 : ℕ∞ω) + 1) = 3 by norm_num]
+    exact cov.contMDiff_cov_apply hW4 hY
+  -- the three terms
+  have t1 : CMDiff 2 (T% (fun y ↦ cov (fun u ↦ cov W u (Z u)) y (Y y))) :=
+    cov.contMDiff_cov_apply hZW hY2
+  have t2 : CMDiff 2 (T% (fun y ↦ cov (fun u ↦ cov W u (Y u)) y (Z y))) :=
+    cov.contMDiff_cov_apply hYW hZ2
+  have hb : CMDiff 2 (T% (mlieBracket I Y Z)) := fun y ↦
+    (hY y).mlieBracket_vectorField (n := 3) (m := 2) (hZ y) (by norm_num)
+  have t3 : CMDiff 2 (T% (fun y ↦ cov W y (mlieBracket I Y Z y))) :=
+    cov.contMDiff_cov_apply hW3 hb
+  show CMDiff 2 (T% (((fun y ↦ cov (fun u ↦ cov W u (Z u)) y (Y y))
+    - (fun y ↦ cov (fun u ↦ cov W u (Y u)) y (Z y)))
+    - (fun y ↦ cov W y (mlieBracket I Y Z y))))
+  exact (t1.sub_section t2).sub_section t3
+
+omit [FiniteDimensional ℝ E] in
+-- BENCH: contMDiff-cov-curvature-section
+/-- **`∇Rm` of `C³`/`C⁴` fields is a `C¹` section.** This is what differentiating `∇Rm`
+again needs — the first step towards `Δ Rm`. Each of the four terms costs its own
+regularity: the leading one wants the curvature section itself to be `C²`
+(`contMDiff_curvature_two`), and the last wants `∇_X W` to be `C³`, which is where `W`'s
+fourth derivative goes. -/
+theorem contMDiff_covCurvature [ContMDiffCovariantDerivative cov 3]
+    {X Y Z W : Π y : M, TangentSpace I y}
+    (hX : CMDiff 3 (T% X)) (hY : CMDiff 3 (T% Y)) (hZ : CMDiff 3 (T% Z))
+    (hW : CMDiff 4 (T% W)) :
+    CMDiff 1 (T% (fun y ↦ cov.covCurvature X Y Z W y)) := by
+  have hX1 : CMDiff 1 (T% X) := hX.of_le (by norm_num)
+  have hX2 : CMDiff 2 (T% X) := hX.of_le (by norm_num)
+  have hY2 : CMDiff 2 (T% Y) := hY.of_le (by norm_num)
+  have hZ2 : CMDiff 2 (T% Z) := hZ.of_le (by norm_num)
+  have hW3 : CMDiff 3 (T% W) := hW.of_le (by norm_num)
+  have hY3 : CMDiff ((2 : ℕ∞ω) + 1) (T% Y) := by
+    rw [show ((2 : ℕ∞ω) + 1) = 3 by norm_num]; exact hY
+  have hZ3 : CMDiff ((2 : ℕ∞ω) + 1) (T% Z) := by
+    rw [show ((2 : ℕ∞ω) + 1) = 3 by norm_num]; exact hZ
+  have hW4 : CMDiff ((3 : ℕ∞ω) + 1) (T% W) := by
+    rw [show ((3 : ℕ∞ω) + 1) = 4 by norm_num]; exact hW
+  have hcurv : CMDiff ((1 : ℕ∞ω) + 1) (T% (fun y ↦ cov.curvature Y Z W y)) := by
+    rw [show ((1 : ℕ∞ω) + 1) = 2 by norm_num]
+    exact cov.contMDiff_curvature_two hY hZ hW
+  -- the four terms
+  have t1 : CMDiff 1 (T% (fun y ↦ cov (fun u ↦ cov.curvature Y Z W u) y (X y))) :=
+    cov.contMDiff_cov_apply hcurv hX1
+  have hDY : CMDiff 2 (T% (fun y ↦ cov Y y (X y))) := cov.contMDiff_cov_apply hY3 hX2
+  have hDZ : CMDiff 2 (T% (fun y ↦ cov Z y (X y))) := cov.contMDiff_cov_apply hZ3 hX2
+  have hDW : CMDiff 3 (T% (fun y ↦ cov W y (X y))) := cov.contMDiff_cov_apply hW4 hX
+  have t2 : CMDiff 1 (T% (fun y ↦ cov.curvature (fun u ↦ cov Y u (X u)) Z W y)) :=
+    cov.contMDiff_curvature hDY hZ2 hW3
+  have t3 : CMDiff 1 (T% (fun y ↦ cov.curvature Y (fun u ↦ cov Z u (X u)) W y)) :=
+    cov.contMDiff_curvature hY2 hDZ hW3
+  have t4 : CMDiff 1 (T% (fun y ↦ cov.curvature Y Z (fun u ↦ cov W u (X u)) y)) :=
+    cov.contMDiff_curvature hY2 hZ2 hDW
+  show CMDiff 1 (T% ((((fun y ↦ cov (fun u ↦ cov.curvature Y Z W u) y (X y))
+    - (fun y ↦ cov.curvature (fun u ↦ cov Y u (X u)) Z W y))
+    - (fun y ↦ cov.curvature Y (fun u ↦ cov Z u (X u)) W y))
+    - (fun y ↦ cov.curvature Y Z (fun u ↦ cov W u (X u)) y)))
+  exact ((t1.sub_section t2).sub_section t3).sub_section t4
+
 end Smoothness
 
 section Direction
