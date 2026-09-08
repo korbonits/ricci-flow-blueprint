@@ -1492,6 +1492,67 @@ target actually requires.
   2|\Ric|^2$.
 \end{theorem}
 
+\begin{lemma}[$\nab h$ is a tensor]
+  \label{lem:cov-bilin-tensor}
+  \lean{CovariantDerivative.covBilin_smul_dir,
+    CovariantDerivative.covBilin_add_dir,
+    CovariantDerivative.covBilin_congr_dir,
+    CovariantDerivative.covBilin_smul_snd,
+    CovariantDerivative.covBilin_add_snd,
+    CovariantDerivative.covBilin_smul_thd,
+    CovariantDerivative.covBilin_add_thd,
+    CovariantDerivative.covBilinDir,
+    CovariantDerivative.covBilinForm,
+    CovariantDerivative.covBilinForm_apply,
+    CovariantDerivative.sum_covBilin_congr}
+  \leanok
+  \uses{def:laplacian, lem:metric-trace-cov}
+  Let $h$ be a bilinear form field on $TM$ and $\nab$ a connection. Then
+  $(\nab_X h)(Y,Z) = X(h(Y,Z)) - h(\nab_X Y, Z) - h(Y, \nab_X Z)$ is
+  \emph{tensorial and pointwise in all three slots}: a continuous trilinear
+  form on $T_xM$, not merely an operation on fields. In particular
+  $\nab_X h$ is an honest bilinear form $\texttt{covBilinForm}$, and the
+  direction is an honest linear form $\texttt{covBilinDir}$.
+
+  \textbf{Proved} (\texttt{BilinDeriv.lean}). All three slots are cheap,
+  unlike the four slots of $\nab\Rm$ (Lemma \ref{lem:cov-curvature-direction}).
+  The \emph{direction} slot needs \emph{nothing}: each of the three terms is a
+  continuous linear map --- $\mathrm{d}(h(Y,Z))_x$, $(\nab Y)_x$, $(\nab Z)_x$
+  --- applied to $X(x)$, so linearity and pointwiseness hold by construction,
+  with no differentiability hypothesis whatever. The $Y$ and $Z$ slots are the
+  usual Leibniz cancellation: replacing $Y$ by $fY$ produces $(Xf)\,h(Y,Z)$
+  from the derivative term, and $-h(\nab_X(fY),Z)$ produces $-(Xf)\,h(Y,Z)$,
+  which cancels it; only $\mathrm{MDifferentiableAt}$ of the fields is used,
+  as in the Hessian's second slot, so no frame-and-globalise argument of the
+  kind $\Rm$'s third slot needs (Lemma \ref{lem:curvature-pointwise}) appears.
+  Hence \texttt{TensorialAt.mkHom} and \texttt{mkHom}$_2$ apply directly.
+
+  The one hypothesis carried is \texttt{IsMDiffBilinAt}: that $y \mapsto h_y(U_y,
+  V_y)$ is differentiable at $x$ for differentiable $U$, $V$. It is what makes
+  the Leibniz rule available and is implied by $h$ being $C^1$ into the space
+  of bilinear forms.
+
+  \textbf{Consequence.} $\operatorname{tr}_\g(\nab_X h)$ is frame-independent
+  on its own (\texttt{sum\_covBilin\_congr}), by the same trace-of-a-bilinear-map
+  argument that Definition \ref{def:ricci-form} uses for $\scal$; so both sides
+  of Lemma \ref{lem:metric-trace-cov} are frame-independent, not just equal for
+  each frame. This is the object the connection Laplacian $\Delta_\g h$ and the
+  double divergence $\operatorname{div}\operatorname{div} h$ are traces of, and
+  those are what $\operatorname{tr}_\g(\partial_t \Ric) = \Delta \scal$ needs.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  Direction: by construction, as above. Second slot: with
+  $\nab_X(fY) = f\nab_X Y + (Xf) Y$ and $h(fY,Z) = f\,h(Y,Z)$,
+  \[
+    (\nab_X h)(fY,Z) = (Xf)h(Y,Z) + f\,X(h(Y,Z)) - f\,h(\nab_XY,Z)
+      - (Xf)h(Y,Z) - f\,h(Y,\nab_XZ) = f\,(\nab_X h)(Y,Z),
+  \]
+  and additivity is the same computation without the coefficient. The third
+  slot is identical with the roles of $Y$ and $Z$ exchanged.
+\end{proof}
+
 \begin{lemma}[The metric trace commutes with $\nab$]
   \label{lem:metric-trace-cov}
   \lean{CovariantDerivative.mvfderiv_sum_eq_sum_covBilin,
