@@ -37,3 +37,4 @@ import RicciFlowBlueprint.Divergence
 import RicciFlowBlueprint.CurvatureLaplacian
 import RicciFlowBlueprint.BilinDeriv
 import RicciFlowBlueprint.BilinLaplacian
+import RicciFlowBlueprint.OneForm

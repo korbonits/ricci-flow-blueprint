@@ -1619,6 +1619,62 @@ target actually requires.
   giving $2\Delta\scal - \Delta\scal = \Delta\scal$.
 \end{definition}
 
+\begin{definition}[$\nab\omega$, $\operatorname{div}\omega$, and the double divergence of a bilinear form]
+  \label{def:one-form-divergence}
+  \lean{CovariantDerivative.covOneForm,
+    CovariantDerivative.covOneForm_smul_dir,
+    CovariantDerivative.covOneForm_smul_snd,
+    CovariantDerivative.covOneFormAt,
+    CovariantDerivative.divOneForm,
+    CovariantDerivative.divOneForm_eq_sum_basis,
+    CovariantDerivative.divOneForm_eq_sum_frame,
+    CovariantDerivative.covBilinFstSnd,
+    CovariantDerivative.divBilin,
+    CovariantDerivative.divBilin_eq_sum_basis,
+    CovariantDerivative.divBilin_eq_sum_frame,
+    CovariantDerivative.divBilinForm,
+    CovariantDerivative.divDivBilin}
+  \leanok
+  \uses{lem:cov-bilin-tensor, def:bilin-laplacian, def:laplacian}
+  For a one-form field $\omega$, $(\nab_X \omega)(Y) = X(\omega(Y)) -
+  \omega(\nab_X Y)$, and $\operatorname{div}\omega = \sum_i (\nab_{e_i}
+  \omega)(e_i)$. For a bilinear form field $h$, $(\operatorname{div} h)(Z) =
+  \sum_i (\nab_{e_i} h)(e_i, Z)$, and the \textbf{double divergence} is
+  $\operatorname{div}\operatorname{div} h = \operatorname{div}
+  (\operatorname{div} h)$.
+
+  \textbf{Proved} (\texttt{OneForm.lean}). The point is that
+  $\operatorname{div}\operatorname{div} h$ --- the trace of $\nab^2 h$ pairing
+  slots $1\&3$ and $2\&4$ --- needs \emph{no four-linear packaging of $\nab^2h$
+  at all}. It factors into two cheap traces:
+
+  \begin{itemize}
+    \item $\operatorname{div} h$ is the trace of the $(0,3)$-tensor $\nab h$
+      (Lemma \ref{lem:cov-bilin-tensor}) in its first two slots, which is one
+      $\texttt{mkHom}_2$ over (direction, second slot): the direction slot is
+      tensorial with no hypotheses, and the second is the Leibniz cancellation.
+      It is tensorial in its remaining slot as a finite sum of third-slot
+      tensorialities, so it is an honest one-form field.
+    \item $\nab\omega$ has \emph{two} terms, against $\nab h$'s three and
+      $\nab\Rm$'s four, so \emph{both} of its slots are free of any frame
+      argument: the direction is a continuous linear map by construction, and
+      the $Y$ slot is the plain Leibniz cancellation on merely differentiable
+      fields. So $\texttt{TensorialAt.mkHom}_2$ applies directly and
+      $\operatorname{div}\omega$ is frame-independent for free.
+  \end{itemize}
+
+  For $\omega = \mathrm{d}f$ these are the Hessian and Laplacian of a function
+  (Definition \ref{def:laplacian}); the general case is what the flow needs.
+  With $\Delta_\g h$ from Definition \ref{def:bilin-laplacian}, both traces in
+  \[
+    \operatorname{tr}_\g(\partial_t \Ric)
+      = \operatorname{div}\operatorname{div} h - \Delta(\operatorname{tr}_\g h)
+  \]
+  now exist, and under the flow $h = -2\Ric$ the second contraction of the
+  second Bianchi identity (Theorem \ref{thm:div-ricci}) turns the right-hand
+  side into $2\Delta\scal - \Delta\scal = \Delta\scal$.
+\end{definition}
+
 \begin{lemma}[The metric trace commutes with $\nab$]
   \label{lem:metric-trace-cov}
   \lean{CovariantDerivative.mvfderiv_sum_eq_sum_covBilin,
