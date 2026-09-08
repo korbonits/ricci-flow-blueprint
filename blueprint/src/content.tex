@@ -2829,6 +2829,49 @@ Perelman's monotone functionals are what rule it out.
   the model space, where Picard--Lindel\"of applies.
 \end{definition}
 
+\begin{lemma}[The trivialisation is the chart]
+  \label{lem:geodesic-chart}
+  \lean{CovariantDerivative.mfderiv_eq_smulRight_velocity,
+    CovariantDerivative.hasDerivAt_extChartAt_comp,
+    CovariantDerivative.trivializationAt_snd_eq_tangentCoordChange,
+    CovariantDerivative.deriv_extChartAt_comp_eq_trivializationAt,
+    CovariantDerivative.coeffAlong_velocity_eq}
+  \leanok
+  \uses{def:geodesic, def:cov-along-curve}
+  With $p(t) = \varphi_{x_0}(\gamma(t))$ the position of $\gamma$ in the chart at $x_0$,
+  \[
+    p'(t) \;=\; \bigl(e_{x_0}\langle \gamma(t), \gamma'(t)\rangle\bigr)_2 ,
+  \]
+  the fibre coordinate of the velocity in the tangent-bundle trivialisation at $x_0$.
+
+  \textbf{Proved} (\texttt{GeodesicODE.lean}). This is the identification that turns the
+  geodesic equation into an ODE: the unknown of the coordinate equation, $p'$, \emph{is} the
+  quantity Definition \ref{def:geodesic} differentiates. Two steps.
+
+  \textbf{The trivialisation is the chart}, literally: Mathlib's
+  \texttt{TangentBundle.trivializationAt\_apply} unfolds
+  $(e_{x_0}\langle y,v\rangle)_2$ to $\mathrm{d}(\varphi_{x_0}\circ\varphi_y^{-1})$ applied to
+  $v$, which is \texttt{tangentCoordChange}, so
+  \texttt{trivializationAt\_snd\_eq\_tangentCoordChange} is a \texttt{rfl}.
+
+  \textbf{The chart position differentiates to it}: compose $\gamma$'s
+  \texttt{HasMFDerivAt} with the chart's and rewrite the chart's \texttt{mfderiv} as
+  \texttt{tangentCoordChange}. That manoeuvre is Mathlib's own, from
+  \texttt{IntegralCurve/Basic.lean}; the only adjustment is replacing the integral-curve
+  hypothesis by plain differentiability, for which
+  \texttt{mfderiv\_eq\_smulRight\_velocity} says a curve's differential is the
+  \texttt{smulRight} of its velocity --- true with no hypothesis, a continuous linear map out
+  of $\R$ being determined by its value at $1$.
+
+  \textbf{Consequence}: \texttt{coeffAlong\_velocity\_eq}, that the coordinates of $\gamma'$ in
+  the chart at $x_0$ are $p'$ read off the model basis. So the coordinate form
+  $\frac{D}{dt}V = c' + \Gamma(\gamma)(\gamma')(c)$ of Definition \ref{def:geodesic}, at
+  $V = \gamma'$, is an equation in $p'$ and $p''$.
+
+  \textbf{What is left} is to assemble it: differentiate the coordinates once more and feed
+  the result to Picard--Lindel\"of.
+\end{lemma}
+
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
   \uses{def:ricci-flow}

@@ -43,3 +43,4 @@ import RicciFlowBlueprint.FlowKoszul
 import RicciFlowBlueprint.ScalarEvolution
 import RicciFlowBlueprint.ScalarFlow
 import RicciFlowBlueprint.CovariantAlongCurve
+import RicciFlowBlueprint.GeodesicODE
