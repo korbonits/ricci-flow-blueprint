@@ -14,7 +14,7 @@ four-linear packaging of `∇²h` at all.
 
 Argument order follows `CovariantDerivative`: `cov σ x (X x)` is `(∇_X σ) x`.
 -/
-import RicciFlowBlueprint.BilinDeriv
+import RicciFlowBlueprint.BilinLaplacian
 
 open Bundle Filter VectorField
 open scoped Manifold ContDiff Topology RealInnerProductSpace
@@ -310,6 +310,10 @@ noncomputable def divBilinOneForm (h : M → E →L[ℝ] E →L[ℝ] ℝ)
     (hb : IsMDiffBilin (I := I) h) : M → E →L[ℝ] ℝ :=
   fun y ↦ cov.divBilinForm (hb y)
 
+omit [CompleteSpace E] in
+theorem divBilinOneForm_eq (hb : IsMDiffBilin (I := I) h) (y : M) :
+    cov.divBilinOneForm h hb y = cov.divBilinForm (hb y) := rfl
+
 /-- **`div div h`**, the double divergence of a bilinear form field: the divergence of the
 one-form `div h`. This is the trace of `∇²h` pairing slots 1&3 and 2&4, obtained without any
 four-linear packaging of `∇²h` --- `div h` is the 1&2 trace of the `(0,3)`-tensor `∇h`, and
@@ -317,6 +321,145 @@ four-linear packaging of `∇²h` --- `div h` is the 1&2 trace of the `(0,3)`-te
 noncomputable def divDivBilin (h : M → E →L[ℝ] E →L[ℝ] ℝ) (hb : IsMDiffBilin (I := I) h)
     (x : M) : ℝ :=
   cov.divOneForm (cov.divBilinOneForm h hb) x
+
+/-- The bilinear form `(v,w) ↦ (∇_v h)(w, Z)` at each point, as a field: what `div h` is the
+frame sum of, and what `TraceCov.lean`'s trace lemma differentiates. -/
+noncomputable def divBilinAux (h : M → E →L[ℝ] E →L[ℝ] ℝ) (hb : IsMDiffBilin (I := I) h)
+    {Z : Π y : M, TangentSpace I y} (hZ : CMDiff 2 (T% Z)) : M → E →L[ℝ] E →L[ℝ] ℝ :=
+  fun y ↦ (cov.covBilinFstSnd (hb y) (hZ.mdifferentiable (by norm_num) y) :
+    TangentSpace I y →L[ℝ] TangentSpace I y →L[ℝ] ℝ)
+
+section DivCommutes
+
+variable [ContMDiffCovariantDerivative cov 1]
+  [IsContMDiffRiemannianBundle I 1 E (fun (x : M) ↦ TangentSpace I x)]
+  [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
+  [VectorBundle ℝ E (fun (x : M) ↦ TangentSpace I x)]
+
+omit [CompleteSpace E] in
+-- BENCH: divergence-commutes-with-cov
+/-- **The divergence commutes with `∇`**: `(∇_W (div h))(Z) = ∑ᵢ (∇²_{W,eᵢ}h)(eᵢ, Z)`.
+This is what identifies the iterated `div div h` with the double trace of `∇²h` that the
+evolution of the scalar curvature produces. The proof is `TraceCov.lean`'s trace lemma applied
+to `(v,w) ↦ (∇_v h)(w,Z)`: differentiating the frame sum produces `∇²h` plus exactly the term
+`(div h)(∇_W Z)` that `∇_W` of a one-form subtracts, so the two cancel. -/
+theorem covOneForm_divBilinOneForm_eq_sum
+    (hcov : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    (hb : IsMDiffBilin (I := I) h) {Z W : Π y : M, TangentSpace I y}
+    (hZ : CMDiff 2 (T% Z)) (hW : MDiffAt (T% W) x)
+    {iota : Type*} [Fintype iota] {fr : iota → Π y : M, TangentSpace I y} {u : Set M}
+    (hs : IsOrthonormalFrameOn I E 1 fr u) (hu : IsOpen u) (hx : x ∈ u)
+    (hfr2 : ∀ i, CMDiff 2 (T% (fr i)))
+    (hB : ∀ i, MDiffAt (fun y ↦ cov.covBilin h (fr i) (fr i) Z y) x) :
+    cov.covOneForm (cov.divBilinOneForm h hb) W Z x
+      = ∑ i, cov.cov2Bilin h W (fr i) (fr i) Z x := by
+  classical
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  have hZ1 : ∀ y, MDiffAt (T% Z) y := fun y ↦ hZ.mdifferentiable h2 y
+  have hfr1 : ∀ i, MDiffAt (T% (fr i)) x := fun i ↦ (hfr2 i).mdifferentiable h2 x
+  have hDfr : ∀ i, MDiffAt (T% (fun y ↦ cov (fr i) y (W y))) x := fun i ↦
+    cov.mdiffAt_cov_apply (hfr2 i) hW
+  have hDZ : MDiffAt (T% (fun y ↦ cov Z y (W y))) x := cov.mdiffAt_cov_apply hZ hW
+  set B := cov.divBilinAux h hb hZ with hBdef
+  obtain ⟨b, hbv⟩ := exists_orthonormalBasis_of_isOrthonormalFrameOn hs hx
+  -- `B` computes `∇h` on the frame, pointwise over `u`
+  have hBapp : ∀ y ∈ u, ∀ i, B y (fr i y) (fr i y) = cov.covBilin h (fr i) (fr i) Z y := by
+    intro y hy i
+    have hfy : MDiffAt (T% (fr i)) y :=
+      (hs.toIsLocalFrameOn.contMDiffAt hu hy i).mdifferentiableAt one_ne_zero
+    exact cov.covBilinFstSnd_apply (hb y) hfy hfy (hZ1 y)
+  -- the one-form `div h` is the frame sum near `x`
+  have hgerm : (fun y ↦ cov.divBilinOneForm h hb y (Z y))
+      =ᶠ[𝓝 x] fun y ↦ ∑ i, B y (fr i y) (fr i y) := by
+    filter_upwards [hu.mem_nhds hx] with y hy
+    obtain ⟨c, hcv⟩ := exists_orthonormalBasis_of_isOrthonormalFrameOn hs hy
+    have hfy : ∀ i, MDiffAt (T% (fr i)) y := fun i ↦
+      (hs.toIsLocalFrameOn.contMDiffAt hu hy i).mdifferentiableAt one_ne_zero
+    rw [cov.divBilinOneForm_eq hb y]
+    calc cov.divBilinForm (hb y) (Z y)
+        = cov.divBilin h Z y := cov.divBilinForm_apply (hb y) (hZ1 y)
+      _ = ∑ i, cov.covBilin h (fr i) (fr i) Z y :=
+          cov.divBilin_eq_sum_frame (hb y) (hZ1 y) hfy c fun i ↦ (hcv i).symm
+      _ = ∑ i, B y (fr i y) (fr i y) :=
+          Finset.sum_congr rfl fun i _ ↦ (hBapp y hy i).symm
+  have hBd : ∀ i, MDiffAt (fun y ↦ B y (fr i y) (fr i y)) x := by
+    intro i
+    refine (hB i).congr_of_eventuallyEq ?_
+    filter_upwards [hu.mem_nhds hx] with y hy
+    exact hBapp y hy i
+  -- the leading term, by the trace lemma
+  have hlead : mvfderiv I (fun y ↦ cov.divBilinOneForm h hb y (Z y)) x (W x)
+      = ∑ i, cov.covBilin B W (fr i) (fr i) x := by
+    rw [hgerm.mvfderiv_eq]
+    exact cov.mvfderiv_sum_eq_sum_covBilin_of_frame hcov hs hu hx hBd
+  -- each summand is `∇²h` plus the term that `∇_W` of a one-form subtracts
+  have hexpand : ∀ i, cov.covBilin B W (fr i) (fr i) x
+      = cov.cov2Bilin h W (fr i) (fr i) Z x
+        + cov.covBilin h (fr i) (fr i) (fun y ↦ cov Z y (W y)) x := by
+    intro i
+    have hmg : (fun y ↦ B y (fr i y) (fr i y))
+        =ᶠ[𝓝 x] fun y ↦ cov.covBilin h (fr i) (fr i) Z y := by
+      filter_upwards [hu.mem_nhds hx] with y hy
+      exact hBapp y hy i
+    have hm' : mvfderiv I (fun y ↦ B y (fr i y) (fr i y)) x (W x)
+        = mvfderiv I (fun y ↦ cov.covBilin h (fr i) (fr i) Z y) x (W x) := by
+      rw [hmg.mvfderiv_eq]
+    have e1 : B x (cov (fr i) x (W x)) (fr i x)
+        = cov.covBilin h (fun y ↦ cov (fr i) y (W y)) (fr i) Z x :=
+      cov.covBilinFstSnd_apply (hb x) (hDfr i) (hfr1 i) (hZ1 x)
+    have e2 : B x (fr i x) (cov (fr i) x (W x))
+        = cov.covBilin h (fr i) (fun y ↦ cov (fr i) y (W y)) Z x :=
+      cov.covBilinFstSnd_apply (hb x) (hfr1 i) (hDfr i) (hZ1 x)
+    have hcB : cov.covBilin B W (fr i) (fr i) x
+        = mvfderiv I (fun y ↦ B y (fr i y) (fr i y)) x (W x)
+          - B x (cov (fr i) x (W x)) (fr i x) - B x (fr i x) (cov (fr i) x (W x)) := rfl
+    have hc2 : cov.cov2Bilin h W (fr i) (fr i) Z x
+        = mvfderiv I (fun y ↦ cov.covBilin h (fr i) (fr i) Z y) x (W x)
+          - cov.covBilin h (fun y ↦ cov (fr i) y (W y)) (fr i) Z x
+          - cov.covBilin h (fr i) (fun y ↦ cov (fr i) y (W y)) Z x
+          - cov.covBilin h (fr i) (fr i) (fun y ↦ cov Z y (W y)) x := rfl
+    rw [hcB, hc2, hm', e1, e2]
+    ring
+  -- The subtracted term of `∇_W ω` is the frame sum of the same quantity. The value is passed
+  -- explicitly: matching `divBilinForm_apply` against a beta-redex sends the unifier through
+  -- `mkHom` into the trivialisations behind `FiberBundle.extend`, and it does not come back.
+  have key : ∀ (v : TangentSpace I x) (V : Π y : M, TangentSpace I y), MDiffAt (T% V) x →
+      V x = v → cov.divBilinForm (hb x) v = ∑ i, cov.covBilin h (fr i) (fr i) V x := by
+    intro v V hVd hVv
+    rw [← hVv, cov.divBilinForm_apply (hb x) hVd]
+    exact cov.divBilin_eq_sum_frame (hb x) hVd hfr1 b fun i ↦ (hbv i).symm
+  have hsub : cov.divBilinOneForm h hb x (cov Z x (W x))
+      = ∑ i, cov.covBilin h (fr i) (fr i) (fun y ↦ cov Z y (W y)) x := by
+    rw [cov.divBilinOneForm_eq hb x]
+    exact key (cov Z x (W x)) (fun y ↦ cov Z y (W y)) hDZ rfl
+  simp only [covOneForm]
+  rw [hlead, hsub, Finset.sum_congr rfl fun i _ ↦ hexpand i, Finset.sum_add_distrib]
+  ring
+
+omit [CompleteSpace E] in
+-- BENCH: div-div-bilin-double-trace
+/-- **`div div h` is the double trace of `∇²h`**:
+`div div h = ∑_{j,i} (∇²_{eⱼ,eᵢ}h)(eᵢ, eⱼ)`. This is the form the evolution of the scalar
+curvature produces, and it is reached without ever packaging `∇²h` as a four-linear map: the
+outer trace is `div` of a one-form and the inner one is the previous lemma. -/
+theorem divDivBilin_eq_sum
+    (hcov : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    (hb : IsMDiffBilin (I := I) h)
+    (hw : IsMDiffOneFormAt (I := I) (cov.divBilinOneForm h hb) x)
+    {iota : Type*} [Fintype iota] {fr : iota → Π y : M, TangentSpace I y} {u : Set M}
+    (hs : IsOrthonormalFrameOn I E 1 fr u) (hu : IsOpen u) (hx : x ∈ u)
+    (hfr2 : ∀ i, CMDiff 2 (T% (fr i)))
+    (hB : ∀ j i, MDiffAt (fun y ↦ cov.covBilin h (fr i) (fr i) (fr j) y) x)
+    (b : OrthonormalBasis iota ℝ (TangentSpace I x)) (hbv : ∀ i, fr i x = b i) :
+    cov.divDivBilin h hb x
+      = ∑ j, ∑ i, cov.cov2Bilin h (fr j) (fr i) (fr i) (fr j) x := by
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  have hfr1 : ∀ i, MDiffAt (T% (fr i)) x := fun i ↦ (hfr2 i).mdifferentiable h2 x
+  rw [divDivBilin, cov.divOneForm_eq_sum_frame hw hfr1 b hbv]
+  exact Finset.sum_congr rfl fun j _ ↦
+    cov.covOneForm_divBilinOneForm_eq_sum hcov hb (hfr2 j) (hfr1 j) hs hu hx hfr2 (hB j)
+
+end DivCommutes
 
 end BilinDivergence
 

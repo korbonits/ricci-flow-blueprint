@@ -1633,7 +1633,9 @@ target actually requires.
     CovariantDerivative.divBilin_eq_sum_basis,
     CovariantDerivative.divBilin_eq_sum_frame,
     CovariantDerivative.divBilinForm,
-    CovariantDerivative.divDivBilin}
+    CovariantDerivative.divDivBilin,
+    CovariantDerivative.covOneForm_divBilinOneForm_eq_sum,
+    CovariantDerivative.divDivBilin_eq_sum}
   \leanok
   \uses{lem:cov-bilin-tensor, def:bilin-laplacian, def:laplacian}
   For a one-form field $\omega$, $(\nab_X \omega)(Y) = X(\omega(Y)) -
@@ -1662,6 +1664,23 @@ target actually requires.
       fields. So $\texttt{TensorialAt.mkHom}_2$ applies directly and
       $\operatorname{div}\omega$ is frame-independent for free.
   \end{itemize}
+
+  \textbf{The two definitions agree.} $\operatorname{div}\operatorname{div} h$
+  is defined here as an \emph{iterated} divergence, while the evolution of the
+  scalar curvature produces the \emph{double trace} of $\nab^2h$. They are equal:
+  \[
+    (\nab_W(\operatorname{div} h))(Z) = \sum_i (\nab^2_{W,e_i}h)(e_i, Z),
+    \qquad
+    \operatorname{div}\operatorname{div} h
+      = \sum_{j}\sum_i (\nab^2_{e_j,e_i}h)(e_i, e_j)
+  \]
+  (\texttt{covOneForm\_divBilinOneForm\_eq\_sum},
+  \texttt{divDivBilin\_eq\_sum}) --- \emph{the divergence commutes with
+  $\nab$}. This is Lemma \ref{lem:metric-trace-cov} applied to the bilinear
+  form $(v,w) \mapsto (\nab_v h)(w,Z)$: differentiating the frame sum produces
+  $\nab^2h$ \emph{plus} exactly the term $(\operatorname{div} h)(\nab_W Z)$
+  that $\nab_W$ of a one-form subtracts, so the two cancel and no curvature
+  term survives.
 
   For $\omega = \mathrm{d}f$ these are the Hessian and Laplacian of a function
   (Definition \ref{def:laplacian}); the general case is what the flow needs.
