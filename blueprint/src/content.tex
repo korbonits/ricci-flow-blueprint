@@ -2649,8 +2649,52 @@ Perelman's monotone functionals are what rule it out.
   section only through its germ. Locality is not an axiom: take a bump $f$
   equal to $1$ near $t$ and supported where the two sections agree; then $fV =
   fW$ globally, while Leibniz evaluates both sides at $t$ to $DV(t)$ and
-  $DW(t)$, since $f(t) = 1$ and $f'(t) = 0$.
+  $DW(t)$, since $f(t) = 1$ and $f'(t) = 0$. Uniqueness is Lemma
+  \ref{lem:cov-along-curve-unique}.
 \end{definition}
+
+\begin{lemma}[Uniqueness of $D/dt$]
+  \label{lem:cov-along-curve-unique}
+  \lean{CovariantDerivative.mdiffAlongAt_iff_of_mem,
+    CovariantDerivative.MDiffAlongAt.of_section,
+    CovariantDerivative.MDiffAlongAt.add,
+    CovariantDerivative.MDiffAlongAt.smul,
+    CovariantDerivative.MDiffAlongAt.sum,
+    CovariantDerivative.exists_frame_expansion,
+    CovariantDerivative.IsCovDerivAlong.sum,
+    CovariantDerivative.IsCovDerivAlong.eq_of_isCovDerivAlong}
+  \leanok
+  \uses{def:cov-along-curve, lem:global-extension}
+  Two operators satisfying the three axioms of Definition
+  \ref{def:cov-along-curve} agree on every section differentiable along
+  $\gamma$. So $D/dt$ deserves the definite article, and anything proved from
+  the axioms is a theorem about \emph{the} covariant derivative along a curve,
+  whatever construction produces it.
+
+  \textbf{Proved} (\texttt{CovariantAlongCurve.lean}). Everything rests on one
+  fact: near $t$ a section along $\gamma$ is a finite combination
+  \[
+    V = \sum_i f_i \cdot (W_i \circ \gamma)
+  \]
+  of restrictions of \emph{global} $C^1$ sections, with $f_i$ differentiable
+  (\texttt{exists\_frame\_expansion}). Locality then replaces $V$ by that sum,
+  additivity splits it, the Leibniz rule evaluates each term, and the third
+  axiom turns $D(W_i \circ \gamma)$ into $\nab_{\gamma'}W_i$ --- an expression
+  in which $D$ no longer occurs.
+
+  The expansion is read off a single trivialisation around $\gamma(t)$. The
+  frame is Mathlib's \texttt{Trivialization.localFrame} for a basis of the
+  model fibre, made global by the bump argument of Lemma
+  \ref{lem:global-extension}; the coefficients are the fibre coordinates of
+  $V$, and they are differentiable because differentiability along $\gamma$
+  \emph{is} differentiability of those coordinates
+  (\texttt{mdiffAlongAt\_iff\_of\_mem}, the base component of Mathlib's
+  total-space criterion being discharged by the curve's own
+  differentiability). That criterion also supplies the closure properties the
+  induction needs --- sections along $\gamma$ add, scale by differentiable
+  functions of the parameter, and sum --- since a trivialisation is fibrewise
+  linear.
+\end{lemma}
 
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
