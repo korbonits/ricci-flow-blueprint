@@ -2835,7 +2835,11 @@ Perelman's monotone functionals are what rule it out.
     CovariantDerivative.hasDerivAt_extChartAt_comp,
     CovariantDerivative.trivializationAt_snd_eq_tangentCoordChange,
     CovariantDerivative.deriv_extChartAt_comp_eq_trivializationAt,
-    CovariantDerivative.coeffAlong_velocity_eq}
+    CovariantDerivative.coeffAlong_velocity_eq,
+    CovariantDerivative.sum_deriv_repr_smul,
+    CovariantDerivative.trivializationAt_covAlong_eq,
+    CovariantDerivative.trivializationAt_covAlong_velocity_eq,
+    CovariantDerivative.covAlong_velocity_eq_zero_iff}
   \leanok
   \uses{def:geodesic, def:cov-along-curve}
   With $p(t) = \varphi_{x_0}(\gamma(t))$ the position of $\gamma$ in the chart at $x_0$,
@@ -2868,8 +2872,27 @@ Perelman's monotone functionals are what rule it out.
   $\frac{D}{dt}V = c' + \Gamma(\gamma)(\gamma')(c)$ of Definition \ref{def:geodesic}, at
   $V = \gamma'$, is an equation in $p'$ and $p''$.
 
-  \textbf{What is left} is to assemble it: differentiate the coordinates once more and feed
-  the result to Picard--Lindel\"of.
+  \textbf{The equation, assembled.} Pushing
+  \texttt{covAlong\_eq\_sum\_of\_frame} through the trivialisation gives the whole of $D/dt$ as
+  a vector equation in the model space, with no basis in the statement
+  (\texttt{trivializationAt\_covAlong\_eq}):
+  \[
+    \bigl(\tfrac{D}{dt}V\bigr)^{e} \;=\; q'(t) \;+\; \Gamma(\gamma(t))(\gamma'(t))(q(t)),
+    \qquad q(u) = \bigl(e\langle\gamma(u),V(u)\rangle\bigr)_2 .
+  \]
+  The basis is eliminated by \texttt{sum\_deriv\_repr\_smul}: the coefficients of $q'(t)$ in a
+  basis are the derivatives of the coefficients of $q$. At $V = \gamma'$ the identification
+  above turns $q$ into $p'$, so
+  \[
+    \nab_{\gamma'}\gamma' = 0 \quad\Longleftrightarrow\quad p''(t) = -\Gamma(\gamma(t))(\gamma'(t))(p'(t))
+  \]
+  (\texttt{trivializationAt\_covAlong\_velocity\_eq},
+  \texttt{covAlong\_velocity\_eq\_zero\_iff}) --- the equivalence because a trivialisation is a
+  continuous linear \emph{equivalence} on each fibre, so vanishing may be tested in
+  coordinates. Everything on the right lives in $E$, and $\Gamma$ is $C^k$ in the point
+  (Definition \ref{def:geodesic}).
+
+  \textbf{What is left} is Picard--Lindel\"of itself, and then $\exp$.
 \end{lemma}
 
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
