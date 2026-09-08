@@ -266,7 +266,7 @@ gives the road, and the one thing it does not give yet.
 
 \begin{lemma}[Curvature and Ricci are pointwise in the last slot]
   \label{lem:curvature-pointwise}
-  \lean{CovariantDerivative.curvature_congr_third, CovariantDerivative.ricci_congr_snd_of_eq, CovariantDerivative.ricciAt, CovariantDerivative.inner_curvature_eq_zero_of_dep, RicciFlowBlueprint.hasPositiveRicciLC_iff_tangent, RicciFlowBlueprint.hasConstSecLC_iff_mul}
+  \lean{CovariantDerivative.curvature_congr_third, CovariantDerivative.curvature_smul_third, CovariantDerivative.curvature_smul_third', CovariantDerivative.ricci_congr_snd_of_eq, CovariantDerivative.ricciAt, CovariantDerivative.inner_curvature_eq_zero_of_dep, RicciFlowBlueprint.hasPositiveRicciLC_iff_tangent, RicciFlowBlueprint.hasConstSecLC_iff_mul}
   \leanok
   \uses{lem:global-extension, def:curvature, def:ricci}
   $\Riem(X,Y)Z$ at $x$ depends only on $Z(x)$, and hence $\Ric(X,Y)(x)$ depends
@@ -1081,31 +1081,36 @@ target actually requires.
   the link is the second-derivative test, Lemma \ref{lem:second-derivative-test}.
 \end{definition}
 
-\begin{lemma}[$\nab \Rm$ is tensorial in its direction]
+\begin{lemma}[$\nab \Rm$ is tensorial in all four slots]
   \label{lem:cov-curvature-direction}
   \lean{CovariantDerivative.covCurvature_smul_dir,
     CovariantDerivative.covCurvature_add_dir,
     CovariantDerivative.cov_smul_dir,
     CovariantDerivative.contMDiff_curvature,
-    CovariantDerivative.covCurvature_antisymm}
+    CovariantDerivative.covCurvature_antisymm,
+    CovariantDerivative.covCurvature_smul_snd,
+    CovariantDerivative.covCurvature_add_snd,
+    CovariantDerivative.covCurvature_smul_thd,
+    CovariantDerivative.covCurvature_add_thd,
+    CovariantDerivative.covCurvature_smul_fth,
+    CovariantDerivative.covCurvature_add_fth}
   \leanok
-  \uses{lem:bianchi-second, def:curvature}
-  $(\nab_{fX} \Riem)(Y,Z)W = f\,(\nab_X \Riem)(Y,Z)W$, and likewise additively.
+  \uses{lem:bianchi-second, def:curvature, lem:curvature-pointwise}
+  $(\nab_X \Riem)(Y,Z)W$ is $C^\infty(M)$-linear in each of $X$, $Y$, $Z$ and
+  $W$ separately: replacing any one of them by $fV$ multiplies the value at $x$
+  by $f(x)$, and replacing it by a sum splits the value.
 
-  \textbf{Proved} (\texttt{CurvatureDeriv.lean}). Each of the four terms of
+  \textbf{Proved} (\texttt{CurvatureDeriv.lean}). Three different mechanisms,
+  not one repeated.
+
+  \emph{The direction slot} is the cheap one. Each of the four terms of
   $\nab\Riem$ picks up exactly one factor of $f(x)$, for the same reason:
   $\nab_{fX}$ is $f\nab_X$ on the nose, and the last three terms feed that into
   a slot of $\Riem$ in which $\Riem$ is already tensorial --- the first two
   cheaply, the third by Lemma \ref{lem:curvature-pointwise}.
 
-  This is what makes the \emph{divergence}
-  $\operatorname{div}\Rm(Y,Z,W) = \sum_i \langle (\nab_{e_i}\Riem)(Y,Z)W, e_i
-  \rangle$ well defined, the trace being over the direction slot; and the
-  divergence is what the contracted second Bianchi identity, and hence $\Delta
-  \scal$, are about.
-
-  \textbf{The other three slots are not done, and are not the same problem.}
-  Under $Y \mapsto fY$ the \emph{first} term picks up a Leibniz term,
+  \emph{The $Y$ and $Z$ slots} are a cancellation instead. Under $Y \mapsto fY$
+  the \emph{first} term picks up a Leibniz term,
   $\nab_X(f\,\Riem(Y,Z)W) = f\nab_X(\Riem(Y,Z)W) + (Xf)\Riem(Y,Z)W$, cancelled
   by the matching term from $\Riem(\nab_X(fY),Z)W$ --- so the direction slot was
   the easy one precisely because it has none. Applying Leibniz needs $y \mapsto
@@ -1114,14 +1119,217 @@ target actually requires.
   \texttt{contMDiff\_curvature}, also proved here: a $C^3$ triple has a $C^1$
   curvature section, the two $\nab\nab$ terms by
   \texttt{contMDiff\_cov\_apply} twice and the bracket term by the same fed
-  Mathlib's \texttt{ContMDiffAt.mlieBracket\_vectorField}. So $Y$ and $Z$ are
-  now unblocked, at one more derivative than the direction slot --- and
-  \texttt{covCurvature\_antisymm} halves what is left of them, since
-  $\nab\Riem$ inherits the antisymmetry of $\Riem$ in those two slots, so
-  whatever is proved for $Y$ transfers to $Z$. $W$ still needs the
-  frame-and-globalise argument of Lemma \ref{lem:curvature-pointwise} one level
-  up.
+  Mathlib's \texttt{ContMDiffAt.mlieBracket\_vectorField}. Once $Y$ is done,
+  \texttt{covCurvature\_antisymm} hands over $Z$ for nothing.
+
+  \emph{The $W$ slot} is the same cancellation with the other pairing:
+  $\Riem(Y,Z)(fW) = f\,\Riem(Y,Z)W$ as \emph{sections}, so the leading $\nab_X$
+  contributes $(Xf)\Riem(Y,Z)W$, and the last term contributes the matching one
+  through $\nab_X(fW) = f\nab_X W + (Xf)W$. It costs one derivative more of $f$
+  than the others, and that is not slack: the second Leibniz term is
+  $\Riem(Y,Z)\big((Xf)W\big)$, and tensoriality in $\Riem$'s third slot wants
+  its coefficient $Xf$ to be $C^2$, hence $f \in C^3$. Stating this needed
+  \texttt{curvature\_smul\_third'}, Lemma \ref{lem:curvature-pointwise}'s
+  third-slot linearity restated asking of the first two slots only the $C^1$
+  regularity its proof actually uses --- the fields landing in them here are
+  $\nab_X Y$ and $\nab_X Z$, which are one derivative worse than $Y$ and $Z$.
+
+  With all four slots, the \emph{divergence}
+  $\operatorname{div}\Rm(Y,Z,W) = \sum_i \langle (\nab_{e_i}\Riem)(Y,Z)W, e_i
+  \rangle$ is well defined --- the trace is over the direction slot, and
+  tensoriality is what makes the sum independent of the orthonormal frame. The
+  divergence is what the contracted second Bianchi identity, and hence $\Delta
+  \scal$, are about.
 \end{lemma}
+
+\begin{definition}[The divergence of the curvature tensor]
+  \label{def:div-curvature}
+  \lean{CovariantDerivative.covCurvature_congr_dir,
+    CovariantDerivative.covCurvatureAt,
+    CovariantDerivative.covCurvatureEndo,
+    CovariantDerivative.divCurvature,
+    CovariantDerivative.divCurvature_eq_sum_basis,
+    CovariantDerivative.divCurvature_eq_sum_frame}
+  \leanok
+  \uses{lem:cov-curvature-direction, lem:global-extension}
+  \[
+    \operatorname{div}\Rm(Y,Z,W)(x)
+      \;=\; \sum_i \big\langle (\nab_{e_i}\Riem)(Y,Z)W,\ e_i \big\rangle,
+  \]
+  the trace of $\nab\Riem$ over its direction slot against its fourth.
+
+  \textbf{Defined and proved frame-independent} (\texttt{Divergence.lean}). Two
+  facts make this well posed, and neither is free.
+
+  First, $(\nab_X\Riem)(Y,Z)W$ at $x$ depends only on $X(x)$
+  (\texttt{covCurvature\_congr\_dir}). This costs no new frame argument, unlike
+  Lemma \ref{lem:curvature-pointwise}: each of the four terms is separately
+  pointwise in $X$. The first is a continuous linear map evaluated at $X(x)$;
+  the next two are $\Riem$ in a slot where it is tensorial, applied to
+  $\nab_X Y$ and $\nab_X Z$, whose values at $x$ are $\nab_{X(x)}Y$ and
+  $\nab_{X(x)}Z$; the last is $\Riem$'s third slot applied to $\nab_X W$, which
+  is Lemma \ref{lem:curvature-pointwise} itself.
+
+  Second, it is $C^\infty(\M)$-linear there
+  (Lemma \ref{lem:cov-curvature-direction}). So
+  $v \mapsto (\nab_v\Riem)(Y,Z)W$ is a genuine endomorphism of $T_x\M$ ---
+  \texttt{covCurvatureEndo}, built on globally $C^2$ extensions of $v$ as
+  \texttt{ricciAt} is --- and $\operatorname{div}\Rm$ is its trace.
+
+  \textbf{Frame-independence is then algebraic}, not a computation: it is
+  \texttt{LinearMap.trace\_eq\_sum\_inner}, valid for any orthonormal basis of
+  $T_x\M$ (\texttt{divCurvature\_eq\_sum\_basis}), and
+  \texttt{divCurvature\_eq\_sum\_frame} reads it off any $C^2$ frame whose
+  values at $x$ are orthonormal. Note the contrast with the scalar curvature:
+  there the object traced is a bilinear form and the trace is metric; here it
+  is an endomorphism and no metric enters the trace at all --- the metric
+  appears only in writing it as $\sum_i \langle \cdot, e_i\rangle$.
+
+  This is the object the contracted second Bianchi identity is about, and
+  through that identity the object $\Delta \scal$ is about.
+\end{definition}
+
+\begin{lemma}[The traced second Bianchi identity]
+  \label{lem:traced-bianchi}
+  \lean{CovariantDerivative.divCurvature_eq_sub_sum}
+  \leanok
+  \uses{def:div-curvature, lem:bianchi-second}
+  \[
+    \operatorname{div}\Rm(Y,Z,W)
+      \;=\; \sum_i \big\langle (\nab_Y\Riem)(e_i,Z)W, e_i\big\rangle
+          \;-\; \sum_i \big\langle (\nab_Z\Riem)(e_i,Y)W, e_i\big\rangle .
+  \]
+
+  \textbf{Proved} (\texttt{Divergence.lean}). Take the second Bianchi identity
+  with $e_i$ in the direction slot,
+  \[
+    (\nab_{e_i}\Riem)(Y,Z)W + (\nab_Y\Riem)(Z,e_i)W + (\nab_Z\Riem)(e_i,Y)W = 0,
+  \]
+  pair with $e_i$, and sum. The middle term is turned round by antisymmetry of
+  $\nab\Riem$ in its second and third slots
+  (\texttt{covCurvature\_antisymm}). Nothing is differentiated along the frame:
+  the identity is pointwise in $e_i$ and is only summed, so no derivative of
+  $e_i$ appears and no orthonormality is used beyond what
+  Definition \ref{def:div-curvature} already needs.
+
+  \textbf{What is left to reach $\operatorname{div}\Ric = \tfrac12 d\scal$} is a
+  single further identity: the two sums on the right are $(\nab_Y\Ric)(Z,W)$ and
+  $(\nab_Z\Ric)(Y,W)$. That is the trace commuting with $\nab$ for the curvature
+  endomorphism --- the analogue for $\Riem$ of Lemma
+  \ref{lem:metric-trace-cov}, and like it a statement about a frame that is not
+  parallel, so the coefficients $\langle \nab_X e_i, e_j\rangle$ enter and are
+  killed by antisymmetry. It is not proved yet.
+\end{lemma}
+
+\begin{theorem}[The contracted second Bianchi identity, first contraction]
+  \label{thm:contracted-bianchi}
+  \lean{CovariantDerivative.covRicci,
+    CovariantDerivative.curvatureBilinFst,
+    CovariantDerivative.sum_inner_covCurvature_eq,
+    CovariantDerivative.divCurvature_eq_covRicci_sub,
+    CovariantDerivative.ricci_eq_sum_inner_frame}
+  \leanok
+  \uses{lem:traced-bianchi, lem:metric-trace-cov, def:div-curvature}
+  For a Levi-Civita connection,
+  \[
+    \operatorname{div}\Rm(Y,Z,W) \;=\; (\nab_Y\Ric)(Z,W) - (\nab_Z\Ric)(Y,W).
+  \]
+
+  \textbf{Proved} (\texttt{Divergence.lean}). Lemma \ref{lem:traced-bianchi}
+  already gives this with the right-hand side written as two frame sums
+  $\sum_i \langle (\nab_X\Riem)(e_i,Z)W, e_i\rangle$. What is proved here is
+  that each such sum \emph{is} $(\nab_X\Ric)(Z,W)$ ---
+  \texttt{sum\_inner\_covCurvature\_eq}, the statement that the first-slot trace
+  commutes with $\nab$.
+
+  \textbf{Why that is not immediate.} $\Ric(Z,W)$ is a frame sum only where the
+  frame is orthonormal, so differentiating it in $X$ means differentiating the
+  frame too, and a $C^2$ orthonormal frame is not parallel. Expanding
+  $X\big(\sum_i \langle \Riem(e_i,Z)W, e_i\rangle\big)$ by metric compatibility
+  produces, besides the wanted terms, $\sum_i \langle \Riem(e_i,Z)W, \nab_X
+  e_i\rangle$; and $(\nab_X\Riem)(e_i,Z)W$ carries the matching $-\Riem(\nab_X
+  e_i, Z)W$. Their sum is
+  \[
+    \sum_i \Big[\,\beta(\nab_X e_i,\, e_i) + \beta(e_i,\, \nab_X e_i)\,\Big],
+    \qquad \beta(a,b) := \langle \Riem(a,Z)W,\, b\rangle,
+  \]
+  which vanishes because the coefficients $\langle \nab_X e_i, e_j\rangle$ are
+  antisymmetric (metric compatibility plus local constancy of $\langle e_i,
+  e_j\rangle$) while the bracket is symmetric in $i,j$. That is exactly the
+  mechanism of Lemma \ref{lem:metric-trace-cov}, and the same Lean lemma
+  \texttt{sum\_bilin\_of\_antisymm} does the work; what is new is that $\beta$
+  has to be produced as a genuine continuous bilinear form, which is
+  \texttt{curvatureBilinFst}, available only because $\Riem$ is tensorial in its
+  first slot.
+
+  Both hypotheses on the connection are used, and for different things:
+  torsion-freeness for the second Bianchi identity, metric compatibility for the
+  trace to commute with $\nab$.
+
+  \textbf{What is left} is the second contraction, $\operatorname{div}\Ric =
+  \tfrac12\, d\scal$: trace this identity again over $Y$ and $W$. That needs the
+  pair symmetry of $\Riem$ carried through $\nab$, and Lemma
+  \ref{lem:metric-trace-cov} to turn $\sum_j (\nab_Z\Ric)(e_j,e_j)$ into
+  $Z(\scal)$.
+\end{theorem}
+
+\begin{theorem}[The contracted second Bianchi identity, second contraction]
+  \label{thm:div-ricci}
+  \lean{CovariantDerivative.inner_covCurvature_expand,
+    CovariantDerivative.inner_covCurvature_pair_symm,
+    CovariantDerivative.covBilin_ricciForm_eq_covRicci,
+    CovariantDerivative.covRicci_symm,
+    CovariantDerivative.two_mul_sum_covRicci_eq_mvfderiv_scalarCurvatureAt}
+  \leanok
+  \uses{thm:contracted-bianchi, lem:metric-trace-cov, lem:curvature-symmetries,
+    thm:ricci-symm}
+  For a Levi-Civita connection,
+  $\operatorname{div}\Ric = \tfrac12\, d\scal$; in the frame form the Lean
+  statement takes,
+  \[
+    2 \sum_i (\nab_{e_i}\Ric)(e_i, Y) \;=\; Y(\scal).
+  \]
+
+  \textbf{Proved} (\texttt{Divergence.lean}). Contract Theorem
+  \ref{thm:contracted-bianchi} over its remaining two slots: sum
+  \[
+    \operatorname{div}\Rm(Y,e_j,e_j) = (\nab_Y\Ric)(e_j,e_j) -
+    (\nab_{e_j}\Ric)(Y,e_j)
+  \]
+  over $j$. On the right the first sum is $Y(\scal)$ by Lemma
+  \ref{lem:metric-trace-cov}, and the second is $\operatorname{div}\Ric(Y)$
+  because $\nab\Ric$ is symmetric --- which it is because $\Ric$ is (Lemma
+  \ref{thm:ricci-symm}), so this step too needs the connection to be
+  metric. On the left, pair symmetry of $\nab\Riem$ turns $\langle
+  (\nab_{e_i}\Riem)(Y,e_j)e_j, e_i\rangle$ into $\langle
+  (\nab_{e_i}\Riem)(e_j,e_i)Y, e_j\rangle$, whose sum over $j$ is
+  $(\nab_{e_i}\Ric)(e_i,Y)$ by Theorem \ref{thm:contracted-bianchi}'s trace
+  lemma; summing over $i$ gives $\operatorname{div}\Ric(Y)$ back. So
+  $\operatorname{div}\Ric(Y) = Y(\scal) - \operatorname{div}\Ric(Y)$.
+
+  \textbf{Pair symmetry of $\nab\Riem$ is not inherited for free.} What Lemma
+  \ref{lem:curvature-symmetries} gives is a symmetry of the $(0,4)$ tensor
+  $\langle\Riem(A,B)C,D\rangle$, and $\nab\Riem$ is defined as an operator on
+  fields, not as the derivative of that tensor. The bridge is
+  \texttt{inner\_covCurvature\_expand}: for a \emph{metric} connection the
+  leading $\nab_X$ can be moved onto the pairing, so
+  \[
+    \langle (\nab_X\Riem)(A,B)C, D\rangle
+      = X\langle \Riem(A,B)C,D\rangle - \sum_{\text{4 slots}} \langle
+      \Riem(\ldots,\nab_X\cdot,\ldots),\cdot\rangle - \langle \Riem(A,B)C,
+      \nab_X D\rangle,
+  \]
+  five corrections rather than four --- the fifth is the metric one. Every term
+  on the right is the $(0,4)$ tensor evaluated somewhere, so the pointwise
+  symmetry transfers, and the two sides' corrections are the same five numbers
+  in a different order.
+
+  With this, roadmap item 2 is closed. The next link in the chain is
+  $\operatorname{tr}_g \partial_t \Ric = \Delta \scal$ under the flow; combined
+  with \texttt{RicciVariation.lean}'s $\partial_t \scal = \operatorname{tr}_g
+  \partial_t\Ric + 2|\Ric|^2$ that gives $\partial_t \scal = \Delta \scal +
+  2|\Ric|^2$.
+\end{theorem}
 
 \begin{lemma}[The metric trace commutes with $\nab$]
   \label{lem:metric-trace-cov}

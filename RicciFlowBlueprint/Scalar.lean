@@ -202,6 +202,24 @@ theorem ricci_eq_sum_inner_curvature [ContMDiffCovariantDerivative cov 1]
   rw [cov.ricci_eq_trace hY x, LinearMap.trace_eq_sum_inner _ b]
   rfl
 
+/-- **Ricci curvature as a sum over an arbitrary frame** whose values at `x` are an
+orthonormal basis: `Ric(X,Y)(x) = Σᵢ ⟪R(frᵢ, X)Y, frᵢ⟫`. Unlike
+`ricci_eq_sum_inner_curvature` the fields are given, not the canonical extensions --- which
+is what a *local* frame supplies, and what differentiating the sum in `x` needs. -/
+theorem ricci_eq_sum_inner_frame [ContMDiffCovariantDerivative cov 1]
+    {ι : Type*} [Fintype ι] {X Y : Π y : M, TangentSpace I y} {x : M}
+    (hY : CMDiff 2 (T% Y)) {fr : ι → Π y : M, TangentSpace I y}
+    (b : OrthonormalBasis ι ℝ (TangentSpace I x))
+    (hfr : ∀ i, MDiffAt (T% (fr i)) x) (hb : ∀ i, fr i x = b i) :
+    cov.ricci X Y x = ∑ i, ⟪cov.curvature (fr i) X Y x, fr i x⟫ := by
+  rw [cov.ricci_eq_sum_inner_curvature hY b]
+  refine Finset.sum_congr rfl fun i _ ↦ ?_
+  have hext : MDiffAt (T% (extend E (b i))) x := mdifferentiableAt_extend ..
+  have hval : (extend E (b i)) x = fr i x := by
+    rw [FiberBundle.extend_apply_self]; exact (hb i).symm
+  rw [(cov.tensorialAt_curvature_fst (V := X) hY x).pointwise hext (hfr i) hval, ← hb i]
+  exact real_inner_comm _ _
+
 /-- The scalar curvature relative to a finite family of vector fields: the sum
 `Σᵢ Ric(bᵢ, bᵢ)(x)`. When the values `bᵢ x` form an orthonormal basis of the tangent
 space at `x` this is the metric trace of the Ricci curvature; frame-independence is
