@@ -9,6 +9,10 @@ blueprint/src/*.out
 blueprint/src/*.pdf
 blueprint/src/*.paux
 blueprint/src/*.pdf.log
+blueprint/src/*.fdb_latexmk
+blueprint/src/*.fls
+blueprint/src/*.synctex.gz
+blueprint/src/*.toc
 .venv/
 __pycache__/
 scratch/

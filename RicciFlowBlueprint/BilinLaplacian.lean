@@ -696,6 +696,30 @@ theorem hessianFun_traceBilin_eq
 
 end MetricTrace
 
+omit [CompleteSpace E] [FiniteDimensional ℝ E] [ContMDiffCovariantDerivative cov 1] in
+/-- **`∇²h` is linear in `h`** under a constant rescaling. Each of the four terms carries the
+constant through: the leading one because `∇h` already does and `mvfderiv` is linear, the three
+corrections because they are `∇h` again. -/
+theorem cov2Bilin_smul_form (c : ℝ) (h : M → E →L[ℝ] E →L[ℝ] ℝ)
+    {W X Y Z : Π y : M, TangentSpace I y} {x : M}
+    (hh : ∀ (U V : Π y : M, TangentSpace I y) (y : M), MDiffAt (fun z ↦ h z (U z) (V z)) y)
+    (hcb : MDiffAt (fun y ↦ cov.covBilin h X Y Z y) x) :
+    cov.cov2Bilin (fun y ↦ (c • h y : E →L[ℝ] E →L[ℝ] ℝ)) W X Y Z x
+      = c * cov.cov2Bilin h W X Y Z x := by
+  have hlin : ∀ (P Q R : Π y : M, TangentSpace I y),
+      (fun y ↦ cov.covBilin (fun z ↦ (c • h z : E →L[ℝ] E →L[ℝ] ℝ)) P Q R y)
+        = fun y ↦ c * cov.covBilin h P Q R y := by
+    intro P Q R
+    funext y
+    exact cov.covBilin_smul_form c h (hh Q R y)
+  have hd : mvfderiv I (fun y ↦ c * cov.covBilin h X Y Z y) x (W x)
+      = c * mvfderiv I (fun y ↦ cov.covBilin h X Y Z y) x (W x) := by
+    rw [mvfderiv_fun_mul mdifferentiableAt_const hcb, mvfderiv_const]
+    simp
+  simp only [cov2Bilin, hlin]
+  rw [hd]
+  ring
+
 end Symmetric
 
 

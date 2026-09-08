@@ -219,6 +219,106 @@ theorem sum_inner_covTwoTensor_eq
           - ∑ i, ∑ j, cov.cov2Bilin h (fr i) (fr i) (fr j) (fr j) x := by
         rw [hswap]; ring
 
+section Pointwise
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E] [IsContMDiffRiemannianBundle I 1 E
+  (fun (x : M) ↦ TangentSpace I x)] [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] [ContMDiffCovariantDerivative cov 1] in
+/-- **`∇A` is pointwise in its direction**, with no hypotheses: all three terms are continuous
+linear maps applied to `U x`. -/
+theorem covTwoTensor_congr_dir {U U' P Q : Π y : M, TangentSpace I y} {x : M}
+    (hUU' : U x = U' x) :
+    cov.covTwoTensor A U P Q x = cov.covTwoTensor A U' P Q x := by
+  simp only [covTwoTensor, hUU']
+
+/-- **`A` is differentiable against differentiable fields at `x`.** What the Leibniz rule for
+the tensor's first argument slot needs; for `A = ∂ₜ∇` it is a regularity hypothesis on the
+first variation of the connection. -/
+def IsMDiffTwoTensorAt
+    (A : Π y : M, TangentSpace I y →L[ℝ] TangentSpace I y →L[ℝ] TangentSpace I y) (x : M) :
+    Prop :=
+  ∀ P Q : Π y : M, TangentSpace I y, MDiffAt (T% P) x → MDiffAt (T% Q) x →
+    MDiffAt (T% (fun y ↦ A y (P y) (Q y))) x
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E] [IsContMDiffRiemannianBundle I 1 E
+  (fun (x : M) ↦ TangentSpace I x)] [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] [ContMDiffCovariantDerivative cov 1] in
+/-- `∇A` is linear in the tensor's first argument, by the Leibniz cancellation: the term
+`(Uf)·A(P,Q)` from differentiating `f·A(P,Q)` is cancelled by the one from `∇_U(f•P)`. -/
+theorem covTwoTensor_smul_snd {f : M → ℝ} {U P Q : Π y : M, TangentSpace I y} {x : M}
+    (hf : MDiffAt f x) (hP : MDiffAt (T% P) x)
+    (hAPQ : MDiffAt (T% (fun y ↦ A y (P y) (Q y))) x) :
+    cov.covTwoTensor A U (f • P) Q x = f x • cov.covTwoTensor A U P Q x := by
+  have hsec : (fun y ↦ A y ((f • P) y) (Q y)) = f • fun y ↦ A y (P y) (Q y) := by
+    funext y
+    show A y (f y • P y) (Q y) = f y • A y (P y) (Q y)
+    rw [map_smul (A y) (f y) (P y)]
+    rfl
+  have key : ∀ (c d : ℝ) (v w z : TangentSpace I x),
+      A x (c • v + d • w) z = c • A x v z + d • A x w z := by
+    intro c d v w z
+    rw [map_add, map_smul, map_smul]
+    rfl
+  have hfx : (f • P) x = f x • P x := rfl
+  simp only [covTwoTensor, hsec, hfx]
+  rw [cov.isCovariantDerivativeOn.leibniz hAPQ hf, cov.isCovariantDerivativeOn.leibniz hP hf]
+  simp only [add_apply, smul_apply, ContinuousLinearMap.smulRight_apply]
+  rw [key (f x) (mvfderiv I f x (U x)) (cov P x (U x)) (P x) (Q x),
+    map_smul (A x) (f x) (P x)]
+  simp only [smul_apply]
+  module
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E] [IsContMDiffRiemannianBundle I 1 E
+  (fun (x : M) ↦ TangentSpace I x)] [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] [ContMDiffCovariantDerivative cov 1] in
+/-- `∇A` is additive in the tensor's first argument. -/
+theorem covTwoTensor_add_snd {U P P' Q : Π y : M, TangentSpace I y} {x : M}
+    (hP : MDiffAt (T% P) x) (hP' : MDiffAt (T% P') x)
+    (hAPQ : MDiffAt (T% (fun y ↦ A y (P y) (Q y))) x)
+    (hAP'Q : MDiffAt (T% (fun y ↦ A y (P' y) (Q y))) x) :
+    cov.covTwoTensor A U (P + P') Q x
+      = cov.covTwoTensor A U P Q x + cov.covTwoTensor A U P' Q x := by
+  have hsec : (fun y ↦ A y ((P + P') y) (Q y))
+      = (fun y ↦ A y (P y) (Q y)) + fun y ↦ A y (P' y) (Q y) := by
+    funext y
+    show A y (P y + P' y) (Q y) = A y (P y) (Q y) + A y (P' y) (Q y)
+    rw [map_add (A y) (P y) (P' y)]
+    rfl
+  have key : ∀ v w z : TangentSpace I x, A x (v + w) z = A x v z + A x w z := by
+    intro v w z
+    rw [map_add]
+    rfl
+  have hpx : (P + P') x = P x + P' x := rfl
+  simp only [covTwoTensor, hsec, hpx]
+  rw [cov.isCovariantDerivativeOn.add hAPQ hAP'Q, cov.isCovariantDerivativeOn.add hP hP']
+  simp only [add_apply]
+  rw [key (cov P x (U x)) (cov P' x (U x)) (Q x), key (P x) (P' x) (cov Q x (U x))]
+  abel
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E] [IsContMDiffRiemannianBundle I 1 E
+  (fun (x : M) ↦ TangentSpace I x)] [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] [ContMDiffCovariantDerivative cov 1] in
+theorem tensorialAt_covTwoTensor_snd (hA : IsMDiffTwoTensorAt (I := I) A x)
+    (U : Π y : M, TangentSpace I y) {Q : Π y : M, TangentSpace I y} (hQ : MDiffAt (T% Q) x) :
+    TensorialAt I E (fun P ↦ cov.covTwoTensor A U P Q x) x where
+  smul hf hP := cov.covTwoTensor_smul_snd hf hP (hA _ _ hP hQ)
+  add hP hP' := cov.covTwoTensor_add_snd hP hP' (hA _ _ hP hQ) (hA _ _ hP' hQ)
+
+omit [CompleteSpace E] [IsContMDiffRiemannianBundle I 1 E
+  (fun (x : M) ↦ TangentSpace I x)] [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] [ContMDiffCovariantDerivative cov 1] in
+/-- **`∇A` is pointwise in the tensor's first argument** (among differentiable fields), from
+tensoriality by `TensorialAt.pointwise`. This is what lets the trace of `∂ₜ Rm` be read off a
+frame rather than off the extensions the variation formula produces. -/
+theorem covTwoTensor_congr_snd (hA : IsMDiffTwoTensorAt (I := I) A x)
+    (U : Π y : M, TangentSpace I y) {P P' Q : Π y : M, TangentSpace I y}
+    (hP : MDiffAt (T% P) x) (hP' : MDiffAt (T% P') x) (hQ : MDiffAt (T% Q) x)
+    (hPP' : P x = P' x) :
+    cov.covTwoTensor A U P Q x = cov.covTwoTensor A U P' Q x :=
+  (cov.tensorialAt_covTwoTensor_snd hA U hQ).pointwise hP hP' hPP'
+
+end Pointwise
+
 section Named
 
 variable [VectorBundle ℝ E (fun (x : M) ↦ TangentSpace I x)] [T2Space M]

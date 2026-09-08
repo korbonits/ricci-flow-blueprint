@@ -289,6 +289,28 @@ theorem covBilin_congr_thd (hb : IsMDiffBilinAt (I := I) h x)
     cov.covBilin h X Y Z x = cov.covBilin h X Y Z' x := by
   rw [← cov.covBilinForm_apply hb hY hZ, ← cov.covBilinForm_apply hb hY hZ', hZZ']
 
+omit [CompleteSpace E] [FiniteDimensional ℝ E] in
+/-- **`∇h` is linear in `h`** under a constant rescaling. -/
+theorem covBilin_smul_form (c : ℝ) (h : M → E →L[ℝ] E →L[ℝ] ℝ)
+    {X Y Z : Π y : M, TangentSpace I y} {x : M}
+    (hh : MDiffAt (fun y ↦ h y (Y y) (Z y)) x) :
+    cov.covBilin (fun y ↦ (c • h y : E →L[ℝ] E →L[ℝ] ℝ)) X Y Z x
+      = c * cov.covBilin h X Y Z x := by
+  have hfun : (fun y ↦ (c • h y : E →L[ℝ] E →L[ℝ] ℝ) (Y y) (Z y))
+      = fun y ↦ c * h y (Y y) (Z y) := by
+    funext y; rfl
+  have hd : mvfderiv I (fun y ↦ c * h y (Y y) (Z y)) x (X x)
+      = c * mvfderiv I (fun y ↦ h y (Y y) (Z y)) x (X x) := by
+    rw [mvfderiv_fun_mul mdifferentiableAt_const hh, mvfderiv_const]
+    simp
+  have e₁ : (c • h x : E →L[ℝ] E →L[ℝ] ℝ) (cov Y x (X x)) (Z x)
+      = c * h x (cov Y x (X x)) (Z x) := rfl
+  have e₂ : (c • h x : E →L[ℝ] E →L[ℝ] ℝ) (Y x) (cov Z x (X x))
+      = c * h x (Y x) (cov Z x (X x)) := rfl
+  simp only [covBilin, hfun]
+  rw [hd, e₁, e₂]
+  ring
+
 end Tensor
 
 section Trace

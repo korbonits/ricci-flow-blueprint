@@ -1648,6 +1648,13 @@ target actually requires.
     CovariantDerivative.divDivBilin,
     CovariantDerivative.covOneForm_divBilinOneForm_eq_sum,
     CovariantDerivative.divDivBilin_eq_sum,
+    CovariantDerivative.divOneForm_smul,
+    CovariantDerivative.divOneForm_congr,
+    CovariantDerivative.divBilin_ricciForm_eq,
+    CovariantDerivative.divDivBilin_ricciForm_eq,
+    CovariantDerivative.covBilin_smul_form,
+    CovariantDerivative.cov2Bilin_smul_form,
+    CovariantDerivative.sum_cov2Bilin_neg_two_ricciForm_eq,
     CovariantDerivative.hessianFun_eq_covOneForm,
     CovariantDerivative.laplacianFun_eq_divOneForm,
     CovariantDerivative.laplacianFun_eq_sum_frame,
@@ -1718,6 +1725,29 @@ target actually requires.
   \ref{def:bilin-laplacian}, plus one $\texttt{Finset.sum\_comm}$. So the
   second of the two canonical double traces of $\nab^2h$ is the Laplacian of a
   function.
+  \textbf{For $h = \Ric$ the double divergence is $\tfrac12\Delta\scal$}
+  (\texttt{divDivBilin\_ricciForm\_eq}), which is the second contraction of the
+  second Bianchi identity with the divergence taken once more:
+  $\operatorname{div}\Ric$ \emph{is} the one-form $\tfrac12\,\mathrm{d}\scal$
+  (\texttt{divBilin\_ricciForm\_eq}, Theorem \ref{thm:div-ricci} read as an
+  identity of one-forms rather than a frame sum), and the divergence of
+  $\mathrm{d}f$ is $\Delta f$. The two steps in between are that $\operatorname{div}$
+  is linear in $\omega$ and depends only on its germ
+  (\texttt{divOneForm\_smul}, \texttt{divOneForm\_congr}).
+
+  \textbf{Hence $\operatorname{tr}_\g(\partial_t\Ric) = \Delta\scal$ under the
+  flow} (\texttt{sum\_cov2Bilin\_neg\_two\_ricciForm\_eq}): at $h = -2\Ric$ the
+  first of the two canonical double traces is
+  $\operatorname{div}\operatorname{div} h = -2\cdot\tfrac12\Delta\scal =
+  -\Delta\scal$ and the second is
+  $\operatorname{tr}_\g(\Delta_\g h) = \Delta(\operatorname{tr}_\g h) =
+  -2\Delta\scal$, so their difference is $\Delta\scal$. Getting there needs
+  only that $\nab^2h$ is linear in $h$
+  (\texttt{cov2Bilin\_smul\_form}, from \texttt{covBilin\_smul\_form}) ---
+  everything else is already proved for $\Ric$ itself, and
+  $\operatorname{tr}_\g\Ric$ \emph{is} $\scal$ by definition, the same frame
+  sum.
+
   With $\Delta_\g h$ from Definition \ref{def:bilin-laplacian}, both traces in
   \[
     \operatorname{tr}_\g(\partial_t \Ric)
@@ -1736,7 +1766,18 @@ target actually requires.
     CovariantDerivative.covBilin_symm,
     CovariantDerivative.cov2Bilin_symm,
     CovariantDerivative.sum_inner_covTwoTensor_eq,
-    CovariantDerivative.sum_inner_covTwoTensor_eq_divDiv}
+    CovariantDerivative.sum_inner_covTwoTensor_eq_divDiv,
+    CovariantDerivative.covEnd_eq_covTwoTensor_flip,
+    RicciFlowBlueprint.derivDifferenceTensor,
+    RicciFlowBlueprint.isKoszulOf_derivDifference,
+    RicciFlowBlueprint.hasDerivAt_curvatureE_covTwoTensor,
+    CovariantDerivative.covTwoTensor_congr_dir,
+    CovariantDerivative.IsMDiffTwoTensorAt,
+    CovariantDerivative.covTwoTensor_congr_snd,
+    RicciFlowBlueprint.derivCurvatureEndoE_apply_field,
+    RicciFlowBlueprint.derivRicciFormOfMetric_apply,
+    RicciFlowBlueprint.metricTraceE_derivRicciFormOfMetric_eq,
+    RicciFlowBlueprint.metricTraceE_derivRicciFormOfMetric_eq_sub}
   \leanok
   \uses{def:bilin-laplacian, lem:variation-connection, lem:metric-trace-cov}
   Let $\nab$ be a metric connection and $A$ a $(1,2)$-tensor field satisfying the Koszul
@@ -1787,11 +1828,58 @@ target actually requires.
   $\texttt{Finset.sum\_comm}$, folding the two copies of
   $\operatorname{tr}_\g(\Delta_\g h)$ together.
 
-  $\Rm_A$ is what $\partial_t\Rm$ equals along a family of metrics, so with
-  $h = \partial_t \g$ this is $\operatorname{tr}_\g(\partial_t\Ric)$; under
-  the Ricci flow $h = -2\Ric$ and the two contracted Bianchi identities
-  (Theorems \ref{thm:contracted-bianchi}, \ref{thm:div-ricci}) turn the
-  right-hand side into $\Delta\scal$.
+  \textbf{$\Rm_A$ \emph{is} $\partial_t\Rm$}, and this is now a theorem rather
+  than a remark (\texttt{FlowKoszul.lean}). Two conventions had to be lined up:
+  \texttt{covEnd}, which the first variation of the curvature is phrased in,
+  takes a $(1,2)$-tensor with its argument first and its direction second
+  (matching \texttt{differenceE}), while \texttt{covTwoTensor} takes the
+  direction first --- so the two agree on \emph{flipped} tensors, term for term
+  (\texttt{covEnd\_eq\_covTwoTensor\_flip}, a \texttt{rfl}). With
+  \texttt{derivDifferenceTensor} the flip of $\partial_t\nab$,
+  \texttt{isKoszulOf\_derivDifference} says it is Koszul for $h = \partial_t \g$
+  --- Lemma \ref{lem:variation-connection} states that on the
+  constant-in-a-trivialisation extensions of the two vectors, and the
+  \texttt{covBilin} congr lemmas transfer it to arbitrary differentiable fields
+  --- and \texttt{hasDerivAt\_curvatureE\_covTwoTensor} delivers $\partial_t\Rm$
+  as $\Rm_A$ for that tensor.
+
+  \textbf{Reading the trace off a frame.} The variation formula delivers
+  $\partial_t[v \mapsto \Rm(v,X)Y]$ on the constant-in-a-trivialisation
+  extension of $v$, while the double trace above is taken over a local
+  orthonormal frame. Transferring between them is
+  \texttt{derivCurvatureEndoE\_apply\_field}, which needs $\nab A$ to be
+  pointwise in each of the two slots $v$ lands in: the \emph{direction} slot is
+  free (\texttt{covTwoTensor\_congr\_dir} --- all three terms are continuous
+  linear maps at $U(x)$), and the tensor's \emph{first argument} slot is the
+  Leibniz cancellation, so \texttt{TensorialAt} applies and
+  \texttt{covTwoTensor\_congr\_snd} follows with no frame argument. The one
+  hypothesis is \texttt{IsMDiffTwoTensorAt}: that $y \mapsto A_y(P_y,Q_y)$ is
+  differentiable for differentiable $P$, $Q$ --- for $A = \partial_t\nab$ a
+  regularity hypothesis on the first variation of the connection, carried
+  alongside the commutation hypotheses the variation already needs.
+
+  \textbf{And the double trace \emph{is} $\operatorname{tr}_\g(\partial_t\Ric)$},
+  now as a theorem
+  (\texttt{metricTraceE\_derivRicciFormOfMetric\_eq\_sub}): with $h =
+  \partial_t\g$,
+  \[
+    \operatorname{tr}_\g(\partial_t \Ric)
+      = \operatorname{div}\operatorname{div} h
+        - \operatorname{tr}_\g(\Delta_\g h),
+  \]
+  with no curvature terms. The outer trace is Lemma
+  \ref{lem:metric-trace-variation}'s $\operatorname{tr}_\g$ read off a
+  $\g$-orthonormal basis; the inner one is the endomorphism trace
+  $\Ric(v,w) = \operatorname{tr}(u \mapsto \Rm(u,v)w)$ read off the same
+  basis; and the summand is
+  \texttt{derivCurvatureEndoE\_apply\_field}. One
+  $\texttt{Finset.sum\_comm}$ lines the two up with the double-trace theorem,
+  whose Koszul hypothesis $\partial_t\nab$ supplies.
+
+  Under the Ricci flow $h = -2\Ric$, so $\operatorname{tr}_\g h = -2\scal$ and
+  the two contracted Bianchi identities (Theorems
+  \ref{thm:contracted-bianchi}, \ref{thm:div-ricci}) turn the right-hand side
+  into $2\Delta\scal - \Delta\scal = \Delta\scal$.
 \end{lemma}
 
 \begin{lemma}[The metric trace commutes with $\nab$]
@@ -2098,11 +2186,12 @@ target actually requires.
   model-space statements are kept: they are the same theorems where Definition
   \ref{def:scalar} was first phrased, and they need no extension lemma.
 
-  So the only ingredient still missing from $\partial_t R = \Delta R +
-  2|\Ric|^2$ is $\operatorname{tr}_\g(\partial_t\Ric) = \Delta R$. That
-  rests on the contracted second Bianchi identity, which is now proved in both
-  contractions (Theorems \ref{thm:contracted-bianchi} and
-  \ref{thm:div-ricci}) rather than pending.
+  The one ingredient this left, $\operatorname{tr}_\g(\partial_t\Ric) =
+  \Delta R$, is now proved as well: it rests on the contracted second Bianchi
+  identity in both contractions (Theorems \ref{thm:contracted-bianchi} and
+  \ref{thm:div-ricci}) together with Lemma
+  \ref{lem:koszul-second-derivative}, and the resulting evolution equation is
+  Theorem \ref{thm:evolution-scal}.
 \end{lemma}
 
 \begin{proof}
@@ -2119,6 +2208,47 @@ target actually requires.
   by definition of the flow and uniqueness of derivatives, and
   $\langle -2\Ric, \Ric\rangle_\g = -2|\Ric|^2_\g$.
 \end{proof}
+
+\begin{theorem}[Evolution of the scalar curvature]
+  \label{thm:evolution-scal}
+  \lean{RicciFlowBlueprint.metricTraceE_derivRicciFormOfMetric_eq_laplacian,
+    RicciFlowBlueprint.hasDerivAt_scalarCurvatureOfMetricAt_eq_laplacian_add}
+  \leanok
+  \uses{def:ricci-flow, lem:variation-scalar, lem:koszul-second-derivative,
+    def:one-form-divergence, def:bilin-laplacian, thm:div-ricci,
+    lem:metric-trace-cov}
+  Under the Ricci flow, on any manifold,
+  \[
+    \partial_t R \;=\; \Delta R \;+\; 2|\Ric|^2_\g .
+  \]
+
+  \textbf{Proved} (\texttt{ScalarFlow.lean}). This is the join of the two
+  halves built separately above, and the first evolution equation of the flow
+  to be formalised here in full.
+
+  The \emph{analytic} half is Lemma \ref{lem:koszul-second-derivative}: for the
+  actual flow, $\partial_t\nab$ is Koszul for $h = \partial_t\g$, $\partial_t
+  \Rm$ is the associated $\Rm_A$, and the double trace of that is
+  \[
+    \operatorname{tr}_\g(\partial_t \Ric)
+      = \operatorname{div}\operatorname{div} h
+        - \operatorname{tr}_\g(\Delta_\g h),
+  \]
+  with \textbf{no curvature terms} --- they cancel at the Koszul step, before
+  any Bianchi identity is used.
+
+  The \emph{geometric} half is Definition \ref{def:one-form-divergence}
+  evaluated at $h = -2\Ric$ (the flow equation, carried across by
+  \texttt{innerE\_deriv\_eq\_of\_isRicciFlowAt'}): the first double trace is
+  $-2\cdot\tfrac12\Delta R = -\Delta R$ by the second contraction of the second
+  Bianchi identity differentiated once more, the second is
+  $\Delta(\operatorname{tr}_\g h) = -2\Delta R$, and the difference is $\Delta
+  R$. That is
+  \texttt{metricTraceE\_derivRicciFormOfMetric\_eq\_laplacian}.
+
+  Composing with $\partial_t R = \operatorname{tr}_\g(\partial_t\Ric) +
+  2|\Ric|^2$ from Lemma \ref{lem:variation-scalar} gives the statement.
+\end{theorem}
 
 \begin{lemma}[Evolution of the curvature tensor]
   \label{lem:evolution-rm}
@@ -2484,6 +2614,220 @@ Perelman's monotone functionals are what rule it out.
   \uses{def:w-entropy, thm:f-monotone}
   $\mathcal{W}$ is nondecreasing along the coupled flow.
 \end{theorem}
+
+\begin{definition}[The covariant derivative along a curve]
+  \label{def:cov-along-curve}
+  \lean{CovariantDerivative.velocity,
+    CovariantDerivative.MDiffAlongAt,
+    CovariantDerivative.IsCovDerivAlong,
+    CovariantDerivative.MDiffAlongAt.zero_section,
+    CovariantDerivative.IsCovDerivAlong.zero,
+    CovariantDerivative.IsCovDerivAlong.congr_of_eventuallyEq}
+  \leanok
+  \uses{def:curvature}
+  For a curve $\gamma \colon \R \to M$, an operator $D$ on sections of $TM$
+  along $\gamma$ deserves the name $D/dt$ when it is additive, satisfies the
+  Leibniz rule over scalar functions of the parameter,
+  \[
+    \tfrac{D}{dt}(fV) = f\,\tfrac{D}{dt}V + f'\,V,
+  \]
+  and restricts the ambient connection: $\tfrac{D}{dt}(W \circ \gamma)(t) =
+  (\nab_{\gamma'(t)} W)(\gamma(t))$ for a global section $W$.
+
+  \textbf{Why this is the first brick.} Mathlib's connection acts on
+  \emph{global sections over $M$}; a curve's velocity is not one, so
+  $\nab_{\gamma'}\gamma' = 0$ cannot even be \emph{stated} with it. Everything
+  in comparison geometry --- geodesics, parallel transport, the Jacobi
+  equation, the first and second variation of length, and hence Definition
+  \ref{def:reduced-volume} --- rests on the pullback connection on
+  $\gamma^*TM$. A section along $\gamma$ is a lift of $\gamma$ to $TM$, so its
+  regularity is ordinary differentiability into the total space and no new
+  bundle structure is needed.
+
+  \textbf{Proved} (\texttt{CovariantAlongCurve.lean}): the predicate, that $D$
+  kills the zero section, and that $D$ is \textbf{local} --- it depends on a
+  section only through its germ. Locality is not an axiom: take a bump $f$
+  equal to $1$ near $t$ and supported where the two sections agree; then $fV =
+  fW$ globally, while Leibniz evaluates both sides at $t$ to $DV(t)$ and
+  $DW(t)$, since $f(t) = 1$ and $f'(t) = 0$. Uniqueness is Lemma
+  \ref{lem:cov-along-curve-unique}, existence Lemma
+  \ref{lem:cov-along-curve-exists}.
+\end{definition}
+
+\begin{lemma}[Uniqueness of $D/dt$]
+  \label{lem:cov-along-curve-unique}
+  \lean{CovariantDerivative.mdiffAlongAt_iff_of_mem,
+    CovariantDerivative.MDiffAlongAt.of_section,
+    CovariantDerivative.MDiffAlongAt.add,
+    CovariantDerivative.MDiffAlongAt.smul,
+    CovariantDerivative.MDiffAlongAt.sum,
+    CovariantDerivative.exists_frame_expansion,
+    CovariantDerivative.IsCovDerivAlong.sum,
+    CovariantDerivative.IsCovDerivAlong.eq_sum_of_expansion,
+    CovariantDerivative.IsCovDerivAlong.eq_of_isCovDerivAlong}
+  \leanok
+  \uses{def:cov-along-curve, lem:global-extension}
+  Two operators satisfying the three axioms of Definition
+  \ref{def:cov-along-curve} agree on every section differentiable along
+  $\gamma$. So $D/dt$ deserves the definite article, and anything proved from
+  the axioms is a theorem about \emph{the} covariant derivative along a curve,
+  whatever construction produces it.
+
+  \textbf{Proved} (\texttt{CovariantAlongCurve.lean}). Everything rests on one
+  fact: near $t$ a section along $\gamma$ is a finite combination
+  \[
+    V = \sum_i f_i \cdot (W_i \circ \gamma)
+  \]
+  of restrictions of \emph{global} $C^1$ sections, with $f_i$ differentiable
+  (\texttt{exists\_frame\_expansion}). Locality then replaces $V$ by that sum,
+  additivity splits it, the Leibniz rule evaluates each term, and the third
+  axiom turns $D(W_i \circ \gamma)$ into $\nab_{\gamma'}W_i$ --- an expression
+  in which $D$ no longer occurs.
+
+  The expansion is read off a single trivialisation around $\gamma(t)$. The
+  frame is Mathlib's \texttt{Trivialization.localFrame} for a basis of the
+  model fibre, made global by the bump argument of Lemma
+  \ref{lem:global-extension}; the coefficients are the fibre coordinates of
+  $V$, and they are differentiable because differentiability along $\gamma$
+  \emph{is} differentiability of those coordinates
+  (\texttt{mdiffAlongAt\_iff\_of\_mem}, the base component of Mathlib's
+  total-space criterion being discharged by the curve's own
+  differentiability). That criterion also supplies the closure properties the
+  induction needs --- sections along $\gamma$ add, scale by differentiable
+  functions of the parameter, and sum --- since a trivialisation is fibrewise
+  linear.
+\end{lemma}
+
+\begin{lemma}[Existence of $D/dt$]
+  \label{lem:cov-along-curve-exists}
+  \lean{CovariantDerivative.canonFrame,
+    CovariantDerivative.coeffAlong,
+    CovariantDerivative.covAlong,
+    CovariantDerivative.sum_coeffAlong_smul_canonFrame,
+    CovariantDerivative.deriv_comp_curve,
+    CovariantDerivative.mdiffAt_sum_smul_section,
+    CovariantDerivative.cov_sum_smul_section_apply,
+    CovariantDerivative.isCovDerivAlong_covAlong,
+    CovariantDerivative.exists_isCovDerivAlong,
+    CovariantDerivative.eq_covAlong}
+  \leanok
+  \uses{def:cov-along-curve, lem:cov-along-curve-unique, lem:global-extension}
+  An operator satisfying the three axioms of Definition \ref{def:cov-along-curve}
+  exists, on the set where $\gamma$ is differentiable. With Lemma
+  \ref{lem:cov-along-curve-unique} it is unique there, so $D/dt$ is well
+  defined --- and, just as importantly, statements quantified over operators
+  satisfying the axioms (the geodesic equation $\nab_{\gamma'}\gamma' = 0$
+  among them) are not vacuous.
+
+  \textbf{Proved} (\texttt{CovariantAlongCurve.lean}). The construction is the
+  classical one, in the trivialisation at $\gamma(t)$: differentiate the fibre
+  coordinates of $V$ and add the connection's own contribution on the frame,
+  \[
+    \tfrac{D}{dt}V(t) \;=\; \sum_i \Bigl( c_i'(t)\, W_i(\gamma t)
+      + c_i(t)\, \nab_{\gamma'(t)}W_i \Bigr),
+  \]
+  with $W_i$ the globalised local frame (\texttt{canonFrame}) and $c_i$ the
+  coordinates (\texttt{coeffAlong}). Only the germ of $W_i$ at $\gamma(t)$
+  matters, since that is all $\nab$ sees, so the choice made in globalising is
+  harmless.
+
+  \textbf{Two of the three axioms are facts about \texttt{deriv}.} Additivity
+  and the Leibniz rule hold because the coordinates are additive in $V$ and
+  scale by $f$ --- a trivialisation is fibrewise linear --- so they reduce to
+  \texttt{deriv\_add} and \texttt{deriv\_mul}; the Leibniz rule's second term
+  is $f'(t)\sum_i c_i(t)W_i(\gamma t) = f'(t)\,V(t)$, the coordinates
+  reconstructing the section.
+
+  \textbf{The third axiom is the one with content.} For $V = W\circ\gamma$ with
+  $W$ a global section, the coordinates are $a_i \circ \gamma$ with $a_i$ the
+  frame coefficients of $W$, so the sum becomes
+  $\sum_i\bigl((\gamma' a_i)W_i(\gamma t) + a_i(\gamma t)\nab_{\gamma'}W_i\bigr)$
+  --- which is exactly $\nab$'s own Leibniz rule applied to the local expansion
+  $W = \sum_i a_i W_i$, transported to $W$ by the germ-locality of $\nab$
+  (Mathlib's \texttt{IsCovariantDerivativeOn.congr\_of\_eventuallyEq}). The two
+  ingredients are a finite-sum Leibniz rule for $\nab$
+  (\texttt{cov\_sum\_smul\_section\_apply}) and the chain rule along the curve,
+  $\frac{d}{dt}(a\circ\gamma) = \mathrm{d}a(\gamma'(t))$
+  (\texttt{deriv\_comp\_curve}).
+\end{lemma}
+
+\begin{definition}[Parallel sections and geodesics]
+  \label{def:geodesic}
+  \lean{CovariantDerivative.IsParallelAlong,
+    CovariantDerivative.IsGeodesicOn,
+    CovariantDerivative.isParallelAlong_iff_forall,
+    CovariantDerivative.isGeodesicOn_iff_forall,
+    CovariantDerivative.covAlong_eq_sum_of_frame,
+    CovariantDerivative.repr_apply_localFrame,
+    CovariantDerivative.repr_covAlong_eq,
+    CovariantDerivative.exists_frame_on_open,
+    CovariantDerivative.covAlong_eq_sum_of_frame_on,
+    CovariantDerivative.christoffel,
+    CovariantDerivative.repr_covAlong_eq_christoffel,
+    CovariantDerivative.christoffelCoord,
+    CovariantDerivative.contMDiffAt_christoffelCoord,
+    CovariantDerivative.christoffel_eq_sum}
+  \leanok
+  \uses{def:cov-along-curve, lem:cov-along-curve-unique, lem:cov-along-curve-exists}
+  A section along $\gamma$ is \emph{parallel} when $\frac{D}{dt}V = 0$, and $\gamma$ is a
+  \emph{geodesic} when its own velocity is parallel: $\nab_{\gamma'}\gamma' = 0$.
+
+  \textbf{Proved} (\texttt{CovariantAlongCurve.lean}): both notions are
+  independent of the construction ---
+  \texttt{isParallelAlong\_iff\_forall} and
+  \texttt{isGeodesicOn\_iff\_forall} say that being parallel is equivalent to
+  vanishing under \emph{every} operator satisfying the axioms of Definition
+  \ref{def:cov-along-curve}. The forward direction is uniqueness (Lemma
+  \ref{lem:cov-along-curve-unique}); the backward direction is existence
+  (Lemma \ref{lem:cov-along-curve-exists}), and without it the quantified form
+  would be vacuously true and the geodesic equation would assert nothing. That
+  is the same hazard as the one Lemma \ref{lem:global-extension} closed for the
+  hypotheses of Theorem \ref{thm:hamilton}, and it is worth stating
+  explicitly rather than trusting.
+
+  \textbf{The coordinate form is proved} (\texttt{covAlong\_eq\_sum\_of\_frame},
+  \texttt{repr\_covAlong\_eq}): in the fibre coordinates of \emph{any}
+  trivialisation around $\gamma(t)$,
+  \[
+    \Bigl(\tfrac{D}{dt}V\Bigr)^{k} \;=\; (c^{k})' \;+\; \sum_i c^{i}\,\Gamma^{k}_{i},
+    \qquad \Gamma^{k}_{i} := \bigl(\nab_{\gamma'}W_i\bigr)^{k},
+  \]
+  with $c^i$ the coordinates of $V$ and $W_i$ the local frame. That $D/dt$ is
+  computed by \emph{any} expansion, not just the preferred trivialisation it is
+  defined through, is \texttt{IsCovDerivAlong.eq\_sum\_of\_expansion} --- the
+  reusable half of the uniqueness proof.
+
+  The correction is packaged as \texttt{christoffel}, $\Gamma(y)(v)(c) =
+  \sum_i c^i\,\nab_v W_i$, so the coordinate equation reads
+  $\frac{D}{dt}V = c' + \Gamma(\gamma(t))(\gamma'(t))(c(t))$
+  (\texttt{repr\_covAlong\_eq\_christoffel}); setting $V = \gamma'$ and the left
+  side to zero is the geodesic equation.
+
+  \textbf{A frame on an open set, not a germ.} Globalising the local frame one
+  point at a time gives sections agreeing with it only \emph{near} that point,
+  which is useless for an ODE along an arc. Intersecting the finitely many
+  agreement sets and taking the interior gives an open $U$ on which a single
+  family of global sections agrees identically
+  (\texttt{exists\_frame\_on\_open}), and
+  \texttt{covAlong\_eq\_sum\_of\_frame\_on} reads the coordinate formula off it.
+
+  \textbf{$\Gamma$ is as regular as the connection.} Contracting both slots
+  against the frame gives the classical symbols $\Gamma_{ij}(y)$, the
+  $e$-coordinates of $\nab_{W_j}W_i$ (\texttt{christoffelCoord}), and
+  $\Gamma$ is bilinear in them (\texttt{christoffel\_eq\_sum}), both slots
+  expanding because $\nab_{(\cdot)}W_i$ is a continuous linear map. Then
+  \texttt{contMDiffAt\_christoffelCoord}: for a $C^k$ connection and a
+  $C^{k+1}$ frame the symbols are $C^k$, by \texttt{contMDiff\_cov\_apply}
+  followed by Mathlib's \texttt{contMDiffAt\_section\_iff}. This is the
+  \emph{first} statement in the file that uses any regularity of $\nab$ ---
+  everything before it holds for a bare covariant derivative --- and it is
+  what an ODE solver consumes.
+
+  \textbf{What is still needed to \emph{solve} the equation} is to identify
+  the tangent-bundle trivialisation with the chart it comes from, turning
+  $\nab_{\gamma'}\gamma' = 0$ into $c'' = -\Gamma(c')(c')$ on an open subset of
+  the model space, where Picard--Lindel\"of applies.
+\end{definition}
 
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
