@@ -528,6 +528,22 @@ theorem two_mul_sum_covRicci_eq_mvfderiv_scalarCurvatureAt
   rw [hleft, hsymm] at hfirst
   linarith [hfirst]
 
+/-- **`div Ric` does not depend on the frame** --- immediately, because the second
+contraction identifies it with `½ Y(scal)`, which mentions no frame. -/
+theorem sum_covRicci_congr (htor : cov.torsion = 0)
+    (hmet : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    {Y : Π y : M, TangentSpace I y} {x : M} (hY : CMDiff 3 (T% Y))
+    {fr : ι → Π y : M, TangentSpace I y} {u : Set M}
+    (hs : IsOrthonormalFrameOn I E 1 fr u) (hu : IsOpen u) (hx : x ∈ u)
+    (hfr : ∀ i, CMDiff 3 (T% (fr i)))
+    {κ : Type*} [Fintype κ] {fr' : κ → Π y : M, TangentSpace I y} {u' : Set M}
+    (hs' : IsOrthonormalFrameOn I E 1 fr' u') (hu' : IsOpen u') (hx' : x ∈ u')
+    (hfr' : ∀ j, CMDiff 3 (T% (fr' j))) :
+    ∑ i, cov.covRicci (fr i) (fr i) Y x = ∑ j, cov.covRicci (fr' j) (fr' j) Y x := by
+  have h := cov.two_mul_sum_covRicci_eq_mvfderiv_scalarCurvatureAt htor hmet hY hs hu hx hfr
+  have h' := cov.two_mul_sum_covRicci_eq_mvfderiv_scalarCurvatureAt htor hmet hY hs' hu' hx' hfr'
+  linarith [h, h']
+
 end SecondContraction
 
 end CovariantDerivative
