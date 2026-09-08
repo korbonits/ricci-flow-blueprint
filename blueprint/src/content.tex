@@ -1652,6 +1652,9 @@ target actually requires.
     CovariantDerivative.divOneForm_congr,
     CovariantDerivative.divBilin_ricciForm_eq,
     CovariantDerivative.divDivBilin_ricciForm_eq,
+    CovariantDerivative.covBilin_smul_form,
+    CovariantDerivative.cov2Bilin_smul_form,
+    CovariantDerivative.sum_cov2Bilin_neg_two_ricciForm_eq,
     CovariantDerivative.hessianFun_eq_covOneForm,
     CovariantDerivative.laplacianFun_eq_divOneForm,
     CovariantDerivative.laplacianFun_eq_sum_frame,
@@ -1731,6 +1734,19 @@ target actually requires.
   $\mathrm{d}f$ is $\Delta f$. The two steps in between are that $\operatorname{div}$
   is linear in $\omega$ and depends only on its germ
   (\texttt{divOneForm\_smul}, \texttt{divOneForm\_congr}).
+
+  \textbf{Hence $\operatorname{tr}_\g(\partial_t\Ric) = \Delta\scal$ under the
+  flow} (\texttt{sum\_cov2Bilin\_neg\_two\_ricciForm\_eq}): at $h = -2\Ric$ the
+  first of the two canonical double traces is
+  $\operatorname{div}\operatorname{div} h = -2\cdot\tfrac12\Delta\scal =
+  -\Delta\scal$ and the second is
+  $\operatorname{tr}_\g(\Delta_\g h) = \Delta(\operatorname{tr}_\g h) =
+  -2\Delta\scal$, so their difference is $\Delta\scal$. Getting there needs
+  only that $\nab^2h$ is linear in $h$
+  (\texttt{cov2Bilin\_smul\_form}, from \texttt{covBilin\_smul\_form}) ---
+  everything else is already proved for $\Ric$ itself, and
+  $\operatorname{tr}_\g\Ric$ \emph{is} $\scal$ by definition, the same frame
+  sum.
 
   With $\Delta_\g h$ from Definition \ref{def:bilin-laplacian}, both traces in
   \[

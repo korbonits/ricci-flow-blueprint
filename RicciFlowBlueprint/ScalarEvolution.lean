@@ -116,4 +116,66 @@ theorem divDivBilin_ricciForm_eq (htor : cov.torsion = 0)
   rw [divDivBilin, cov.divOneForm_congr hgerm, cov.divOneForm_smul _ v hscal',
     cov.laplacianFun_eq_divOneForm, hv]
 
+-- BENCH: trace-ricci-variation-is-laplacian-scal
+/-- **`tr_g(∂ₜ Ric) = Δ scal` under the Ricci flow.** The two canonical double traces of
+`∇²h` that `sum_inner_covTwoTensor_eq` produces, evaluated at `h = −2 Ric`: the first is
+`div div h = −2 · ½ Δ scal = −Δ scal`, the second `tr_g(Δ_g h) = Δ(tr_g h) = −2 Δ scal`, and
+`−Δ scal − (−2 Δ scal) = Δ scal`. Only `∇²h`'s linearity in `h` is needed to get there —
+everything downstream is already proved for `Ric` itself. -/
+theorem sum_cov2Bilin_neg_two_ricciForm_eq (htor : cov.torsion = 0)
+    (hmet : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    (hbg : IsMDiffBilin (I := I) (fun y ↦ cov.ricciForm y)) {x : M}
+    (hscal : IsMDiffOneFormAt (I := I)
+      (fun y ↦ (mvfderiv I (fun z ↦ cov.scalarCurvatureAt z) y :
+        TangentSpace I y →L[ℝ] ℝ)) x)
+    (hw : IsMDiffOneFormAt (I := I)
+      (cov.divBilinOneForm (fun y ↦ cov.ricciForm y) hbg) x)
+    {fr : ι → Π y : M, TangentSpace I y} {u : Set M}
+    (hs : IsOrthonormalFrameOn I E 1 fr u) (hu : IsOpen u) (hx : x ∈ u)
+    (hfr : ∀ i, CMDiff 3 (T% (fr i)))
+    (b : OrthonormalBasis ι ℝ (TangentSpace I x)) (hbv : ∀ i, fr i x = b i)
+    (hh : ∀ (U V : Π y : M, TangentSpace I y) (y : M),
+      MDiffAt (fun z ↦ cov.ricciForm z (U z) (V z)) y)
+    (hd : ∀ a c d, MDiffAt
+      (fun y ↦ cov.covBilin (fun z ↦ cov.ricciForm z) (fr a) (fr c) (fr d) y) x)
+    (hcb : ∀ j, cov.IsMDiffCovBilinAt (fun y ↦ cov.ricciForm y) (fr j) (fr j) x) :
+    (∑ i, ∑ j, cov.cov2Bilin (fun y ↦ ((-2 : ℝ) • cov.ricciForm y : E →L[ℝ] E →L[ℝ] ℝ))
+        (fr i) (fr j) (fr j) (fr i) x)
+      - ∑ i, ∑ j, cov.cov2Bilin (fun y ↦ ((-2 : ℝ) • cov.ricciForm y : E →L[ℝ] E →L[ℝ] ℝ))
+        (fr i) (fr i) (fr j) (fr j) x
+      = cov.laplacianFun (fun z ↦ cov.scalarCurvatureAt z) x := by
+  have hfr2 : ∀ i, CMDiff 2 (T% (fr i)) := fun i ↦ (hfr i).of_le (by norm_num)
+  -- pull the constant out of both double sums
+  have hpull : ∀ (a c d e : ι),
+      cov.cov2Bilin (fun y ↦ ((-2 : ℝ) • cov.ricciForm y : E →L[ℝ] E →L[ℝ] ℝ))
+          (fr a) (fr c) (fr d) (fr e) x
+        = (-2 : ℝ) * cov.cov2Bilin (fun y ↦ cov.ricciForm y) (fr a) (fr c) (fr d) (fr e) x :=
+    fun a c d e ↦ cov.cov2Bilin_smul_form _ _ hh (hd c d e)
+  -- the first double trace is `div div Ric = ½ Δ scal`
+  have hfirst : (∑ i, ∑ j, cov.cov2Bilin (fun y ↦ cov.ricciForm y)
+      (fr i) (fr j) (fr j) (fr i) x)
+      = (1 / 2 : ℝ) * cov.laplacianFun (fun z ↦ cov.scalarCurvatureAt z) x := by
+    rw [← cov.divDivBilin_eq_sum hmet hbg hw hs hu hx hfr2 (fun j i ↦ hd i i j) b hbv]
+    exact cov.divDivBilin_ricciForm_eq htor hmet hbg hscal hs hu hx hfr
+  -- the second is `tr_g(Δ_g Ric) = Δ(tr_g Ric) = Δ scal`
+  have hsecond : (∑ i, ∑ j, cov.cov2Bilin (fun y ↦ cov.ricciForm y)
+      (fr i) (fr i) (fr j) (fr j) x)
+      = cov.laplacianFun (fun z ↦ cov.scalarCurvatureAt z) x := by
+    have htrace : cov.laplacianFun (traceBilin (I := I) (fun y ↦ cov.ricciForm y)) x
+        = ∑ j, cov.laplacianBilin (fun y ↦ cov.ricciForm y) (fr j) (fr j) x :=
+      cov.laplacianFun_traceBilin_eq hmet hbg hscal hs hu hx b hbv hfr2
+        (fun y _ i ↦ hh (fr i) (fr i) y) (fun i j ↦ hd i j j) hcb
+    rw [Finset.sum_comm]
+    have hlap : ∀ j, cov.laplacianBilin (fun y ↦ cov.ricciForm y) (fr j) (fr j) x
+        = ∑ i, cov.cov2Bilin (fun y ↦ cov.ricciForm y) (fr i) (fr i) (fr j) (fr j) x :=
+      fun j ↦ cov.laplacianBilin_eq_sum_frame (hbg x) (hcb j) (hfr2 j) (hfr2 j) hfr2 b hbv
+    rw [← Finset.sum_congr rfl fun j _ ↦ hlap j, ← htrace]
+    -- `traceBilin ricciForm` *is* `scalarCurvatureAt`: the same frame sum, by definition
+    rfl
+  rw [Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ hpull i j j i,
+    Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ hpull i i j j]
+  simp only [← Finset.mul_sum]
+  rw [hfirst, hsecond]
+  ring
+
 end CovariantDerivative
