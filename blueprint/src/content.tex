@@ -1746,7 +1746,12 @@ target actually requires.
     RicciFlowBlueprint.hasDerivAt_scalarCurvatureOfMetric'_of_isRicciFlowAt,
     RicciFlowBlueprint.ricciFormOfMetric,
     RicciFlowBlueprint.ricciFormOfMetric_apply_field,
-    RicciFlowBlueprint.innerE_deriv_eq_of_isRicciFlowAt'}
+    RicciFlowBlueprint.innerE_deriv_eq_of_isRicciFlowAt',
+    RicciFlowBlueprint.scalarCurvatureOfMetricAt,
+    RicciFlowBlueprint.scalarCurvatureOfMetricAt_eq_metricTraceE,
+    RicciFlowBlueprint.hasDerivAt_ricciFormOfMetric,
+    RicciFlowBlueprint.hasDerivAt_scalarCurvatureOfMetricAt,
+    RicciFlowBlueprint.hasDerivAt_scalarCurvatureOfMetricAt_of_isRicciFlowAt}
   \leanok
   \uses{lem:variation-curvature, lem:metric-trace-variation, def:ricci-of-metric, def:scalar, def:ricci-flow}
   Along a family of metrics $\g(t)$ with $\partial_t \g = h$,
@@ -1767,21 +1772,34 @@ target actually requires.
   \Ric\rangle_\g$, which is $2|\Ric|^2_\g = 2\sum_{i,j} \Ric(e_i,e_j)\Ric(e_j,e_i)$
   under the flow.
 
-  The \emph{scalar} statement is still on the model space $M = E$, where
-  Definition \ref{def:scalar} used to live: it is phrased through
-  \texttt{ricciE}, the Ricci form built on \emph{constant} fields, which only
-  exist globally when $M = E$. That restriction is now removable, and the first
-  step is taken here: \texttt{ricciFormOfMetric} is the Ricci form of a metric
-  on \emph{any} manifold --- Definition \ref{def:ricci-form} for the
-  Levi-Civita connection of $\g$, built on the global $C^2$ extensions of Lemma
-  \ref{lem:global-extension} instead of constant fields --- and
+  \textbf{The scalar statement now holds on any manifold.} It used to be
+  confined to the model space $M = E$, because it was phrased through
+  \texttt{ricciE}, the Ricci form built on \emph{constant} fields, and those
+  are global sections only when $M = E$. The restriction is removed by working
+  with the tensors of Definition \ref{def:ricci-form} instead:
+  \texttt{ricciFormOfMetric} is the Ricci form of $\g$ on any manifold ---
+  Definition \ref{def:ricci-form} for the Levi-Civita connection of $\g$,
+  built on the global $C^2$ extensions of Lemma \ref{lem:global-extension} ---
+  and \texttt{scalarCurvatureOfMetricAt} is $\operatorname{scal}$ likewise.
+  Three things then transfer verbatim.
   \texttt{innerE\_deriv\_eq\_of\_isRicciFlowAt'} carries the flow equation
-  $\partial_t \g = -2\Ric$ across to it, by instantiating the flow on those
-  extensions and using uniqueness of derivatives.
+  $\partial_t \g = -2\Ric$ across, by instantiating the flow on those
+  extensions and using uniqueness of derivatives;
+  \texttt{hasDerivAt\_ricciFormOfMetric} differentiates the Ricci form
+  coordinatewise, each value $\Ric_t(v,w)(x)$ being $\Ric_t(V,W)(x)$ for any
+  $C^2$ fields with $V(x) = v$, $W(x) = w$; and
+  \texttt{scalarCurvatureOfMetricAt\_eq\_metricTraceE} identifies
+  $\operatorname{scal}$ with $\operatorname{tr}_\g \Ric$, so Lemma
+  \ref{lem:metric-trace-variation} applies unchanged. The conclusions are
+  \texttt{hasDerivAt\_scalarCurvatureOfMetricAt} and, under the flow,
+  \texttt{hasDerivAt\_scalarCurvatureOfMetricAt\_of\_isRicciFlowAt}. The
+  model-space statements are kept: they are the same theorems where Definition
+  \ref{def:scalar} was first phrased, and they need no extension lemma.
 
-  The other ingredient, $\operatorname{tr}_\g(\partial_t\Ric) = \Delta R$,
-  rests on the contracted second Bianchi identity, and \emph{that} is now
-  proved in both contractions (Theorems \ref{thm:contracted-bianchi} and
+  So the only ingredient still missing from $\partial_t R = \Delta R +
+  2|\Ric|^2$ is $\operatorname{tr}_\g(\partial_t\Ric) = \Delta R$. That
+  rests on the contracted second Bianchi identity, which is now proved in both
+  contractions (Theorems \ref{thm:contracted-bianchi} and
   \ref{thm:div-ricci}) rather than pending.
 \end{lemma}
 

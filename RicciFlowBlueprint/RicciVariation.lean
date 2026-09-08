@@ -218,6 +218,106 @@ theorem innerE_deriv_eq_of_isRicciFlowAt'
   simp only [smul_apply, smul_eq_mul]
   rw [huniq, hform]
 
+/-- **The scalar curvature of a metric on a general manifold**: `RicciForm.lean`'s
+`scalarCurvatureAt` for the Levi-Civita connection of `g`. The model-space
+`scalarCurvatureOfMetric'` below is the same thing where `Scalar.lean`'s definition
+lives. -/
+noncomputable def scalarCurvatureOfMetricAt
+    (g : ContMDiffRiemannianMetric I 2 E (fun (x : M) ↦ TangentSpace I x)) (x : M) : ℝ :=
+  letI : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨g.toRiemannianMetric⟩
+  (leviCivitaConnection I M).scalarCurvatureAt x
+
+omit [CompleteSpace E] in
+/-- **Scalar curvature is the metric trace of the Ricci form**, on a general manifold. -/
+theorem scalarCurvatureOfMetricAt_eq_metricTraceE
+    (g : ContMDiffRiemannianMetric I 2 E (fun (x : M) ↦ TangentSpace I x)) (x : M) :
+    scalarCurvatureOfMetricAt g x = metricTraceE g x (ricciFormOfMetric g x) := by
+  let _ : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨g.toRiemannianMetric⟩
+  rw [metricTraceE_eq_sum (I := I) (M := M) g x _
+    (stdOrthonormalBasis ℝ (TangentSpace I x))]
+  rfl
+
+-- BENCH: variation-ricci-form-apply-manifold
+/-- Each value `Ric_t(v,w)(x)` of the Ricci form is differentiable in `t`, on a general
+manifold: it is `Ric_t(V,W)(x)` for any `C²` fields taking those values at `x`, and that is
+`hasDerivAt_ricciOfMetric`. -/
+theorem hasDerivAt_ricciFormOfMetric_apply
+    (hg : ∀ y, HasDerivAt (fun t ↦ innerE (g t) y) (h y) t₀)
+    (hcomm : CommutesWithMvfderiv g h t₀) (hcov : CommutesWithCov g t₀)
+    (x : M) (v w : TangentSpace I x)
+    {V W : Π y : M, TangentSpace I y} (hV : CMDiff 2 (T% V)) (hW : CMDiff 2 (T% W))
+    (hVv : V x = v) (hWw : W x = w) :
+    HasDerivAt (fun t ↦ ricciFormOfMetric (g t) x v w)
+      (traceCLM (derivCurvatureEndoE g t₀ V hW x)) t₀ := by
+  have hfun : (fun t ↦ ricciFormOfMetric (g t) x v w)
+      = fun t ↦ ricciOfMetric (g t) V W x := by
+    funext t
+    rw [← hVv, ← hWw]
+    exact ricciFormOfMetric_apply_field (g t) hV hW
+  rw [hfun]
+  exact hasDerivAt_ricciOfMetric hg hcomm hcov
+    (hV.mdifferentiable (by norm_num : (2 : ℕ∞ω) ≠ 0) x) hW
+
+/-- The derivative `∂ₜ Ric` of the Ricci form along the family, on a general manifold. -/
+noncomputable def derivRicciFormOfMetric
+    (g : ℝ → ContMDiffRiemannianMetric I 2 E (fun (x : M) ↦ TangentSpace I x)) (t₀ : ℝ)
+    (x : M) : E →L[ℝ] E →L[ℝ] ℝ :=
+  deriv (fun t ↦ ricciFormOfMetric (g t) x) t₀
+
+/-- **The Ricci form is differentiable in `t`**, on a general manifold. -/
+theorem hasDerivAt_ricciFormOfMetric
+    (hg : ∀ y, HasDerivAt (fun t ↦ innerE (g t) y) (h y) t₀)
+    (hcomm : CommutesWithMvfderiv g h t₀) (hcov : CommutesWithCov g t₀) (x : M) :
+    HasDerivAt (fun t ↦ ricciFormOfMetric (g t) x) (derivRicciFormOfMetric g t₀ x) t₀ := by
+  have key : ∀ v w : E, ∃ d, HasDerivAt (fun t ↦ ricciFormOfMetric (g t) x v w) d t₀ := by
+    intro v w
+    obtain ⟨V, hV, hVv⟩ :=
+      exists_contMDiff_two_extension (x := x) (show TangentSpace I x from v)
+    obtain ⟨W, hW, hWw⟩ :=
+      exists_contMDiff_two_extension (x := x) (show TangentSpace I x from w)
+    exact ⟨_, hasDerivAt_ricciFormOfMetric_apply hg hcomm hcov x _ _ hV hW hVv hWw⟩
+  obtain ⟨R', hR'⟩ := exists_hasDerivAt_clm₂_of_apply
+    (B := fun t ↦ ricciFormOfMetric (g t) x) (t₀ := t₀) key
+  exact hR'.differentiableAt.hasDerivAt
+
+-- BENCH: variation-scalar-manifold
+/-- **First variation of the scalar curvature on a general manifold**:
+`∂ₜ R = tr_g(∂ₜ Ric) − ⟨h, Ric⟩_g`. -/
+theorem hasDerivAt_scalarCurvatureOfMetricAt
+    (hg : ∀ y, HasDerivAt (fun t ↦ innerE (g t) y) (h y) t₀)
+    (hcomm : CommutesWithMvfderiv g h t₀) (hcov : CommutesWithCov g t₀) (x : M) :
+    HasDerivAt (fun t ↦ scalarCurvatureOfMetricAt (g t) x)
+      (metricTraceE (I := I) (M := M) (g t₀) x (derivRicciFormOfMetric g t₀ x)
+        - metricTraceE (I := I) (M := M) (g t₀) x
+            (h x ∘L sharpE (I := I) (M := M) (g t₀) x (ricciFormOfMetric (g t₀) x))) t₀ := by
+  have hfun : (fun t ↦ scalarCurvatureOfMetricAt (g t) x)
+      = fun t ↦ metricTraceE (I := I) (M := M) (g t) x (ricciFormOfMetric (g t) x) := by
+    funext t; exact scalarCurvatureOfMetricAt_eq_metricTraceE (g t) x
+  rw [hfun]
+  exact hasDerivAt_metricTraceE (hg x) (hasDerivAt_ricciFormOfMetric hg hcomm hcov x)
+
+-- BENCH: evolution-scalar-trace-manifold
+/-- **Scalar curvature under the Ricci flow, on a general manifold**:
+`∂ₜ R = tr_g(∂ₜ Ric) + 2 |Ric|²_g`, where `|Ric|²_g = tr_g (Ric ∘ Ric♯)`
+(`metricTraceE_comp_sharpE_eq_sum`). What remains for `∂ₜ R = ΔR + 2|Ric|²` is
+`tr_g(∂ₜ Ric) = ΔR`. -/
+theorem hasDerivAt_scalarCurvatureOfMetricAt_of_isRicciFlowAt
+    (hg : ∀ y, HasDerivAt (fun t ↦ innerE (g t) y) (h y) t₀)
+    (hcomm : CommutesWithMvfderiv g h t₀) (hcov : CommutesWithCov g t₀) (x : M)
+    (hflow : letI : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) :=
+        ⟨(g t₀).toRiemannianMetric⟩
+      IsRicciFlowAt I M g t₀) :
+    HasDerivAt (fun t ↦ scalarCurvatureOfMetricAt (g t) x)
+      (metricTraceE (I := I) (M := M) (g t₀) x (derivRicciFormOfMetric g t₀ x)
+        + 2 * metricTraceE (I := I) (M := M) (g t₀) x
+            (ricciFormOfMetric (g t₀) x ∘L
+              sharpE (I := I) (M := M) (g t₀) x (ricciFormOfMetric (g t₀) x))) t₀ := by
+  have hd := hasDerivAt_scalarCurvatureOfMetricAt hg hcomm hcov x
+  rw [innerE_deriv_eq_of_isRicciFlowAt' hg x hflow] at hd
+  refine hd.congr_deriv ?_
+  rw [ContinuousLinearMap.smul_comp, metricTraceE_smul]
+  ring
+
 end FlowMetric
 
 /-! ### Scalar curvature on the model space
