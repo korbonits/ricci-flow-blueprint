@@ -1744,7 +1744,10 @@ target actually requires.
     CovariantDerivative.covTwoTensor_congr_dir,
     CovariantDerivative.IsMDiffTwoTensorAt,
     CovariantDerivative.covTwoTensor_congr_snd,
-    RicciFlowBlueprint.derivCurvatureEndoE_apply_field}
+    RicciFlowBlueprint.derivCurvatureEndoE_apply_field,
+    RicciFlowBlueprint.derivRicciFormOfMetric_apply,
+    RicciFlowBlueprint.metricTraceE_derivRicciFormOfMetric_eq,
+    RicciFlowBlueprint.metricTraceE_derivRicciFormOfMetric_eq_sub}
   \leanok
   \uses{def:bilin-laplacian, lem:variation-connection, lem:metric-trace-cov}
   Let $\nab$ be a metric connection and $A$ a $(1,2)$-tensor field satisfying the Koszul
@@ -1825,11 +1828,28 @@ target actually requires.
   regularity hypothesis on the first variation of the connection, carried
   alongside the commutation hypotheses the variation already needs.
 
-  So with $h = \partial_t \g$ the double trace above is
-  $\operatorname{tr}_\g(\partial_t\Ric)$; under the Ricci flow $h = -2\Ric$
-  and the two contracted Bianchi identities (Theorems
+  \textbf{And the double trace \emph{is} $\operatorname{tr}_\g(\partial_t\Ric)$},
+  now as a theorem
+  (\texttt{metricTraceE\_derivRicciFormOfMetric\_eq\_sub}): with $h =
+  \partial_t\g$,
+  \[
+    \operatorname{tr}_\g(\partial_t \Ric)
+      = \operatorname{div}\operatorname{div} h
+        - \operatorname{tr}_\g(\Delta_\g h),
+  \]
+  with no curvature terms. The outer trace is Lemma
+  \ref{lem:metric-trace-variation}'s $\operatorname{tr}_\g$ read off a
+  $\g$-orthonormal basis; the inner one is the endomorphism trace
+  $\Ric(v,w) = \operatorname{tr}(u \mapsto \Rm(u,v)w)$ read off the same
+  basis; and the summand is
+  \texttt{derivCurvatureEndoE\_apply\_field}. One
+  $\texttt{Finset.sum\_comm}$ lines the two up with the double-trace theorem,
+  whose Koszul hypothesis $\partial_t\nab$ supplies.
+
+  Under the Ricci flow $h = -2\Ric$, so $\operatorname{tr}_\g h = -2\scal$ and
+  the two contracted Bianchi identities (Theorems
   \ref{thm:contracted-bianchi}, \ref{thm:div-ricci}) turn the right-hand side
-  into $\Delta\scal$.
+  into $2\Delta\scal - \Delta\scal = \Delta\scal$.
 \end{lemma}
 
 \begin{lemma}[The metric trace commutes with $\nab$]

@@ -167,6 +167,108 @@ theorem derivCurvatureEndoE_apply_field
     (leviCivitaOfMetric (g t₀)).covTwoTensor_congr_snd hA X hE hV hY1 hEv]
   rfl
 
+variable [T2Space M]
+
+/-- `∂ₜ Ric(v,w)` is the trace of `∂ₜ[u ↦ Rm(u,V)W]`, for any `C²` fields taking those values
+at `x`. Uniqueness of derivatives against `hasDerivAt_ricciFormOfMetric`. -/
+theorem derivRicciFormOfMetric_apply
+    (hg : ∀ y, HasDerivAt (fun t ↦ innerE (g t) y) (h y) t₀)
+    (hcomm : CommutesWithMvfderiv g h t₀) (hcov : CommutesWithCov g t₀)
+    (x : M) (v w : TangentSpace I x) {V W : Π y : M, TangentSpace I y}
+    (hV : CMDiff 2 (T% V)) (hW : CMDiff 2 (T% W)) (hVv : V x = v) (hWw : W x = w) :
+    derivRicciFormOfMetric g t₀ x v w = traceCLM (derivCurvatureEndoE g t₀ V hW x) := by
+  have hd : HasDerivAt (fun t ↦ ricciFormOfMetric (g t) x v w)
+      (derivRicciFormOfMetric g t₀ x v w) t₀ := by
+    have := ((hasDerivAt_ricciFormOfMetric hg hcomm hcov x).clm_apply
+      (hasDerivAt_const (F := E) t₀ v)).clm_apply (hasDerivAt_const (F := E) t₀ w)
+    simp only [map_zero, add_zero] at this
+    exact this
+  exact hd.unique
+    (hasDerivAt_ricciFormOfMetric_apply hg hcomm hcov x v w hV hW hVv hWw)
+
+set_option maxHeartbeats 1000000 in
+-- BENCH: metric-trace-of-ricci-variation
+/-- **`tr_g(∂ₜ Ric)` is the double trace of `Rm_A`.** The outer trace is `metricTraceE_eq_sum`,
+the inner one `LinearMap.trace_eq_sum_inner`, and the summand is
+`derivCurvatureEndoE_apply_field`; one `Finset.sum_comm` lines the two up with
+`sum_inner_covTwoTensor_eq`. -/
+theorem metricTraceE_derivRicciFormOfMetric_eq
+    (hg : ∀ y, HasDerivAt (fun t ↦ innerE (g t) y) (h y) t₀)
+    (hcomm : CommutesWithMvfderiv g h t₀) (hcov : CommutesWithCov g t₀)
+    {x : M} (hA : CovariantDerivative.IsMDiffTwoTensorAt (I := I) (derivDifferenceTensor g t₀) x)
+    {iota : Type*} [Fintype iota] {fr : iota → Π y : M, TangentSpace I y}
+    (hfr : ∀ i, CMDiff 2 (T% (fr i)))
+    (b : letI : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨(g t₀).toRiemannianMetric⟩
+      OrthonormalBasis iota ℝ (TangentSpace I x))
+    (hbv : ∀ i, fr i x = b i) :
+    letI : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨(g t₀).toRiemannianMetric⟩
+    metricTraceE (g t₀) x (derivRicciFormOfMetric g t₀ x)
+      = ∑ i, ∑ j, ⟪(leviCivitaOfMetric (g t₀)).covTwoTensor (derivDifferenceTensor g t₀)
+            (fr i) (fr j) (fr j) x
+          - (leviCivitaOfMetric (g t₀)).covTwoTensor (derivDifferenceTensor g t₀)
+            (fr j) (fr i) (fr j) x, fr i x⟫ := by
+  let _ : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨(g t₀).toRiemannianMetric⟩
+  have hfin : FiniteDimensional ℝ (TangentSpace I x) := VectorBundle.finiteDimensional ℝ E _ x
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  have hfr1 : ∀ i, MDiffAt (T% (fr i)) x := fun i ↦ (hfr i).mdifferentiable h2 x
+  rw [metricTraceE_eq_sum (I := I) (M := M) (g t₀) x _ b]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun j _ ↦ ?_
+  rw [← hbv j, derivRicciFormOfMetric_apply (V := fr j) (W := fr j) hg hcomm hcov x
+    (fr j x) (fr j x) (hfr j) (hfr j) rfl rfl]
+  -- the trace as a frame sum, in the `→ₗ` form `metricTraceE_eq_sum` uses: ascribing an
+  -- `E →L[ℝ] E` to the `TangentSpace` type grinds, but `→ₗ[ℝ]` needs only the module instances
+  let T : TangentSpace I x →ₗ[ℝ] TangentSpace I x :=
+    (derivCurvatureEndoE g t₀ (fr j) (hfr j) x).toLinearMap
+  change LinearMap.trace ℝ (TangentSpace I x) T = _
+  rw [LinearMap.trace_eq_sum_inner T b]
+  refine Finset.sum_congr rfl fun i _ ↦ ?_
+  have e : ⟪b i, T (b i)⟫ = ⟪T (b i), b i⟫ := real_inner_comm _ _
+  -- the summand, as an equation between tangent vectors: no inner product, so no `Inner ℝ E`
+  have hT : (T (b i) : TangentSpace I x)
+      = (leviCivitaOfMetric (g t₀)).covTwoTensor (derivDifferenceTensor g t₀)
+          (fr i) (fr j) (fr j) x
+        - (leviCivitaOfMetric (g t₀)).covTwoTensor (derivDifferenceTensor g t₀)
+          (fr j) (fr i) (fr j) x := by
+    show derivCurvatureEndoE g t₀ (fr j) (hfr j) x (b i) = _
+    rw [← hbv i, derivCurvatureEndoE_apply_field hg hcomm hcov hA (hfr1 i) (hfr1 j) (hfr j)]
+  rw [e, hT, hbv i]
+
+set_option maxHeartbeats 1000000 in
+-- BENCH: trace-of-ricci-variation-koszul
+/-- **`tr_g(∂ₜ Ric) = div div h − tr_g(Δ_g h)`**, with `h = ∂ₜ g` and no curvature terms:
+the last identification the evolution of the scalar curvature needs. The double trace of
+`∂ₜ Rm` is computed by `sum_inner_covTwoTensor_eq`, and `∂ₜ∇` supplies its Koszul hypothesis
+by `isKoszulOf_derivDifference`. -/
+theorem metricTraceE_derivRicciFormOfMetric_eq_sub
+    (hg : ∀ y, HasDerivAt (fun t ↦ innerE (g t) y) (h y) t₀)
+    (hcomm : CommutesWithMvfderiv g h t₀) (hcov : CommutesWithCov g t₀)
+    (hbil : ∀ y : M, CovariantDerivative.IsMDiffBilinAt (I := I) h y)
+    (hsymm : ∀ (y : M) (v w : E), h y v w = h y w v)
+    {x : M} (hA : CovariantDerivative.IsMDiffTwoTensorAt (I := I) (derivDifferenceTensor g t₀) x)
+    {iota : Type*} [Fintype iota] {fr : iota → Π y : M, TangentSpace I y}
+    (hfr : ∀ i, CMDiff 2 (T% (fr i)))
+    (b : letI : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨(g t₀).toRiemannianMetric⟩
+      OrthonormalBasis iota ℝ (TangentSpace I x))
+    (hbv : ∀ i, fr i x = b i)
+    (hd : ∀ a c d, MDiffAt
+      (fun y ↦ (leviCivitaOfMetric (g t₀)).covBilin h (fr a) (fr c) (fr d) y) x) :
+    letI : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨(g t₀).toRiemannianMetric⟩
+    metricTraceE (g t₀) x (derivRicciFormOfMetric g t₀ x)
+      = (∑ i, ∑ j, (leviCivitaOfMetric (g t₀)).cov2Bilin h (fr i) (fr j) (fr j) (fr i) x)
+        - ∑ i, ∑ j, (leviCivitaOfMetric (g t₀)).cov2Bilin h (fr i) (fr i) (fr j) (fr j) x := by
+  let _ : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨(g t₀).toRiemannianMetric⟩
+  let _ : CovariantDerivative.ContMDiffCovariantDerivative (leviCivitaOfMetric (g t₀)) 1 :=
+    contMDiffCovariantDerivative_leviCivitaOfMetric_one (g t₀)
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  have hfr1 : ∀ i, MDiffAt (T% (fr i)) x := fun i ↦ (hfr i).mdifferentiable h2 x
+  rw [metricTraceE_derivRicciFormOfMetric_eq hg hcomm hcov hA hfr b hbv]
+  simp only [inner_sub_left]
+  exact (leviCivitaOfMetric (g t₀)).sum_inner_covTwoTensor_eq
+    (CovariantDerivative.isMetricCompatible_leviCivitaConnection I (M := M))
+    (isKoszulOf_derivDifference hg hcomm hbil) hsymm hfr
+    (fun i j ↦ hA _ _ (hfr1 i) (hfr1 j)) hd
+
 end Flow
 
 end RicciFlowBlueprint
