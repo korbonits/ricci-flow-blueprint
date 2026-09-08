@@ -271,9 +271,17 @@ theirs is imported here.
   `ricciE`/`scalarCurvatureOfMetric'` and not yet ported to
   `ricciForm`/`scalarCurvatureAt`.
 - ~~The metric trace does not yet commute with `∇` on the manifold.~~ Closed
-  2026-09-07 by `TraceCov.lean` (PR #20). What still waits is the
-  *contraction*: rewriting the traced second Bianchi identity as `ΔR`, and
-  the analogous step for `Δ Rm`.
+  2026-09-07 by `TraceCov.lean` (PR #20), and the *contraction* is closed too:
+  **both** contractions of the second Bianchi identity are proved
+  (`Divergence.lean`), so `div Rm(Y,Z,W) = (∇_Y Ric)(Z,W) − (∇_Z Ric)(Y,W)` and
+  `2 div Ric = d scal`.
+- ~~`∇Rm` is only an operator on fields, and there is no `Δ Rm`.~~ **Closed
+  2026-09-08.** `∇Rm` is tensorial and pointwise in all four slots
+  (`CurvatureDeriv.lean`, `Divergence.lean`), `∇²Rm` likewise in both derivative
+  slots, and `Δ Rm` is the trace of the resulting bilinear map
+  (`CurvatureLaplacian.lean`). The Bochner identity for the rough Laplacian is
+  proved too (`Bochner.lean`). **What is left on the evolution line is the
+  identification `∂ₜ Rm = Δ Rm + Q`** — a computation, not a port; see Next 3.
 
 ## Lean gotchas
 
