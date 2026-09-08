@@ -558,6 +558,144 @@ theorem cov2Bilin_symm (hsymm : ∀ (y : M) (v w : E), h y v w = h y w v)
     cov.covBilin_symm hsymm X Y (fun y ↦ cov Z y (W y))]
   ring
 
+section MetricTrace
+
+open scoped RealInnerProductSpace
+
+variable [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+
+/-- **`tr_g h`, the metric trace of a bilinear form field, as a function on `M`.** -/
+noncomputable def traceBilin (h : M → E →L[ℝ] E →L[ℝ] ℝ) (y : M) : ℝ :=
+  haveI : FiniteDimensional ℝ (TangentSpace I y) := VectorBundle.finiteDimensional ℝ E _ y
+  ∑ i, h y (stdOrthonormalBasis ℝ (TangentSpace I y) i)
+    (stdOrthonormalBasis ℝ (TangentSpace I y) i)
+
+omit [CompleteSpace E] [ContMDiffCovariantDerivative cov 1] in
+/-- `tr_g h` is frame-independent: `h y` is already a continuous bilinear form. -/
+theorem traceBilin_eq_sum_basis (h : M → E →L[ℝ] E →L[ℝ] ℝ) (y : M)
+    {ι : Type*} [Fintype ι] (b : OrthonormalBasis ι ℝ (TangentSpace I y)) :
+    traceBilin (I := I) h y = ∑ i, h y (b i) (b i) := by
+  have hfin : FiniteDimensional ℝ (TangentSpace I y) :=
+    VectorBundle.finiteDimensional ℝ E _ y
+  exact OrthonormalBasis.sum_apply_self_eq _ b
+    ((h y : TangentSpace I y →L[ℝ] TangentSpace I y →L[ℝ] ℝ))
+
+variable [IsContMDiffRiemannianBundle I 1 E (fun (x : M) ↦ TangentSpace I x)]
+  [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
+  [VectorBundle ℝ E (fun (x : M) ↦ TangentSpace I x)]
+
+/-- `∇_Y h` at each point, as a field of bilinear forms: what `d(tr_g h)` is the frame sum of. -/
+noncomputable def covBilinFormAux (h : M → E →L[ℝ] E →L[ℝ] ℝ)
+    (hb : ∀ y : M, IsMDiffBilinAt (I := I) h y) (Y : Π y : M, TangentSpace I y) :
+    M → E →L[ℝ] E →L[ℝ] ℝ :=
+  fun y ↦ (cov.covBilinForm (hb y) Y : TangentSpace I y →L[ℝ] TangentSpace I y →L[ℝ] ℝ)
+
+omit [CompleteSpace E] in
+-- BENCH: hessian-metric-trace
+/-- **The Hessian of `tr_g h` is the trace of `∇²h`**:
+`∇²(tr_g h)(X,Y) = ∑ᵢ (∇²_{X,Y}h)(eᵢ,eᵢ)`. The same "trace commutes with `∇`" mechanism as the
+divergence, one level up: differentiating the frame sum twice produces `∇²h` plus exactly the
+term `(tr_g ∇_{∇_X Y} h)` that the Hessian's connection correction subtracts. -/
+theorem hessianFun_traceBilin_eq
+    (hcov : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    (hb : ∀ y : M, IsMDiffBilinAt (I := I) h y)
+    {X Y : Π y : M, TangentSpace I y} {x : M}
+    (hX : MDiffAt (T% X) x) (hY : CMDiff 2 (T% Y))
+    {iota : Type*} [Fintype iota] {fr : iota → Π y : M, TangentSpace I y} {u : Set M}
+    (hs : IsOrthonormalFrameOn I E 1 fr u) (hu : IsOpen u) (hx : x ∈ u)
+    (hfr2 : ∀ i, CMDiff 2 (T% (fr i)))
+    (hh : ∀ y ∈ u, ∀ i, MDiffAt (fun y' ↦ h y' (fr i y') (fr i y')) y)
+    (hd : ∀ i, MDiffAt (fun y ↦ cov.covBilin h Y (fr i) (fr i) y) x) :
+    cov.hessianFun (traceBilin (I := I) h) X Y x
+      = ∑ i, cov.cov2Bilin h X Y (fr i) (fr i) x := by
+  classical
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  have hY1 : MDiffAt (T% Y) x := hY.mdifferentiable h2 x
+  have hfr1 : ∀ i, MDiffAt (T% (fr i)) x := fun i ↦ (hfr2 i).mdifferentiable h2 x
+  have hDY : MDiffAt (T% (fun y ↦ cov Y y (X y))) x := cov.mdiffAt_cov_apply hY hX
+  set B := cov.covBilinFormAux h hb Y with hBdef
+  obtain ⟨b, hbv⟩ := exists_orthonormalBasis_of_isOrthonormalFrameOn hs hx
+  -- `d(tr_g h)` is the frame sum of `∇h`, at every point of `u`
+  have hgrad : ∀ y ∈ u, ∀ V : Π z : M, TangentSpace I z,
+      mvfderiv I (traceBilin (I := I) h) y (V y)
+        = ∑ i, cov.covBilin h V (fr i) (fr i) y := by
+    intro y hy V
+    obtain ⟨c, hcv⟩ := exists_orthonormalBasis_of_isOrthonormalFrameOn hs hy
+    have hsum : traceBilin (I := I) h =ᶠ[𝓝 y] fun z ↦ ∑ i, h z (fr i z) (fr i z) := by
+      filter_upwards [hu.mem_nhds hy] with z hz
+      obtain ⟨d, hdv⟩ := exists_orthonormalBasis_of_isOrthonormalFrameOn hs hz
+      rw [traceBilin_eq_sum_basis (I := I) h z d]
+      exact Finset.sum_congr rfl fun i _ ↦ by rw [hdv i]
+    rw [hsum.mvfderiv_eq]
+    exact cov.mvfderiv_sum_eq_sum_covBilin_of_frame hcov hs hu hy (fun i ↦ hh y hy i)
+  -- the leading term of the Hessian, by the trace lemma one level up
+  have hBapp : ∀ y ∈ u, ∀ i, B y (fr i y) (fr i y) = cov.covBilin h Y (fr i) (fr i) y := by
+    intro y hy i
+    have hfy : MDiffAt (T% (fr i)) y :=
+      (hs.toIsLocalFrameOn.contMDiffAt hu hy i).mdifferentiableAt one_ne_zero
+    exact cov.covBilinForm_apply (hb y) hfy hfy
+  have hgerm : (fun y ↦ mvfderiv I (traceBilin (I := I) h) y (Y y))
+      =ᶠ[𝓝 x] fun y ↦ ∑ i, B y (fr i y) (fr i y) := by
+    filter_upwards [hu.mem_nhds hx] with y hy
+    rw [hgrad y hy Y]
+    exact Finset.sum_congr rfl fun i _ ↦ (hBapp y hy i).symm
+  have hBd : ∀ i, MDiffAt (fun y ↦ B y (fr i y) (fr i y)) x := by
+    intro i
+    refine (hd i).congr_of_eventuallyEq ?_
+    filter_upwards [hu.mem_nhds hx] with y hy
+    exact hBapp y hy i
+  have hlead : mvfderiv I (fun y ↦ mvfderiv I (traceBilin (I := I) h) y (Y y)) x (X x)
+      = ∑ i, cov.covBilin B X (fr i) (fr i) x := by
+    rw [hgerm.mvfderiv_eq]
+    exact cov.mvfderiv_sum_eq_sum_covBilin_of_frame hcov hs hu hx hBd
+  -- each summand is `∇²h` plus the term the Hessian's connection correction subtracts
+  have hexpand : ∀ i, cov.covBilin B X (fr i) (fr i) x
+      = cov.cov2Bilin h X Y (fr i) (fr i) x
+        + cov.covBilin h (fun y ↦ cov Y y (X y)) (fr i) (fr i) x := by
+    intro i
+    have hmg : (fun y ↦ B y (fr i y) (fr i y))
+        =ᶠ[𝓝 x] fun y ↦ cov.covBilin h Y (fr i) (fr i) y := by
+      filter_upwards [hu.mem_nhds hx] with y hy
+      exact hBapp y hy i
+    have hm' : mvfderiv I (fun y ↦ B y (fr i y) (fr i y)) x (X x)
+        = mvfderiv I (fun y ↦ cov.covBilin h Y (fr i) (fr i) y) x (X x) := by
+      rw [hmg.mvfderiv_eq]
+    -- values passed explicitly: matching `covBilinForm_apply` against a beta-redex sends the
+    -- unifier through `mkHom₂` into the trivialisations behind `FiberBundle.extend`
+    have key : ∀ (v w : TangentSpace I x) (V W : Π y : M, TangentSpace I y),
+        MDiffAt (T% V) x → MDiffAt (T% W) x → V x = v → W x = w →
+        B x v w = cov.covBilin h Y V W x := by
+      intro v w V W hV hW hVv hWw
+      rw [← hVv, ← hWw]
+      exact cov.covBilinForm_apply (hb x) hV hW
+    have e₁ : B x (cov (fr i) x (X x)) (fr i x)
+        = cov.covBilin h Y (fun y ↦ cov (fr i) y (X y)) (fr i) x :=
+      key (cov (fr i) x (X x)) (fr i x) (fun y ↦ cov (fr i) y (X y)) (fr i)
+        (cov.mdiffAt_cov_apply (hfr2 i) hX) (hfr1 i) rfl rfl
+    have e₂ : B x (fr i x) (cov (fr i) x (X x))
+        = cov.covBilin h Y (fr i) (fun y ↦ cov (fr i) y (X y)) x :=
+      key (fr i x) (cov (fr i) x (X x)) (fr i) (fun y ↦ cov (fr i) y (X y))
+        (hfr1 i) (cov.mdiffAt_cov_apply (hfr2 i) hX) rfl rfl
+    have hcB : cov.covBilin B X (fr i) (fr i) x
+        = mvfderiv I (fun y ↦ B y (fr i y) (fr i y)) x (X x)
+          - B x (cov (fr i) x (X x)) (fr i x) - B x (fr i x) (cov (fr i) x (X x)) := rfl
+    have hc2 : cov.cov2Bilin h X Y (fr i) (fr i) x
+        = mvfderiv I (fun y ↦ cov.covBilin h Y (fr i) (fr i) y) x (X x)
+          - cov.covBilin h (fun y ↦ cov Y y (X y)) (fr i) (fr i) x
+          - cov.covBilin h Y (fun y ↦ cov (fr i) y (X y)) (fr i) x
+          - cov.covBilin h Y (fr i) (fun y ↦ cov (fr i) y (X y)) x := rfl
+    rw [hcB, hc2, hm', e₁, e₂]
+    ring
+  -- the Hessian's connection correction is the same frame sum
+  have hsub : mvfderiv I (traceBilin (I := I) h) x (cov Y x (X x))
+      = ∑ i, cov.covBilin h (fun y ↦ cov Y y (X y)) (fr i) (fr i) x :=
+    hgrad x hx (fun y ↦ cov Y y (X y))
+  simp only [hessianFun]
+  rw [hlead, hsub, Finset.sum_congr rfl fun i _ ↦ hexpand i, Finset.sum_add_distrib]
+  ring
+
+end MetricTrace
+
 end Symmetric
 
 

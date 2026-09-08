@@ -1566,7 +1566,10 @@ target actually requires.
     CovariantDerivative.cov2BilinForm,
     CovariantDerivative.laplacianBilin,
     CovariantDerivative.laplacianBilin_eq_sum_basis,
-    CovariantDerivative.laplacianBilin_eq_sum_frame}
+    CovariantDerivative.laplacianBilin_eq_sum_frame,
+    CovariantDerivative.traceBilin,
+    CovariantDerivative.traceBilin_eq_sum_basis,
+    CovariantDerivative.hessianFun_traceBilin_eq}
   \leanok
   \uses{lem:cov-bilin-tensor, def:laplacian, def:cov2-curvature}
   For a bilinear form field $h$,
@@ -1604,6 +1607,15 @@ target actually requires.
   the leading term of $\nab h$ differentiates $h(Y,Z)$ in the direction $V$, so
   it sees the germ of $V$ --- which is exactly why the inner slot needs the
   frame argument and the outer one does not.
+
+  \textbf{The trace commutes with $\nab^2$ too}: $\nab^2(\operatorname{tr}_\g
+  h)(X,Y) = \sum_i (\nab^2_{X,Y}h)(e_i,e_i)$ (\texttt{traceBilin},
+  \texttt{hessianFun\_traceBilin\_eq}), by the same mechanism as the
+  divergence (Definition \ref{def:one-form-divergence}) one level up:
+  differentiating the frame sum twice produces $\nab^2h$ \emph{plus} exactly
+  the term $\operatorname{tr}_\g(\nab_{\nab_XY} h)$ that the Hessian's
+  connection correction subtracts. Tracing once more identifies
+  $\Delta(\operatorname{tr}_\g h)$ with $\operatorname{tr}_\g(\Delta_\g h)$.
 
   This is what $\operatorname{tr}_\g(\partial_t\Ric) = \Delta \scal$ is
   assembled from. Tracing the first variation of $\Rm$ (Lemma
