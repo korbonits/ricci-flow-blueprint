@@ -1241,6 +1241,51 @@ target actually requires.
   differentiate $\nab\Riem$ a second time.
 \end{lemma}
 
+\begin{definition}[The second covariant derivative of the curvature tensor]
+  \label{def:cov2-curvature}
+  \lean{CovariantDerivative.cov2Curvature,
+    CovariantDerivative.cov2Curvature_congr_dir,
+    CovariantDerivative.cov2Curvature_smul_dir,
+    CovariantDerivative.cov2Curvature_add_dir,
+    CovariantDerivative.cov2Curvature_smul_snd,
+    CovariantDerivative.cov2Curvature_add_snd}
+  \leanok
+  \uses{lem:cov-curvature-pointwise, lem:cov-curvature-direction}
+  \[
+    (\nab^2_{X,Y}\Riem)(A,B)C
+      = \nab_X\big((\nab_Y\Riem)(A,B)C\big)
+        - (\nab_{\nab_X Y}\Riem)(A,B)C
+        - (\nab_Y\Riem)(\nab_X A,B)C
+        - (\nab_Y\Riem)(A,\nab_X B)C
+        - (\nab_Y\Riem)(A,B)(\nab_X C),
+  \]
+  one correction for each of $\nab\Riem$'s four slots.
+
+  \textbf{Defined, and tensorial in both derivative slots}
+  (\texttt{CurvatureLaplacian.lean}). The outer slot $X$ is free, exactly as it
+  was for $\nab\Riem$: every term is either a continuous linear map evaluated at
+  $X(x)$, or $\nab\Riem$ in a slot where it is now known to be pointwise
+  (Lemma \ref{lem:cov-curvature-pointwise}), applied to a field whose value at
+  $x$ is determined by $X(x)$. So \texttt{cov2Curvature\_congr\_dir} needs no
+  frame argument at all --- it is the four-slot pointwise lemma cashed in.
+
+  The inner slot $Y$ is the familiar cancellation: the Leibniz term of
+  $\nab_X\big(f\,(\nab_Y\Riem)(A,B)C\big)$ is matched by the one that
+  $\nab_X(fY) = f\nab_X Y + (Xf)Y$ produces in the second term. As in the
+  fourth slot of $\nab\Riem$, the coefficient is asked for three derivatives,
+  because $(Xf)$ must itself be $C^2$ for the tensoriality it is fed to.
+
+  Regularity throughout: $X, Y, A, B$ are $C^3$ and $C$ is $C^4$ --- the last
+  slot is the expensive one at every level, and here it is what
+  \texttt{covCurvature\_congr\_fth} costs.
+
+  \textbf{What remains for $\Delta\Rm$} is pointwise dependence in $Y$ --- the
+  frame-and-globalise argument once more, at $C^3$ --- after which
+  $\nab^2\Riem$ is a bilinear map $T_x\M \times T_x\M \to T_x\M$ and
+  $\Delta\Rm(A,B)C = \sum_i (\nab^2_{e_i,e_i}\Riem)(A,B)C$ is its trace, with
+  frame-independence free by \texttt{OrthonormalBasis.sum\_apply\_self\_eq}.
+\end{definition}
+
 \begin{definition}[The divergence of the curvature tensor]
   \label{def:div-curvature}
   \lean{CovariantDerivative.covCurvature_congr_dir,
