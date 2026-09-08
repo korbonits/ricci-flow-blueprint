@@ -194,6 +194,65 @@ theorem covCurvature_add_dir {X' : Π y : M, TangentSpace I y}
   module
 
 omit [CompleteSpace E] in
+-- BENCH: cov-curvature-smul-snd
+/-- **`∇R` is `C^∞(M)`-linear in its second slot**: `(∇_X R)(f•Y, Z)W = f(x)·(∇_X R)(Y,Z)W`.
+
+Unlike the direction slot this is *not* four independent rescalings. The first term picks up
+a Leibniz term, `∇_X(f · R(Y,Z)W) = f ∇_X(R(Y,Z)W) + (Xf) R(Y,Z)W`, and the second picks up
+the matching one from `∇_X(f•Y) = f ∇_X Y + (Xf) Y`; they cancel. Applying Leibniz at all is
+what `contMDiff_curvature` is for. -/
+theorem covCurvature_smul_snd
+    (hf : ContMDiff I 𝓘(ℝ, ℝ) 2 f)
+    (hX : CMDiff 2 (T% X)) (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z))
+    (hW : CMDiff 3 (T% W)) :
+    cov.covCurvature X (f • Y) Z W x = f x • cov.covCurvature X Y Z W x := by
+  have h1 : (1 : ℕ∞ω) ≠ 0 := by norm_num
+  have hW2 : CMDiff 2 (T% W) := hW.of_le (by norm_num)
+  have hX1 : CMDiff 1 (T% X) := hX.of_le (by norm_num)
+  have hfm : ∀ y, MDiffAt f y := hf.mdifferentiable two_ne_zero₃
+  have hYm : ∀ y, MDiffAt (T% Y) y := hY.mdifferentiable two_ne_zero₃
+  have hYW : ∀ y, MDiffAt (T% (fun u ↦ cov W u (Y u))) y := fun y ↦
+    cov.mdiffAt_cov_apply hW2 (hYm y)
+  have hDY : CMDiff 1 (T% (fun y ↦ cov Y y (X y))) := cov.contMDiff_cov_apply hY hX1
+  have hDW : CMDiff 2 (T% (fun y ↦ cov W y (X y))) := cov.contMDiff_cov_apply hW hX
+  have hDYm : MDiffAt (T% (fun y ↦ cov Y y (X y))) x := (hDY.mdifferentiable h1) x
+  have hcs : MDiffAt (T% (fun y ↦ cov.curvature Y Z W y)) x :=
+    ((cov.contMDiff_curvature hY hZ hW).mdifferentiable h1) x
+  have hXf : MDiffAt (fun y ↦ d% f y (X y)) x :=
+    (RicciFlowBlueprint.contMDiffAt_mvfderiv_apply (hf x) (hX1 x)
+      (by norm_num)).mdifferentiableAt h1
+  -- term 1: the curvature section rescales, then Leibniz
+  have e1 : (fun y ↦ cov.curvature (f • Y) Z W y) = f • (fun y ↦ cov.curvature Y Z W y) := by
+    funext y
+    exact cov.curvature_smul_left f Y Z W (hfm y) (hYm y) (hYW y)
+  have t1 : cov (fun y ↦ cov.curvature (f • Y) Z W y) x (X x)
+      = f x • cov (fun y ↦ cov.curvature Y Z W y) x (X x)
+        + (d% f x (X x)) • cov.curvature Y Z W x := by
+    rw [e1, cov.isCovariantDerivativeOn.leibniz hcs (hfm x)]
+    simp only [add_apply, smul_apply, ContinuousLinearMap.smulRight_apply]
+  -- term 2: `∇_X(f•Y) = f ∇_X Y + (Xf) Y`, and the Leibniz term reappears
+  have e2 : (fun y ↦ cov (f • Y) y (X y))
+      = f • (fun y ↦ cov Y y (X y)) + ((fun y ↦ d% f y (X y)) • Y) := by
+    funext y
+    rw [cov.isCovariantDerivativeOn.leibniz (hYm y) (hfm y)]
+    simp only [add_apply, smul_apply, ContinuousLinearMap.smulRight_apply]
+    rfl
+  have t2 : cov.curvature (fun y ↦ cov (f • Y) y (X y)) Z W x
+      = f x • cov.curvature (fun y ↦ cov Y y (X y)) Z W x
+        + (d% f x (X x)) • cov.curvature Y Z W x := by
+    rw [e2, cov.curvature_add_left hW2 ((hfm x).smul_section hDYm) (hXf.smul_section (hYm x)),
+      cov.curvature_smul_left f _ Z W (hfm x) hDYm (cov.mdiffAt_cov_apply hW2 hDYm),
+      cov.curvature_smul_left _ Y Z W hXf (hYm x) (hYW x)]
+  have t3 : cov.curvature (f • Y) (fun y ↦ cov Z y (X y)) W x
+      = f x • cov.curvature Y (fun y ↦ cov Z y (X y)) W x :=
+    cov.curvature_smul_left f Y _ W (hfm x) (hYm x) (hYW x)
+  have t4 : cov.curvature (f • Y) Z (fun y ↦ cov W y (X y)) x
+      = f x • cov.curvature Y Z _ x :=
+    cov.curvature_smul_left f Y Z _ (hfm x) (hYm x) (cov.mdiffAt_cov_apply hDW (hYm x))
+  simp only [covCurvature, t1, t2, t3, t4]
+  module
+
+omit [CompleteSpace E] in
 -- BENCH: cov-curvature-antisymm
 /-- **`∇R` inherits the antisymmetry of `R` in the two curvature slots**:
 `(∇_X R)(Y,Z)W = -(∇_X R)(Z,Y)W`. Every term of `covCurvature` flips sign — the first
@@ -215,6 +274,72 @@ theorem covCurvature_antisymm (X : Π y : M, TangentSpace I y)
     cov.curvature_antisymm (fun y ↦ cov Z y (X y)) Y W x,
     cov.curvature_antisymm Z (fun y ↦ cov Y y (X y)) W x,
     cov.curvature_antisymm Z Y (fun y ↦ cov W y (X y)) x]
+  module
+
+omit [CompleteSpace E] in
+-- BENCH: cov-curvature-add-snd
+/-- **`∇R` is additive in its second slot.** No Leibniz term here: `∇_X(Y+Y')` splits with
+nothing left over. -/
+theorem covCurvature_add_snd {Y' : Π y : M, TangentSpace I y}
+    (hX : CMDiff 2 (T% X)) (hY : CMDiff 2 (T% Y)) (hY' : CMDiff 2 (T% Y'))
+    (hZ : CMDiff 2 (T% Z)) (hW : CMDiff 3 (T% W)) :
+    cov.covCurvature X (Y + Y') Z W x
+      = cov.covCurvature X Y Z W x + cov.covCurvature X Y' Z W x := by
+  have h1 : (1 : ℕ∞ω) ≠ 0 := by norm_num
+  have hW2 : CMDiff 2 (T% W) := hW.of_le (by norm_num)
+  have hYm : ∀ y, MDiffAt (T% Y) y := hY.mdifferentiable two_ne_zero₃
+  have hY'm : ∀ y, MDiffAt (T% Y') y := hY'.mdifferentiable two_ne_zero₃
+  have hXm : MDiffAt (T% X) x := (hX.mdifferentiable two_ne_zero₃) x
+  have hDW : CMDiff 2 (T% (fun y ↦ cov W y (X y))) := cov.contMDiff_cov_apply hW hX
+  have hDYm : MDiffAt (T% (fun y ↦ cov Y y (X y))) x := cov.mdiffAt_cov_apply hY hXm
+  have hDY'm : MDiffAt (T% (fun y ↦ cov Y' y (X y))) x := cov.mdiffAt_cov_apply hY' hXm
+  have hcs : MDiffAt (T% (fun y ↦ cov.curvature Y Z W y)) x :=
+    ((cov.contMDiff_curvature hY hZ hW).mdifferentiable h1) x
+  have hcs' : MDiffAt (T% (fun y ↦ cov.curvature Y' Z W y)) x :=
+    ((cov.contMDiff_curvature hY' hZ hW).mdifferentiable h1) x
+  have e1 : (fun y ↦ cov.curvature (Y + Y') Z W y)
+      = (fun y ↦ cov.curvature Y Z W y) + (fun y ↦ cov.curvature Y' Z W y) := by
+    funext y
+    exact cov.curvature_add_left hW2 (hYm y) (hY'm y)
+  have e2 : (fun y ↦ cov (Y + Y') y (X y))
+      = (fun y ↦ cov Y y (X y)) + (fun y ↦ cov Y' y (X y)) := by
+    funext y
+    rw [cov.isCovariantDerivativeOn.add (hYm y) (hY'm y)]
+    rfl
+  simp only [covCurvature, e1, e2, cov.isCovariantDerivativeOn.add hcs hcs', add_apply,
+    cov.curvature_add_left hW2 hDYm hDY'm,
+    cov.curvature_add_left hW2 (hYm x) (hY'm x),
+    cov.curvature_add_left hDW (hYm x) (hY'm x)]
+  module
+
+omit [CompleteSpace E] in
+-- BENCH: cov-curvature-smul-thd
+/-- **`∇R` is `C^∞(M)`-linear in its third slot** — free from the second, by
+`covCurvature_antisymm`. -/
+theorem covCurvature_smul_thd
+    (hf : ContMDiff I 𝓘(ℝ, ℝ) 2 f)
+    (hX : CMDiff 2 (T% X)) (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z))
+    (hW : CMDiff 3 (T% W)) :
+    cov.covCurvature X Y (f • Z) W x = f x • cov.covCurvature X Y Z W x := by
+  have hfZ : CMDiff 2 (T% (f • Z)) := hf.smul_section hZ
+  rw [cov.covCurvature_antisymm X hY hfZ hW,
+    cov.covCurvature_smul_snd hf hX hZ hY hW,
+    cov.covCurvature_antisymm X hZ hY hW]
+  module
+
+omit [CompleteSpace E] in
+/-- **`∇R` is additive in its third slot** — free from the second, by
+`covCurvature_antisymm`. -/
+theorem covCurvature_add_thd {Z' : Π y : M, TangentSpace I y}
+    (hX : CMDiff 2 (T% X)) (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z))
+    (hZ' : CMDiff 2 (T% Z')) (hW : CMDiff 3 (T% W)) :
+    cov.covCurvature X Y (Z + Z') W x
+      = cov.covCurvature X Y Z W x + cov.covCurvature X Y Z' W x := by
+  have hZZ' : CMDiff 2 (T% (Z + Z')) := hZ.add_section hZ'
+  rw [cov.covCurvature_antisymm X hY hZZ' hW,
+    cov.covCurvature_add_snd hX hZ hZ' hY hW,
+    cov.covCurvature_antisymm X hZ hY hW,
+    cov.covCurvature_antisymm X hZ' hY hW]
   module
 
 end Direction

@@ -1081,13 +1081,17 @@ target actually requires.
   the link is the second-derivative test, Lemma \ref{lem:second-derivative-test}.
 \end{definition}
 
-\begin{lemma}[$\nab \Rm$ is tensorial in its direction]
+\begin{lemma}[$\nab \Rm$ is tensorial in three of its four slots]
   \label{lem:cov-curvature-direction}
   \lean{CovariantDerivative.covCurvature_smul_dir,
     CovariantDerivative.covCurvature_add_dir,
     CovariantDerivative.cov_smul_dir,
     CovariantDerivative.contMDiff_curvature,
-    CovariantDerivative.covCurvature_antisymm}
+    CovariantDerivative.covCurvature_antisymm,
+    CovariantDerivative.covCurvature_smul_snd,
+    CovariantDerivative.covCurvature_add_snd,
+    CovariantDerivative.covCurvature_smul_thd,
+    CovariantDerivative.covCurvature_add_thd}
   \leanok
   \uses{lem:bianchi-second, def:curvature}
   $(\nab_{fX} \Riem)(Y,Z)W = f\,(\nab_X \Riem)(Y,Z)W$, and likewise additively.
@@ -1114,13 +1118,16 @@ target actually requires.
   \texttt{contMDiff\_curvature}, also proved here: a $C^3$ triple has a $C^1$
   curvature section, the two $\nab\nab$ terms by
   \texttt{contMDiff\_cov\_apply} twice and the bracket term by the same fed
-  Mathlib's \texttt{ContMDiffAt.mlieBracket\_vectorField}. So $Y$ and $Z$ are
-  now unblocked, at one more derivative than the direction slot --- and
-  \texttt{covCurvature\_antisymm} halves what is left of them, since
-  $\nab\Riem$ inherits the antisymmetry of $\Riem$ in those two slots, so
-  whatever is proved for $Y$ transfers to $Z$. $W$ still needs the
-  frame-and-globalise argument of Lemma \ref{lem:curvature-pointwise} one level
-  up.
+  Mathlib's \texttt{ContMDiffAt.mlieBracket\_vectorField}. With it,
+  \texttt{covCurvature\_smul\_snd} and \texttt{covCurvature\_add\_snd} give
+  the $Y$ slot, and \texttt{covCurvature\_antisymm} hands over the $Z$ slot for
+  nothing. So $\nab\Riem$ is tensorial in three of its four slots.
+
+  \textbf{What is left is the $W$ slot}, which is the analogue of the
+  curvature's third and needs the frame-and-globalise argument of
+  Lemma \ref{lem:curvature-pointwise} one level up. After that, the trace over
+  the direction slot against the fourth is $\operatorname{div}\Rm$, and the
+  contracted second Bianchi identity is in reach.
 \end{lemma}
 
 \begin{lemma}[The metric trace commutes with $\nab$]
