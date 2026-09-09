@@ -2988,7 +2988,10 @@ Perelman's monotone functionals are what rule it out.
   \label{lem:geodesic-unique}
   \lean{CovariantDerivative.hasDerivAt_geodesicField_of_isGeodesic,
     CovariantDerivative.eventuallyEq_of_isGeodesic,
-    CovariantDerivative.eventuallyEq_of_isGeodesic'}
+    CovariantDerivative.eventuallyEq_of_isGeodesic',
+    CovariantDerivative.eq_of_mem_closure_of_continuousAt,
+    CovariantDerivative.forall_totalSpace_eq_of_isGeodesicOn,
+    CovariantDerivative.eqOn_of_isGeodesicOn}
   \leanok
   \uses{lem:geodesic-exists, lem:geodesic-chart, def:geodesic}
   Two geodesics of a $C^k$ connection ($k \ge 1$) on a boundaryless manifold which agree at
@@ -3012,6 +3015,26 @@ Perelman's monotone functionals are what rule it out.
   As with existence, a frame-free form (\texttt{eventuallyEq\_of\_isGeodesic'}) follows by
   taking the frame around the common initial point, both curves staying in its open set by
   continuity.
+
+  \textbf{Uniqueness on a whole preconnected open set}
+  (\texttt{forall\_totalSpace\_eq\_of\_isGeodesicOn}, \texttt{eqOn\_of\_isGeodesicOn}) is the
+  usual clopen argument on the agreement set
+  $A = \{u \in s : (c_1(u),c_1'(u)) = (c_2(u),c_2'(u))\} \subseteq TM$. Open is the local
+  statement above --- agreeing \emph{near} a point makes the two curves the same function there,
+  so their velocities agree too, $\mathrm{d}$ being local
+  (\texttt{Filter.EventuallyEq.mfderiv\_eq}, whose \texttt{tangentSpaceCast} is the identity and
+  goes away by \texttt{rfl}).
+
+  Closed is where a small obstacle sits: \textbf{Mathlib has no \texttt{T2Space} instance on the
+  total space of a bundle}, so the diagonal in $TM \times TM$ is not available as a closed set.
+  It is taken in two pieces instead --- the base in $M$, the fibre coordinate
+  $(e\langle c(u), c'(u)\rangle)_2$ in $E$, both Hausdorff --- and reassembled by the
+  injectivity of a trivialisation on its source. The fibre coordinate is continuous at the point
+  precisely because \texttt{mdiffAlongAt\_iff\_of\_mem} turns differentiability \emph{along} the
+  curve into differentiability of exactly that coordinate. The reusable tool extracted here is
+  \texttt{eq\_of\_mem\_closure\_of\_continuousAt}: two maps agreeing on $A$ and continuous
+  \emph{at} a point of $\overline{A}$ agree there, which is the usual $\{f = g\}$-is-closed
+  argument with continuity assumed only where it is needed.
 \end{lemma}
 
 \begin{lemma}[Affine reparametrisation]
@@ -3043,11 +3066,9 @@ Perelman's monotone functionals are what rule it out.
   chart coordinate --- rather than against $\Gamma$, a function of the base point. Every
   computation performed inside a chart wants that form.
 
-  \textbf{What is left before $\exp$} is uniqueness of geodesics on a whole
-  \emph{interval}, not merely near a point: Lemma \ref{lem:geodesic-unique} is local, and
-  $\exp_x(v) = c(1)$ is well defined only once two runs agreeing at $0$ are known to agree at
-  $1$. That is the usual clopen argument --- the agreement set is open by local uniqueness and
-  closed by continuity into $TM$.
+  \textbf{Towards $\exp$}: with interval uniqueness (Lemma \ref{lem:geodesic-unique}) the value
+  $\exp_x(v) = c(1)$ is well defined, two runs agreeing at $0$ agreeing at $1$; and
+  reparametrisation is what makes $\exp_x(av)$ and $\exp_x(v)$ comparable.
 \end{lemma}
 
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
