@@ -325,8 +325,16 @@ theorem admitsConstPositiveSecMetric_iff :
 field through a given tangent vector, so both predicates can be satisfied vacuously
 and the implication is trivially true; with it, `exists_contMDiff_two_extension`
 makes them assertions about every direction at every point
-(`hasPositiveRicciLC_tested_at`, `hasConstSecLC_tested_at`). Chow-Liao-Qin assume
-`T2Space` for the same reason. -/
+(`hasPositiveRicciLC_tested_at`, `hasConstSecLC_tested_at`).
+
+Chow-Liao-Qin also assume `T2Space`, but not for this reason: their
+`positiveRicciMetric` (`Geometry/Curvature/MetricConditions.lean`) quantifies directly
+over `v : TangentSpace I x`, so it has no extension step to be made non-vacuous. In
+their development `[T2Space M]` travels with `[SigmaCompactSpace M]` and is
+load-bearing for the *existence* of a Riemannian metric:
+`nonempty_contMDiffRiemannianMetric_of_sigmaCompact`
+(`Geometry/Metric/MetricExistence.lean`) builds one by a partition of unity, through
+Mathlib's `exists_contMDiffSection_forall_mem_convex_of_local`, which assumes both. -/
 proof_wanted hamilton_1982
     {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
       [FiniteDimensional ℝ E]
