@@ -2274,7 +2274,8 @@ target actually requires.
 \begin{lemma}[The Ricci identity for a bilinear form]
   \label{lem:bilin-ricci-identity}
   \lean{CovariantDerivative.cov2Bilin_eq_hessianFun,
-    CovariantDerivative.cov2Bilin_sub_swap}
+    CovariantDerivative.cov2Bilin_sub_swap,
+    CovariantDerivative.cov2Curvature_eq_hessian}
   \leanok
   \uses{def:curvature, lem:ricci-identity}
   For a bilinear form field $h$ and a torsion-free connection,
@@ -2304,6 +2305,20 @@ target actually requires.
   $h(\nab_{[W,X]}Y - \nab_W\nab_X Y + \nab_X\nab_W Y,\, Z)$, which is
   $-h(R(W,X)Y,Z)$ by the definition of the curvature --- torsion-freeness used
   the second time, to turn $\nab_W X - \nab_X W$ into $[W,X]$.
+
+  \textbf{The same expansion one level up} is
+  \texttt{cov2Curvature\_eq\_hessian}: $\nab^2\Rm$ against the Hessian of the
+  \emph{section} $\Rm(A,B)C$, with the same cancellation of the section's first
+  derivative. Two things differ. $\Rm$ has three input slots and a vector
+  output, so there will be four curvature terms rather than two --- one per
+  input slot and one for the output, the last being the only place a section's
+  Hessian differs from a function's. And the expansion needs \emph{no
+  regularity of the connection at all}: where the bilinear case had to
+  differentiate a scalar and so needed \texttt{mvfderiv} to be additive, here
+  the only splitting is $\nab$ over a difference of sections, which is an axiom
+  of a covariant derivative. What it does need is the differentiability of the
+  four sections $\nab\Rm$ is built from, which is exactly what
+  \texttt{contMDiff\_covCurvature} supplies.
 \end{lemma}
 
 \begin{theorem}[Scalar maximum principle]

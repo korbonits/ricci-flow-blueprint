@@ -19,6 +19,7 @@ cross terms, and leaves exactly the curvature.
 -/
 import RicciFlowBlueprint.BilinLaplacian
 import RicciFlowBlueprint.Bianchi
+import RicciFlowBlueprint.CurvatureLaplacian
 import RicciFlowBlueprint.Hessian
 
 open Bundle Filter VectorField
@@ -157,5 +158,74 @@ theorem cov2Bilin_sub_swap (hcov : cov.torsion = 0) (hb : IsMDiffBilinAt (I := I
     cov.hessianFun_symm hcov hf2 hWd hXd]
   linarith [e1, e2, key1, key2]
 
+
+/-! ### The same, one level up: `∇²Rm`
+
+`Rm` has three input slots and a vector output, so commuting the derivatives of `∇²Rm` costs
+four curvature terms — one per input slot, and one for the output, the last being the only
+place a section's Hessian differs from a function's.
+
+The structure of the proof is identical to the bilinear case: expand `∇²Rm` against the
+Hessian of the *section* `Rm(A,B)C`, then antisymmetrise.
+-/
+
+section Curvature
+
+variable [ContMDiffCovariantDerivative cov 2]
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E] [ContMDiffCovariantDerivative cov 1]
+  [ContMDiffCovariantDerivative cov 2] in
+-- BENCH: cov2-curvature-expand
+/-- **`∇²Rm` expanded against the Hessian of the section `Rm(A,B)C`.** Exactly as for a bilinear
+form: every term other than the leading Hessian is either `∇Rm` in one slot, or `Rm` with a
+second derivative of one of the fields in one slot; and the first derivative of the section
+cancels between the leading term and the `∇_{∇_X Y}` correction.
+
+The four hypotheses are the differentiability of the four sections that `∇Rm` is built from —
+exactly what `contMDiff_covCurvature` establishes when the fields are regular enough. -/
+theorem cov2Curvature_eq_hessian {X Y A B C : Π y : M, TangentSpace I y} {x : M}
+    (ha : MDiffAt (T% (fun u ↦ cov (fun y ↦ cov.curvature A B C y) u (Y u))) x)
+    (hb : MDiffAt (T% (fun u ↦ cov.curvature (fun z ↦ cov A z (Y z)) B C u)) x)
+    (hc : MDiffAt (T% (fun u ↦ cov.curvature A (fun z ↦ cov B z (Y z)) C u)) x)
+    (hd : MDiffAt (T% (fun u ↦ cov.curvature A B (fun z ↦ cov C z (Y z)) u)) x) :
+    cov.cov2Curvature X Y A B C x
+      = cov.hessian X Y (fun y ↦ cov.curvature A B C y) x
+        + cov.curvature (fun z ↦ cov A z (cov Y z (X z))) B C x
+        + cov.curvature A (fun z ↦ cov B z (cov Y z (X z))) C x
+        + cov.curvature A B (fun z ↦ cov C z (cov Y z (X z))) x
+        - cov.covCurvature X (fun z ↦ cov A z (Y z)) B C x
+        - cov.curvature (fun z ↦ cov (fun w ↦ cov A w (Y w)) z (X z)) B C x
+        - cov.curvature (fun z ↦ cov A z (Y z)) (fun z ↦ cov B z (X z)) C x
+        - cov.curvature (fun z ↦ cov A z (Y z)) B (fun z ↦ cov C z (X z)) x
+        - cov.covCurvature X A (fun z ↦ cov B z (Y z)) C x
+        - cov.curvature (fun z ↦ cov A z (X z)) (fun z ↦ cov B z (Y z)) C x
+        - cov.curvature A (fun z ↦ cov (fun w ↦ cov B w (Y w)) z (X z)) C x
+        - cov.curvature A (fun z ↦ cov B z (Y z)) (fun z ↦ cov C z (X z)) x
+        - cov.covCurvature X A B (fun z ↦ cov C z (Y z)) x
+        - cov.curvature (fun z ↦ cov A z (X z)) B (fun z ↦ cov C z (Y z)) x
+        - cov.curvature A (fun z ↦ cov B z (X z)) (fun z ↦ cov C z (Y z)) x
+        - cov.curvature A B (fun z ↦ cov (fun w ↦ cov C w (Y w)) z (X z)) x
+        - cov.covCurvature Y (fun z ↦ cov A z (X z)) B C x
+        - cov.covCurvature Y A (fun z ↦ cov B z (X z)) C x
+        - cov.covCurvature Y A B (fun z ↦ cov C z (X z)) x := by
+  have hsplit : cov (fun u ↦ cov.covCurvature Y A B C u) x (X x)
+      = cov (fun u ↦ cov (fun y ↦ cov.curvature A B C y) u (Y u)) x (X x)
+        - cov (fun u ↦ cov.curvature (fun z ↦ cov A z (Y z)) B C u) x (X x)
+        - cov (fun u ↦ cov.curvature A (fun z ↦ cov B z (Y z)) C u) x (X x)
+        - cov (fun u ↦ cov.curvature A B (fun z ↦ cov C z (Y z)) u) x (X x) := by
+    have hfun : (fun u ↦ cov.covCurvature Y A B C u)
+        = ((((fun u ↦ cov (fun y ↦ cov.curvature A B C y) u (Y u))
+            - (fun u ↦ cov.curvature (fun z ↦ cov A z (Y z)) B C u))
+            - (fun u ↦ cov.curvature A (fun z ↦ cov B z (Y z)) C u))
+            - (fun u ↦ cov.curvature A B (fun z ↦ cov C z (Y z)) u)) := rfl
+    have hab := mdifferentiableAt_sub_section ha hb
+    have habc := mdifferentiableAt_sub_section hab hc
+    rw [hfun, cov.sub_apply habc hd, cov.sub_apply hab hc, cov.sub_apply ha hb]
+    rfl
+  rw [cov2Curvature, hsplit]
+  simp only [hessian, covCurvature]
+  abel
+
+end Curvature
 
 end CovariantDerivative
