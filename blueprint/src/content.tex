@@ -2829,6 +2829,293 @@ Perelman's monotone functionals are what rule it out.
   the model space, where Picard--Lindel\"of applies.
 \end{definition}
 
+\begin{lemma}[The trivialisation is the chart]
+  \label{lem:geodesic-chart}
+  \lean{CovariantDerivative.mfderiv_eq_smulRight_velocity,
+    CovariantDerivative.hasDerivAt_extChartAt_comp,
+    CovariantDerivative.trivializationAt_snd_eq_tangentCoordChange,
+    CovariantDerivative.deriv_extChartAt_comp_eq_trivializationAt,
+    CovariantDerivative.coeffAlong_velocity_eq,
+    CovariantDerivative.sum_deriv_repr_smul,
+    CovariantDerivative.trivializationAt_covAlong_eq,
+    CovariantDerivative.trivializationAt_covAlong_velocity_eq,
+    CovariantDerivative.covAlong_velocity_eq_zero_iff,
+    CovariantDerivative.christoffelB,
+    CovariantDerivative.christoffelB_apply,
+    CovariantDerivative.christoffel_eq_christoffelB,
+    CovariantDerivative.contMDiffAt_christoffelB}
+  \leanok
+  \uses{def:geodesic, def:cov-along-curve}
+  With $p(t) = \varphi_{x_0}(\gamma(t))$ the position of $\gamma$ in the chart at $x_0$,
+  \[
+    p'(t) \;=\; \bigl(e_{x_0}\langle \gamma(t), \gamma'(t)\rangle\bigr)_2 ,
+  \]
+  the fibre coordinate of the velocity in the tangent-bundle trivialisation at $x_0$.
+
+  \textbf{Proved} (\texttt{GeodesicODE.lean}). This is the identification that turns the
+  geodesic equation into an ODE: the unknown of the coordinate equation, $p'$, \emph{is} the
+  quantity Definition \ref{def:geodesic} differentiates. Two steps.
+
+  \textbf{The trivialisation is the chart}, literally: Mathlib's
+  \texttt{TangentBundle.trivializationAt\_apply} unfolds
+  $(e_{x_0}\langle y,v\rangle)_2$ to $\mathrm{d}(\varphi_{x_0}\circ\varphi_y^{-1})$ applied to
+  $v$, which is \texttt{tangentCoordChange}, so
+  \texttt{trivializationAt\_snd\_eq\_tangentCoordChange} is a \texttt{rfl}.
+
+  \textbf{The chart position differentiates to it}: compose $\gamma$'s
+  \texttt{HasMFDerivAt} with the chart's and rewrite the chart's \texttt{mfderiv} as
+  \texttt{tangentCoordChange}. That manoeuvre is Mathlib's own, from
+  \texttt{IntegralCurve/Basic.lean}; the only adjustment is replacing the integral-curve
+  hypothesis by plain differentiability, for which
+  \texttt{mfderiv\_eq\_smulRight\_velocity} says a curve's differential is the
+  \texttt{smulRight} of its velocity --- true with no hypothesis, a continuous linear map out
+  of $\R$ being determined by its value at $1$.
+
+  \textbf{Consequence}: \texttt{coeffAlong\_velocity\_eq}, that the coordinates of $\gamma'$ in
+  the chart at $x_0$ are $p'$ read off the model basis. So the coordinate form
+  $\frac{D}{dt}V = c' + \Gamma(\gamma)(\gamma')(c)$ of Definition \ref{def:geodesic}, at
+  $V = \gamma'$, is an equation in $p'$ and $p''$.
+
+  \textbf{The equation, assembled.} Pushing
+  \texttt{covAlong\_eq\_sum\_of\_frame} through the trivialisation gives the whole of $D/dt$ as
+  a vector equation in the model space, with no basis in the statement
+  (\texttt{trivializationAt\_covAlong\_eq}):
+  \[
+    \bigl(\tfrac{D}{dt}V\bigr)^{e} \;=\; q'(t) \;+\; \Gamma(\gamma(t))(\gamma'(t))(q(t)),
+    \qquad q(u) = \bigl(e\langle\gamma(u),V(u)\rangle\bigr)_2 .
+  \]
+  The basis is eliminated by \texttt{sum\_deriv\_repr\_smul}: the coefficients of $q'(t)$ in a
+  basis are the derivatives of the coefficients of $q$. At $V = \gamma'$ the identification
+  above turns $q$ into $p'$, so
+  \[
+    \nab_{\gamma'}\gamma' = 0 \quad\Longleftrightarrow\quad p''(t) = -\Gamma(\gamma(t))(\gamma'(t))(p'(t))
+  \]
+  (\texttt{trivializationAt\_covAlong\_velocity\_eq},
+  \texttt{covAlong\_velocity\_eq\_zero\_iff}) --- the equivalence because a trivialisation is a
+  continuous linear \emph{equivalence} on each fibre, so vanishing may be tested in
+  coordinates. Everything on the right lives in $E$, and $\Gamma$ is $C^k$ in the point
+  (Definition \ref{def:geodesic}).
+
+  \textbf{$\Gamma$ as a bilinear map on the model space.} Picard--Lindel\"of wants a $C^1$
+  vector field on a normed space, so the symbols must be assembled into a continuous
+  \emph{bilinear} map varying with the base point, not a family of scalars:
+  \texttt{christoffelB} does this with two \texttt{smulRight}s, so linearity and continuity in
+  both slots hold by construction and no $\texttt{mk}_2$ is needed.
+  \texttt{christoffel\_eq\_christoffelB} is the bridge, and
+  \texttt{contMDiffAt\_christoffelB} carries the regularity across: each scalar symbol is
+  $C^k$ and the assembly is by fixed continuous linear maps.
+
+  \textbf{What is left} is the transport through the chart --- $\Gamma$ as a function of the
+  chart coordinate $p$ rather than of $y \in M$, which is where boundarylessness enters --- and
+  then Mathlib's
+  \texttt{exists\_forall\_mem\_closedBall\_exists\_eq\_forall\_mem\_Ioo\_hasDerivAt}, applied to
+  the first-order system $(p,v) \mapsto (v, -\Gamma(p)(v)(v))$ on $E \times E$. That is
+  Lemma \ref{lem:geodesic-exists}.
+\end{lemma}
+
+\begin{lemma}[Local existence of geodesics]
+  \label{lem:geodesic-exists}
+  \lean{CovariantDerivative.christoffelChart,
+    CovariantDerivative.christoffelChart_apply,
+    CovariantDerivative.contDiffAt_christoffelChart,
+    CovariantDerivative.geodesicField,
+    CovariantDerivative.contDiffAt_geodesicField,
+    CovariantDerivative.exists_solution_geodesicField,
+    CovariantDerivative.exists_isGeodesicOn,
+    CovariantDerivative.exists_isGeodesicOn'}
+  \leanok
+  \uses{lem:geodesic-chart, def:geodesic, def:cov-along-curve}
+  Let $\nab$ be a $C^k$ covariant derivative ($k \ge 1$) on the tangent bundle of a
+  \emph{boundaryless} manifold $M$. For every $x_0 \in M$ and every $v_0 \in T_{x_0}M$ there
+  exist $\epsilon > 0$ and a curve $c : \R \to M$ with
+  \[
+    \bigl(c(0), c'(0)\bigr) = (x_0, v_0) \quad\text{in } TM,
+    \qquad \nab_{c'}c' = 0 \ \text{ on } (-\epsilon,\epsilon).
+  \]
+
+  \textbf{Proved} (\texttt{GeodesicODE.lean}). Together with
+  Lemma \ref{lem:cov-along-curve-exists} this is what makes Definition \ref{def:geodesic}
+  non-vacuous in the strongest sense: not only is $D/dt$ a real operator, its geodesics are a
+  nonempty family through every point in every direction.
+
+  \textbf{The chart transport, and where boundarylessness enters.}
+  \texttt{christoffelB} is a function of the base point $y \in M$; an ODE solver wants a vector
+  field on an open subset of $E$, so compose with $\varphi_{x_0}^{-1}$
+  (\texttt{christoffelChart}). Its regularity is
+  \texttt{contDiffAt\_christoffelChart}: the inverse chart is smooth on $\mathrm{range}\,I$,
+  which is \emph{everything} exactly when $M$ has no boundary, so the composite is
+  \texttt{ContMDiffAt} and hence --- being a map between open subsets of normed spaces ---
+  \texttt{ContDiffAt} in the ordinary sense. For a general model with corners the chart target
+  is not open in $E$ and \texttt{ContDiffAt} would be the wrong predicate; this is the one
+  place in the construction that needs $[\texttt{I.Boundaryless}]$.
+
+  \textbf{The first-order system.} $p'' = -\tilde\Gamma(p)(p')(p')$ is second order; the
+  equivalent first-order system on $E \times E$ is
+  \[
+    F(p,v) = \bigl(v,\; -\tilde\Gamma(p)(v)(v)\bigr)
+  \]
+  (\texttt{geodesicField}), which is $C^k$ because $\tilde\Gamma$ is and evaluation of a
+  continuous bilinear map is smooth (\texttt{contDiffAt\_geodesicField}). Mathlib's
+  \texttt{ContDiffAt.exists\_forall\_mem\_closedBall\_exists\_eq\_forall\_mem\_Ioo\_hasDerivAt}$_0$
+  then supplies a solution on an open interval
+  (\texttt{exists\_solution\_geodesicField}) --- \emph{no Lipschitz estimate is done by hand},
+  Mathlib's \texttt{IsPicardLindelof.of\_contDiffAt\_one} doing that work.
+
+  \textbf{Back to the manifold.} Set $c = \varphi_{x_0}^{-1} \circ p$. Shrinking the interval so
+  that $p$ stays in the chart target and $c$ stays in the frame's open set --- both by
+  continuity, the target being open because $M$ is boundaryless --- everything
+  Lemma \ref{lem:geodesic-chart} asks on the manifold side is read off the solution through the
+  same identification: $c$ is differentiable because $\varphi_{x_0}^{-1}$ is, and the velocity
+  is differentiable \emph{along} $c$ because its fibre coordinate is $p'$, which is the second
+  component of the solution. Then \texttt{covAlong\_velocity\_eq\_zero\_iff}, read from right to
+  left, gives $\nab_{c'}c' = 0$.
+
+  The initial condition is stated as a single equation in the total space of $TM$,
+  $\langle c(0), c'(0)\rangle = \langle x_0, v_0\rangle$, which packages $c(0) = x_0$ and
+  $c'(0) = v_0$ with no dependent-type cast; it follows because a trivialisation is injective on
+  its source and both components match.
+
+  \textbf{No frame data is needed} (\texttt{exists\_isGeodesicOn'}): the frame comes from
+  \texttt{exists\_frame\_on\_open} around $x_0$, now stated at an arbitrary regularity rather
+  than only $C^1$.
+
+  \textbf{What is left} on this line is $\exp$, parallel transport and Jacobi fields;
+  uniqueness is Lemma \ref{lem:geodesic-unique} and reparametrisation
+  Lemma \ref{lem:geodesic-reparam}.
+\end{lemma}
+
+\begin{lemma}[Uniqueness of geodesics]
+  \label{lem:geodesic-unique}
+  \lean{CovariantDerivative.hasDerivAt_geodesicField_of_isGeodesic,
+    CovariantDerivative.eventuallyEq_of_isGeodesic,
+    CovariantDerivative.eventuallyEq_of_isGeodesic',
+    CovariantDerivative.eq_of_mem_closure_of_continuousAt,
+    CovariantDerivative.forall_totalSpace_eq_of_isGeodesicOn,
+    CovariantDerivative.eqOn_of_isGeodesicOn}
+  \leanok
+  \uses{lem:geodesic-exists, lem:geodesic-chart, def:geodesic}
+  Two geodesics of a $C^k$ connection ($k \ge 1$) on a boundaryless manifold which agree at
+  $t_0$ together with their velocities agree on a neighbourhood of $t_0$.
+
+  \textbf{Proved} (\texttt{GeodesicODE.lean}). The identification of
+  Lemma \ref{lem:geodesic-chart} runs backwards: read in the chart at the common initial point,
+  a geodesic \emph{solves} the first-order system of Lemma \ref{lem:geodesic-exists}
+  (\texttt{hasDerivAt\_geodesicField\_of\_isGeodesic}), so Mathlib's
+  \texttt{ODE\_solution\_unique\_of\_eventually} applies, with the Lipschitz constant supplied by
+  \texttt{ContDiffAt.exists\_lipschitzOnWith} --- again no estimate is done by hand. Pulling the
+  resulting equality of chart positions back through $\varphi_{x_0}^{-1}$ gives the curves.
+
+  \textbf{The hypotheses are the ones the equation already needs}, and this is the point worth
+  recording. To run an ODE uniqueness theorem one needs $p'$ to be \emph{differentiable}, not
+  merely for $p''$ to have a value; but the chart coordinate of the velocity \emph{is} $p'$, so
+  differentiability of the velocity along $c$ --- which
+  Definition \ref{def:cov-along-curve} already requires for $\frac{D}{dt}\gamma'$ to mean
+  anything --- is exactly that. No extra regularity is imposed.
+
+  As with existence, a frame-free form (\texttt{eventuallyEq\_of\_isGeodesic'}) follows by
+  taking the frame around the common initial point, both curves staying in its open set by
+  continuity.
+
+  \textbf{Uniqueness on a whole preconnected open set}
+  (\texttt{forall\_totalSpace\_eq\_of\_isGeodesicOn}, \texttt{eqOn\_of\_isGeodesicOn}) is the
+  usual clopen argument on the agreement set
+  $A = \{u \in s : (c_1(u),c_1'(u)) = (c_2(u),c_2'(u))\} \subseteq TM$. Open is the local
+  statement above --- agreeing \emph{near} a point makes the two curves the same function there,
+  so their velocities agree too, $\mathrm{d}$ being local
+  (\texttt{Filter.EventuallyEq.mfderiv\_eq}, whose \texttt{tangentSpaceCast} is the identity and
+  goes away by \texttt{rfl}).
+
+  Closed is where a small obstacle sits: \textbf{Mathlib has no \texttt{T2Space} instance on the
+  total space of a bundle}, so the diagonal in $TM \times TM$ is not available as a closed set.
+  It is taken in two pieces instead --- the base in $M$, the fibre coordinate
+  $(e\langle c(u), c'(u)\rangle)_2$ in $E$, both Hausdorff --- and reassembled by the
+  injectivity of a trivialisation on its source. The fibre coordinate is continuous at the point
+  precisely because \texttt{mdiffAlongAt\_iff\_of\_mem} turns differentiability \emph{along} the
+  curve into differentiability of exactly that coordinate. The reusable tool extracted here is
+  \texttt{eq\_of\_mem\_closure\_of\_continuousAt}: two maps agreeing on $A$ and continuous
+  \emph{at} a point of $\overline{A}$ agree there, which is the usual $\{f = g\}$-is-closed
+  argument with continuity assumed only where it is needed.
+\end{lemma}
+
+\begin{lemma}[Affine reparametrisation]
+  \label{lem:geodesic-reparam}
+  \lean{CovariantDerivative.velocity_comp_mul,
+    CovariantDerivative.covAlong_velocity_eq_zero_iff_chart,
+    CovariantDerivative.covAlong_velocity_comp_mul_eq_zero,
+    CovariantDerivative.covAlong_velocity_comp_mul_eq_zero',
+    CovariantDerivative.isGeodesicOn_comp_mul}
+  \leanok
+  \uses{lem:geodesic-chart, def:geodesic}
+  If $c$ is a geodesic then so is $t \mapsto c(ta)$, for every $a \in \R$.
+
+  \textbf{Proved} (\texttt{Exponential.lean}). This is the invariance $\exp$ is built on, and it
+  costs almost nothing once the equation is in the chart. Reparametrising multiplies $p''$ by
+  $a^2$; on the right, $\tilde\Gamma$ is \emph{bilinear by construction}
+  (\texttt{christoffelB} is two \texttt{smulRight}s), so each slot contributes one factor of
+  $a$ and the two sides match. The chain rule for the velocity itself,
+  $\gamma'(ta)\,a$, is \texttt{velocity\_comp\_mul}.
+
+  Two things are worth recording. First, \textbf{no case split on $a = 0$ is needed}: there both
+  sides are zero and the constant curve comes out a geodesic for free, with no separate argument
+  about $\frac{D}{dt}$ of the zero section. Second, \textbf{boundarylessness is not used}: the
+  argument reads the equation in a chart but never differentiates the inverse chart, so unlike
+  Lemmas \ref{lem:geodesic-exists} and \ref{lem:geodesic-unique} it holds with corners.
+
+  The bridge that makes this cheap is \texttt{covAlong\_velocity\_eq\_zero\_iff\_chart}, which
+  restates Lemma \ref{lem:geodesic-chart}'s equation against $\tilde\Gamma$ --- a function of the
+  chart coordinate --- rather than against $\Gamma$, a function of the base point. Every
+  computation performed inside a chart wants that form.
+
+  \textbf{Towards $\exp$}: with interval uniqueness (Lemma \ref{lem:geodesic-unique}) the value
+  $\exp_x(v) = c(1)$ is well defined, two runs agreeing at $0$ agreeing at $1$; and
+  reparametrisation is what makes $\exp_x(av)$ and $\exp_x(v)$ comparable. That is
+  Definition \ref{def:exp}.
+\end{lemma}
+
+\begin{definition}[The exponential map]
+  \label{def:exp}
+  \lean{CovariantDerivative.IsGeodesicRun,
+    CovariantDerivative.exists_isGeodesicRun,
+    CovariantDerivative.IsGeodesicRun.eq_of_mem,
+    CovariantDerivative.IsGeodesicRun.comp_mul,
+    CovariantDerivative.mdiffAlongAt_velocity_comp_mul,
+    CovariantDerivative.expMap,
+    CovariantDerivative.expMap_eq,
+    CovariantDerivative.expMap_smul_eq,
+    CovariantDerivative.expMap_zero}
+  \leanok
+  \uses{lem:geodesic-exists, lem:geodesic-unique, lem:geodesic-reparam}
+  For $x \in M$ and $v \in T_xM$, $\exp_x(v) = c(1)$ where $c$ is the geodesic with
+  $c(0) = x$ and $c'(0) = v$, when that geodesic reaches time $1$.
+
+  \textbf{Built} (\texttt{Exponential.lean}). \emph{This is the first object of the
+  comparison-geometry substrate}, and everything above it exists to make it well defined rather
+  than a choice.
+
+  A \texttt{IsGeodesicRun} packages a geodesic with exactly what the uniqueness theorem asks: an
+  open preconnected set $s \ni 0$ of times, differentiability of the curve and of its velocity
+  \emph{along} it, the equation, and the initial data $(c(0),c'(0)) = (x,v)$ as a single
+  equation in $TM$. Lemma \ref{lem:geodesic-exists} supplies one for every $(x,v)$
+  (\texttt{exists\_isGeodesicRun}), and \texttt{IsGeodesicRun.eq\_of\_mem} says two runs with the
+  same initial data agree wherever both are defined --- Lemma \ref{lem:geodesic-unique} applied
+  to $s_1 \cap s_2$, which is preconnected because in $\R$ preconnected means order-connected
+  and order-connectedness survives intersection.
+
+  $\exp$ is then defined by choice on the runs reaching time $1$, and
+  \texttt{expMap\_eq} says \emph{any} such run computes it --- which is precisely
+  well-definedness, and is the reason the uniqueness work was needed.
+
+  \textbf{Homogeneity} (\texttt{expMap\_smul\_eq}) is Lemma \ref{lem:geodesic-reparam} cashed
+  in: $\exp_x(av) = \gamma_v(a)$, the geodesic with initial velocity $v$ read at time $a$. This
+  is what turns $\exp$ from a single value into a map defined near the origin of $T_xM$, and it
+  gives $\exp_x(0) = x$ (\texttt{expMap\_zero}) with no separate argument.
+
+  \textbf{What is left} on this line is the regularity of $\exp$ --- smooth dependence on
+  $(x,v)$, from the smooth dependence of ODE solutions on initial conditions, for which Mathlib
+  has \texttt{ContDiffAt.exists\_eventually\_eq\_hasDerivAt} --- and then $\mathrm{d}\exp_0 =
+  \mathrm{id}$, parallel transport, and Jacobi fields.
+\end{definition}
+
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
   \uses{def:ricci-flow}
