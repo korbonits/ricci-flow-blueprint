@@ -737,24 +737,26 @@ theorem repr_covAlong_eq
   rw [add_comm]
 
 
+omit [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I] in
 -- BENCH: cov-along-curve-frame-open
 /-- **A frame valid on an open set**, not merely a germ. Globalising the local frame one point
 at a time gives sections agreeing with it only near that point; intersecting the finitely many
 agreement sets and taking the interior gives an open `U` on which they agree identically. That
 is what an ODE needs: a single family of global sections good along a whole arc of the
 curve. -/
-theorem exists_frame_on_open
+theorem exists_frame_on_open {n : ℕ∞}
+    [ContMDiffVectorBundle (n : ℕ∞ω) E (fun (x : M) ↦ TangentSpace I x) I]
     {e : Trivialization E (TotalSpace.proj : TotalSpace E (fun (x : M) ↦ TangentSpace I x) → M)}
     [MemTrivializationAtlas e] {ι : Type*} [Finite ι] (b : Module.Basis ι ℝ E)
     {y₀ : M} (hy₀ : y₀ ∈ e.baseSet) :
     ∃ (U : Set M) (W : ι → Π y : M, TangentSpace I y),
-      IsOpen U ∧ y₀ ∈ U ∧ U ⊆ e.baseSet ∧ (∀ i, CMDiff (1 : ℕ∞ω) (T% (W i))) ∧
+      IsOpen U ∧ y₀ ∈ U ∧ U ⊆ e.baseSet ∧ (∀ i, CMDiff (n : ℕ∞ω) (T% (W i))) ∧
       ∀ i, ∀ y ∈ U, W i y = e.localFrame b i y := by
   classical
   have hloc : ∀ i, ∃ τ : Π y : M, TangentSpace I y,
-      CMDiff (1 : ℕ∞ω) (T% τ) ∧ τ =ᶠ[𝓝 y₀] e.localFrame b i := fun i ↦
-    RicciFlowBlueprint.exists_contMDiff_eventuallyEq (n := 1)
-      (e.open_baseSet.mem_nhds hy₀) (e.contMDiffOn_localFrame_baseSet 1 b i)
+      CMDiff (n : ℕ∞ω) (T% τ) ∧ τ =ᶠ[𝓝 y₀] e.localFrame b i := fun i ↦
+    RicciFlowBlueprint.exists_contMDiff_eventuallyEq (n := n)
+      (e.open_baseSet.mem_nhds hy₀) (e.contMDiffOn_localFrame_baseSet (n : ℕ∞ω) b i)
   choose W hW hWeq using hloc
   refine ⟨interior {y | ∀ i, W i y = e.localFrame b i y} ∩ e.baseSet, W,
     isOpen_interior.inter e.open_baseSet, ⟨?_, hy₀⟩, Set.inter_subset_right, hW,

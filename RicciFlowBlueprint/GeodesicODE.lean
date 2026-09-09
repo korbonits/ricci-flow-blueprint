@@ -15,6 +15,7 @@ The chart-side manoeuvre is Mathlib's own, from `IntegralCurve/Basic.lean`: turn
 `HasMFDerivAt` of the curve into `HasDerivAt` of the chart composite, and the
 `mfderiv` of the chart into `tangentCoordChange`.
 -/
+import Mathlib.Analysis.ODE.ExistUnique
 import RicciFlowBlueprint.CovariantAlongCurve
 
 open Bundle Filter
@@ -283,6 +284,239 @@ theorem contMDiffAt_christoffelB
     ContinuousLinearMap.contMDiff _
   exact ContMDiffAt.comp y (hout _)
     (ContMDiffAt.comp y (hin _) (contMDiffAt_christoffelCoord cov hW hy i j))
+
+section Chart
+
+/-- **Γ as a function of the chart coordinate.** `christoffelB` is a function of the base
+point `y : M`; Picard–Lindelöf wants a vector field on an open subset of the model space, so
+compose with the inverse chart. -/
+noncomputable def christoffelChart
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)) (x₀ : M)
+    {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ E) (W : ι → Π y : M, TangentSpace I y)
+    (p : E) : E →L[ℝ] E →L[ℝ] E :=
+  christoffelB cov (trivializationAt E (fun z : M ↦ TangentSpace I z) x₀) b W
+    ((extChartAt I x₀).symm p)
+
+omit [VectorBundle ℝ E (fun (x : M) ↦ TangentSpace I x)]
+  [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I] [T2Space M] in
+theorem christoffelChart_apply
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)) (x₀ : M)
+    {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ E) (W : ι → Π y : M, TangentSpace I y)
+    (p : E) :
+    christoffelChart cov x₀ b W p
+      = christoffelB cov (trivializationAt E (fun z : M ↦ TangentSpace I z) x₀) b W
+          ((extChartAt I x₀).symm p) := rfl
+
+variable [I.Boundaryless]
+
+omit [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I] [T2Space M] in
+-- BENCH: geodesic-christoffel-chart-regularity
+/-- **`Γ̃` is `C^k` on the chart target.** The inverse chart is `C^ω` on `range I`, which is
+everything when `M` is boundaryless, so the composite inherits `contMDiffAt_christoffelB`;
+being a map between open subsets of normed spaces it is then `ContDiffAt` in the ordinary
+sense, which is what the ODE theory consumes. **Boundarylessness enters exactly here**: for a
+general `ModelWithCorners` the chart target is not open in `E` and `ContDiffAt` would be the
+wrong predicate. -/
+theorem contDiffAt_christoffelChart
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)) {k : ℕ∞ω}
+    [ContMDiffCovariantDerivative cov k] (x₀ : M)
+    {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ E)
+    {W : ι → Π y : M, TangentSpace I y} (hW : ∀ i, CMDiff (k + 1) (T% (W i)))
+    {p : E} (hp : p ∈ (extChartAt I x₀).target)
+    (hb : (extChartAt I x₀).symm p
+      ∈ (trivializationAt E (fun z : M ↦ TangentSpace I z) x₀).baseSet) :
+    ContDiffAt ℝ k (christoffelChart cov x₀ b W) p := by
+  have hsymm : ContMDiffAt 𝓘(ℝ, E) I k (extChartAt I x₀).symm p := by
+    have h := contMDiffWithinAt_extChartAt_symm_range (I := I) (n := ω) x₀ hp
+    rw [I.range_eq_univ, contMDiffWithinAt_univ] at h
+    exact h.of_le le_top
+  exact (ContMDiffAt.comp p (contMDiffAt_christoffelB cov b hW hb) hsymm).contDiffAt
+
+/-! ### The geodesic system and Picard–Lindelöf
+
+`p'' = −Γ̃(p)(p')(p')` is second order; the first-order system it is equivalent to is
+`(p, v) ↦ (v, −Γ̃(p)(v)(v))` on `E × E`. Its `C^k`-ness is inherited from `Γ̃`, evaluation of a
+continuous bilinear map being smooth, so Mathlib's `C¹` existence theorem applies with no
+Lipschitz estimate done by hand.
+-/
+
+/-- **The geodesic vector field** on `E × E`. -/
+noncomputable def geodesicField
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)) (x₀ : M)
+    {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ E) (W : ι → Π y : M, TangentSpace I y)
+    (z : E × E) : E × E :=
+  (z.2, -christoffelChart cov x₀ b W z.1 z.2 z.2)
+
+omit [VectorBundle ℝ E (fun (x : M) ↦ TangentSpace I x)]
+  [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I] [T2Space M]
+  [I.Boundaryless] in
+/-- **The geodesic field is as regular as `Γ̃`.** -/
+theorem contDiffAt_geodesicField
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)) {k : ℕ∞ω} (x₀ : M)
+    {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ E) (W : ι → Π y : M, TangentSpace I y)
+    {z : E × E} (hΓ : ContDiffAt ℝ k (christoffelChart cov x₀ b W) z.1) :
+    ContDiffAt ℝ k (geodesicField cov x₀ b W) z := by
+  refine ContDiffAt.prodMk contDiff_snd.contDiffAt ?_
+  exact (((ContDiffAt.comp z hΓ contDiff_fst.contDiffAt).clm_apply
+    contDiff_snd.contDiffAt).clm_apply contDiff_snd.contDiffAt).neg
+
+omit [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I] [T2Space M] in
+-- BENCH: geodesic-ode-existence
+/-- **The geodesic system has a local solution.** Picard–Lindelöf, in the form Mathlib states
+for a `C¹` vector field on a normed space — so no Lipschitz estimate is done here. -/
+theorem exists_solution_geodesicField
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)) {k : ℕ∞ω} (hk : 1 ≤ k)
+    [ContMDiffCovariantDerivative cov k] (x₀ : M)
+    {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ E)
+    {W : ι → Π y : M, TangentSpace I y} (hW : ∀ i, CMDiff (k + 1) (T% (W i)))
+    {p₀ : E} (hp : p₀ ∈ (extChartAt I x₀).target)
+    (hb : (extChartAt I x₀).symm p₀
+      ∈ (trivializationAt E (fun z : M ↦ TangentSpace I z) x₀).baseSet)
+    (v₀ : E) (t₀ : ℝ) :
+    ∃ z : ℝ → E × E, z t₀ = (p₀, v₀) ∧ ∃ ε > (0 : ℝ),
+      ∀ t ∈ Set.Ioo (t₀ - ε) (t₀ + ε), HasDerivAt z (geodesicField cov x₀ b W (z t)) t := by
+  exact ((contDiffAt_geodesicField cov x₀ b W
+    (contDiffAt_christoffelChart cov x₀ b hW hp hb)).of_le
+    hk).exists_forall_mem_closedBall_exists_eq_forall_mem_Ioo_hasDerivAt₀ t₀
+
+/-! ### From the ODE solution back to a geodesic
+
+Pulling the solution back through `(extChartAt I x₀).symm` gives a curve on `M`, and
+`covAlong_velocity_eq_zero_iff` — read from right to left — says it is a geodesic. Everything
+the *iff* asks on the manifold side (differentiability of `γ`, differentiability of the velocity
+*along* `γ`) is read off the solution through the same identification: the chart coordinate of
+the velocity is `p'`, which is the second component of the solution.
+-/
+
+-- BENCH: geodesic-existence
+/-- **Local existence of geodesics.** Through any point, in any direction, there is a geodesic
+on some interval about `0`. The initial condition is stated in the total space of `TM`, which
+packages `γ 0 = x₀` and `γ'(0) = v₀` into one equation with no dependent-type cast. -/
+theorem exists_isGeodesicOn
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)) {k : ℕ∞ω} (hk : 1 ≤ k)
+    [ContMDiffCovariantDerivative cov k] (x₀ : M)
+    {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ E)
+    {W : ι → Π y : M, TangentSpace I y} (hW : ∀ i, CMDiff (k + 1) (T% (W i)))
+    {U : Set M} (hU : IsOpen U) (hx₀U : x₀ ∈ U)
+    (hUe : U ⊆ (trivializationAt E (fun z : M ↦ TangentSpace I z) x₀).baseSet)
+    (hWU : ∀ i, ∀ y ∈ U, W i y
+      = (trivializationAt E (fun z : M ↦ TangentSpace I z) x₀).localFrame b i y)
+    (v₀ : TangentSpace I x₀) :
+    ∃ ε > (0 : ℝ), ∃ c : ℝ → M,
+      (⟨c 0, velocity (I := I) c 0⟩ : TangentBundle I M) = ⟨x₀, v₀⟩ ∧
+        IsGeodesicOn cov c (Set.Ioo (-ε) ε) := by
+  classical
+  have hW1 : ∀ i, CMDiff (1 : ℕ∞ω) (T% (W i)) := fun i ↦ (hW i).of_le le_add_self
+  set e := trivializationAt E (fun z : M ↦ TangentSpace I z) x₀ with he
+  have hx₀e : x₀ ∈ e.baseSet := hUe hx₀U
+  have hp₀t : extChartAt I x₀ x₀ ∈ (extChartAt I x₀).target := mem_extChartAt_target x₀
+  have hsymm₀ : (extChartAt I x₀).symm (extChartAt I x₀ x₀) = x₀ := extChartAt_to_inv x₀
+  obtain ⟨z, hz0, ε₁, hε₁, hzd⟩ :=
+    exists_solution_geodesicField cov hk x₀ b hW hp₀t (by rw [hsymm₀]; exact hx₀e)
+      ((e ⟨x₀, v₀⟩).2) 0
+  simp only [zero_sub, zero_add] at hzd
+  have hmem0 : (0 : ℝ) ∈ Set.Ioo (-ε₁) ε₁ := ⟨neg_lt_zero.mpr hε₁, hε₁⟩
+  -- the two components of the solution
+  have hqd : ∀ u ∈ Set.Ioo (-ε₁) ε₁, HasDerivAt (fun s ↦ (z s).1) (z u).2 u := fun u hu ↦
+    (ContinuousLinearMap.fst ℝ E E).hasFDerivAt.comp_hasDerivAt u (hzd u hu)
+  have hvd : ∀ u ∈ Set.Ioo (-ε₁) ε₁, HasDerivAt (fun s ↦ (z s).2)
+      (-christoffelChart cov x₀ b W (z u).1 (z u).2 (z u).2) u := fun u hu ↦
+    (ContinuousLinearMap.snd ℝ E E).hasFDerivAt.comp_hasDerivAt u (hzd u hu)
+  set c : ℝ → M := fun u ↦ (extChartAt I x₀).symm (z u).1 with hcdef
+  have hq0 : (z 0).1 = extChartAt I x₀ x₀ := by rw [hz0]
+  have hc0 : c 0 = x₀ := by simp only [hcdef, hq0, hsymm₀]
+  -- shrink the interval so that the chart and the frame are both available
+  have hev : ∀ᶠ u in 𝓝 (0 : ℝ),
+      u ∈ Set.Ioo (-ε₁) ε₁ ∧ (z u).1 ∈ (extChartAt I x₀).target ∧ c u ∈ U := by
+    have hqc : ContinuousAt (fun s ↦ (z s).1) 0 := (hqd 0 hmem0).continuousAt
+    have h1 : ∀ᶠ u in 𝓝 (0 : ℝ), u ∈ Set.Ioo (-ε₁) ε₁ := isOpen_Ioo.mem_nhds hmem0
+    have h2 : ∀ᶠ u in 𝓝 (0 : ℝ), (z u).1 ∈ (extChartAt I x₀).target :=
+      hqc.preimage_mem_nhds ((isOpen_extChartAt_target x₀).mem_nhds (by rw [hq0]; exact hp₀t))
+    have hcc : ContinuousAt c 0 :=
+      (continuousAt_extChartAt_symm'' (by rw [hq0]; exact hp₀t)).comp hqc
+    have h3 : ∀ᶠ u in 𝓝 (0 : ℝ), c u ∈ U :=
+      hcc.preimage_mem_nhds (hU.mem_nhds (by rw [hc0]; exact hx₀U))
+    filter_upwards [h1, h2, h3] with u a₁ a₂ a₃ using ⟨a₁, a₂, a₃⟩
+  obtain ⟨δ, hδ, hball⟩ := Metric.eventually_nhds_iff.mp hev
+  have hgood : ∀ u ∈ Set.Ioo (-δ) δ,
+      u ∈ Set.Ioo (-ε₁) ε₁ ∧ (z u).1 ∈ (extChartAt I x₀).target ∧ c u ∈ U := by
+    intro u hu
+    exact hball (by rw [Real.dist_eq, sub_zero, abs_lt]; exact ⟨hu.1, hu.2⟩)
+  have h0δ : (0 : ℝ) ∈ Set.Ioo (-δ) δ := ⟨neg_lt_zero.mpr hδ, hδ⟩
+  -- the manifold-side facts, all read off the solution
+  have hchart : ∀ u ∈ Set.Ioo (-δ) δ, extChartAt I x₀ (c u) = (z u).1 := fun u hu ↦
+    PartialEquiv.right_inv _ (hgood u hu).2.1
+  have hcdiff : ∀ u ∈ Set.Ioo (-δ) δ, MDifferentiableAt 𝓘(ℝ, ℝ) I c u := by
+    intro u hu
+    have hsymmC : ContMDiffAt 𝓘(ℝ, E) I (1 : ℕ∞ω) (extChartAt I x₀).symm (z u).1 := by
+      have h := contMDiffWithinAt_extChartAt_symm_range (I := I) (n := ω) x₀ (hgood u hu).2.1
+      rw [I.range_eq_univ, contMDiffWithinAt_univ] at h
+      exact h.of_le le_top
+    have hqm : MDifferentiableAt 𝓘(ℝ, ℝ) 𝓘(ℝ, E) (fun s ↦ (z s).1) u :=
+      mdifferentiableAt_iff_differentiableAt.mpr (hqd u (hgood u hu).1).differentiableAt
+    exact (hsymmC.mdifferentiableAt one_ne_zero).comp u hqm
+  have hsrc : ∀ u ∈ Set.Ioo (-δ) δ, c u ∈ (chartAt H x₀).source := by
+    intro u hu
+    have h := hUe (hgood u hu).2.2
+    rwa [he, TangentBundle.trivializationAt_baseSet (I := I) x₀] at h
+  have hderivq : ∀ u ∈ Set.Ioo (-δ) δ,
+      deriv (fun s ↦ extChartAt I x₀ (c s)) u = (z u).2 := by
+    intro u hu
+    have heq : (fun s ↦ extChartAt I x₀ (c s)) =ᶠ[𝓝 u] fun s ↦ (z s).1 := by
+      filter_upwards [isOpen_Ioo.mem_nhds hu] with s hs using hchart s hs
+    rw [heq.deriv_eq]
+    exact (hqd u (hgood u hu).1).deriv
+  have hcoord : ∀ u ∈ Set.Ioo (-δ) δ, (e ⟨c u, velocity (I := I) c u⟩).2 = (z u).2 := by
+    intro u hu
+    rw [he, ← deriv_extChartAt_comp_eq_trivializationAt (hcdiff u hu) (hsrc u hu)]
+    exact hderivq u hu
+  have hV : ∀ u ∈ Set.Ioo (-δ) δ, MDiffAlongAt c (velocity (I := I) c) u := by
+    intro u hu
+    rw [mdiffAlongAt_iff_of_mem (e := e) (hcdiff u hu) (hUe (hgood u hu).2.2)]
+    have heq : (fun s ↦ (e ⟨c s, velocity (I := I) c s⟩).2) =ᶠ[𝓝 u] fun s ↦ (z s).2 := by
+      filter_upwards [isOpen_Ioo.mem_nhds hu] with s hs using hcoord s hs
+    exact ((hvd u (hgood u hu).1).differentiableAt).congr_of_eventuallyEq heq
+  refine ⟨δ, hδ, c, ?_, ?_⟩
+  · have hs1 : (⟨c 0, velocity (I := I) c 0⟩ : TangentBundle I M) ∈ e.source :=
+      e.mem_source.mpr (hUe (hgood 0 h0δ).2.2)
+    have hs2 : (⟨x₀, v₀⟩ : TangentBundle I M) ∈ e.source := e.mem_source.mpr hx₀e
+    refine e.toPartialHomeomorph.injOn hs1 hs2 ?_
+    show (e ⟨c 0, velocity (I := I) c 0⟩ : M × E) = e ⟨x₀, v₀⟩
+    refine Prod.ext ?_ ?_
+    · rw [e.coe_fst hs1, e.coe_fst hs2]; exact hc0
+    · rw [hcoord 0 h0δ, hz0]
+  · intro t ht
+    have hmemU : c t ∈ U := (hgood t ht).2.2
+    rw [covAlong_velocity_eq_zero_iff cov x₀ b hU hUe hW1 hWU hmemU (hcdiff t ht)
+      (by filter_upwards [isOpen_Ioo.mem_nhds ht] with s hs using hcdiff s hs) (hV t ht)]
+    have h1 : deriv (fun s ↦ extChartAt I x₀ (c s)) =ᶠ[𝓝 t] fun s ↦ (z s).2 := by
+      filter_upwards [isOpen_Ioo.mem_nhds ht] with s hs using hderivq s hs
+    rw [h1.deriv_eq, (hvd t (hgood t ht).1).deriv,
+      christoffel_eq_christoffelB cov b (hUe hmemU) (fun i ↦ hWU i (c t) hmemU),
+      hcoord t ht, hderivq t ht, christoffelChart]
+
+-- BENCH: geodesic-existence-clean
+/-- **Local existence of geodesics, with no frame data.** The frame comes from
+`exists_frame_on_open` around `x₀`, at the level the Christoffel symbols need. -/
+theorem exists_isGeodesicOn'
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)) {k : ℕ∞} (hk : 1 ≤ k)
+    [ContMDiffCovariantDerivative cov (k : ℕ∞ω)]
+    [ContMDiffVectorBundle ((k + 1 : ℕ∞) : ℕ∞ω) E (fun (x : M) ↦ TangentSpace I x) I]
+    (x₀ : M) (v₀ : TangentSpace I x₀) :
+    ∃ ε > (0 : ℝ), ∃ c : ℝ → M,
+      (⟨c 0, velocity (I := I) c 0⟩ : TangentBundle I M) = ⟨x₀, v₀⟩ ∧
+        IsGeodesicOn cov c (Set.Ioo (-ε) ε) := by
+  obtain ⟨U, W, hU, hx₀U, hUe, hW, hWU⟩ :=
+    exists_frame_on_open (n := k + 1) (e := trivializationAt E (fun z : M ↦ TangentSpace I z) x₀)
+      (Module.finBasis ℝ E) (mem_baseSet_trivializationAt E _ x₀)
+  refine exists_isGeodesicOn cov (k := (k : ℕ∞ω)) (by exact_mod_cast hk) x₀
+    (Module.finBasis ℝ E) (fun i ↦ ?_) hU hx₀U hUe hWU v₀
+  have h := hW i
+  have hcast : ((k + 1 : ℕ∞) : ℕ∞ω) = (k : ℕ∞ω) + 1 := by norm_cast
+  rwa [hcast] at h
+
+end Chart
+
 
 end ODE
 

@@ -2909,7 +2909,79 @@ Perelman's monotone functionals are what rule it out.
   chart coordinate $p$ rather than of $y \in M$, which is where boundarylessness enters --- and
   then Mathlib's
   \texttt{exists\_forall\_mem\_closedBall\_exists\_eq\_forall\_mem\_Ioo\_hasDerivAt}, applied to
-  the first-order system $(p,v) \mapsto (v, -\Gamma(p)(v)(v))$ on $E \times E$. Then $\exp$.
+  the first-order system $(p,v) \mapsto (v, -\Gamma(p)(v)(v))$ on $E \times E$. That is
+  Lemma \ref{lem:geodesic-exists}.
+\end{lemma}
+
+\begin{lemma}[Local existence of geodesics]
+  \label{lem:geodesic-exists}
+  \lean{CovariantDerivative.christoffelChart,
+    CovariantDerivative.christoffelChart_apply,
+    CovariantDerivative.contDiffAt_christoffelChart,
+    CovariantDerivative.geodesicField,
+    CovariantDerivative.contDiffAt_geodesicField,
+    CovariantDerivative.exists_solution_geodesicField,
+    CovariantDerivative.exists_isGeodesicOn,
+    CovariantDerivative.exists_isGeodesicOn'}
+  \leanok
+  \uses{lem:geodesic-chart, def:geodesic, def:cov-along-curve}
+  Let $\nab$ be a $C^k$ covariant derivative ($k \ge 1$) on the tangent bundle of a
+  \emph{boundaryless} manifold $M$. For every $x_0 \in M$ and every $v_0 \in T_{x_0}M$ there
+  exist $\epsilon > 0$ and a curve $c : \R \to M$ with
+  \[
+    \bigl(c(0), c'(0)\bigr) = (x_0, v_0) \quad\text{in } TM,
+    \qquad \nab_{c'}c' = 0 \ \text{ on } (-\epsilon,\epsilon).
+  \]
+
+  \textbf{Proved} (\texttt{GeodesicODE.lean}). Together with
+  Lemma \ref{lem:cov-along-curve-exists} this is what makes Definition \ref{def:geodesic}
+  non-vacuous in the strongest sense: not only is $D/dt$ a real operator, its geodesics are a
+  nonempty family through every point in every direction.
+
+  \textbf{The chart transport, and where boundarylessness enters.}
+  \texttt{christoffelB} is a function of the base point $y \in M$; an ODE solver wants a vector
+  field on an open subset of $E$, so compose with $\varphi_{x_0}^{-1}$
+  (\texttt{christoffelChart}). Its regularity is
+  \texttt{contDiffAt\_christoffelChart}: the inverse chart is smooth on $\mathrm{range}\,I$,
+  which is \emph{everything} exactly when $M$ has no boundary, so the composite is
+  \texttt{ContMDiffAt} and hence --- being a map between open subsets of normed spaces ---
+  \texttt{ContDiffAt} in the ordinary sense. For a general model with corners the chart target
+  is not open in $E$ and \texttt{ContDiffAt} would be the wrong predicate; this is the one
+  place in the construction that needs $[\texttt{I.Boundaryless}]$.
+
+  \textbf{The first-order system.} $p'' = -\tilde\Gamma(p)(p')(p')$ is second order; the
+  equivalent first-order system on $E \times E$ is
+  \[
+    F(p,v) = \bigl(v,\; -\tilde\Gamma(p)(v)(v)\bigr)
+  \]
+  (\texttt{geodesicField}), which is $C^k$ because $\tilde\Gamma$ is and evaluation of a
+  continuous bilinear map is smooth (\texttt{contDiffAt\_geodesicField}). Mathlib's
+  \texttt{ContDiffAt.exists\_forall\_mem\_closedBall\_exists\_eq\_forall\_mem\_Ioo\_hasDerivAt}$_0$
+  then supplies a solution on an open interval
+  (\texttt{exists\_solution\_geodesicField}) --- \emph{no Lipschitz estimate is done by hand},
+  Mathlib's \texttt{IsPicardLindelof.of\_contDiffAt\_one} doing that work.
+
+  \textbf{Back to the manifold.} Set $c = \varphi_{x_0}^{-1} \circ p$. Shrinking the interval so
+  that $p$ stays in the chart target and $c$ stays in the frame's open set --- both by
+  continuity, the target being open because $M$ is boundaryless --- everything
+  Lemma \ref{lem:geodesic-chart} asks on the manifold side is read off the solution through the
+  same identification: $c$ is differentiable because $\varphi_{x_0}^{-1}$ is, and the velocity
+  is differentiable \emph{along} $c$ because its fibre coordinate is $p'$, which is the second
+  component of the solution. Then \texttt{covAlong\_velocity\_eq\_zero\_iff}, read from right to
+  left, gives $\nab_{c'}c' = 0$.
+
+  The initial condition is stated as a single equation in the total space of $TM$,
+  $\langle c(0), c'(0)\rangle = \langle x_0, v_0\rangle$, which packages $c(0) = x_0$ and
+  $c'(0) = v_0$ with no dependent-type cast; it follows because a trivialisation is injective on
+  its source and both components match.
+
+  \textbf{No frame data is needed} (\texttt{exists\_isGeodesicOn'}): the frame comes from
+  \texttt{exists\_frame\_on\_open} around $x_0$, now stated at an arbitrary regularity rather
+  than only $C^1$.
+
+  \textbf{What is left} on this line is uniqueness of geodesics --- Mathlib's
+  \texttt{ODE\_solution\_unique} applied to the same system --- and then $\exp$, parallel
+  transport and Jacobi fields.
 \end{lemma}
 
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
