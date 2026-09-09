@@ -46,3 +46,4 @@ import RicciFlowBlueprint.CovariantAlongCurve
 import RicciFlowBlueprint.GeodesicODE
 import RicciFlowBlueprint.Exponential
 import RicciFlowBlueprint.RicciIdentity
+import RicciFlowBlueprint.BianchiDeriv

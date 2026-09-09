@@ -2363,6 +2363,45 @@ target actually requires.
   off a \texttt{TensorialAt}.
 \end{lemma}
 
+\begin{lemma}[The differentiated second Bianchi identity]
+  \label{lem:bianchi-second-deriv}
+  \lean{CovariantDerivative.cov2Curvature_cyclic_eq_zero}
+  \leanok
+  \uses{lem:bianchi-second, def:cov2-curvature}
+  For a torsion-free connection the cyclic identity of Lemma
+  \ref{lem:bianchi-second} survives one more derivative:
+  \[
+    (\nab^2_{X,Y}\Rm)(A,B)C + (\nab^2_{X,A}\Rm)(B,Y)C
+      + (\nab^2_{X,B}\Rm)(Y,A)C = 0.
+  \]
+
+  \textbf{Proved} (\texttt{BianchiDeriv.lean}). This is what the trace step of
+  Lemma \ref{lem:evolution-rm} consumes: summed over $Y = e_i$ with $X = e_i$ it
+  turns $\Delta \Rm$ into two traces of $\nab^2\Rm$ whose derivative slots are in
+  the \emph{wrong} order, which Lemma \ref{lem:curvature-ricci-identity} then
+  reorders at the cost of terms quadratic in $\Rm$.
+
+  \textbf{Nothing is differentiated twice by hand.} $\nab^2\Rm$ is $\nab\Rm$
+  differentiated once with one correction per slot, so the cyclic sum splits into
+  a leading part and four correction groups, and every one of the five vanishes by
+  the \emph{undifferentiated} identity. The leading parts combine, by additivity
+  of $\nab$ on sections, into $\nab_X$ of the section
+  $u \mapsto (\nab_Y\Rm)(A,B)C + (\nab_A\Rm)(B,Y)C + (\nab_B\Rm)(Y,A)C$, which
+  Lemma \ref{lem:bianchi-second} says is the zero section; and each correction
+  group is the cyclic sum with one field replaced by its covariant derivative, so
+  is that lemma again. So the proof is five applications of
+  \texttt{bianchi\_second} and one $\nab 0 = 0$.
+
+  \textbf{The corrections cancel three at a time, not in pairs} --- one group per
+  differentiated field, $\nab_X Y$, $\nab_X A$, $\nab_X B$, $\nab_X C$. That
+  regrouping is what carries the content. Regularity is one derivative above
+  Lemma \ref{lem:bianchi-second} throughout, and the last slot stays the
+  expensive one: $C$ is asked for four derivatives so that $\nab_X C$ still has
+  the three that the spectator slot wants. \textbf{No metric is needed}, exactly
+  as for Lemma \ref{lem:bianchi-second} itself --- which is worth knowing before
+  the trace step, where a metric first becomes unavoidable.
+\end{lemma}
+
 \begin{theorem}[Scalar maximum principle]
   \label{thm:max-scalar}
   \lean{RicciFlowBlueprint.MaximumPrinciple.le_of_deriv_ge_at_min, RicciFlowBlueprint.MaximumPrinciple.le_of_laplacian}
