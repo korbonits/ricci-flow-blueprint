@@ -515,6 +515,189 @@ theorem exists_isGeodesicOn'
   have hcast : ((k + 1 : ℕ∞) : ℕ∞ω) = (k : ℕ∞ω) + 1 := by norm_cast
   rwa [hcast] at h
 
+/-! ### Uniqueness
+
+The same identification runs backwards: a geodesic, read in the chart, *solves* the system, so
+Mathlib's ODE uniqueness applies. The hypotheses are exactly the ones the geodesic equation
+already needs — `c` differentiable and its velocity differentiable *along* `c` — because the
+chart coordinate of the velocity is `p'`, so differentiability along `c` is what makes `p'`
+differentiable.
+-/
+
+omit [I.Boundaryless] in
+-- BENCH: geodesic-solves-system
+/-- **A geodesic solves the first-order system**, in the chart at `x₀`. -/
+theorem hasDerivAt_geodesicField_of_isGeodesic
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)) (x₀ : M)
+    {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ E)
+    {W : ι → Π y : M, TangentSpace I y} {U : Set M} (hU : IsOpen U)
+    (hUe : U ⊆ (trivializationAt E (fun z : M ↦ TangentSpace I z) x₀).baseSet)
+    (hW : ∀ i, CMDiff (1 : ℕ∞ω) (T% (W i)))
+    (hWU : ∀ i, ∀ y ∈ U, W i y
+      = (trivializationAt E (fun z : M ↦ TangentSpace I z) x₀).localFrame b i y)
+    {c : ℝ → M} {t : ℝ} (hcU : ∀ᶠ u in 𝓝 t, c u ∈ U)
+    (hcd : ∀ᶠ u in 𝓝 t, MDifferentiableAt 𝓘(ℝ, ℝ) I c u)
+    (hcV : ∀ᶠ u in 𝓝 t, MDiffAlongAt c (velocity (I := I) c) u)
+    (hg : ∀ᶠ u in 𝓝 t, covAlong cov c (velocity (I := I) c) u = 0) :
+    HasDerivAt (fun u ↦ (extChartAt I x₀ (c u),
+        ((trivializationAt E (fun z : M ↦ TangentSpace I z) x₀)
+          ⟨c u, velocity (I := I) c u⟩).2))
+      (geodesicField cov x₀ b W (extChartAt I x₀ (c t),
+        ((trivializationAt E (fun z : M ↦ TangentSpace I z) x₀)
+          ⟨c t, velocity (I := I) c t⟩).2)) t := by
+  set e := trivializationAt E (fun z : M ↦ TangentSpace I z) x₀ with he
+  have hbase : e.baseSet = (chartAt H x₀).source :=
+    TangentBundle.trivializationAt_baseSet (I := I) x₀
+  have hsrc : ∀ u ∈ {u | c u ∈ U}, c u ∈ (chartAt H x₀).source := fun u hu ↦ hbase ▸ hUe hu
+  have hsrct : c t ∈ (chartAt H x₀).source := hsrc t hcU.self_of_nhds
+  -- the chart position differentiates to the fibre coordinate of the velocity
+  have hpos : ∀ᶠ u in 𝓝 t, HasDerivAt (fun s ↦ extChartAt I x₀ (c s))
+      ((e ⟨c u, velocity (I := I) c u⟩).2) u := by
+    filter_upwards [hcU, hcd] with u hu hdu
+    exact (hasDerivAt_extChartAt_comp hdu (hsrc u hu)).congr_deriv
+      (trivializationAt_snd_eq_tangentCoordChange x₀ _).symm
+  have hderiv : ∀ᶠ u in 𝓝 t, deriv (fun s ↦ extChartAt I x₀ (c s) : ℝ → E) u
+      = (e ⟨c u, velocity (I := I) c u⟩).2 := by
+    filter_upwards [hpos] with u hu using hu.deriv
+  -- and that coordinate differentiates to the Christoffel term
+  have hdiff : DifferentiableAt ℝ (fun u ↦ (e ⟨c u, velocity (I := I) c u⟩).2) t :=
+    (mdiffAlongAt_iff_of_mem (e := e) hcd.self_of_nhds
+      (hUe hcU.self_of_nhds)).mp hcV.self_of_nhds
+  have hleft : (extChartAt I x₀).symm (extChartAt I x₀ (c t)) = c t :=
+    (extChartAt I x₀).left_inv (by rw [extChartAt_source]; exact hsrct)
+  have hval : deriv (fun u ↦ (e ⟨c u, velocity (I := I) c u⟩).2) t
+      = -christoffelChart cov x₀ b W (extChartAt I x₀ (c t))
+          ((e ⟨c t, velocity (I := I) c t⟩).2) ((e ⟨c t, velocity (I := I) c t⟩).2) := by
+    have heqf : (fun u ↦ (e ⟨c u, velocity (I := I) c u⟩).2)
+        =ᶠ[𝓝 t] deriv (fun s ↦ extChartAt I x₀ (c s) : ℝ → E) := by
+      filter_upwards [hderiv] with u hu using hu.symm
+    rw [heqf.deriv_eq]
+    rw [(covAlong_velocity_eq_zero_iff cov x₀ b hU hUe hW hWU hcU.self_of_nhds
+      hcd.self_of_nhds hcd hcV.self_of_nhds).mp hg.self_of_nhds]
+    rw [christoffel_eq_christoffelB cov b (hUe hcU.self_of_nhds)
+      (fun i ↦ hWU i (c t) hcU.self_of_nhds), hderiv.self_of_nhds, christoffelChart, hleft]
+  refine (hpos.self_of_nhds.prodMk ?_)
+  rw [← hval]
+  exact hdiff.hasDerivAt
+
+-- BENCH: geodesic-unique
+/-- **Uniqueness of geodesics.** Two geodesics through the same point with the same velocity
+agree near that time. Read in the chart both solve the same `C¹` system, so Mathlib's
+`ODE_solution_unique_of_eventually` applies; the Lipschitz constant comes from
+`ContDiffAt.exists_lipschitzOnWith`, not from any estimate done here. -/
+theorem eventuallyEq_of_isGeodesic
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)) {k : ℕ∞ω} (hk : 1 ≤ k)
+    [ContMDiffCovariantDerivative cov k] (x₀ : M)
+    {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ E)
+    {W : ι → Π y : M, TangentSpace I y} (hW : ∀ i, CMDiff (k + 1) (T% (W i)))
+    {U : Set M} (hU : IsOpen U)
+    (hUe : U ⊆ (trivializationAt E (fun z : M ↦ TangentSpace I z) x₀).baseSet)
+    (hWU : ∀ i, ∀ y ∈ U, W i y
+      = (trivializationAt E (fun z : M ↦ TangentSpace I z) x₀).localFrame b i y)
+    {c₁ c₂ : ℝ → M} {t₀ : ℝ}
+    (h₁U : ∀ᶠ u in 𝓝 t₀, c₁ u ∈ U)
+    (h₁d : ∀ᶠ u in 𝓝 t₀, MDifferentiableAt 𝓘(ℝ, ℝ) I c₁ u)
+    (h₁V : ∀ᶠ u in 𝓝 t₀, MDiffAlongAt c₁ (velocity (I := I) c₁) u)
+    (h₁g : ∀ᶠ u in 𝓝 t₀, covAlong cov c₁ (velocity (I := I) c₁) u = 0)
+    (h₂U : ∀ᶠ u in 𝓝 t₀, c₂ u ∈ U)
+    (h₂d : ∀ᶠ u in 𝓝 t₀, MDifferentiableAt 𝓘(ℝ, ℝ) I c₂ u)
+    (h₂V : ∀ᶠ u in 𝓝 t₀, MDiffAlongAt c₂ (velocity (I := I) c₂) u)
+    (h₂g : ∀ᶠ u in 𝓝 t₀, covAlong cov c₂ (velocity (I := I) c₂) u = 0)
+    (hinit : (⟨c₁ t₀, velocity (I := I) c₁ t₀⟩ : TangentBundle I M)
+      = ⟨c₂ t₀, velocity (I := I) c₂ t₀⟩) :
+    c₁ =ᶠ[𝓝 t₀] c₂ := by
+  have hW1 : ∀ i, CMDiff (1 : ℕ∞ω) (T% (W i)) := fun i ↦ (hW i).of_le le_add_self
+  set e := trivializationAt E (fun z : M ↦ TangentSpace I z) x₀ with he
+  have hbase : e.baseSet = (chartAt H x₀).source :=
+    TangentBundle.trivializationAt_baseSet (I := I) x₀
+  obtain ⟨z₁, hz₁⟩ : ∃ z₁ : ℝ → E × E, z₁ = fun u ↦
+      (extChartAt I x₀ (c₁ u), (e ⟨c₁ u, velocity (I := I) c₁ u⟩).2) := ⟨_, rfl⟩
+  obtain ⟨z₂, hz₂⟩ : ∃ z₂ : ℝ → E × E, z₂ = fun u ↦
+      (extChartAt I x₀ (c₂ u), (e ⟨c₂ u, velocity (I := I) c₂ u⟩).2) := ⟨_, rfl⟩
+  have hsol₁ : ∀ᶠ u in 𝓝 t₀, HasDerivAt z₁ (geodesicField cov x₀ b W (z₁ u)) u := by
+    filter_upwards [eventually_eventually_nhds.mpr h₁U, eventually_eventually_nhds.mpr h₁d,
+      eventually_eventually_nhds.mpr h₁V, eventually_eventually_nhds.mpr h₁g] with u a₁ a₂ a₃ a₄
+    rw [hz₁]
+    exact hasDerivAt_geodesicField_of_isGeodesic cov x₀ b hU hUe hW1 hWU a₁ a₂ a₃ a₄
+  have hsol₂ : ∀ᶠ u in 𝓝 t₀, HasDerivAt z₂ (geodesicField cov x₀ b W (z₂ u)) u := by
+    filter_upwards [eventually_eventually_nhds.mpr h₂U, eventually_eventually_nhds.mpr h₂d,
+      eventually_eventually_nhds.mpr h₂V, eventually_eventually_nhds.mpr h₂g] with u a₁ a₂ a₃ a₄
+    rw [hz₂]
+    exact hasDerivAt_geodesicField_of_isGeodesic cov x₀ b hU hUe hW1 hWU a₁ a₂ a₃ a₄
+  have hb0 : c₁ t₀ = c₂ t₀ := congrArg TotalSpace.proj hinit
+  have hinit' : z₁ t₀ = z₂ t₀ := by
+    rw [hz₁, hz₂]
+    refine Prod.ext ?_ ?_
+    · show extChartAt I x₀ (c₁ t₀) = extChartAt I x₀ (c₂ t₀)
+      rw [hb0]
+    · show (e ⟨c₁ t₀, velocity (I := I) c₁ t₀⟩).2 = (e ⟨c₂ t₀, velocity (I := I) c₂ t₀⟩).2
+      rw [hinit]
+  -- the field is `C¹` at the common initial point, hence locally Lipschitz
+  have hsrc₁ : c₁ t₀ ∈ (chartAt H x₀).source := hbase ▸ hUe h₁U.self_of_nhds
+  have hptgt : extChartAt I x₀ (c₁ t₀) ∈ (extChartAt I x₀).target :=
+    (extChartAt I x₀).map_source (by rw [extChartAt_source]; exact hsrc₁)
+  have hleft : (extChartAt I x₀).symm (extChartAt I x₀ (c₁ t₀)) = c₁ t₀ :=
+    (extChartAt I x₀).left_inv (by rw [extChartAt_source]; exact hsrc₁)
+  have hΓ : ContDiffAt ℝ 1 (christoffelChart cov x₀ b W) (extChartAt I x₀ (c₁ t₀)) :=
+    (contDiffAt_christoffelChart cov x₀ b hW hptgt (by rw [hleft]; exact hUe h₁U.self_of_nhds)).of_le
+      hk
+  have hF : ContDiffAt ℝ 1 (geodesicField cov x₀ b W) (z₁ t₀) := by
+    refine contDiffAt_geodesicField cov x₀ b W ?_
+    rw [hz₁]
+    exact hΓ
+  obtain ⟨K, S, hS, hlip⟩ := hF.exists_lipschitzOnWith
+  have hmem₁ : ∀ᶠ u in 𝓝 t₀, z₁ u ∈ S :=
+    hsol₁.self_of_nhds.continuousAt.preimage_mem_nhds hS
+  have hmem₂ : ∀ᶠ u in 𝓝 t₀, z₂ u ∈ S :=
+    hsol₂.self_of_nhds.continuousAt.preimage_mem_nhds (hinit' ▸ hS)
+  have hzeq : z₁ =ᶠ[𝓝 t₀] z₂ :=
+    ODE_solution_unique_of_eventually (v := fun _ ↦ geodesicField cov x₀ b W)
+      (s := fun _ ↦ S) (K := K) (Filter.Eventually.of_forall fun _ ↦ hlip)
+      (by filter_upwards [hsol₁, hmem₁] with u a₁ a₂ using ⟨a₁, a₂⟩)
+      (by filter_upwards [hsol₂, hmem₂] with u a₁ a₂ using ⟨a₁, a₂⟩) hinit'
+  -- pull the equality back through the chart
+  filter_upwards [hzeq, h₁U, h₂U] with u hu hu₁ hu₂
+  have e₁ : (extChartAt I x₀).symm (extChartAt I x₀ (c₁ u)) = c₁ u :=
+    (extChartAt I x₀).left_inv (by rw [extChartAt_source]; exact hbase ▸ hUe hu₁)
+  have e₂ : (extChartAt I x₀).symm (extChartAt I x₀ (c₂ u)) = c₂ u :=
+    (extChartAt I x₀).left_inv (by rw [extChartAt_source]; exact hbase ▸ hUe hu₂)
+  have : extChartAt I x₀ (c₁ u) = extChartAt I x₀ (c₂ u) := by
+    have := congrArg Prod.fst hu
+    rwa [hz₁, hz₂] at this
+  rw [← e₁, ← e₂, this]
+
+-- BENCH: geodesic-unique-clean
+/-- **Uniqueness of geodesics, with no frame data.** The frame comes from
+`exists_frame_on_open` around the common initial point, and the two curves stay in its open set
+by continuity. -/
+theorem eventuallyEq_of_isGeodesic'
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)) {k : ℕ∞} (hk : 1 ≤ k)
+    [ContMDiffCovariantDerivative cov (k : ℕ∞ω)]
+    [ContMDiffVectorBundle ((k + 1 : ℕ∞) : ℕ∞ω) E (fun (x : M) ↦ TangentSpace I x) I]
+    {c₁ c₂ : ℝ → M} {t₀ : ℝ}
+    (h₁d : ∀ᶠ u in 𝓝 t₀, MDifferentiableAt 𝓘(ℝ, ℝ) I c₁ u)
+    (h₁V : ∀ᶠ u in 𝓝 t₀, MDiffAlongAt c₁ (velocity (I := I) c₁) u)
+    (h₁g : ∀ᶠ u in 𝓝 t₀, covAlong cov c₁ (velocity (I := I) c₁) u = 0)
+    (h₂d : ∀ᶠ u in 𝓝 t₀, MDifferentiableAt 𝓘(ℝ, ℝ) I c₂ u)
+    (h₂V : ∀ᶠ u in 𝓝 t₀, MDiffAlongAt c₂ (velocity (I := I) c₂) u)
+    (h₂g : ∀ᶠ u in 𝓝 t₀, covAlong cov c₂ (velocity (I := I) c₂) u = 0)
+    (hinit : (⟨c₁ t₀, velocity (I := I) c₁ t₀⟩ : TangentBundle I M)
+      = ⟨c₂ t₀, velocity (I := I) c₂ t₀⟩) :
+    c₁ =ᶠ[𝓝 t₀] c₂ := by
+  have hb0 : c₁ t₀ = c₂ t₀ := congrArg TotalSpace.proj hinit
+  obtain ⟨U, W, hU, hx₀U, hUe, hW, hWU⟩ :=
+    exists_frame_on_open (n := k + 1)
+      (e := trivializationAt E (fun z : M ↦ TangentSpace I z) (c₁ t₀))
+      (Module.finBasis ℝ E) (mem_baseSet_trivializationAt E _ (c₁ t₀))
+  have hcast : ((k + 1 : ℕ∞) : ℕ∞ω) = (k : ℕ∞ω) + 1 := by norm_cast
+  have h₁U : ∀ᶠ u in 𝓝 t₀, c₁ u ∈ U :=
+    h₁d.self_of_nhds.continuousAt.preimage_mem_nhds (hU.mem_nhds hx₀U)
+  have h₂U : ∀ᶠ u in 𝓝 t₀, c₂ u ∈ U :=
+    h₂d.self_of_nhds.continuousAt.preimage_mem_nhds (hU.mem_nhds (hb0 ▸ hx₀U))
+  exact eventuallyEq_of_isGeodesic cov (k := (k : ℕ∞ω)) (by exact_mod_cast hk) (c₁ t₀)
+    (Module.finBasis ℝ E) (fun i ↦ by have h := hW i; rwa [hcast] at h) hU hUe hWU
+    h₁U h₁d h₁V h₁g h₂U h₂d h₂V h₂g hinit
+
 end Chart
 
 

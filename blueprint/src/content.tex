@@ -2979,9 +2979,38 @@ Perelman's monotone functionals are what rule it out.
   \texttt{exists\_frame\_on\_open} around $x_0$, now stated at an arbitrary regularity rather
   than only $C^1$.
 
-  \textbf{What is left} on this line is uniqueness of geodesics --- Mathlib's
-  \texttt{ODE\_solution\_unique} applied to the same system --- and then $\exp$, parallel
-  transport and Jacobi fields.
+  \textbf{What is left} on this line is $\exp$, parallel transport and Jacobi fields;
+  uniqueness is Lemma \ref{lem:geodesic-unique}.
+\end{lemma}
+
+\begin{lemma}[Uniqueness of geodesics]
+  \label{lem:geodesic-unique}
+  \lean{CovariantDerivative.hasDerivAt_geodesicField_of_isGeodesic,
+    CovariantDerivative.eventuallyEq_of_isGeodesic,
+    CovariantDerivative.eventuallyEq_of_isGeodesic'}
+  \leanok
+  \uses{lem:geodesic-exists, lem:geodesic-chart, def:geodesic}
+  Two geodesics of a $C^k$ connection ($k \ge 1$) on a boundaryless manifold which agree at
+  $t_0$ together with their velocities agree on a neighbourhood of $t_0$.
+
+  \textbf{Proved} (\texttt{GeodesicODE.lean}). The identification of
+  Lemma \ref{lem:geodesic-chart} runs backwards: read in the chart at the common initial point,
+  a geodesic \emph{solves} the first-order system of Lemma \ref{lem:geodesic-exists}
+  (\texttt{hasDerivAt\_geodesicField\_of\_isGeodesic}), so Mathlib's
+  \texttt{ODE\_solution\_unique\_of\_eventually} applies, with the Lipschitz constant supplied by
+  \texttt{ContDiffAt.exists\_lipschitzOnWith} --- again no estimate is done by hand. Pulling the
+  resulting equality of chart positions back through $\varphi_{x_0}^{-1}$ gives the curves.
+
+  \textbf{The hypotheses are the ones the equation already needs}, and this is the point worth
+  recording. To run an ODE uniqueness theorem one needs $p'$ to be \emph{differentiable}, not
+  merely for $p''$ to have a value; but the chart coordinate of the velocity \emph{is} $p'$, so
+  differentiability of the velocity along $c$ --- which
+  Definition \ref{def:cov-along-curve} already requires for $\frac{D}{dt}\gamma'$ to mean
+  anything --- is exactly that. No extra regularity is imposed.
+
+  As with existence, a frame-free form (\texttt{eventuallyEq\_of\_isGeodesic'}) follows by
+  taking the frame around the common initial point, both curves staying in its open set by
+  continuity.
 \end{lemma}
 
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
