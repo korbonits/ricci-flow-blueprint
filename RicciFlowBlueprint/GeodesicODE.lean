@@ -404,6 +404,8 @@ theorem exists_isGeodesicOn
     (v₀ : TangentSpace I x₀) :
     ∃ ε > (0 : ℝ), ∃ c : ℝ → M,
       (⟨c 0, velocity (I := I) c 0⟩ : TangentBundle I M) = ⟨x₀, v₀⟩ ∧
+        (∀ u ∈ Set.Ioo (-ε) ε, MDifferentiableAt 𝓘(ℝ, ℝ) I c u) ∧
+        (∀ u ∈ Set.Ioo (-ε) ε, MDiffAlongAt c (velocity (I := I) c) u) ∧
         IsGeodesicOn cov c (Set.Ioo (-ε) ε) := by
   classical
   have hW1 : ∀ i, CMDiff (1 : ℕ∞ω) (T% (W i)) := fun i ↦ (hW i).of_le le_add_self
@@ -476,7 +478,7 @@ theorem exists_isGeodesicOn
     have heq : (fun s ↦ (e ⟨c s, velocity (I := I) c s⟩).2) =ᶠ[𝓝 u] fun s ↦ (z s).2 := by
       filter_upwards [isOpen_Ioo.mem_nhds hu] with s hs using hcoord s hs
     exact ((hvd u (hgood u hu).1).differentiableAt).congr_of_eventuallyEq heq
-  refine ⟨δ, hδ, c, ?_, ?_⟩
+  refine ⟨δ, hδ, c, ?_, hcdiff, hV, ?_⟩
   · have hs1 : (⟨c 0, velocity (I := I) c 0⟩ : TangentBundle I M) ∈ e.source :=
       e.mem_source.mpr (hUe (hgood 0 h0δ).2.2)
     have hs2 : (⟨x₀, v₀⟩ : TangentBundle I M) ∈ e.source := e.mem_source.mpr hx₀e
@@ -505,6 +507,8 @@ theorem exists_isGeodesicOn'
     (x₀ : M) (v₀ : TangentSpace I x₀) :
     ∃ ε > (0 : ℝ), ∃ c : ℝ → M,
       (⟨c 0, velocity (I := I) c 0⟩ : TangentBundle I M) = ⟨x₀, v₀⟩ ∧
+        (∀ u ∈ Set.Ioo (-ε) ε, MDifferentiableAt 𝓘(ℝ, ℝ) I c u) ∧
+        (∀ u ∈ Set.Ioo (-ε) ε, MDiffAlongAt c (velocity (I := I) c) u) ∧
         IsGeodesicOn cov c (Set.Ioo (-ε) ε) := by
   obtain ⟨U, W, hU, hx₀U, hUe, hW, hWU⟩ :=
     exists_frame_on_open (n := k + 1) (e := trivializationAt E (fun z : M ↦ TangentSpace I z) x₀)

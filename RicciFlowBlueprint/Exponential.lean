@@ -62,6 +62,37 @@ variable [VectorBundle ℝ E (fun (x : M) ↦ TangentSpace I x)]
   [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
   [FiniteDimensional ℝ E] [T2Space M] [I.Boundaryless]
 
+omit [FiniteDimensional ℝ E] [T2Space M] [I.Boundaryless] in
+/-- **The velocity of a reparametrised curve is differentiable along it.** Its fibre coordinate
+is `a • v(u·a)` with `v` the coordinate for the original curve, which
+`mdiffAlongAt_iff_of_mem` says is differentiable. -/
+theorem mdiffAlongAt_velocity_comp_mul {c : ℝ → M} {t a : ℝ}
+    (hcd : ∀ᶠ u in 𝓝 (t * a), MDifferentiableAt 𝓘(ℝ, ℝ) I c u)
+    (hcV : ∀ᶠ u in 𝓝 (t * a), MDiffAlongAt c (velocity (I := I) c) u) :
+    MDiffAlongAt (fun s ↦ c (s * a)) (velocity (I := I) (fun s ↦ c (s * a))) t := by
+  set e := trivializationAt E (fun z : M ↦ TangentSpace I z) (c (t * a)) with he
+  have hmem₀ : c (t * a) ∈ e.baseSet := mem_baseSet_trivializationAt E _ (c (t * a))
+  have hb : ∀ᶠ u in 𝓝 (t * a), c u ∈ e.baseSet :=
+    hcd.self_of_nhds.continuousAt.preimage_mem_nhds (e.open_baseSet.mem_nhds hmem₀)
+  have hmul : ∀ s : ℝ, HasDerivAt (fun r : ℝ ↦ r * a) a s := fun s ↦ by
+    simpa using (hasDerivAt_id s).mul_const a
+  have htend : Filter.Tendsto (fun s : ℝ ↦ s * a) (𝓝 t) (𝓝 (t * a)) := (hmul t).continuousAt
+  have hvdiff : DifferentiableAt ℝ (fun r ↦ (e ⟨c r, velocity (I := I) c r⟩).2) (t * a) :=
+    (mdiffAlongAt_iff_of_mem (e := e) hcd.self_of_nhds hmem₀).mp hcV.self_of_nhds
+  have hσd : MDifferentiableAt 𝓘(ℝ, ℝ) I (fun s ↦ c (s * a)) t :=
+    hcd.self_of_nhds.comp t
+      (mdifferentiableAt_iff_differentiableAt.mpr (hmul t).differentiableAt)
+  rw [mdiffAlongAt_iff_of_mem (e := e) hσd hmem₀]
+  have heq : (fun u ↦ (e ⟨c (u * a), velocity (I := I) (fun s ↦ c (s * a)) u⟩).2)
+      =ᶠ[𝓝 t] fun u ↦ a • (e ⟨c (u * a), velocity (I := I) c (u * a)⟩).2 := by
+    filter_upwards [htend.eventually hb, htend.eventually hcd] with u hu hdu
+    have hlin : ∀ w : TangentSpace I (c (u * a)), (e ⟨c (u * a), w⟩).2
+        = e.continuousLinearEquivAt ℝ (c (u * a)) hu w := fun _ ↦ rfl
+    rw [velocity_comp_mul a u hdu, hlin, map_smul, ← hlin]
+  refine DifferentiableAt.congr_of_eventuallyEq ?_ heq
+  exact (hvdiff.comp t (hmul t).differentiableAt).const_smul a
+
+
 omit [I.Boundaryless] in
 -- BENCH: geodesic-reparam
 /-- **An affine reparametrisation of a geodesic is a geodesic.** The chart equation is
@@ -325,5 +356,165 @@ theorem eqOn_of_isGeodesicOn
     h₁d h₁V h₁g h₂d h₂V h₂g hinit u hu)
 
 end Interval
+
+/-! ### The exponential map
+
+With existence, uniqueness on an interval and reparametrisation in hand, `exp` is a definition
+and three short lemmas. A *geodesic run* packages a geodesic together with everything the
+uniqueness theorem asks of it; two runs with the same initial data agree wherever both are
+defined, because the intersection of two order-connected sets is order-connected. `expMap` is
+then defined by choice on the runs that reach time `1`, and is well defined by that agreement.
+-/
+
+section Exp
+
+variable [VectorBundle ℝ E (fun (x : M) ↦ TangentSpace I x)]
+  [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
+  [FiniteDimensional ℝ E] [T2Space M] [I.Boundaryless]
+
+set_option maxSynthPendingDepth 3
+
+/-- **A geodesic run**: a geodesic on an open preconnected set of times containing `0`, with
+the regularity the equation needs, and with prescribed initial position and velocity. -/
+structure IsGeodesicRun (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+    (c : ℝ → M) (s : Set ℝ) (x : M) (v : TangentSpace I x) : Prop where
+  isOpen : IsOpen s
+  isPreconnected : IsPreconnected s
+  mem_zero : (0 : ℝ) ∈ s
+  mdiff : ∀ u ∈ s, MDifferentiableAt 𝓘(ℝ, ℝ) I c u
+  mdiffAlong : ∀ u ∈ s, MDiffAlongAt c (velocity (I := I) c) u
+  geodesic : IsGeodesicOn cov c s
+  init : (⟨c 0, velocity (I := I) c 0⟩ : TangentBundle I M) = ⟨x, v⟩
+
+-- BENCH: geodesic-run-exists
+/-- **Every initial condition has a run.** -/
+theorem exists_isGeodesicRun
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)) {k : ℕ∞} (hk : 1 ≤ k)
+    [ContMDiffCovariantDerivative cov (k : ℕ∞ω)]
+    [ContMDiffVectorBundle ((k + 1 : ℕ∞) : ℕ∞ω) E (fun (x : M) ↦ TangentSpace I x) I]
+    (x : M) (v : TangentSpace I x) :
+    ∃ ε > (0 : ℝ), ∃ c : ℝ → M, IsGeodesicRun cov c (Set.Ioo (-ε) ε) x v := by
+  obtain ⟨ε, hε, c, hinit, hd, hV, hg⟩ := exists_isGeodesicOn' cov hk x v
+  exact ⟨ε, hε, c, isOpen_Ioo, isPreconnected_Ioo, ⟨neg_lt_zero.mpr hε, hε⟩, hd, hV, hg, hinit⟩
+
+-- BENCH: geodesic-run-unique
+/-- **Two runs with the same initial data agree wherever both are defined.** The intersection of
+two order-connected sets is order-connected, so `eqOn_of_isGeodesicOn` applies to it. -/
+theorem IsGeodesicRun.eq_of_mem
+    {cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)}
+    {c₁ c₂ : ℝ → M} {s₁ s₂ : Set ℝ} {x : M} {v : TangentSpace I x}
+    (h₁ : IsGeodesicRun cov c₁ s₁ x v) {k : ℕ∞} (hk : 1 ≤ k)
+    [ContMDiffCovariantDerivative cov (k : ℕ∞ω)]
+    [ContMDiffVectorBundle ((k + 1 : ℕ∞) : ℕ∞ω) E (fun (x : M) ↦ TangentSpace I x) I]
+    (h₂ : IsGeodesicRun cov c₂ s₂ x v) {t : ℝ} (ht₁ : t ∈ s₁) (ht₂ : t ∈ s₂) : c₁ t = c₂ t := by
+  have hord : (s₁ ∩ s₂).OrdConnected :=
+    (isPreconnected_iff_ordConnected.mp h₁.isPreconnected).inter
+      (isPreconnected_iff_ordConnected.mp h₂.isPreconnected)
+  exact eqOn_of_isGeodesicOn cov hk (h₁.isOpen.inter h₂.isOpen)
+    (isPreconnected_iff_ordConnected.mpr hord) ⟨h₁.mem_zero, h₂.mem_zero⟩
+    (fun u hu ↦ h₁.mdiff u hu.1) (fun u hu ↦ h₁.mdiffAlong u hu.1)
+    (fun u hu ↦ h₁.geodesic u hu.1)
+    (fun u hu ↦ h₂.mdiff u hu.2) (fun u hu ↦ h₂.mdiffAlong u hu.2)
+    (fun u hu ↦ h₂.geodesic u hu.2) (h₁.init.trans h₂.init.symm) ⟨ht₁, ht₂⟩
+
+omit [I.Boundaryless] in
+-- BENCH: geodesic-run-reparam
+/-- **A run reparametrised.** `t ↦ c(ta)` is a run for the initial velocity `a·v`. -/
+theorem IsGeodesicRun.comp_mul
+    {cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)}
+    {c : ℝ → M} {s : Set ℝ} {x : M} {v : TangentSpace I x}
+    (h : IsGeodesicRun cov c s x v) (a : ℝ) :
+    IsGeodesicRun cov (fun u ↦ c (u * a)) {u : ℝ | u * a ∈ s} x (a • v) := by
+  have hcont : Continuous fun u : ℝ ↦ u * a := continuous_id.mul continuous_const
+  have hord : s.OrdConnected := isPreconnected_iff_ordConnected.mp h.isPreconnected
+  have hzero : (0 : ℝ) * a ∈ s := by rw [zero_mul]; exact h.mem_zero
+  have hnbhd : ∀ u ∈ {u : ℝ | u * a ∈ s}, ∀ᶠ r in 𝓝 (u * a), r ∈ s := fun u hu ↦
+    h.isOpen.mem_nhds hu
+  have hmulmem : ∀ u ∈ {u : ℝ | u * a ∈ s},
+      MDifferentiableAt 𝓘(ℝ, ℝ) I (fun r ↦ c (r * a)) u := by
+    intro u hu
+    have hd : HasDerivAt (fun r : ℝ ↦ r * a) a u := by simpa using (hasDerivAt_id u).mul_const a
+    exact (h.mdiff (u * a) hu).comp u
+      (mdifferentiableAt_iff_differentiableAt.mpr hd.differentiableAt)
+  refine ⟨hcont.isOpen_preimage _ h.isOpen, isPreconnected_iff_ordConnected.mpr ?_, hzero,
+    hmulmem, ?_, ?_, ?_⟩
+  · refine ⟨fun p hp q hq r hr ↦ ?_⟩
+    rcases le_or_gt 0 a with ha | ha
+    · exact hord.out hp hq ⟨mul_le_mul_of_nonneg_right hr.1 ha,
+        mul_le_mul_of_nonneg_right hr.2 ha⟩
+    · exact hord.out hq hp ⟨mul_le_mul_of_nonpos_right hr.2 ha.le,
+        mul_le_mul_of_nonpos_right hr.1 ha.le⟩
+  · intro u hu
+    exact mdiffAlongAt_velocity_comp_mul
+      (by filter_upwards [hnbhd u hu] with r hr using h.mdiff r hr)
+      (by filter_upwards [hnbhd u hu] with r hr using h.mdiffAlong r hr)
+  · intro u hu
+    exact covAlong_velocity_comp_mul_eq_zero' cov
+      (by filter_upwards [hnbhd u hu] with r hr using h.mdiff r hr)
+      (by filter_upwards [hnbhd u hu] with r hr using h.mdiffAlong r hr)
+      (by filter_upwards [hnbhd u hu] with r hr using h.geodesic r hr)
+  · have hvel : velocity (I := I) (fun r ↦ c (r * a)) 0 = a • velocity (I := I) c (0 * a) :=
+      velocity_comp_mul a 0 (h.mdiff (0 * a) hzero)
+    rw [zero_mul] at hvel
+    have hF := congrArg
+      (fun q : TangentBundle I M ↦ (⟨q.proj, a • q.2⟩ : TangentBundle I M)) h.init
+    show (⟨c (0 * a), velocity (I := I) (fun u ↦ c (u * a)) 0⟩ : TangentBundle I M) = ⟨x, a • v⟩
+    rw [zero_mul, hvel]
+    exact hF
+
+open scoped Classical in
+/-- **The exponential map.** `expMap cov x v` is `c 1` for a geodesic run `c` with initial data
+`(x, v)` that reaches time `1`, and `x` when no such run exists. Well defined by
+`IsGeodesicRun.eq_of_mem` (see `expMap_eq`). -/
+noncomputable def expMap (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+    (x : M) (v : TangentSpace I x) : M :=
+  if h : ∃ cs : (ℝ → M) × Set ℝ, IsGeodesicRun cov cs.1 cs.2 x v ∧ (1 : ℝ) ∈ cs.2 then
+    h.choose.1 1
+  else x
+
+-- BENCH: exp-eq
+/-- **`expMap` is computed by any run reaching time `1`** — which is what makes it well
+defined. -/
+theorem expMap_eq (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+    {k : ℕ∞} (hk : 1 ≤ k) [ContMDiffCovariantDerivative cov (k : ℕ∞ω)]
+    [ContMDiffVectorBundle ((k + 1 : ℕ∞) : ℕ∞ω) E (fun (x : M) ↦ TangentSpace I x) I]
+    {c : ℝ → M} {s : Set ℝ} {x : M} {v : TangentSpace I x}
+    (h : IsGeodesicRun cov c s x v) (h1 : (1 : ℝ) ∈ s) : expMap cov x v = c 1 := by
+  classical
+  have hex : ∃ cs : (ℝ → M) × Set ℝ, IsGeodesicRun cov cs.1 cs.2 x v ∧ (1 : ℝ) ∈ cs.2 :=
+    ⟨(c, s), h, h1⟩
+  rw [expMap]
+  split
+  · next hP => exact hP.choose_spec.1.eq_of_mem hk h hP.choose_spec.2 h1
+  · next hP => exact absurd hex hP
+
+-- BENCH: exp-homogeneous
+/-- **Homogeneity of `exp`**: `exp_x(a v) = γ_v(a)`, the geodesic with initial velocity `v`
+evaluated at time `a`. This is the affine reparametrisation cashed in, and it is what makes
+`exp` a map on a neighbourhood of the origin rather than a single value. -/
+theorem expMap_smul_eq (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+    {k : ℕ∞} (hk : 1 ≤ k) [ContMDiffCovariantDerivative cov (k : ℕ∞ω)]
+    [ContMDiffVectorBundle ((k + 1 : ℕ∞) : ℕ∞ω) E (fun (x : M) ↦ TangentSpace I x) I]
+    {c : ℝ → M} {s : Set ℝ} {x : M} {v : TangentSpace I x}
+    (h : IsGeodesicRun cov c s x v) {a : ℝ} (ha : a ∈ s) :
+    expMap cov x (a • v) = c a := by
+  have h1 : (1 : ℝ) ∈ {u : ℝ | u * a ∈ s} := by simpa using ha
+  have := expMap_eq cov hk (h.comp_mul a) h1
+  simpa using this
+
+-- BENCH: exp-zero
+/-- **`exp_x 0 = x`.** -/
+theorem expMap_zero (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+    {k : ℕ∞} (hk : 1 ≤ k) [ContMDiffCovariantDerivative cov (k : ℕ∞ω)]
+    [ContMDiffVectorBundle ((k + 1 : ℕ∞) : ℕ∞ω) E (fun (x : M) ↦ TangentSpace I x) I]
+    (x : M) : expMap cov x (0 : TangentSpace I x) = x := by
+  obtain ⟨ε, hε, c, hrun⟩ := exists_isGeodesicRun cov hk x (0 : TangentSpace I x)
+  have h0 : (0 : ℝ) ∈ Set.Ioo (-ε) ε := ⟨neg_lt_zero.mpr hε, hε⟩
+  have hkey := expMap_smul_eq cov hk hrun h0
+  rw [smul_zero] at hkey
+  rw [hkey]
+  exact congrArg TotalSpace.proj hrun.init
+
+end Exp
 
 end CovariantDerivative

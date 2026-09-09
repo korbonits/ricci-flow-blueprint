@@ -3068,8 +3068,53 @@ Perelman's monotone functionals are what rule it out.
 
   \textbf{Towards $\exp$}: with interval uniqueness (Lemma \ref{lem:geodesic-unique}) the value
   $\exp_x(v) = c(1)$ is well defined, two runs agreeing at $0$ agreeing at $1$; and
-  reparametrisation is what makes $\exp_x(av)$ and $\exp_x(v)$ comparable.
+  reparametrisation is what makes $\exp_x(av)$ and $\exp_x(v)$ comparable. That is
+  Definition \ref{def:exp}.
 \end{lemma}
+
+\begin{definition}[The exponential map]
+  \label{def:exp}
+  \lean{CovariantDerivative.IsGeodesicRun,
+    CovariantDerivative.exists_isGeodesicRun,
+    CovariantDerivative.IsGeodesicRun.eq_of_mem,
+    CovariantDerivative.IsGeodesicRun.comp_mul,
+    CovariantDerivative.mdiffAlongAt_velocity_comp_mul,
+    CovariantDerivative.expMap,
+    CovariantDerivative.expMap_eq,
+    CovariantDerivative.expMap_smul_eq,
+    CovariantDerivative.expMap_zero}
+  \leanok
+  \uses{lem:geodesic-exists, lem:geodesic-unique, lem:geodesic-reparam}
+  For $x \in M$ and $v \in T_xM$, $\exp_x(v) = c(1)$ where $c$ is the geodesic with
+  $c(0) = x$ and $c'(0) = v$, when that geodesic reaches time $1$.
+
+  \textbf{Built} (\texttt{Exponential.lean}). \emph{This is the first object of the
+  comparison-geometry substrate}, and everything above it exists to make it well defined rather
+  than a choice.
+
+  A \texttt{IsGeodesicRun} packages a geodesic with exactly what the uniqueness theorem asks: an
+  open preconnected set $s \ni 0$ of times, differentiability of the curve and of its velocity
+  \emph{along} it, the equation, and the initial data $(c(0),c'(0)) = (x,v)$ as a single
+  equation in $TM$. Lemma \ref{lem:geodesic-exists} supplies one for every $(x,v)$
+  (\texttt{exists\_isGeodesicRun}), and \texttt{IsGeodesicRun.eq\_of\_mem} says two runs with the
+  same initial data agree wherever both are defined --- Lemma \ref{lem:geodesic-unique} applied
+  to $s_1 \cap s_2$, which is preconnected because in $\R$ preconnected means order-connected
+  and order-connectedness survives intersection.
+
+  $\exp$ is then defined by choice on the runs reaching time $1$, and
+  \texttt{expMap\_eq} says \emph{any} such run computes it --- which is precisely
+  well-definedness, and is the reason the uniqueness work was needed.
+
+  \textbf{Homogeneity} (\texttt{expMap\_smul\_eq}) is Lemma \ref{lem:geodesic-reparam} cashed
+  in: $\exp_x(av) = \gamma_v(a)$, the geodesic with initial velocity $v$ read at time $a$. This
+  is what turns $\exp$ from a single value into a map defined near the origin of $T_xM$, and it
+  gives $\exp_x(0) = x$ (\texttt{expMap\_zero}) with no separate argument.
+
+  \textbf{What is left} on this line is the regularity of $\exp$ --- smooth dependence on
+  $(x,v)$, from the smooth dependence of ODE solutions on initial conditions, for which Mathlib
+  has \texttt{ContDiffAt.exists\_eventually\_eq\_hasDerivAt} --- and then $\mathrm{d}\exp_0 =
+  \mathrm{id}$, parallel transport, and Jacobi fields.
+\end{definition}
 
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
