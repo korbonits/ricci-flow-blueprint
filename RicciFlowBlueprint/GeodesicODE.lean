@@ -698,6 +698,36 @@ theorem eventuallyEq_of_isGeodesic'
     (Module.finBasis ℝ E) (fun i ↦ by have h := hW i; rwa [hcast] at h) hU hUe hWU
     h₁U h₁d h₁V h₁g h₂U h₂d h₂V h₂g hinit
 
+omit [I.Boundaryless] in
+-- BENCH: geodesic-chart-iff
+/-- **The geodesic equation against `Γ̃`.** `covAlong_velocity_eq_zero_iff` states the equation
+with `christoffel`, a function of the base point; this restates it with `christoffelChart`, a
+function of the chart coordinate, which is the form every computation in the chart wants. -/
+theorem covAlong_velocity_eq_zero_iff_chart
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)) (x₀ : M)
+    {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ E)
+    {W : ι → Π y : M, TangentSpace I y} {U : Set M} (hU : IsOpen U)
+    (hUe : U ⊆ (trivializationAt E (fun z : M ↦ TangentSpace I z) x₀).baseSet)
+    (hW : ∀ i, CMDiff (1 : ℕ∞ω) (T% (W i)))
+    (hWU : ∀ i, ∀ y ∈ U, W i y
+      = (trivializationAt E (fun z : M ↦ TangentSpace I z) x₀).localFrame b i y)
+    {c : ℝ → M} {t : ℝ} (hcU : c t ∈ U) (hcd : MDifferentiableAt 𝓘(ℝ, ℝ) I c t)
+    (hcC : ∀ᶠ u in 𝓝 t, MDifferentiableAt 𝓘(ℝ, ℝ) I c u)
+    (hcV : MDiffAlongAt c (velocity (I := I) c) t) :
+    covAlong cov c (velocity (I := I) c) t = 0 ↔
+      deriv (deriv (fun u ↦ extChartAt I x₀ (c u) : ℝ → E)) t
+        = -christoffelChart cov x₀ b W (extChartAt I x₀ (c t))
+            (deriv (fun u ↦ extChartAt I x₀ (c u) : ℝ → E) t)
+            (deriv (fun u ↦ extChartAt I x₀ (c u) : ℝ → E) t) := by
+  have hbase : (trivializationAt E (fun z : M ↦ TangentSpace I z) x₀).baseSet
+      = (chartAt H x₀).source := TangentBundle.trivializationAt_baseSet (I := I) x₀
+  have hsrc : c t ∈ (chartAt H x₀).source := hbase ▸ hUe hcU
+  have hleft : (extChartAt I x₀).symm (extChartAt I x₀ (c t)) = c t :=
+    (extChartAt I x₀).left_inv (by rw [extChartAt_source]; exact hsrc)
+  rw [covAlong_velocity_eq_zero_iff cov x₀ b hU hUe hW hWU hcU hcd hcC hcV,
+    christoffel_eq_christoffelB cov b (hUe hcU) (fun i ↦ hWU i (c t) hcU),
+    deriv_extChartAt_comp_eq_trivializationAt hcd hsrc, christoffelChart, hleft]
+
 end Chart
 
 

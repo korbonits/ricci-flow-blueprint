@@ -2980,7 +2980,8 @@ Perelman's monotone functionals are what rule it out.
   than only $C^1$.
 
   \textbf{What is left} on this line is $\exp$, parallel transport and Jacobi fields;
-  uniqueness is Lemma \ref{lem:geodesic-unique}.
+  uniqueness is Lemma \ref{lem:geodesic-unique} and reparametrisation
+  Lemma \ref{lem:geodesic-reparam}.
 \end{lemma}
 
 \begin{lemma}[Uniqueness of geodesics]
@@ -3011,6 +3012,42 @@ Perelman's monotone functionals are what rule it out.
   As with existence, a frame-free form (\texttt{eventuallyEq\_of\_isGeodesic'}) follows by
   taking the frame around the common initial point, both curves staying in its open set by
   continuity.
+\end{lemma}
+
+\begin{lemma}[Affine reparametrisation]
+  \label{lem:geodesic-reparam}
+  \lean{CovariantDerivative.velocity_comp_mul,
+    CovariantDerivative.covAlong_velocity_eq_zero_iff_chart,
+    CovariantDerivative.covAlong_velocity_comp_mul_eq_zero,
+    CovariantDerivative.covAlong_velocity_comp_mul_eq_zero',
+    CovariantDerivative.isGeodesicOn_comp_mul}
+  \leanok
+  \uses{lem:geodesic-chart, def:geodesic}
+  If $c$ is a geodesic then so is $t \mapsto c(ta)$, for every $a \in \R$.
+
+  \textbf{Proved} (\texttt{Exponential.lean}). This is the invariance $\exp$ is built on, and it
+  costs almost nothing once the equation is in the chart. Reparametrising multiplies $p''$ by
+  $a^2$; on the right, $\tilde\Gamma$ is \emph{bilinear by construction}
+  (\texttt{christoffelB} is two \texttt{smulRight}s), so each slot contributes one factor of
+  $a$ and the two sides match. The chain rule for the velocity itself,
+  $\gamma'(ta)\,a$, is \texttt{velocity\_comp\_mul}.
+
+  Two things are worth recording. First, \textbf{no case split on $a = 0$ is needed}: there both
+  sides are zero and the constant curve comes out a geodesic for free, with no separate argument
+  about $\frac{D}{dt}$ of the zero section. Second, \textbf{boundarylessness is not used}: the
+  argument reads the equation in a chart but never differentiates the inverse chart, so unlike
+  Lemmas \ref{lem:geodesic-exists} and \ref{lem:geodesic-unique} it holds with corners.
+
+  The bridge that makes this cheap is \texttt{covAlong\_velocity\_eq\_zero\_iff\_chart}, which
+  restates Lemma \ref{lem:geodesic-chart}'s equation against $\tilde\Gamma$ --- a function of the
+  chart coordinate --- rather than against $\Gamma$, a function of the base point. Every
+  computation performed inside a chart wants that form.
+
+  \textbf{What is left before $\exp$} is uniqueness of geodesics on a whole
+  \emph{interval}, not merely near a point: Lemma \ref{lem:geodesic-unique} is local, and
+  $\exp_x(v) = c(1)$ is well defined only once two runs agreeing at $0$ are known to agree at
+  $1$. That is the usual clopen argument --- the agreement set is open by local uniqueness and
+  closed by continuity into $TM$.
 \end{lemma}
 
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
