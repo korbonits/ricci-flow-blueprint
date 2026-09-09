@@ -2266,7 +2266,44 @@ target actually requires.
   $h = -2\Ric$. The second Bianchi identity is Lemma \ref{lem:bianchi-second}.
   What remains is its trace against the metric, which rewrites the
   antisymmetrised $\nab^2 \Ric$ as $\Delta \Rm$ plus terms quadratic in
-  $\Rm$.
+  $\Rm$ --- and that rewriting is a matter of moving covariant derivatives past
+  each other, for which Lemma \ref{lem:bilin-ricci-identity} is the first
+  ingredient.
+\end{lemma}
+
+\begin{lemma}[The Ricci identity for a bilinear form]
+  \label{lem:bilin-ricci-identity}
+  \lean{CovariantDerivative.cov2Bilin_eq_hessianFun,
+    CovariantDerivative.cov2Bilin_sub_swap}
+  \leanok
+  \uses{def:curvature, lem:ricci-identity}
+  For a bilinear form field $h$ and a torsion-free connection,
+  \[
+    (\nab^2_{W,X}h)(Y,Z) - (\nab^2_{X,W}h)(Y,Z)
+      \;=\; -h(R(W,X)Y,\,Z) \;-\; h(Y,\,R(W,X)Z).
+  \]
+
+  \textbf{Proved} (\texttt{RicciIdentity.lean}). Commuting the two derivatives
+  of $\nab^2 h$ costs exactly one curvature term per slot of $h$ --- against
+  none for a function, whose Hessian is symmetric, and one for a section. It is
+  the commutation rule Lemma \ref{lem:evolution-rm} needs: with $h = -2\Ric$,
+  turning $\nab^2\Ric$ into $\Delta\Rm$ plus quadratic terms is a matter of
+  moving derivatives past each other.
+
+  \textbf{The content is one expansion} (\texttt{cov2Bilin\_eq\_hessianFun}):
+  $\nab^2 h$ is the Hessian of the \emph{scalar} $h(Y,Z)$, plus terms that are
+  either $\nab h$ in one slot or $h$ applied to a second derivative of one of
+  the fields. The first derivative of the scalar cancels between the leading
+  term and the $\nab_{\nab_W X}$ correction --- which is why no first-order
+  term survives.
+
+  Antisymmetrising then does three things: the leading Hessian dies because a
+  function has a symmetric Hessian (torsion-freeness, used the first time); the
+  $\nab h$ terms and the cross terms $h(\nab_X Y, \nab_W Z)$ cancel outright;
+  and what is left is
+  $h(\nab_{[W,X]}Y - \nab_W\nab_X Y + \nab_X\nab_W Y,\, Z)$, which is
+  $-h(R(W,X)Y,Z)$ by the definition of the curvature --- torsion-freeness used
+  the second time, to turn $\nab_W X - \nab_X W$ into $[W,X]$.
 \end{lemma}
 
 \begin{theorem}[Scalar maximum principle]
