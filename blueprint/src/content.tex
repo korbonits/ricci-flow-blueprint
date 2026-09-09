@@ -2267,8 +2267,8 @@ target actually requires.
   What remains is its trace against the metric, which rewrites the
   antisymmetrised $\nab^2 \Ric$ as $\Delta \Rm$ plus terms quadratic in
   $\Rm$ --- and that rewriting is a matter of moving covariant derivatives past
-  each other, for which Lemma \ref{lem:bilin-ricci-identity} is the first
-  ingredient.
+  each other, for which Lemmas \ref{lem:bilin-ricci-identity} and
+  \ref{lem:curvature-ricci-identity} are the ingredients.
 \end{lemma}
 
 \begin{lemma}[The Ricci identity for a bilinear form]
@@ -2307,18 +2307,60 @@ target actually requires.
   the second time, to turn $\nab_W X - \nab_X W$ into $[W,X]$.
 
   \textbf{The same expansion one level up} is
-  \texttt{cov2Curvature\_eq\_hessian}: $\nab^2\Rm$ against the Hessian of the
-  \emph{section} $\Rm(A,B)C$, with the same cancellation of the section's first
-  derivative. Two things differ. $\Rm$ has three input slots and a vector
-  output, so there will be four curvature terms rather than two --- one per
-  input slot and one for the output, the last being the only place a section's
-  Hessian differs from a function's. And the expansion needs \emph{no
-  regularity of the connection at all}: where the bilinear case had to
-  differentiate a scalar and so needed \texttt{mvfderiv} to be additive, here
-  the only splitting is $\nab$ over a difference of sections, which is an axiom
-  of a covariant derivative. What it does need is the differentiability of the
-  four sections $\nab\Rm$ is built from, which is exactly what
-  \texttt{contMDiff\_covCurvature} supplies.
+  \texttt{cov2Curvature\_eq\_hessian}, and it is the engine of
+  Lemma \ref{lem:curvature-ricci-identity}.
+\end{lemma}
+
+\begin{lemma}[The Ricci identity for the curvature tensor]
+  \label{lem:curvature-ricci-identity}
+  \lean{CovariantDerivative.cov2Curvature_eq_hessian,
+    CovariantDerivative.curvature_fst_second_deriv_comm,
+    CovariantDerivative.curvature_snd_second_deriv_comm,
+    CovariantDerivative.curvature_thd_second_deriv_comm,
+    CovariantDerivative.cov2Curvature_sub_swap}
+  \leanok
+  \uses{lem:bilin-ricci-identity, def:curvature, lem:ricci-identity}
+  For a torsion-free connection,
+  \[
+    (\nab^2_{X,Y}\Rm)(A,B)C - (\nab^2_{Y,X}\Rm)(A,B)C
+      = R(X,Y)\bigl(\Rm(A,B)C\bigr) - \Rm(R(X,Y)A,B)C - \Rm(A,R(X,Y)B)C
+        - \Rm(A,B)\bigl(R(X,Y)C\bigr).
+  \]
+
+  \textbf{Proved} (\texttt{RicciIdentity.lean}). One curvature term per slot of
+  $\Rm$: three for the inputs, one for the vector output. This is what lets the
+  \emph{differentiated} second Bianchi identity be antisymmetrised, and so is
+  the step from Lemma \ref{lem:bianchi-second} towards
+  Lemma \ref{lem:evolution-rm}.
+
+  \textbf{The expansion} (\texttt{cov2Curvature\_eq\_hessian}) is the bilinear
+  one one level up: $\nab^2\Rm$ against the Hessian of the \emph{section}
+  $\Rm(A,B)C$, with the same cancellation of the section's first derivative
+  between the leading term and the $\nab_{\nab_X Y}$ correction. It needs
+  \emph{no regularity of the connection at all} --- where the bilinear case had
+  to differentiate a scalar, and so needed \texttt{mvfderiv} to be additive on
+  differentiable functions, here the only splitting is $\nab$ over a difference
+  of sections, which is an axiom. What it does need, differentiability of the
+  four sections $\nab\Rm$ is built from, is what
+  \texttt{contMDiff\_covCurvature} already supplies.
+
+  \textbf{Antisymmetrising} then needs four facts, and everything else cancels
+  in pairs --- the $\nab\Rm$ terms because each appears in both orders, and the
+  cross terms $\Rm(\nab_Y A, \nab_X B)C$ because swapping $X$ and $Y$ maps the
+  pair to itself. The output term is Lemma \ref{lem:ricci-identity}, the Ricci
+  identity for sections: this is exactly where a section's Hessian differs from
+  a function's, and so where the bilinear case had nothing. The three input
+  terms are one lemma each.
+
+  \textbf{The third slot is the expensive one}, as everywhere in this tower.
+  Slots one and two combine their four second-derivative terms using only
+  additivity and pointwiseness at the point (\texttt{tensorialAt\_curvature\_fst}
+  and \texttt{\_snd}); the third needs \texttt{curvature\_add\_right} and
+  \texttt{curvature\_congr\_third}, which want their sections globally $C^2$ ---
+  and, because \texttt{curvature\_congr\_third} argues through an orthonormal
+  frame, a \emph{metric}. That is the same asymmetry that forced
+  \texttt{RicciSymm.lean} to build \texttt{curvatureEndoAt} by hand rather than
+  off a \texttt{TensorialAt}.
 \end{lemma}
 
 \begin{theorem}[Scalar maximum principle]
