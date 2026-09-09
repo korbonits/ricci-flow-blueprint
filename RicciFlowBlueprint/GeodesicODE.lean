@@ -101,6 +101,8 @@ theorem coeffAlong_velocity_eq [FiniteDimensional ℝ E] {x₀ : M}
 
 section ODE
 
+set_option maxSynthPendingDepth 3
+
 variable [VectorBundle ℝ E (fun (x : M) ↦ TangentSpace I x)]
   [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
   [FiniteDimensional ℝ E] [T2Space M]
@@ -211,6 +213,76 @@ theorem covAlong_velocity_eq_zero_iff
       exact this
   rw [hzero, trivializationAt_covAlong_velocity_eq cov x₀ b hU hUe hW hWU hγU hγ hγC hV,
     add_eq_zero_iff_eq_neg]
+
+
+/-! ### Γ as a bilinear map on the model space
+
+For Picard–Lindelöf the Christoffel symbols must be a *continuous bilinear map* `E → E → E`
+depending on the base point, not a family of scalars: the geodesic system on `E × E` is
+`(p, v) ↦ (v, −Γ(p)(v)(v))`, and its `C¹`-ness is what the ODE theorem asks for.
+-/
+
+/-- **Γ as a continuous bilinear map on the model space.** `Γ(y)(a)(c) = ∑ᵢⱼ aʲcⁱ Γᵢⱼ(y)`,
+assembled from the scalar symbols with two `smulRight`s so that no `mk₂` and no bilinearity
+proof is needed — continuity and linearity in both slots hold by construction. -/
+noncomputable def christoffelB
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+    (e : Trivialization E (TotalSpace.proj : TotalSpace E (fun (x : M) ↦ TangentSpace I x) → M))
+    {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ E) (W : ι → Π y : M, TangentSpace I y)
+    (y : M) : E →L[ℝ] E →L[ℝ] E :=
+  ∑ i, ∑ j, ContinuousLinearMap.smulRightL ℝ E (E →L[ℝ] E) (b.coord j).toContinuousLinearMap
+    (ContinuousLinearMap.smulRightL ℝ E E (b.coord i).toContinuousLinearMap
+      (christoffelCoord cov e W i j y))
+
+omit [VectorBundle ℝ E (fun (x : M) ↦ TangentSpace I x)]
+  [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I] [T2Space M] in
+theorem christoffelB_apply
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+    {e : Trivialization E (TotalSpace.proj : TotalSpace E (fun (x : M) ↦ TangentSpace I x) → M)}
+    {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ E) {W : ι → Π y : M, TangentSpace I y}
+    (y : M) (a c : E) :
+    christoffelB cov e b W y a c
+      = ∑ i, ∑ j, (b.repr c i * b.repr a j) • christoffelCoord cov e W i j y := by
+  rw [christoffelB]
+  simp only [sum_apply, ContinuousLinearMap.smulRightL_apply_apply, smul_apply,
+    ContinuousLinearMap.smulRight_apply, LinearMap.coe_toContinuousLinearMap',
+    Module.Basis.coord_apply, smul_smul]
+  exact Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ by rw [mul_comm]
+
+
+omit [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I] [T2Space M] in
+/-- `christoffelB` computes `christoffel`, with the velocity read in the trivialisation. -/
+theorem christoffel_eq_christoffelB
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+    {e : Trivialization E (TotalSpace.proj : TotalSpace E (fun (x : M) ↦ TangentSpace I x) → M)}
+    [MemTrivializationAtlas e] {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ E)
+    {W : ι → Π y : M, TangentSpace I y} {y : M} (hy : y ∈ e.baseSet)
+    (hWy : ∀ i, W i y = e.localFrame b i y) (v : TangentSpace I y) (c : E) :
+    christoffel cov e b W y v c = christoffelB cov e b W y ((e ⟨y, v⟩).2) c := by
+  rw [christoffel_eq_sum cov b hy hWy v c, christoffelB_apply]
+
+omit [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I] [T2Space M] in
+-- BENCH: geodesic-christoffel-regularity
+/-- **Γ is `C^k` in the base point as a bilinear map.** Each scalar symbol is `C^k`
+(`contMDiffAt_christoffelCoord`) and the assembly is by fixed continuous linear maps, so the
+regularity survives. This is the hypothesis Picard–Lindelöf will consume. -/
+theorem contMDiffAt_christoffelB
+    (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x)) {k : ℕ∞ω}
+    [ContMDiffCovariantDerivative cov k]
+    {e : Trivialization E (TotalSpace.proj : TotalSpace E (fun (x : M) ↦ TangentSpace I x) → M)}
+    [MemTrivializationAtlas e] {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ E)
+    {W : ι → Π y : M, TangentSpace I y} (hW : ∀ i, CMDiff (k + 1) (T% (W i)))
+    {y : M} (hy : y ∈ e.baseSet) :
+    ContMDiffAt I 𝓘(ℝ, E →L[ℝ] E →L[ℝ] E) k (christoffelB cov e b W) y := by
+  refine ContMDiffAt.sum fun i _ ↦ ContMDiffAt.sum fun j _ ↦ ?_
+  have hin : ContMDiff 𝓘(ℝ, E) 𝓘(ℝ, E →L[ℝ] E) k
+      (ContinuousLinearMap.smulRightL ℝ E E (b.coord i).toContinuousLinearMap) :=
+    ContinuousLinearMap.contMDiff _
+  have hout : ContMDiff 𝓘(ℝ, E →L[ℝ] E) 𝓘(ℝ, E →L[ℝ] E →L[ℝ] E) k
+      (ContinuousLinearMap.smulRightL ℝ E (E →L[ℝ] E) (b.coord j).toContinuousLinearMap) :=
+    ContinuousLinearMap.contMDiff _
+  exact ContMDiffAt.comp y (hout _)
+    (ContMDiffAt.comp y (hin _) (contMDiffAt_christoffelCoord cov hW hy i j))
 
 end ODE
 

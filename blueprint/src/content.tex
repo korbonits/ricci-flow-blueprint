@@ -2839,7 +2839,11 @@ Perelman's monotone functionals are what rule it out.
     CovariantDerivative.sum_deriv_repr_smul,
     CovariantDerivative.trivializationAt_covAlong_eq,
     CovariantDerivative.trivializationAt_covAlong_velocity_eq,
-    CovariantDerivative.covAlong_velocity_eq_zero_iff}
+    CovariantDerivative.covAlong_velocity_eq_zero_iff,
+    CovariantDerivative.christoffelB,
+    CovariantDerivative.christoffelB_apply,
+    CovariantDerivative.christoffel_eq_christoffelB,
+    CovariantDerivative.contMDiffAt_christoffelB}
   \leanok
   \uses{def:geodesic, def:cov-along-curve}
   With $p(t) = \varphi_{x_0}(\gamma(t))$ the position of $\gamma$ in the chart at $x_0$,
@@ -2892,7 +2896,20 @@ Perelman's monotone functionals are what rule it out.
   coordinates. Everything on the right lives in $E$, and $\Gamma$ is $C^k$ in the point
   (Definition \ref{def:geodesic}).
 
-  \textbf{What is left} is Picard--Lindel\"of itself, and then $\exp$.
+  \textbf{$\Gamma$ as a bilinear map on the model space.} Picard--Lindel\"of wants a $C^1$
+  vector field on a normed space, so the symbols must be assembled into a continuous
+  \emph{bilinear} map varying with the base point, not a family of scalars:
+  \texttt{christoffelB} does this with two \texttt{smulRight}s, so linearity and continuity in
+  both slots hold by construction and no $\texttt{mk}_2$ is needed.
+  \texttt{christoffel\_eq\_christoffelB} is the bridge, and
+  \texttt{contMDiffAt\_christoffelB} carries the regularity across: each scalar symbol is
+  $C^k$ and the assembly is by fixed continuous linear maps.
+
+  \textbf{What is left} is the transport through the chart --- $\Gamma$ as a function of the
+  chart coordinate $p$ rather than of $y \in M$, which is where boundarylessness enters --- and
+  then Mathlib's
+  \texttt{exists\_forall\_mem\_closedBall\_exists\_eq\_forall\_mem\_Ioo\_hasDerivAt}, applied to
+  the first-order system $(p,v) \mapsto (v, -\Gamma(p)(v)(v))$ on $E \times E$. Then $\exp$.
 \end{lemma}
 
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
