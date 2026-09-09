@@ -373,9 +373,13 @@ Now `thm:hamilton-ivey` at the head of `chap:kappa`, with a
    (`IsGeodesicRun`, `expMap`, `expMap_eq`, `expMap_smul_eq`, `expMap_zero`) —
    the first object of the comparison-geometry substrate, well defined rather
    than chosen, with homogeneity `exp_x(a v) = γ_v(a)` from reparametrisation.
-   **Left on this line**: regularity of `exp` (smooth dependence on `(x,v)`,
-   from mathlib's `ContDiffAt.exists_eventually_eq_hasDerivAt`), then
-   `d exp_0 = id`, parallel transport and Jacobi fields.
+   **Left on this line**: regularity of `exp` — and this is **not** a
+   manifold-side computation. Mathlib has **no smooth dependence of ODE
+   solutions on initial conditions** (checked 2026-09-09; its local flow is
+   built by `choose` behind a `dite` and is not even continuous as constructed),
+   only Lipschitz and continuous dependence. So `d exp_0 = id`, parallel
+   transport and Jacobi fields all sit behind a genuine ODE-theory gap; see
+   "Where the real gaps are".
 
 
 **Upstream candidates** (Mathlib-general, no dependence on the curvature
@@ -425,6 +429,18 @@ theirs is imported here.
   the deciding fact in build-versus-import.
 - Mathlib has **no maximal-solution ODE theory** — hence germ uniqueness in
   `Homogeneous.lean`.
+- **Mathlib has no *smooth dependence* of ODE solutions on initial conditions.**
+  Checked 2026-09-09, `Analysis/ODE/ExistUnique.lean`: the local flow
+  `ContDiffAt.exists_eventually_eq_hasDerivAt` is built by `choose` behind a
+  `dite`, so as constructed it is not even continuous in the initial point; what
+  *is* available is Lipschitz and continuous dependence
+  (`IsPicardLindelof.exists_forall_mem_closedBall_eq_hasDerivWithinAt_lipschitzOnWith`,
+  `..._continuousOn`). **This is now the gate on the `L`-geometry line**:
+  `expMap` is built and well defined (`Exponential.lean`), but nothing yet says
+  it is continuous, let alone `C^k`, and `d exp_0 = id` and Jacobi fields both
+  need that. Closing it is a mathlib-level contribution — the variational
+  equation, or a Banach fixed point in a `C^k` space — not a manifold-side
+  computation, and it should be scoped as such before being attempted.
 - ~~No global `C²` extension of a tangent vector.~~ **Closed 2026-09-07**
   (`GlobalExtension.lean`, PR #16). It was the worst hazard in the repo, not
   merely a gap: `Hamilton.lean`'s predicates quantify over globally `C²`
