@@ -2373,7 +2373,11 @@ target actually requires.
     CovariantDerivative.sum_inner_covCurvature_snd_eq,
     CovariantDerivative.covCurvatureBilinDir,
     CovariantDerivative.sum_inner_covCurvature_frame_deriv_eq_zero,
-    CovariantDerivative.sum_inner_cov2Curvature_snd_eq_mvfderiv}
+    CovariantDerivative.sum_inner_cov2Curvature_snd_eq_mvfderiv,
+    CovariantDerivative.covDivCurvature,
+    CovariantDerivative.sum_inner_cov2Curvature_snd_eq_covRicci,
+    CovariantDerivative.cov2Curvature_antisymm,
+    CovariantDerivative.inner_curvatureLaplacian_eq}
   \leanok
   \uses{lem:bianchi-second, def:cov2-curvature}
   For a torsion-free connection the cyclic identity of Lemma
@@ -2480,6 +2484,28 @@ target actually requires.
   That form is $\operatorname{innerSL}$ composed with \texttt{covCurvatureEndo},
   so bilinearity holds by construction. The frame is asked for $C^4$: pair
   symmetry wants $C^3$ in the slot $\nab_A e_i$ occupies.
+
+  \textbf{The trace step closes} (\texttt{inner\_curvatureLaplacian\_eq}):
+  \[
+    \langle \Delta\Rm(A,B)C, D\rangle
+      = -(\nab_A \operatorname{div}\Rm)(C,D,B)
+        + (\nab_B \operatorname{div}\Rm)(C,D,A) - Q,
+  \]
+  where $Q$ is the two commutator sums and
+  $(\nab_A\operatorname{div}\Rm)(C,D,B)$ is \texttt{covDivCurvature}, the
+  covariant derivative of the $(0,3)$-tensor
+  $\operatorname{div}\Rm(C,D,B) = (\nab_C\Ric)(D,B) - (\nab_D\Ric)(C,B)$ of
+  Theorem \ref{thm:contracted-bianchi}. \textbf{Every term is accounted for}: the
+  first two are second derivatives of $\Ric$, the last two are quadratic in $\Rm$,
+  being $\Rm$ applied to $\Rm$.
+
+  One brick was missing for this: the second sum carries the traced index in
+  $\Rm$'s \emph{first} slot rather than its second, so
+  \texttt{cov2Curvature\_antisymm} --- $\nab^2\Rm$ inheriting $\Rm$'s
+  antisymmetry, each of the five terms flipping by
+  \texttt{covCurvature\_antisymm}, with the two corrections in $\nab_X A$ and
+  $\nab_X B$ \emph{swapping with each other} --- turns it round. That is where the
+  sign flip between the two divergence terms comes from.
 \end{lemma}
 
 \begin{theorem}[Scalar maximum principle]

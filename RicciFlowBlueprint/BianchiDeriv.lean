@@ -470,4 +470,151 @@ theorem sum_inner_cov2Curvature_snd_eq_mvfderiv
   simp only [sum_apply]
   ring
 
+omit [T2Space M] [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+  [IsContMDiffRiemannianBundle I 3 E (fun (x : M) ↦ TangentSpace I x)] in
+-- BENCH: cov2-curvature-antisymm
+/-- **`∇²Rm` inherits `Rm`'s antisymmetry in its first two slots.**
+
+Each of the five terms of `cov2Curvature` is `∇Rm` with `A` and `B` in those slots, so each
+flips sign by `covCurvature_antisymm`; for the leading term the flip happens at the level of
+*sections*, so `∇` of a negated section is what carries it.
+
+The two correction terms in `∇_X A` and `∇_X B` do not merely flip — they **swap with each
+other**, which is why the sign works out with no bookkeeping left over. -/
+theorem cov2Curvature_antisymm (X Y : Π y : M, TangentSpace I y)
+    {A B C : Π y : M, TangentSpace I y} {x : M}
+    (hX : CMDiff 3 (T% X)) (hY : CMDiff 3 (T% Y)) (hA : CMDiff 3 (T% A))
+    (hB : CMDiff 3 (T% B)) (hC : CMDiff 4 (T% C)) :
+    cov.cov2Curvature X Y A B C x = -cov.cov2Curvature X Y B A C x := by
+  have h1 : (1 : ℕ∞ω) ≠ 0 := by norm_num
+  have hX2 : CMDiff 2 (T% X) := hX.of_le (by norm_num)
+  have hA2 : CMDiff 2 (T% A) := hA.of_le (by norm_num)
+  have hB2 : CMDiff 2 (T% B) := hB.of_le (by norm_num)
+  have hC3 : CMDiff 3 (T% C) := hC.of_le (by norm_num)
+  have hDA : CMDiff 2 (T% (fun z ↦ cov A z (X z))) := cov.contMDiff_cov_apply hA hX2
+  have hDB : CMDiff 2 (T% (fun z ↦ cov B z (X z))) := cov.contMDiff_cov_apply hB hX2
+  have hDC : CMDiff 3 (T% (fun z ↦ cov C z (X z))) := cov.contMDiff_cov_apply hC hX
+  -- the leading term flips at the level of sections
+  have hsec : (fun u ↦ cov.covCurvature Y B A C u)
+      = -(fun u ↦ cov.covCurvature Y A B C u) := by
+    funext u
+    show _ = -_
+    exact cov.covCurvature_antisymm Y hB2 hA2 hC3
+  have hlead : cov (fun u ↦ cov.covCurvature Y B A C u) x
+      = -cov (fun u ↦ cov.covCurvature Y A B C u) x := by
+    rw [hsec, cov.neg_apply ((cov.contMDiff_covCurvature hY hA hB hC).mdifferentiable h1 x)]
+  have hleadapp : cov (fun u ↦ cov.covCurvature Y B A C u) x (X x)
+      = -cov (fun u ↦ cov.covCurvature Y A B C u) x (X x) := by
+    rw [hlead]; rfl
+  unfold cov2Curvature
+  rw [hleadapp, cov.covCurvature_antisymm (fun z ↦ cov Y z (X z)) hB2 hA2 hC3,
+    cov.covCurvature_antisymm Y hDB hA2 hC3,
+    cov.covCurvature_antisymm Y hB2 hDA hC3,
+    cov.covCurvature_antisymm Y hB2 hA2 hDC]
+  module
+
+/-- **`(∇_A div Rm)(C,D,B)`, written out.**
+
+`div Rm(C,D,B) = (∇_C Ric)(D,B) − (∇_D Ric)(C,B)` is `divCurvature_eq_covRicci_sub`, so this
+is the covariant derivative of that `(0,3)`-tensor in the direction `A`: the derivative of
+the function minus one correction per slot.
+
+Everything the trace step produces is one of these — a **second** derivative of `Ric`. -/
+noncomputable def covDivCurvature (A B C D : Π y : M, TangentSpace I y) (x : M) : ℝ :=
+  mvfderiv I (fun y ↦ cov.covRicci C D B y - cov.covRicci D C B y) x (A x)
+    - (cov.covRicci C (fun y ↦ cov D y (A y)) B x
+        - cov.covRicci (fun y ↦ cov D y (A y)) C B x)
+    - (cov.covRicci C D (fun y ↦ cov B y (A y)) x
+        - cov.covRicci D C (fun y ↦ cov B y (A y)) x)
+    - (cov.covRicci (fun y ↦ cov C y (A y)) D B x
+        - cov.covRicci D (fun y ↦ cov C y (A y)) B x)
+
+-- BENCH: trace-in-terms-of-ricci
+/-- **The trace of `∇²Rm`, entirely in terms of `∇Ric`** — the close of the trace step.
+
+  `∑ᵢ ⟪(∇²_{A,eᵢ}Rm)(B,eᵢ)C, D⟫ = ∇_A [ (∇_C Ric)(D,B) − (∇_D Ric)(C,B) ]`
+
+with the right-hand side written out as the derivative of the frame sum minus the three
+corrections that make `∇_A` of a `(0,3)`-tensor. Every sum produced by the trace step is
+now a second derivative of `Ric` and nothing else.
+
+The three correction sums are `sum_inner_covCurvature_snd_eq` applied with one field
+replaced by its covariant derivative. The leading term needs that identity as an equality of
+*functions* rather than at the single point `x` — an orthonormal basis at each `y` of the
+frame's domain, then germ-locality of `mvfderiv`. -/
+theorem sum_inner_cov2Curvature_snd_eq_covRicci
+    (hmet : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    (htor : cov.torsion = 0)
+    {A B C D : Π y : M, TangentSpace I y} {x : M}
+    (hA : CMDiff 3 (T% A)) (hB : CMDiff 4 (T% B)) (hC : CMDiff 4 (T% C))
+    (hD : CMDiff 4 (T% D))
+    {ι : Type*} [Fintype ι] {fr : ι → Π y : M, TangentSpace I y} {u : Set M}
+    (hfr : ∀ i, CMDiff 4 (T% (fr i)))
+    (hs : IsOrthonormalFrameOn I E 1 fr u) (hu : IsOpen u) (hx : x ∈ u)
+    (b : OrthonormalBasis ι ℝ (TangentSpace I x)) (hbv : ∀ i, fr i x = b i) :
+    ∑ i, ⟪cov.cov2Curvature A (fr i) B (fr i) C x, D x⟫
+      = cov.covDivCurvature A B C D x := by
+  unfold covDivCurvature
+  have hB3 : CMDiff 3 (T% B) := hB.of_le (by norm_num)
+  have hC3 : CMDiff 3 (T% C) := hC.of_le (by norm_num)
+  have hD3 : CMDiff 3 (T% D) := hD.of_le (by norm_num)
+  have hfr3 : ∀ i, CMDiff 3 (T% (fr i)) := fun i ↦ (hfr i).of_le (by norm_num)
+  -- the differentiated fields, at the `C³` the divergence identity asks of each slot
+  have hDB : CMDiff 3 (T% (fun y ↦ cov B y (A y))) := cov.contMDiff_cov_apply hB hA
+  have hDC : CMDiff 3 (T% (fun y ↦ cov C y (A y))) := cov.contMDiff_cov_apply hC hA
+  have hDD : CMDiff 3 (T% (fun y ↦ cov D y (A y))) := cov.contMDiff_cov_apply hD hA
+  -- the identity as an equality of functions near `x`, so that it may be differentiated
+  have hfun : (fun y ↦ ∑ i, ⟪cov.covCurvature (fr i) B (fr i) C y, D y⟫)
+      =ᶠ[𝓝 x] fun y ↦ cov.covRicci C D B y - cov.covRicci D C B y := by
+    filter_upwards [hu.mem_nhds hx] with y hy
+    obtain ⟨by', hby⟩ := exists_orthonormalBasis_of_isOrthonormalFrameOn hs hy
+    exact cov.sum_inner_covCurvature_snd_eq hmet htor hB3 hC3 hD3 hfr3 hs hu hy by'
+      (fun i ↦ (hby i).symm)
+  rw [cov.sum_inner_cov2Curvature_snd_eq_mvfderiv hmet htor hA hB hC hD hfr hs hu hx b hbv,
+    hfun.mvfderiv_eq,
+    cov.sum_inner_covCurvature_snd_eq hmet htor hB3 hC3 hDD hfr3 hs hu hx b hbv,
+    cov.sum_inner_covCurvature_snd_eq hmet htor hDB hC3 hD3 hfr3 hs hu hx b hbv,
+    cov.sum_inner_covCurvature_snd_eq hmet htor hB3 hDC hD3 hfr3 hs hu hx b hbv]
+
+-- BENCH: inner-curvature-laplacian
+/-- **`Δ Rm` as second derivatives of `Ric` plus terms quadratic in `Rm`** — the close of the
+trace step, and `∂ₜRm = ΔRm + Q` up to the substitution `h = −2Ric`.
+
+  `⟪Δ Rm(A,B)C, D⟫ = −(∇_A div Rm)(C,D,B) + (∇_B div Rm)(C,D,A) − Q`
+
+with `Q` the two commutator sums. **Every term is accounted for**: the first two are second
+derivatives of `Ric`, by the contracted second Bianchi identity and the trace-commutes
+argument; the last two are quadratic in `Rm`, being `Rm` applied to `Rm`.
+
+The second sum of `curvatureLaplacian_eq_swapped` carries the traced index in `Rm`'s *first*
+slot rather than its second; `cov2Curvature_antisymm` turns it round, which is where the
+sign flip between the two divergence terms comes from. -/
+theorem inner_curvatureLaplacian_eq
+    (hmet : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    (htor : cov.torsion = 0)
+    {A B C D : Π y : M, TangentSpace I y} {x : M}
+    (hA : CMDiff 4 (T% A)) (hB : CMDiff 4 (T% B)) (hC : CMDiff 4 (T% C))
+    (hD : CMDiff 4 (T% D))
+    {ι : Type*} [Fintype ι] {fr : ι → Π y : M, TangentSpace I y} {u : Set M}
+    (hfr : ∀ i, CMDiff 4 (T% (fr i)))
+    (hs : IsOrthonormalFrameOn I E 1 fr u) (hu : IsOpen u) (hx : x ∈ u)
+    (b : OrthonormalBasis ι ℝ (TangentSpace I x)) (hbv : ∀ i, fr i x = b i) :
+    ⟪cov.curvatureLaplacian A B C x, D x⟫
+      = -cov.covDivCurvature A B C D x + cov.covDivCurvature B A C D x
+        - ∑ i, ⟪cov.curvatureCommutator (fr i) A B (fr i) C x, D x⟫
+        - ∑ i, ⟪cov.curvatureCommutator (fr i) B (fr i) A C x, D x⟫ := by
+  have hA3 : CMDiff 3 (T% A) := hA.of_le (by norm_num)
+  have hB3 : CMDiff 3 (T% B) := hB.of_le (by norm_num)
+  have hfr3 : ∀ i, CMDiff 3 (T% (fr i)) := fun i ↦ (hfr i).of_le (by norm_num)
+  -- the traced index sits in `Rm`'s first slot in the second sum; turn it round
+  have hanti : ∀ i, cov.cov2Curvature B (fr i) (fr i) A C x
+      = -cov.cov2Curvature B (fr i) A (fr i) C x :=
+    fun i ↦ cov.cov2Curvature_antisymm B (fr i) hB3 (hfr3 i) (hfr3 i) hA3 hC
+  rw [cov.curvatureLaplacian_eq_swapped htor hA3 hB3 hC hfr3 b hbv]
+  simp only [inner_sub_left, inner_neg_left, sum_inner, hanti, inner_neg_left,
+    Finset.sum_neg_distrib]
+  rw [cov.sum_inner_cov2Curvature_snd_eq_covRicci hmet htor hA3 hB hC hD hfr hs hu hx b hbv,
+    cov.sum_inner_cov2Curvature_snd_eq_covRicci hmet htor hB3 hA hC hD hfr hs hu hx b hbv]
+  ring
+
 end CovariantDerivative
