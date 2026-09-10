@@ -2365,7 +2365,8 @@ target actually requires.
 
 \begin{lemma}[The differentiated second Bianchi identity]
   \label{lem:bianchi-second-deriv}
-  \lean{CovariantDerivative.cov2Curvature_cyclic_eq_zero}
+  \lean{CovariantDerivative.cov2Curvature_cyclic_eq_zero,
+    CovariantDerivative.curvatureLaplacian_eq_neg_sum}
   \leanok
   \uses{lem:bianchi-second, def:cov2-curvature}
   For a torsion-free connection the cyclic identity of Lemma
@@ -2400,6 +2401,20 @@ target actually requires.
   the three that the spectator slot wants. \textbf{No metric is needed}, exactly
   as for Lemma \ref{lem:bianchi-second} itself --- which is worth knowing before
   the trace step, where a metric first becomes unavoidable.
+
+  \textbf{The trace is taken} (\texttt{curvatureLaplacian\_eq\_neg\_sum}). Summing
+  over $X = Y = e_i$ puts the first term of the cyclic sum on the diagonal, where
+  it \emph{is} $\Delta\Rm$, and leaves the other two:
+  \[
+    \Delta\Rm(A,B)C = -\sum_i (\nab^2_{e_i,A}\Rm)(B,e_i)C
+      - \sum_i (\nab^2_{e_i,B}\Rm)(e_i,A)C .
+  \]
+  This is where the metric enters, and it is also what forces
+  Lemma \ref{lem:curvature-ricci-identity}: in both surviving sums the traced
+  index sits in the \emph{outer} derivative slot, while the divergence lemmas of
+  Theorem \ref{thm:contracted-bianchi} trace the slot $\nab\Rm$ is pointwise in.
+  Reordering the two derivative slots is what produces the terms quadratic
+  in $\Rm$.
 \end{lemma}
 
 \begin{theorem}[Scalar maximum principle]

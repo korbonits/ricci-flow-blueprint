@@ -134,4 +134,40 @@ theorem cov2Curvature_cyclic_eq_zero (hcov : cov.torsion = 0)
   unfold cov2Curvature
   linear_combination (norm := module) hsum - kY - kA - kB - kC
 
+-- BENCH: curvature-laplacian-trace
+/-- **`Δ Rm` as two traces of `∇²Rm` with the derivative slots in the wrong order.**
+
+Summing `cov2Curvature_cyclic_eq_zero` over `X = Y = eᵢ` puts the first term of the cyclic
+sum on the diagonal, where it *is* `Δ Rm` (`curvatureLaplacian_eq_sum_frame`), and leaves
+the other two:
+
+  `Δ Rm(A,B)C = −∑ᵢ (∇²_{eᵢ,A}Rm)(B,eᵢ)C − ∑ᵢ (∇²_{eᵢ,B}Rm)(eᵢ,A)C`.
+
+This is the shape the evolution equation needs, and it is also why the Ricci identity for
+the curvature tensor is required: in both surviving sums the *traced* index `eᵢ` sits in the
+outer derivative slot, while the divergence lemmas of `Divergence.lean` trace the slot that
+`∇Rm` is pointwise in. Reordering the two derivative slots by `cov2Curvature_sub_swap` is
+what produces the terms quadratic in `Rm`.
+
+The metric enters here and only here — the identity being summed carries none. -/
+theorem curvatureLaplacian_eq_neg_sum (hcov : cov.torsion = 0)
+    (hA : CMDiff 3 (T% A)) (hB : CMDiff 3 (T% B)) (hC : CMDiff 4 (T% C))
+    {ι : Type*} [Fintype ι] {fr : ι → Π y : M, TangentSpace I y}
+    (hfr : ∀ i, CMDiff 3 (T% (fr i))) (b : OrthonormalBasis ι ℝ (TangentSpace I x))
+    (hb : ∀ i, fr i x = b i) :
+    cov.curvatureLaplacian A B C x
+      = -∑ i, cov.cov2Curvature (fr i) A B (fr i) C x
+        - ∑ i, cov.cov2Curvature (fr i) B (fr i) A C x := by
+  have hcyc : ∀ i : ι, cov.cov2Curvature (fr i) (fr i) A B C x
+      + cov.cov2Curvature (fr i) A B (fr i) C x
+      + cov.cov2Curvature (fr i) B (fr i) A C x = 0 :=
+    fun i ↦ cov.cov2Curvature_cyclic_eq_zero hcov (hfr i) (hfr i) hA hB hC
+  have hsum : ∑ i, (cov.cov2Curvature (fr i) (fr i) A B C x
+      + cov.cov2Curvature (fr i) A B (fr i) C x
+      + cov.cov2Curvature (fr i) B (fr i) A C x) = 0 := by
+    simp only [hcyc, Finset.sum_const_zero]
+  rw [Finset.sum_add_distrib, Finset.sum_add_distrib] at hsum
+  rw [cov.curvatureLaplacian_eq_sum_frame hA hB hC hfr b hb]
+  linear_combination (norm := module) hsum
+
 end CovariantDerivative
