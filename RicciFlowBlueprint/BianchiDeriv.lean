@@ -283,4 +283,38 @@ theorem curvatureLaplacian_eq_swapped (hcov : cov.torsion = 0)
   rw [cov.curvatureLaplacian_eq_neg_sum hcov hA hB hC hfr b hb, e2, e3]
   module
 
+omit [ContMDiffCovariantDerivative cov 3] in
+-- BENCH: sum-inner-covcurvature-snd
+/-- **The divergence of `Rm` in its second slot, in terms of `∇Ric`.**
+
+`∑ᵢ ⟪(∇_{eᵢ}Rm)(B,eᵢ)C, D⟫ = (∇_C Ric)(D,B) − (∇_D Ric)(C,B)`.
+
+`Divergence.lean` traces the derivative index against `Rm`'s *output*; the trace step of the
+evolution equation produces it against `Rm`'s *second input*. Pair symmetry of `∇Rm`
+(`inner_covCurvature_pair_symm`) exchanges the two — it moves the pair `(B,eᵢ)` past `(C,D)`
+and so puts `eᵢ` back in the output slot, where `divCurvature` lives. The contracted second
+Bianchi identity then evaluates it.
+
+This is the undifferentiated form of what the two surviving sums of
+`curvatureLaplacian_eq_swapped` become once `∇_A` is moved outside the trace. -/
+theorem sum_inner_covCurvature_snd_eq
+    (hmet : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    (htor : cov.torsion = 0)
+    {B C D : Π y : M, TangentSpace I y} {x : M}
+    (hB : CMDiff 3 (T% B)) (hC : CMDiff 3 (T% C)) (hD : CMDiff 3 (T% D))
+    {ι : Type*} [Fintype ι] {fr : ι → Π y : M, TangentSpace I y} {u : Set M}
+    (hfr : ∀ i, CMDiff 3 (T% (fr i)))
+    (hs : IsOrthonormalFrameOn I E 1 fr u) (hu : IsOpen u) (hx : x ∈ u)
+    (v : OrthonormalBasis ι ℝ (TangentSpace I x)) (hbv : ∀ i, fr i x = v i) :
+    ∑ i, ⟪cov.covCurvature (fr i) B (fr i) C x, D x⟫
+      = cov.covRicci C D B x - cov.covRicci D C B x := by
+  have hB2 : CMDiff 2 (T% B) := hB.of_le (by norm_num)
+  have hC2 : CMDiff 2 (T% C) := hC.of_le (by norm_num)
+  have hD2 : CMDiff 2 (T% D) := hD.of_le (by norm_num)
+  have hfr2 : ∀ i, CMDiff 2 (T% (fr i)) := fun i ↦ (hfr i).of_le (by norm_num)
+  rw [← cov.divCurvature_eq_covRicci_sub htor hmet hC2 hD2 hB hs hu hx hfr2,
+    cov.divCurvature_eq_sum_frame hC2 hD2 hB hfr2 v hbv]
+  refine Finset.sum_congr rfl fun i _ ↦ ?_
+  exact cov.inner_covCurvature_pair_symm hmet htor (hfr2 i) hB (hfr i) hC hD
+
 end CovariantDerivative
