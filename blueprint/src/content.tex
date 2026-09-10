@@ -2370,7 +2370,10 @@ target actually requires.
     CovariantDerivative.cov2Curvature_sub_swap',
     CovariantDerivative.curvatureCommutator,
     CovariantDerivative.curvatureLaplacian_eq_swapped,
-    CovariantDerivative.sum_inner_covCurvature_snd_eq}
+    CovariantDerivative.sum_inner_covCurvature_snd_eq,
+    CovariantDerivative.covCurvatureBilinDir,
+    CovariantDerivative.sum_inner_covCurvature_frame_deriv_eq_zero,
+    CovariantDerivative.sum_inner_cov2Curvature_snd_eq_mvfderiv}
   \leanok
   \uses{lem:bianchi-second, def:cov2-curvature}
   For a torsion-free connection the cyclic identity of Lemma
@@ -2459,6 +2462,24 @@ target actually requires.
   level up, with the two frame-derivative corrections cancelling against each
   other by \texttt{sum\_bilin\_of\_antisymm} --- whose statement is already the
   symmetrised form $\sum_i (B(D_i,e_i) + B(e_i,D_i)) = 0$ that this produces.
+
+  \textbf{And $\nab_A$ does move outside the trace}
+  (\texttt{sum\_inner\_cov2Curvature\_snd\_eq\_mvfderiv}). Expanding
+  $\Rm$'s second covariant derivative on the diagonal and pairing with $D$ leaves
+  five groups: metric compatibility turns the leading one into a derivative of the
+  frame sum minus a term in $\nab_A D$; the two in which $\nab_A$ landed on the
+  \emph{frame} cancel each other; the remaining two are the sum with $B$ or $C$
+  differentiated. \textbf{No curvature term survives} --- the frame's
+  non-parallelism is absorbed entirely by the antisymmetry argument, exactly as
+  one level down in Lemma \ref{lem:metric-trace-cov}.
+
+  The cancellation (\texttt{sum\_inner\_covCurvature\_frame\_deriv\_eq\_zero})
+  is where pair symmetry earns its keep a second time: it puts \emph{both} frame
+  terms into the same bilinear form \texttt{covCurvatureBilinDir}, one with the
+  arguments in each order, so \texttt{sum\_bilin\_of\_antisymm} applies verbatim.
+  That form is $\operatorname{innerSL}$ composed with \texttt{covCurvatureEndo},
+  so bilinearity holds by construction. The frame is asked for $C^4$: pair
+  symmetry wants $C^3$ in the slot $\nab_A e_i$ occupies.
 \end{lemma}
 
 \begin{theorem}[Scalar maximum principle]

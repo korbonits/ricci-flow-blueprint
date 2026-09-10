@@ -40,6 +40,7 @@ step, which is where a metric first becomes unavoidable.
 Argument order follows `CovariantDerivative`: `cov σ x (X x)` is `(∇_X σ) x`.
 -/
 import RicciFlowBlueprint.RicciIdentity
+import RicciFlowBlueprint.Bochner
 
 open Bundle Filter Module VectorField
 open scoped Manifold ContDiff Topology RealInnerProductSpace
@@ -316,5 +317,157 @@ theorem sum_inner_covCurvature_snd_eq
     cov.divCurvature_eq_sum_frame hC2 hD2 hB hfr2 v hbv]
   refine Finset.sum_congr rfl fun i _ ↦ ?_
   exact cov.inner_covCurvature_pair_symm hmet htor (hfr2 i) hB (hfr i) hC hD
+
+/-- **The direction slot of `∇Rm`, paired against a vector, as a genuine bilinear form.**
+
+`(v,w) ↦ ⟪(∇_v Rm)(Y,Z)W, w⟫`. `covCurvatureEndo` is already linear in `v`, so this is
+`innerSL` composed with it — bilinearity holds by construction, no `mk₂`.
+
+Declared at the `E →L[ℝ] E →L[ℝ] ℝ` type with the body ascribed through
+`TangentSpace I x →L[ℝ] …`: at the `TangentSpace` type it is defeq but `sum_bilin_of_antisymm`
+will not match it, exactly as for `curvatureBilinFst`. -/
+noncomputable def covCurvatureBilinDir (Y Z W : Π y : M, TangentSpace I y) (x : M) :
+    E →L[ℝ] E →L[ℝ] ℝ :=
+  haveI : FiniteDimensional ℝ (TangentSpace I x) := VectorBundle.finiteDimensional ℝ E _ x
+  (innerSL ℝ (E := TangentSpace I x)).comp
+    ((cov.covCurvatureEndo Y Z W x).toContinuousLinearMap :
+      TangentSpace I x →L[ℝ] TangentSpace I x)
+
+omit [CompleteSpace E] [ContMDiffCovariantDerivative cov 3] in
+theorem covCurvatureBilinDir_apply {Y Z W : Π y : M, TangentSpace I y} {x : M}
+    (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z)) (hW : CMDiff 3 (T% W))
+    {σ : Π y : M, TangentSpace I y} (hσ : CMDiff 2 (T% σ)) (w : TangentSpace I x) :
+    cov.covCurvatureBilinDir Y Z W x (σ x) w = ⟪cov.covCurvature σ Y Z W x, w⟫ := by
+  have : FiniteDimensional ℝ (TangentSpace I x) := VectorBundle.finiteDimensional ℝ E _ x
+  show ⟪cov.covCurvatureEndo Y Z W x (σ x), w⟫ = _
+  rw [cov.covCurvatureEndo_apply hY hZ hW, cov.covCurvatureAt_eq hσ hY hZ hW]
+
+-- BENCH: frame-deriv-cancels
+/-- **The two frame-derivative corrections cancel.**
+
+Expanding `∑ᵢ (∇²_{A,eᵢ}Rm)(B,eᵢ)C` term by term leaves, besides the leading derivative and
+the corrections in `B` and `C`, two terms in which `∇_A` has landed on the frame itself —
+one with `eᵢ` in the derivative slot, one with `eᵢ` in `Rm`'s second slot. **They cancel each
+other**, and this is what makes the trace commute with `∇`.
+
+Pair symmetry of `∇Rm` puts both into the same bilinear form `covCurvatureBilinDir C D B`,
+one with the arguments in each order, so `sum_bilin_of_antisymm` applies verbatim — its
+statement is *already* the symmetrised `∑ᵢ (B(Dᵢ,eᵢ) + B(eᵢ,Dᵢ)) = 0`. The antisymmetry of
+`⟪∇_A eᵢ, eⱼ⟫` is `inner_cov_antisymm`, the frame being orthonormal on a neighbourhood.
+
+The frame is asked for `C⁴`: pair symmetry wants `C³` in the slot `∇_A eᵢ` occupies. -/
+theorem sum_inner_covCurvature_frame_deriv_eq_zero
+    (hmet : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    (htor : cov.torsion = 0)
+    {A B C D : Π y : M, TangentSpace I y} {x : M}
+    (hA : CMDiff 3 (T% A)) (hB : CMDiff 3 (T% B)) (hC : CMDiff 3 (T% C))
+    (hD : CMDiff 3 (T% D))
+    {ι : Type*} [Fintype ι] {fr : ι → Π y : M, TangentSpace I y} {u : Set M}
+    (hfr : ∀ i, CMDiff 4 (T% (fr i)))
+    (hs : IsOrthonormalFrameOn I E 1 fr u) (hu : IsOpen u) (hx : x ∈ u)
+    (b : OrthonormalBasis ι ℝ (TangentSpace I x)) (hbv : ∀ i, fr i x = b i) :
+    ∑ i, (⟪cov.covCurvature (fun y ↦ cov (fr i) y (A y)) B (fr i) C x, D x⟫
+        + ⟪cov.covCurvature (fr i) B (fun y ↦ cov (fr i) y (A y)) C x, D x⟫) = 0 := by
+  classical
+  have hA2 : CMDiff 2 (T% A) := hA.of_le (by norm_num)
+  have hfr3 : ∀ i, CMDiff 3 (T% (fr i)) := fun i ↦ (hfr i).of_le (by norm_num)
+  have hfr2 : ∀ i, CMDiff 2 (T% (fr i)) := fun i ↦ (hfr i).of_le (by norm_num)
+  have hB2 : CMDiff 2 (T% B) := hB.of_le (by norm_num)
+  have hC2 : CMDiff 2 (T% C) := hC.of_le (by norm_num)
+  have hD2 : CMDiff 2 (T% D) := hD.of_le (by norm_num)
+  -- `∇_A eᵢ`, at the two levels the two pair-symmetry applications want
+  have hDfr3 : ∀ i, CMDiff 3 (T% (fun y ↦ cov (fr i) y (A y))) :=
+    fun i ↦ cov.contMDiff_cov_apply (hfr i) hA
+  have hDfr2 : ∀ i, CMDiff 2 (T% (fun y ↦ cov (fr i) y (A y))) :=
+    fun i ↦ (hDfr3 i).of_le (by norm_num)
+  -- Rewrite both terms into the same bilinear form by pair symmetry.
+  have key : ∀ i, ⟪cov.covCurvature (fun y ↦ cov (fr i) y (A y)) B (fr i) C x, D x⟫
+      + ⟪cov.covCurvature (fr i) B (fun y ↦ cov (fr i) y (A y)) C x, D x⟫
+      = cov.covCurvatureBilinDir C D B x (cov (fr i) x (A x)) (b i)
+        + cov.covCurvatureBilinDir C D B x (b i) (cov (fr i) x (A x)) := by
+    intro i
+    rw [cov.inner_covCurvature_pair_symm hmet htor (hDfr2 i) hB (hfr3 i) hC hD,
+      cov.inner_covCurvature_pair_symm hmet htor (hfr2 i) hB (hDfr3 i) hC hD, ← hbv i,
+      cov.covCurvatureBilinDir_apply hC2 hD2 hB (hDfr2 i),
+      cov.covCurvatureBilinDir_apply hC2 hD2 hB (hfr2 i)]
+  simp only [key]
+  refine sum_bilin_of_antisymm b _ (fun i ↦ cov (fr i) x (A x)) (fun i j ↦ ?_)
+  rw [← hbv i, ← hbv j]
+  exact cov.inner_cov_antisymm hmet (fun i ↦ ((hfr2 i).mdifferentiable (by norm_num)) x)
+    (fun i j ↦ by
+      filter_upwards [hu.mem_nhds hx] with y hy
+      rw [orthonormal_iff_ite.mp (hs.orthonormal hy) i j,
+        orthonormal_iff_ite.mp (hs.orthonormal hx) i j]) i j
+
+-- BENCH: trace-commutes-with-cov
+/-- **The trace commutes with `∇`, one level up: `∇_A` moves outside the frame sum.**
+
+Expanding `cov2Curvature` on the diagonal `Y = eᵢ`, `Rm`-slot-2 `= eᵢ` and pairing with `D`
+leaves five groups. Metric compatibility turns the leading one into a derivative of the
+frame sum minus a term in `∇_A D`; the two in which `∇_A` landed on the frame itself cancel
+(`sum_inner_covCurvature_frame_deriv_eq_zero`); the remaining two are the sum with `B` or
+`C` differentiated.
+
+**No curvature term survives** — the frame's non-parallelism is absorbed entirely by the
+antisymmetry argument, exactly as in `TraceCov.lean` and `OneForm.lean` one level down. -/
+theorem sum_inner_cov2Curvature_snd_eq_mvfderiv
+    (hmet : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    (htor : cov.torsion = 0)
+    {A B C D : Π y : M, TangentSpace I y} {x : M}
+    (hA : CMDiff 3 (T% A)) (hB : CMDiff 4 (T% B)) (hC : CMDiff 4 (T% C))
+    (hD : CMDiff 4 (T% D))
+    {ι : Type*} [Fintype ι] {fr : ι → Π y : M, TangentSpace I y} {u : Set M}
+    (hfr : ∀ i, CMDiff 4 (T% (fr i)))
+    (hs : IsOrthonormalFrameOn I E 1 fr u) (hu : IsOpen u) (hx : x ∈ u)
+    (b : OrthonormalBasis ι ℝ (TangentSpace I x)) (hbv : ∀ i, fr i x = b i) :
+    ∑ i, ⟪cov.cov2Curvature A (fr i) B (fr i) C x, D x⟫
+      = mvfderiv I (fun y ↦ ∑ i, ⟪cov.covCurvature (fr i) B (fr i) C y, D y⟫) x (A x)
+        - ∑ i, ⟪cov.covCurvature (fr i) B (fr i) C x, cov D x (A x)⟫
+        - ∑ i, ⟪cov.covCurvature (fr i) (fun y ↦ cov B y (A y)) (fr i) C x, D x⟫
+        - ∑ i, ⟪cov.covCurvature (fr i) B (fr i) (fun y ↦ cov C y (A y)) x, D x⟫ := by
+  classical
+  have h1 : (1 : ℕ∞ω) ≠ 0 := by norm_num
+  have hA2 : CMDiff 2 (T% A) := hA.of_le (by norm_num)
+  have hB3 : CMDiff 3 (T% B) := hB.of_le (by norm_num)
+  have hC3 : CMDiff 3 (T% C) := hC.of_le (by norm_num)
+  have hD3 : CMDiff 3 (T% D) := hD.of_le (by norm_num)
+  have hfr3 : ∀ i, CMDiff 3 (T% (fr i)) := fun i ↦ (hfr i).of_le (by norm_num)
+  -- the `∇Rm` sections being traced, and their differentiability
+  have hsec : ∀ i, CMDiff 1 (T% (fun y ↦ cov.covCurvature (fr i) B (fr i) C y)) :=
+    fun i ↦ cov.contMDiff_covCurvature (hfr3 i) hB3 (hfr3 i) hC
+  have hDm : MDiffAt (T% D) x := (hD.mdifferentiable (by norm_num)) x
+  -- the leading term, by metric compatibility
+  have hlead : ∀ i, ⟪cov (fun y ↦ cov.covCurvature (fr i) B (fr i) C y) x (A x), D x⟫
+      = mvfderiv I (fun y ↦ ⟪cov.covCurvature (fr i) B (fr i) C y, D y⟫) x (A x)
+        - ⟪cov.covCurvature (fr i) B (fr i) C x, cov D x (A x)⟫ := by
+    intro i
+    have := hmet.mvfderiv_inner_eq (V := fun y : M ↦ TangentSpace I y) A
+      ((hsec i).mdifferentiable h1 x) hDm
+    linarith [this]
+  -- the frame-derivative terms cancel
+  have hcancel := cov.sum_inner_covCurvature_frame_deriv_eq_zero hmet htor hA hB3 hC3 hD3
+    hfr hs hu hx b hbv
+  -- expand each summand
+  have hexp : ∀ i, ⟪cov.cov2Curvature A (fr i) B (fr i) C x, D x⟫
+      = (mvfderiv I (fun y ↦ ⟪cov.covCurvature (fr i) B (fr i) C y, D y⟫) x (A x)
+          - ⟪cov.covCurvature (fr i) B (fr i) C x, cov D x (A x)⟫)
+        - (⟪cov.covCurvature (fun y ↦ cov (fr i) y (A y)) B (fr i) C x, D x⟫
+          + ⟪cov.covCurvature (fr i) B (fun y ↦ cov (fr i) y (A y)) C x, D x⟫)
+        - ⟪cov.covCurvature (fr i) (fun y ↦ cov B y (A y)) (fr i) C x, D x⟫
+        - ⟪cov.covCurvature (fr i) B (fr i) (fun y ↦ cov C y (A y)) x, D x⟫ := by
+    intro i
+    show ⟪cov (fun y ↦ cov.covCurvature (fr i) B (fr i) C y) x (A x)
+        - cov.covCurvature (fun y ↦ cov (fr i) y (A y)) B (fr i) C x
+        - cov.covCurvature (fr i) (fun y ↦ cov B y (A y)) (fr i) C x
+        - cov.covCurvature (fr i) B (fun y ↦ cov (fr i) y (A y)) C x
+        - cov.covCurvature (fr i) B (fr i) (fun y ↦ cov C y (A y)) x, D x⟫ = _
+    simp only [inner_sub_left, hlead i]
+    ring
+  simp only [hexp]
+  rw [Finset.sum_sub_distrib, Finset.sum_sub_distrib, Finset.sum_sub_distrib,
+    Finset.sum_sub_distrib, hcancel,
+    RicciFlowBlueprint.mvfderiv_fun_sum (I := I) (fun i _ ↦ MDifferentiableAt.inner_bundle' ((hsec i).mdifferentiable h1 x) hDm)]
+  simp only [sum_apply]
+  ring
 
 end CovariantDerivative
