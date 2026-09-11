@@ -2366,7 +2366,9 @@ target actually requires.
 \begin{lemma}[The first variation of $\Rm$, commutator separated]
   \label{lem:first-variation-rm}
   \lean{CovariantDerivative.inner_curvatureOfTwoTensor_eq,
-    CovariantDerivative.inner_curvatureOfTwoTensor_eq_curvature}
+    CovariantDerivative.inner_curvatureOfTwoTensor_eq_curvature,
+    CovariantDerivative.covDivCurvature_eq_cov2Bilin,
+    CovariantDerivative.inner_derivCurvature_eq_curvatureLaplacian_add}
   \leanok
   \uses{lem:koszul-second-derivative, lem:bilin-ricci-identity}
   With $A = \partial_t\nab$ Koszul for $h = \partial_t g$,
@@ -2391,6 +2393,27 @@ target actually requires.
   other two antisymmetrise a derivative slot against an \emph{argument} slot, so no
   commutation rule applies to them at all; they keep their derivatives and are what
   the trace step of Lemma \ref{lem:bianchi-second-deriv} turns into $\Delta\Rm$.
+
+  \textbf{And the two halves join} (\texttt{inner\_derivCurvature\_eq\_curvatureLaplacian\_add}):
+  \[
+    \langle \partial_t\Rm(X,Y)Z, W\rangle = \langle \Delta\Rm(X,Y)Z, W\rangle
+      + Q_1 + Q_2 + \Ric(R(X,Y)Z,W) + \Ric(Z,R(X,Y)W),
+  \]
+  with $Q_1,Q_2$ the two commutator sums of Lemma \ref{lem:bianchi-second-deriv}.
+  \textbf{Every term on the right is either $\Delta\Rm$ or quadratic in the
+  curvature}, and the two sources of quadratic terms are different: $Q_1+Q_2$ is what
+  reordering the derivative slots of $\nab^2\Rm$ cost, while the two
+  $\Ric$-against-$\Rm$ terms are what commuting the derivative slots of $\nab^2h$
+  cost. Neither is bolted on; each is a commutator defect.
+
+  The join needs one bridge, \texttt{covDivCurvature\_eq\_cov2Bilin}: the trace step
+  speaks $\operatorname{covRicci}$ (what the contracted second Bianchi identity
+  produces) and the flow side speaks $\nab^2$ of $\operatorname{ricciForm}$, and the
+  three corrections regroup --- not termwise --- one group per differentiated slot.
+  \textbf{Four $\nab^2\Ric$ terms then cancel in pairs, by symmetry of $\Ric$
+  alone}: the flow side produces $(\nab^2_{X,W}\Ric)(Y,Z)$ where the trace step
+  produces $(\nab^2_{X,W}\Ric)(Z,Y)$. That is the last thing the derivation needs,
+  and it is free.
 \end{lemma}
 
 \begin{lemma}[The differentiated second Bianchi identity]
