@@ -2453,15 +2453,48 @@ target actually requires.
   differ only by the \texttt{letI} introducing the metric's instance --- is itself
   checked, by a bridge lemma proved by \texttt{:= h}; so the statement is not vacuous.
 
-  \textbf{Towards Hamilton's sharp estimate.} Sharpening $R \ge C$ to
-  $R \ge -n/(2t)$ needs one more inequality, $R^2 \le n|\Ric|^2_\g$, and that is proved
-  (\texttt{sq\_metricTraceE\_le\_card\_mul}): over a $\g$-orthonormal basis it is
-  Chebyshev's inequality on the diagonal followed by discarding the off-diagonal
-  squares. What is \emph{not} yet available is the maximum principle it would be fed
-  to: the reaction term becomes $F(r) = \tfrac{2}{n}r^2$, which is not globally
-  Lipschitz, while Theorem \ref{thm:max-scalar} asks for a Lipschitz $F$. Closing that
-  needs either a locally-Lipschitz form of the principle or a truncation argument, and
-  the comparison solution blows up at $t = 0$.
+  \textbf{Sharpening it} is Theorem \ref{thm:hamilton-scal-lower}, which keeps the
+  reaction term instead of discarding it.
+\end{theorem}
+
+\begin{theorem}[Hamilton's lower bound on the scalar curvature]
+  \label{thm:hamilton-scal-lower}
+  \lean{RicciFlowBlueprint.reactionTrunc,
+    RicciFlowBlueprint.reactionTrunc_le,
+    RicciFlowBlueprint.lipschitzWith_reactionTrunc,
+    RicciFlowBlueprint.hamiltonComparison,
+    RicciFlowBlueprint.hasDerivAt_hamiltonComparison,
+    RicciFlowBlueprint.sq_scalarCurvatureOfMetricAt_le,
+    RicciFlowBlueprint.scalarCurvatureOfMetricAt_ge_hamiltonComparison,
+    RicciFlowBlueprint.scalarCurvatureOfMetricAt_ge_hamiltonComparison_of_scalarFlowRHS}
+  \leanok
+  \uses{thm:scal-lower-bound-preserved, thm:evolution-scal, thm:max-scalar}
+  Let $g$ be a Ricci flow on $[0,T]$ on a closed $n$-manifold and let $C < 0$. If
+  $R \ge C$ everywhere at time $0$, then for every $t \in [0,T]$
+  \[
+    R(t,\cdot) \;\ge\; \frac{C}{1 - \tfrac{2}{n} C t},
+  \]
+  which increases from $C$ towards $0$.
+
+  \textbf{Proved} (\texttt{ScalarLowerBound.lean}). Theorem
+  \ref{thm:scal-lower-bound-preserved} threw the reaction term away; keeping it gives
+  the estimate. By Cauchy--Schwarz $R^2 \le n|\Ric|^2_\g$
+  (\texttt{sq\_metricTraceE\_le\_card\_mul} at $B = \Ric$), so
+  $2|\Ric|^2 \ge \tfrac{2}{n}R^2$ and $R$ obeys
+  $\partial_t R \ge \Delta R + \tfrac{2}{n}R^2$, whose comparison ODE
+  $\varphi' = \tfrac{2}{n}\varphi^2$ has solution $C/(1 - \tfrac{2}{n}Ct)$.
+
+  \textbf{The obstruction was that $r \mapsto \tfrac{2}{n}r^2$ is not Lipschitz},
+  while Theorem \ref{thm:max-scalar} asks for a Lipschitz reaction. Truncating it at
+  level $-C$ costs nothing, and \textbf{no bound on $R$ has to be assumed}: the
+  truncation lies below $\tfrac{2}{n}r^2$ at \emph{every} $r$ --- clamping only moves
+  $|r|$ down --- so the hypothesis at spatial minima survives untouched, while along
+  the comparison solution the truncation is invisible, that solution never leaving
+  $[C,0]$. An earlier plan truncated at a bound for $R$ read off compactness; that is
+  unnecessary.
+
+  As in Theorem \ref{thm:scal-lower-bound-preserved} the Laplacian and the norm both
+  move with $t$, and the maximum principle does not mind.
 \end{theorem}
 
 \begin{theorem}[Evolution of the curvature tensor]
