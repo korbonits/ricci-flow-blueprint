@@ -2419,6 +2419,7 @@ target actually requires.
 \begin{theorem}[A lower bound on the scalar curvature is preserved]
   \label{thm:scal-lower-bound-preserved}
   \lean{RicciFlowBlueprint.metricTraceE_comp_sharpE_self_nonneg,
+    RicciFlowBlueprint.sq_metricTraceE_le_card_mul,
     RicciFlowBlueprint.ricciFormOfMetric_symm,
     RicciFlowBlueprint.scalarFlowRHS,
     RicciFlowBlueprint.scalarCurvatureOfMetricAt_ge_of_hasDerivAt,
@@ -2451,6 +2452,16 @@ target actually requires.
   for at each time separately. That it really is that theorem's conclusion --- the two
   differ only by the \texttt{letI} introducing the metric's instance --- is itself
   checked, by a bridge lemma proved by \texttt{:= h}; so the statement is not vacuous.
+
+  \textbf{Towards Hamilton's sharp estimate.} Sharpening $R \ge C$ to
+  $R \ge -n/(2t)$ needs one more inequality, $R^2 \le n|\Ric|^2_\g$, and that is proved
+  (\texttt{sq\_metricTraceE\_le\_card\_mul}): over a $\g$-orthonormal basis it is
+  Chebyshev's inequality on the diagonal followed by discarding the off-diagonal
+  squares. What is \emph{not} yet available is the maximum principle it would be fed
+  to: the reaction term becomes $F(r) = \tfrac{2}{n}r^2$, which is not globally
+  Lipschitz, while Theorem \ref{thm:max-scalar} asks for a Lipschitz $F$. Closing that
+  needs either a locally-Lipschitz form of the principle or a truncation argument, and
+  the comparison solution blows up at $t = 0$.
 \end{theorem}
 
 \begin{theorem}[Evolution of the curvature tensor]

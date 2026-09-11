@@ -20,6 +20,7 @@ Everything here is at one point, on the model space `E = T_xM`: the metric is
 -/
 import RicciFlowBlueprint.Variation
 import Mathlib.Analysis.InnerProductSpace.Trace
+import Mathlib.Algebra.Order.Chebyshev
 
 open Bundle
 open scoped Manifold ContDiff
@@ -129,6 +130,40 @@ theorem metricTraceE_comp_sharpE_self_nonneg (B : E →L[ℝ] E →L[ℝ] ℝ)
   rw [hsymm (stdOrthonormalBasis ℝ (TangentSpace I x) j)
     (stdOrthonormalBasis ℝ (TangentSpace I x) i)]
   exact mul_self_nonneg _
+
+omit [CompleteSpace E] in
+-- BENCH: metric-trace-cauchy-schwarz
+/-- **`(tr_g B)² ≤ n · |B|²_g` for a symmetric form** --- Cauchy–Schwarz for the metric trace,
+`n` the dimension. Over a `g`-orthonormal basis the left side is `(∑ᵢ B(bᵢ,bᵢ))²` and the right
+`n · ∑ᵢⱼ B(bᵢ,bⱼ)²`, so it is Chebyshev's inequality on the diagonal followed by discarding the
+off-diagonal squares. At `B = Ric` this is `R² ≤ n|Ric|²`, which is what upgrades
+`∂ₜ R = Δ R + 2|Ric|²` from "a lower bound is preserved" to Hamilton's `R ≥ -n/(2t)`. -/
+theorem sq_metricTraceE_le_card_mul (B : E →L[ℝ] E →L[ℝ] ℝ)
+    (hsymm : ∀ v w : E, B v w = B w v) {ι : Type*} [Fintype ι]
+    (b : letI : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨g.toRiemannianMetric⟩
+      OrthonormalBasis ι ℝ (TangentSpace I x)) :
+    (metricTraceE g x B) ^ 2
+      ≤ (Fintype.card ι : ℝ) * metricTraceE g x (B ∘L sharpE g x B) := by
+  let _ : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨g.toRiemannianMetric⟩
+  rw [metricTraceE_eq_sum g x B b, metricTraceE_comp_sharpE_eq_sum g x B B b]
+  -- the double sum is a sum of squares
+  have hsq : ∑ i, ∑ j, B (b i) (b j) * B (b j) (b i) = ∑ i, ∑ j, B (b i) (b j) ^ 2 := by
+    refine Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ ?_
+    rw [hsymm (b j) (b i)]
+    ring
+  rw [hsq]
+  -- Chebyshev on the diagonal, then the off-diagonal squares are discarded
+  have hdiag : ∑ i, B (b i) (b i) ^ 2 ≤ ∑ i, ∑ j, B (b i) (b j) ^ 2 :=
+    Finset.sum_le_sum fun i _ ↦
+      Finset.single_le_sum (f := fun j ↦ B (b i) (b j) ^ 2)
+        (fun j _ ↦ sq_nonneg _) (Finset.mem_univ i)
+  have hcheb : (∑ i, B (b i) (b i)) ^ 2
+      ≤ (Fintype.card ι : ℝ) * ∑ i, B (b i) (b i) ^ 2 := by
+    have h := sq_sum_le_card_mul_sum_sq (s := (Finset.univ : Finset ι))
+      (f := fun i ↦ B (b i) (b i))
+    simpa using h
+  refine hcheb.trans ?_
+  gcongr
 
 omit [CompleteSpace E] in
 /-- `tr_g (g♭ ∘ T) = tr T`: the metric trace of the form `(v, w) ↦ g(T v, w)` is the trace of
