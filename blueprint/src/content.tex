@@ -2416,6 +2416,42 @@ target actually requires.
   and it is free.
 \end{lemma}
 
+\begin{theorem}[Evolution of the curvature tensor]
+  \label{thm:evolution-rm}
+  \lean{RicciFlowBlueprint.inner_derivCurvature_eq_curvatureLaplacian_add_of_isRicciFlowAt,
+    RicciFlowBlueprint.hasDerivAt_inner_curvatureE_eq_curvatureLaplacian_add_of_isRicciFlowAt}
+  \leanok
+  \uses{def:ricci-flow, lem:first-variation-rm, lem:bianchi-second-deriv,
+    lem:koszul-second-derivative}
+  Under the Ricci flow, on any manifold,
+  \[
+    \partial_t \langle \Rm(X,Y)Z, W\rangle = \langle \Delta\Rm(X,Y)Z, W\rangle
+      + Q_1 + Q_2 + \Ric(R(X,Y)Z,W) + \Ric(Z,R(X,Y)W),
+  \]
+  the pairing being against the metric frozen at the time of differentiation, so
+  that the left-hand side is the time derivative of the $(1,3)$-tensor $\Rm$ and
+  carries no $\partial_t\g$ term of its own.
+
+  \textbf{Proved} (\texttt{CurvatureEvolution.lean}). Lemma
+  \ref{lem:first-variation-rm} proves the identity for \emph{any} $(1,2)$-tensor
+  $A$ Koszul for $h = -2\Ric$; this specialises it to a genuine Ricci flow, where
+  $A = \partial_t\nab$ and $h = \partial_t\g$. Both hypotheses it needs are then
+  theorems rather than assumptions: $\partial_t\nab$ is Koszul for $\partial_t\g$
+  (\texttt{isKoszulOf\_derivDifference}), and $\partial_t\g = -2\Ric$ under the
+  flow (\texttt{innerE\_deriv\_eq\_of\_isRicciFlowAt'}). Composing with the first
+  variation of the curvature, which delivers $\partial_t\Rm$ as the $\Rm_A$ of
+  $\partial_t\nab$, turns the identity into a statement about a derivative in
+  $t$.
+
+  \textbf{What the specialisation costs is bookkeeping, not mathematics}, and the
+  same bookkeeping Theorem \ref{thm:evolution-scal} paid: every hypothesis is
+  written under the two-step \texttt{letI} that introduces the metric's
+  \texttt{RiemannianBundle} instance and the $C^1$ regularity of its Levi-Civita
+  connection, and the levels the curvature tower consumes --- a $C^3$ metric and a
+  $C^3$ connection --- are carried as explicit hypotheses, a $C^2$ metric giving
+  only a $C^1$ connection.
+\end{theorem}
+
 \begin{lemma}[The differentiated second Bianchi identity]
   \label{lem:bianchi-second-deriv}
   \lean{CovariantDerivative.cov2Curvature_cyclic_eq_zero,
