@@ -2363,6 +2363,36 @@ target actually requires.
   off a \texttt{TensorialAt}.
 \end{lemma}
 
+\begin{lemma}[The first variation of $\Rm$, commutator separated]
+  \label{lem:first-variation-rm}
+  \lean{CovariantDerivative.inner_curvatureOfTwoTensor_eq,
+    CovariantDerivative.inner_curvatureOfTwoTensor_eq_curvature}
+  \leanok
+  \uses{lem:koszul-second-derivative, lem:bilin-ricci-identity}
+  With $A = \partial_t\nab$ Koszul for $h = \partial_t g$,
+  \[
+    \langle \partial_t\Rm(X,Y)Z, W\rangle
+      = \tfrac12\bigl[-h(R(X,Y)Z,W) - h(Z,R(X,Y)W)\bigr]
+        + \tfrac12 P_1 - \tfrac12 P_2,
+  \]
+  where $P_1 = (\nab^2_{X,Z}h)(W,Y) - (\nab^2_{Y,Z}h)(W,X)$ and
+  $P_2 = (\nab^2_{X,W}h)(Y,Z) - (\nab^2_{Y,W}h)(X,Z)$.
+
+  \textbf{Proved} (\texttt{CurvatureFlow.lean}). Pairing
+  $\partial_t\Rm(X,Y)Z = (\nab_X A)(Y,Z) - (\nab_Y A)(X,Z)$ against $W$ and applying
+  Lemma \ref{lem:koszul-second-derivative} twice gives \emph{three} antisymmetrised
+  pairs of $\nab^2 h$.
+
+  \textbf{The three pairs are not alike, and the whole evolution equation is that
+  asymmetry.} Only the first is antisymmetrised in $\nab^2h$'s two \emph{derivative}
+  slots, so only it is a commutator: Lemma \ref{lem:bilin-ricci-identity} evaluates
+  it, and it loses its derivatives entirely, becoming $h$ applied to $\Rm$ --- under
+  the flow, with $h = -2\Ric$, exactly the terms quadratic in the curvature. The
+  other two antisymmetrise a derivative slot against an \emph{argument} slot, so no
+  commutation rule applies to them at all; they keep their derivatives and are what
+  the trace step of Lemma \ref{lem:bianchi-second-deriv} turns into $\Delta\Rm$.
+\end{lemma}
+
 \begin{lemma}[The differentiated second Bianchi identity]
   \label{lem:bianchi-second-deriv}
   \lean{CovariantDerivative.cov2Curvature_cyclic_eq_zero,

@@ -47,3 +47,4 @@ import RicciFlowBlueprint.GeodesicODE
 import RicciFlowBlueprint.Exponential
 import RicciFlowBlueprint.RicciIdentity
 import RicciFlowBlueprint.BianchiDeriv
+import RicciFlowBlueprint.CurvatureFlow
