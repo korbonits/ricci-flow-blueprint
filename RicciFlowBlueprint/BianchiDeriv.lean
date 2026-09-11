@@ -617,4 +617,60 @@ theorem inner_curvatureLaplacian_eq
     cov.sum_inner_cov2Curvature_snd_eq_covRicci hmet htor hB3 hA hC hD hfr hs hu hx b hbv]
   ring
 
+omit [CompleteSpace E] in
+-- BENCH: cov-div-curvature-as-cov2bilin
+/-- **`(∇_A div Rm)` is a difference of two `∇²Ric` terms.**
+
+  `covDivCurvature A B C D = (∇²_{A,C}Ric)(D,B) − (∇²_{A,D}Ric)(C,B)`
+
+`covDivCurvature` is phrased through `covRicci` because that is what the contracted second
+Bianchi identity produces; the *flow* side speaks `cov2Bilin` of `ricciForm`. This is the
+bridge, and it is pure bookkeeping: `covBilin_ricciForm_eq_covRicci` identifies the two at
+each point, and the three corrections of `covDivCurvature` regroup — **not termwise** — into
+the three that each `cov2Bilin` subtracts, one group per differentiated slot.
+
+The regularity climbs one step here: `cov2Bilin`'s corrections put `∇_A D` in an *argument*
+slot of `∇Ric`, which asks `C³` of it, hence `C⁴` of the field. -/
+theorem covDivCurvature_eq_cov2Bilin
+    {A B C D : Π y : M, TangentSpace I y} {x : M}
+    (hA : CMDiff 3 (T% A)) (hB : CMDiff 4 (T% B)) (hC : CMDiff 4 (T% C))
+    (hD : CMDiff 4 (T% D))
+    (hd₁ : MDiffAt (fun y ↦ cov.covRicci C D B y) x)
+    (hd₂ : MDiffAt (fun y ↦ cov.covRicci D C B y) x) :
+    cov.covDivCurvature A B C D x
+      = cov.cov2Bilin (fun y ↦ cov.ricciForm y) A C D B x
+        - cov.cov2Bilin (fun y ↦ cov.ricciForm y) A D C B x := by
+  have hA2 : CMDiff 2 (T% A) := hA.of_le (by norm_num)
+  have hB3 : CMDiff 3 (T% B) := hB.of_le (by norm_num)
+  have hC3 : CMDiff 3 (T% C) := hC.of_le (by norm_num)
+  have hD3 : CMDiff 3 (T% D) := hD.of_le (by norm_num)
+  have hC2 : CMDiff 2 (T% C) := hC.of_le (by norm_num)
+  have hD2 : CMDiff 2 (T% D) := hD.of_le (by norm_num)
+  -- the differentiated fields, at the levels each slot asks for
+  have hDB3 : CMDiff 3 (T% (fun y ↦ cov B y (A y))) := cov.contMDiff_cov_apply hB hA
+  have hDC3 : CMDiff 3 (T% (fun y ↦ cov C y (A y))) := cov.contMDiff_cov_apply hC hA
+  have hDD3 : CMDiff 3 (T% (fun y ↦ cov D y (A y))) := cov.contMDiff_cov_apply hD hA
+  have hDC2 : CMDiff 2 (T% (fun y ↦ cov C y (A y))) := hDC3.of_le (by norm_num)
+  have hDD2 : CMDiff 2 (T% (fun y ↦ cov D y (A y))) := hDD3.of_le (by norm_num)
+  -- the bridge, as an equality of functions so that it can be differentiated
+  have efun : ∀ P Q R : Π y : M, TangentSpace I y, CMDiff 2 (T% P) → CMDiff 3 (T% Q) →
+      CMDiff 3 (T% R) →
+      (fun y ↦ cov.covBilin (fun z ↦ cov.ricciForm z) P Q R y)
+        = fun y ↦ cov.covRicci P Q R y :=
+    fun P Q R hP hQ hR ↦ funext fun y ↦ cov.covBilin_ricciForm_eq_covRicci hP hQ hR
+  -- and the leading derivative, split
+  have hlead : mvfderiv I (fun y ↦ cov.covRicci C D B y - cov.covRicci D C B y) x (A x)
+      = mvfderiv I (fun y ↦ cov.covRicci C D B y) x (A x)
+        - mvfderiv I (fun y ↦ cov.covRicci D C B y) x (A x) := by
+    rw [mvfderiv_fun_sub hd₁ hd₂]; rfl
+  unfold covDivCurvature cov2Bilin
+  rw [hlead, efun C D B hC2 hD3 hB3, efun D C B hD2 hC3 hB3,
+    cov.covBilin_ricciForm_eq_covRicci hDC2 hD3 hB3,
+    cov.covBilin_ricciForm_eq_covRicci hC2 hDD3 hB3,
+    cov.covBilin_ricciForm_eq_covRicci hC2 hD3 hDB3,
+    cov.covBilin_ricciForm_eq_covRicci hDD2 hC3 hB3,
+    cov.covBilin_ricciForm_eq_covRicci hD2 hDC3 hB3,
+    cov.covBilin_ricciForm_eq_covRicci hD2 hC3 hDB3]
+  ring
+
 end CovariantDerivative

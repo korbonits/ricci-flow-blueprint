@@ -159,6 +159,42 @@ theorem inner_covTwoTensor_eq (hcov : cov.IsMetricCompatible (M := M) (V := Tang
   linarith [hmet, hsum, hder, k₁, k₂, k₃, e₁, e₂, e₃]
 
 omit [CompleteSpace E] in
+-- BENCH: inner-curvature-of-two-tensor
+/-- **The first variation of `Rm` in terms of `∇²h`, all four indices.**
+
+`∂ₜRm(X,Y)Z = (∇_X A)(Y,Z) − (∇_Y A)(X,Z)` with `A = ∂ₜ∇` Koszul for `h = ∂ₜg`, so pairing
+against `W` and applying `inner_covTwoTensor_eq` twice gives
+
+  `⟪∂ₜRm(X,Y)Z, W⟫ = ½[(∇²_{X,Y}h)(Z,W) − (∇²_{Y,X}h)(Z,W)]
+      + ½[(∇²_{X,Z}h)(W,Y) − (∇²_{Y,Z}h)(W,X)] − ½[(∇²_{X,W}h)(Y,Z) − (∇²_{Y,W}h)(X,Z)]`.
+
+**Three antisymmetrised pairs, and they are not alike.** The first is `∇²h` antisymmetrised
+in its two *derivative* slots, so the Ricci identity for a bilinear form collapses it to
+curvature terms — quadratic, once `h = −2Ric`. The other two carry the traced structure that
+becomes `Δ Rm`. That split is the whole of the evolution equation.
+
+The two uniform hypotheses replace six pointwise ones: `∇h` differentiable on `C²` fields,
+and `A` differentiable on them, which is what the flow supplies. -/
+theorem inner_curvatureOfTwoTensor_eq
+    (hcov : cov.IsMetricCompatible (M := M) (V := TangentSpace I)) (hA : cov.IsKoszulOf A h)
+    {X Y Z W : Π y : M, TangentSpace I y} {x : M}
+    (hX : CMDiff 2 (T% X)) (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z))
+    (hW : CMDiff 2 (T% W))
+    (hAf : ∀ P Q : Π y : M, TangentSpace I y, CMDiff 2 (T% P) → CMDiff 2 (T% Q) →
+      MDiffAt (T% (fun y ↦ A y (P y) (Q y))) x)
+    (hd : ∀ P Q R : Π y : M, TangentSpace I y, CMDiff 2 (T% P) → CMDiff 2 (T% Q) →
+      CMDiff 2 (T% R) → MDiffAt (fun y ↦ cov.covBilin h P Q R y) x) :
+    ⟪cov.covTwoTensor A X Y Z x, W x⟫ - ⟪cov.covTwoTensor A Y X Z x, W x⟫
+      = (cov.cov2Bilin h X Y Z W x - cov.cov2Bilin h Y X Z W x) / 2
+        + (cov.cov2Bilin h X Z W Y x - cov.cov2Bilin h Y Z W X x) / 2
+        - (cov.cov2Bilin h X W Y Z x - cov.cov2Bilin h Y W X Z x) / 2 := by
+  rw [cov.inner_covTwoTensor_eq hcov hA (hX.of_le (by norm_num)) hY hZ hW
+      (hAf Y Z hY hZ) (hd Y Z W hY hZ hW) (hd Z W Y hZ hW hY) (hd W Y Z hW hY hZ),
+    cov.inner_covTwoTensor_eq hcov hA (hY.of_le (by norm_num)) hX hZ hW
+      (hAf X Z hX hZ) (hd X Z W hX hZ hW) (hd Z W X hZ hW hX) (hd W X Z hW hX hZ)]
+  ring
+
+omit [CompleteSpace E] in
 -- BENCH: koszul-double-trace
 /-- **The double trace of the Koszul curvature.** For a metric connection, a *symmetric* `h`
 and `A` Koszul for `h`, the object `Rm_A(X,Y)Z = (∇_X A)(Y,Z) − (∇_Y A)(X,Z)` --- which is what

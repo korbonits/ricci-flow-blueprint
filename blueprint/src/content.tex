@@ -2363,6 +2363,95 @@ target actually requires.
   off a \texttt{TensorialAt}.
 \end{lemma}
 
+\begin{lemma}[The first variation of $\Rm$, commutator separated]
+  \label{lem:first-variation-rm}
+  \lean{CovariantDerivative.inner_curvatureOfTwoTensor_eq,
+    CovariantDerivative.inner_curvatureOfTwoTensor_eq_curvature,
+    CovariantDerivative.covDivCurvature_eq_cov2Bilin,
+    CovariantDerivative.inner_derivCurvature_eq_curvatureLaplacian_add}
+  \leanok
+  \uses{lem:koszul-second-derivative, lem:bilin-ricci-identity}
+  With $A = \partial_t\nab$ Koszul for $h = \partial_t g$,
+  \[
+    \langle \partial_t\Rm(X,Y)Z, W\rangle
+      = \tfrac12\bigl[-h(R(X,Y)Z,W) - h(Z,R(X,Y)W)\bigr]
+        + \tfrac12 P_1 - \tfrac12 P_2,
+  \]
+  where $P_1 = (\nab^2_{X,Z}h)(W,Y) - (\nab^2_{Y,Z}h)(W,X)$ and
+  $P_2 = (\nab^2_{X,W}h)(Y,Z) - (\nab^2_{Y,W}h)(X,Z)$.
+
+  \textbf{Proved} (\texttt{CurvatureFlow.lean}). Pairing
+  $\partial_t\Rm(X,Y)Z = (\nab_X A)(Y,Z) - (\nab_Y A)(X,Z)$ against $W$ and applying
+  Lemma \ref{lem:koszul-second-derivative} twice gives \emph{three} antisymmetrised
+  pairs of $\nab^2 h$.
+
+  \textbf{The three pairs are not alike, and the whole evolution equation is that
+  asymmetry.} Only the first is antisymmetrised in $\nab^2h$'s two \emph{derivative}
+  slots, so only it is a commutator: Lemma \ref{lem:bilin-ricci-identity} evaluates
+  it, and it loses its derivatives entirely, becoming $h$ applied to $\Rm$ --- under
+  the flow, with $h = -2\Ric$, exactly the terms quadratic in the curvature. The
+  other two antisymmetrise a derivative slot against an \emph{argument} slot, so no
+  commutation rule applies to them at all; they keep their derivatives and are what
+  the trace step of Lemma \ref{lem:bianchi-second-deriv} turns into $\Delta\Rm$.
+
+  \textbf{And the two halves join} (\texttt{inner\_derivCurvature\_eq\_curvatureLaplacian\_add}):
+  \[
+    \langle \partial_t\Rm(X,Y)Z, W\rangle = \langle \Delta\Rm(X,Y)Z, W\rangle
+      + Q_1 + Q_2 + \Ric(R(X,Y)Z,W) + \Ric(Z,R(X,Y)W),
+  \]
+  with $Q_1,Q_2$ the two commutator sums of Lemma \ref{lem:bianchi-second-deriv}.
+  \textbf{Every term on the right is either $\Delta\Rm$ or quadratic in the
+  curvature}, and the two sources of quadratic terms are different: $Q_1+Q_2$ is what
+  reordering the derivative slots of $\nab^2\Rm$ cost, while the two
+  $\Ric$-against-$\Rm$ terms are what commuting the derivative slots of $\nab^2h$
+  cost. Neither is bolted on; each is a commutator defect.
+
+  The join needs one bridge, \texttt{covDivCurvature\_eq\_cov2Bilin}: the trace step
+  speaks $\operatorname{covRicci}$ (what the contracted second Bianchi identity
+  produces) and the flow side speaks $\nab^2$ of $\operatorname{ricciForm}$, and the
+  three corrections regroup --- not termwise --- one group per differentiated slot.
+  \textbf{Four $\nab^2\Ric$ terms then cancel in pairs, by symmetry of $\Ric$
+  alone}: the flow side produces $(\nab^2_{X,W}\Ric)(Y,Z)$ where the trace step
+  produces $(\nab^2_{X,W}\Ric)(Z,Y)$. That is the last thing the derivation needs,
+  and it is free.
+\end{lemma}
+
+\begin{theorem}[Evolution of the curvature tensor]
+  \label{thm:evolution-rm}
+  \lean{RicciFlowBlueprint.inner_derivCurvature_eq_curvatureLaplacian_add_of_isRicciFlowAt,
+    RicciFlowBlueprint.hasDerivAt_inner_curvatureE_eq_curvatureLaplacian_add_of_isRicciFlowAt}
+  \leanok
+  \uses{def:ricci-flow, lem:first-variation-rm, lem:bianchi-second-deriv,
+    lem:koszul-second-derivative}
+  Under the Ricci flow, on any manifold,
+  \[
+    \partial_t \langle \Rm(X,Y)Z, W\rangle = \langle \Delta\Rm(X,Y)Z, W\rangle
+      + Q_1 + Q_2 + \Ric(R(X,Y)Z,W) + \Ric(Z,R(X,Y)W),
+  \]
+  the pairing being against the metric frozen at the time of differentiation, so
+  that the left-hand side is the time derivative of the $(1,3)$-tensor $\Rm$ and
+  carries no $\partial_t\g$ term of its own.
+
+  \textbf{Proved} (\texttt{CurvatureEvolution.lean}). Lemma
+  \ref{lem:first-variation-rm} proves the identity for \emph{any} $(1,2)$-tensor
+  $A$ Koszul for $h = -2\Ric$; this specialises it to a genuine Ricci flow, where
+  $A = \partial_t\nab$ and $h = \partial_t\g$. Both hypotheses it needs are then
+  theorems rather than assumptions: $\partial_t\nab$ is Koszul for $\partial_t\g$
+  (\texttt{isKoszulOf\_derivDifference}), and $\partial_t\g = -2\Ric$ under the
+  flow (\texttt{innerE\_deriv\_eq\_of\_isRicciFlowAt'}). Composing with the first
+  variation of the curvature, which delivers $\partial_t\Rm$ as the $\Rm_A$ of
+  $\partial_t\nab$, turns the identity into a statement about a derivative in
+  $t$.
+
+  \textbf{What the specialisation costs is bookkeeping, not mathematics}, and the
+  same bookkeeping Theorem \ref{thm:evolution-scal} paid: every hypothesis is
+  written under the two-step \texttt{letI} that introduces the metric's
+  \texttt{RiemannianBundle} instance and the $C^1$ regularity of its Levi-Civita
+  connection, and the levels the curvature tower consumes --- a $C^3$ metric and a
+  $C^3$ connection --- are carried as explicit hypotheses, a $C^2$ metric giving
+  only a $C^1$ connection.
+\end{theorem}
+
 \begin{lemma}[The differentiated second Bianchi identity]
   \label{lem:bianchi-second-deriv}
   \lean{CovariantDerivative.cov2Curvature_cyclic_eq_zero,
