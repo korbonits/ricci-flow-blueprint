@@ -2363,6 +2363,151 @@ target actually requires.
   off a \texttt{TensorialAt}.
 \end{lemma}
 
+\begin{lemma}[The differentiated second Bianchi identity]
+  \label{lem:bianchi-second-deriv}
+  \lean{CovariantDerivative.cov2Curvature_cyclic_eq_zero,
+    CovariantDerivative.curvatureLaplacian_eq_neg_sum,
+    CovariantDerivative.cov2Curvature_sub_swap',
+    CovariantDerivative.curvatureCommutator,
+    CovariantDerivative.curvatureLaplacian_eq_swapped,
+    CovariantDerivative.sum_inner_covCurvature_snd_eq,
+    CovariantDerivative.covCurvatureBilinDir,
+    CovariantDerivative.sum_inner_covCurvature_frame_deriv_eq_zero,
+    CovariantDerivative.sum_inner_cov2Curvature_snd_eq_mvfderiv,
+    CovariantDerivative.covDivCurvature,
+    CovariantDerivative.sum_inner_cov2Curvature_snd_eq_covRicci,
+    CovariantDerivative.cov2Curvature_antisymm,
+    CovariantDerivative.inner_curvatureLaplacian_eq}
+  \leanok
+  \uses{lem:bianchi-second, def:cov2-curvature}
+  For a torsion-free connection the cyclic identity of Lemma
+  \ref{lem:bianchi-second} survives one more derivative:
+  \[
+    (\nab^2_{X,Y}\Rm)(A,B)C + (\nab^2_{X,A}\Rm)(B,Y)C
+      + (\nab^2_{X,B}\Rm)(Y,A)C = 0.
+  \]
+
+  \textbf{Proved} (\texttt{BianchiDeriv.lean}). This is what the trace step of
+  Lemma \ref{lem:evolution-rm} consumes: summed over $Y = e_i$ with $X = e_i$ it
+  turns $\Delta \Rm$ into two traces of $\nab^2\Rm$ whose derivative slots are in
+  the \emph{wrong} order, which Lemma \ref{lem:curvature-ricci-identity} then
+  reorders at the cost of terms quadratic in $\Rm$.
+
+  \textbf{Nothing is differentiated twice by hand.} $\nab^2\Rm$ is $\nab\Rm$
+  differentiated once with one correction per slot, so the cyclic sum splits into
+  a leading part and four correction groups, and every one of the five vanishes by
+  the \emph{undifferentiated} identity. The leading parts combine, by additivity
+  of $\nab$ on sections, into $\nab_X$ of the section
+  $u \mapsto (\nab_Y\Rm)(A,B)C + (\nab_A\Rm)(B,Y)C + (\nab_B\Rm)(Y,A)C$, which
+  Lemma \ref{lem:bianchi-second} says is the zero section; and each correction
+  group is the cyclic sum with one field replaced by its covariant derivative, so
+  is that lemma again. So the proof is five applications of
+  \texttt{bianchi\_second} and one $\nab 0 = 0$.
+
+  \textbf{The corrections cancel three at a time, not in pairs} --- one group per
+  differentiated field, $\nab_X Y$, $\nab_X A$, $\nab_X B$, $\nab_X C$. That
+  regrouping is what carries the content. Regularity is one derivative above
+  Lemma \ref{lem:bianchi-second} throughout, and the last slot stays the
+  expensive one: $C$ is asked for four derivatives so that $\nab_X C$ still has
+  the three that the spectator slot wants. \textbf{No metric is needed}, exactly
+  as for Lemma \ref{lem:bianchi-second} itself --- which is worth knowing before
+  the trace step, where a metric first becomes unavoidable.
+
+  \textbf{The trace is taken} (\texttt{curvatureLaplacian\_eq\_neg\_sum}). Summing
+  over $X = Y = e_i$ puts the first term of the cyclic sum on the diagonal, where
+  it \emph{is} $\Delta\Rm$, and leaves the other two:
+  \[
+    \Delta\Rm(A,B)C = -\sum_i (\nab^2_{e_i,A}\Rm)(B,e_i)C
+      - \sum_i (\nab^2_{e_i,B}\Rm)(e_i,A)C .
+  \]
+  This is where the metric enters, and it is also what forces
+  Lemma \ref{lem:curvature-ricci-identity}: in both surviving sums the traced
+  index sits in the \emph{outer} derivative slot, while the divergence lemmas of
+  Theorem \ref{thm:contracted-bianchi} trace the slot $\nab\Rm$ is pointwise in.
+  Reordering the two derivative slots is what produces the terms quadratic
+  in $\Rm$.
+
+  \textbf{The reordering is done} (\texttt{curvatureLaplacian\_eq\_swapped}).
+  Applying Lemma \ref{lem:curvature-ricci-identity} to each summand moves the
+  traced index out of the outer derivative slot and into the inner one, at the
+  cost of one commutator apiece:
+  \[
+    \Delta\Rm(A,B)C = -\sum_i (\nab^2_{A,e_i}\Rm)(B,e_i)C
+      - \sum_i (\nab^2_{B,e_i}\Rm)(e_i,A)C - \sum_i \mathcal{C}_i - \sum_i \mathcal{C}'_i,
+  \]
+  where $\mathcal{C}$ is \texttt{curvatureCommutator}, the right-hand side of
+  Lemma \ref{lem:curvature-ricci-identity}. \textbf{This is
+  Lemma \ref{lem:evolution-rm} in outline}: the first two sums are $\nab$ of a
+  divergence of $\Rm$ and so become second derivatives of $\Ric$ by
+  Theorem \ref{thm:contracted-bianchi}; the last two \emph{are} $Q$, and they are
+  quadratic in $\Rm$ because $\mathcal{C}$ is $\Rm$ applied to $\Rm$. Nothing else
+  will appear --- $Q$ is not bolted on at the end, it is precisely what the
+  reordering costs.
+
+  The twenty-five differentiability hypotheses of
+  Lemma \ref{lem:curvature-ricci-identity} all follow from uniform $C^3$ fields
+  with $C$ at $C^4$, which is the regularity the trace already carries; that
+  wrapper (\texttt{cov2Curvature\_sub\_swap'}) is what makes the identity usable
+  inside a frame sum.
+
+  \textbf{The undifferentiated divergence is identified}
+  (\texttt{sum\_inner\_covCurvature\_snd\_eq}):
+  \[
+    \sum_i \langle (\nab_{e_i}\Rm)(B,e_i)C, D\rangle
+      = (\nab_C\Ric)(D,B) - (\nab_D\Ric)(C,B).
+  \]
+  Theorem \ref{thm:contracted-bianchi} traces the derivative index against
+  $\Rm$'s \emph{output}, whereas the trace step produces it against $\Rm$'s
+  \emph{second input}. Pair symmetry of $\nab\Rm$ exchanges the two: it moves the
+  pair $(B,e_i)$ past $(C,D)$ and so puts $e_i$ back in the output slot, where
+  $\operatorname{div}\Rm$ lives. This needs only a $C^2$ connection. What remains
+  on this line is to move $\nab_A$ outside the trace, which is the
+  \emph{trace commutes with $\nab$} argument of Lemma \ref{lem:metric-trace-cov} one
+  level up, with the two frame-derivative corrections cancelling against each
+  other by \texttt{sum\_bilin\_of\_antisymm} --- whose statement is already the
+  symmetrised form $\sum_i (B(D_i,e_i) + B(e_i,D_i)) = 0$ that this produces.
+
+  \textbf{And $\nab_A$ does move outside the trace}
+  (\texttt{sum\_inner\_cov2Curvature\_snd\_eq\_mvfderiv}). Expanding
+  $\Rm$'s second covariant derivative on the diagonal and pairing with $D$ leaves
+  five groups: metric compatibility turns the leading one into a derivative of the
+  frame sum minus a term in $\nab_A D$; the two in which $\nab_A$ landed on the
+  \emph{frame} cancel each other; the remaining two are the sum with $B$ or $C$
+  differentiated. \textbf{No curvature term survives} --- the frame's
+  non-parallelism is absorbed entirely by the antisymmetry argument, exactly as
+  one level down in Lemma \ref{lem:metric-trace-cov}.
+
+  The cancellation (\texttt{sum\_inner\_covCurvature\_frame\_deriv\_eq\_zero})
+  is where pair symmetry earns its keep a second time: it puts \emph{both} frame
+  terms into the same bilinear form \texttt{covCurvatureBilinDir}, one with the
+  arguments in each order, so \texttt{sum\_bilin\_of\_antisymm} applies verbatim.
+  That form is $\operatorname{innerSL}$ composed with \texttt{covCurvatureEndo},
+  so bilinearity holds by construction. The frame is asked for $C^4$: pair
+  symmetry wants $C^3$ in the slot $\nab_A e_i$ occupies.
+
+  \textbf{The trace step closes} (\texttt{inner\_curvatureLaplacian\_eq}):
+  \[
+    \langle \Delta\Rm(A,B)C, D\rangle
+      = -(\nab_A \operatorname{div}\Rm)(C,D,B)
+        + (\nab_B \operatorname{div}\Rm)(C,D,A) - Q,
+  \]
+  where $Q$ is the two commutator sums and
+  $(\nab_A\operatorname{div}\Rm)(C,D,B)$ is \texttt{covDivCurvature}, the
+  covariant derivative of the $(0,3)$-tensor
+  $\operatorname{div}\Rm(C,D,B) = (\nab_C\Ric)(D,B) - (\nab_D\Ric)(C,B)$ of
+  Theorem \ref{thm:contracted-bianchi}. \textbf{Every term is accounted for}: the
+  first two are second derivatives of $\Ric$, the last two are quadratic in $\Rm$,
+  being $\Rm$ applied to $\Rm$.
+
+  One brick was missing for this: the second sum carries the traced index in
+  $\Rm$'s \emph{first} slot rather than its second, so
+  \texttt{cov2Curvature\_antisymm} --- $\nab^2\Rm$ inheriting $\Rm$'s
+  antisymmetry, each of the five terms flipping by
+  \texttt{covCurvature\_antisymm}, with the two corrections in $\nab_X A$ and
+  $\nab_X B$ \emph{swapping with each other} --- turns it round. That is where the
+  sign flip between the two divergence terms comes from.
+\end{lemma}
+
 \begin{theorem}[Scalar maximum principle]
   \label{thm:max-scalar}
   \lean{RicciFlowBlueprint.MaximumPrinciple.le_of_deriv_ge_at_min, RicciFlowBlueprint.MaximumPrinciple.le_of_laplacian}
