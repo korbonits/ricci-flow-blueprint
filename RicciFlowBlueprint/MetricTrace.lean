@@ -115,6 +115,22 @@ theorem metricTraceE_comp_sharpE_eq_sum (h B : E →L[ℝ] E →L[ℝ] ℝ) {ι 
   exact key (fun j ↦ B (b i) (b j)) (fun j ↦ b j) (b i)
 
 omit [CompleteSpace E] in
+-- BENCH: metric-trace-self-nonneg
+/-- **`|B|²_g ≥ 0` for a symmetric form.** The pairing `⟨B, B⟩_g` is a sum of squares over any
+`g`-orthonormal basis, by `metricTraceE_comp_sharpE_eq_sum` and symmetry. This is what makes the
+`2|Ric|²` of `∂ₜ R = Δ R + 2|Ric|²` a nonnegative term, and hence what makes a lower bound on
+the scalar curvature preserved under the flow. -/
+theorem metricTraceE_comp_sharpE_self_nonneg (B : E →L[ℝ] E →L[ℝ] ℝ)
+    (hsymm : ∀ v w : E, B v w = B w v) :
+    0 ≤ metricTraceE g x (B ∘L sharpE g x B) := by
+  let _ : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨g.toRiemannianMetric⟩
+  rw [metricTraceE_comp_sharpE_eq_sum g x B B (stdOrthonormalBasis ℝ (TangentSpace I x))]
+  refine Finset.sum_nonneg fun i _ ↦ Finset.sum_nonneg fun j _ ↦ ?_
+  rw [hsymm (stdOrthonormalBasis ℝ (TangentSpace I x) j)
+    (stdOrthonormalBasis ℝ (TangentSpace I x) i)]
+  exact mul_self_nonneg _
+
+omit [CompleteSpace E] in
 /-- `tr_g (g♭ ∘ T) = tr T`: the metric trace of the form `(v, w) ↦ g(T v, w)` is the trace of
 `T`. -/
 theorem metricTraceE_innerE_comp (T : E →L[ℝ] E) :

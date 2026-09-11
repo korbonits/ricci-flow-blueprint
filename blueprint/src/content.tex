@@ -2416,6 +2416,43 @@ target actually requires.
   and it is free.
 \end{lemma}
 
+\begin{theorem}[A lower bound on the scalar curvature is preserved]
+  \label{thm:scal-lower-bound-preserved}
+  \lean{RicciFlowBlueprint.metricTraceE_comp_sharpE_self_nonneg,
+    RicciFlowBlueprint.ricciFormOfMetric_symm,
+    RicciFlowBlueprint.scalarFlowRHS,
+    RicciFlowBlueprint.scalarCurvatureOfMetricAt_ge_of_hasDerivAt,
+    RicciFlowBlueprint.hasDerivAt_scalarFlowRHS_of_hasDerivAt_scalarCurvatureAt,
+    RicciFlowBlueprint.scalarCurvatureOfMetricAt_ge_of_hasDerivAt_scalarFlowRHS}
+  \leanok
+  \uses{thm:evolution-scal, thm:max-scalar, lem:second-derivative-test}
+  Let $g$ be a Ricci flow on $[0,T]$ on a closed manifold. If $R \ge C$ everywhere at
+  time $0$, then $R \ge C$ everywhere for every $t \in [0,T]$.
+
+  \textbf{Proved} (\texttt{ScalarPreservation.lean}). This is the first inequality of
+  Hamilton's pinching set $K$, proved on the manifold rather than for the ODE.
+
+  \textbf{It needs no Uhlenbeck trick, and that is why it is worth isolating.} What
+  forces Hamilton's trick is that the tensor maximum principle is applied to a section
+  of a bundle whose fibre metric moves with $t$, so the bundle has to be trivialised
+  first. The scalar equation has no fibre at all: the only thing that moves is the
+  Laplacian, and the maximum principle never looks at the Laplacian except to ask that
+  it be $\ge 0$ at a spatial minimum --- which Lemma \ref{lem:second-derivative-test}
+  gives for each metric separately. So the abstract principle
+  \ref{thm:max-scalar} applies directly, and the metric is introduced only inside the
+  proof, one time at a time.
+
+  The reaction term is nonnegative because $|\Ric|^2_\g$ is a sum of squares over any
+  $\g$-orthonormal basis (\texttt{metricTraceE\_comp\_sharpE\_self\_nonneg}, using
+  symmetry of $\Ric$), so the comparison ODE is $\varphi' = 0$ and the constant $C$ is a
+  subsolution.
+
+  The hypothesis is the evolution equation of Theorem \ref{thm:evolution-scal}, asked
+  for at each time separately. That it really is that theorem's conclusion --- the two
+  differ only by the \texttt{letI} introducing the metric's instance --- is itself
+  checked, by a bridge lemma proved by \texttt{:= h}; so the statement is not vacuous.
+\end{theorem}
+
 \begin{theorem}[Evolution of the curvature tensor]
   \label{thm:evolution-rm}
   \lean{RicciFlowBlueprint.inner_derivCurvature_eq_curvatureLaplacian_add_of_isRicciFlowAt,
