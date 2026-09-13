@@ -65,20 +65,20 @@ theorem isClosed_touching {f : ℝ × M → ℝ} (hf : Continuous f) (T : ℝ) :
   rw [this]
   exact (hK.image continuous_fst).isClosed
 
--- BENCH: max-principle-scalar
-/-- **The scalar maximum principle, abstractly.** Let `M` be compact, `u : ℝ → M → ℝ` jointly
-continuous with time derivative `ut` on `[0, T]`, and `F` Lipschitz. Suppose that at every
-spatial minimum `x₀` of `u t` one has `F (u t x₀) ≤ ut t x₀` (on a manifold this is
-`∂ₜu = Δu + ⟨X, ∇u⟩ + F(u)` together with `Δu ≥ 0`, `∇u = 0` at a minimum). If `φ` solves
-`φ' = F(φ)` on `[0, T]` and `φ 0 ≤ u 0` everywhere, then `φ t ≤ u t x` for all `t ∈ [0, T]`
-and all `x`. -/
-theorem le_of_deriv_ge_at_min {u ut : ℝ → M → ℝ} {F φ : ℝ → ℝ} {K : NNReal} {T : ℝ}
+-- BENCH: max-principle-scalar-time
+/-- **The scalar maximum principle with a time-dependent reaction.** As
+`le_of_deriv_ge_at_min`, but the comparison ODE is the **non-autonomous** `φ' = F t (φ)` and
+the differential inequality at a spatial minimum reads `F t (u t x₀) ≤ ut t x₀`, with `F t`
+Lipschitz with a constant uniform in `t`. `F` is used only at the touching time, so the
+generalisation is free. -/
+theorem le_of_deriv_ge_at_min_time {u ut : ℝ → M → ℝ} {F : ℝ → ℝ → ℝ} {φ : ℝ → ℝ}
+    {K : NNReal} {T : ℝ}
     (hT : 0 ≤ T)
     (hu : Continuous fun p : ℝ × M ↦ u p.1 p.2)
     (hut : ∀ t ∈ Icc 0 T, ∀ x, HasDerivAt (fun s ↦ u s x) (ut t x) t)
-    (hF : LipschitzWith K F)
-    (hmin : ∀ t ∈ Icc 0 T, ∀ x₀, (∀ x, u t x₀ ≤ u t x) → F (u t x₀) ≤ ut t x₀)
-    (hφ : ∀ t ∈ Icc 0 T, HasDerivAt φ (F (φ t)) t)
+    (hF : ∀ t, LipschitzWith K (F t))
+    (hmin : ∀ t ∈ Icc 0 T, ∀ x₀, (∀ x, u t x₀ ≤ u t x) → F t (u t x₀) ≤ ut t x₀)
+    (hφ : ∀ t ∈ Icc 0 T, HasDerivAt φ (F t (φ t)) t)
     (h0 : ∀ x, φ 0 ≤ u 0 x) :
     ∀ t ∈ Icc 0 T, ∀ x, φ t ≤ u t x := by
   set c : ℝ := 2 * K + 1 with hc
@@ -143,24 +143,24 @@ theorem le_of_deriv_ge_at_min {u ut : ℝ → M → ℝ} {F φ : ℝ → ℝ} {K
     have hmin₀ : ∀ x, u t₀ x₀ ≤ u t₀ x := fun x ↦ hx₀'.trans (hglob x)
     have heq : u t₀ x₀ = ψ t₀ := le_antisymm hx₀' (hglob x₀)
     -- the left derivative of `u (·, x₀) - ψ` at `t₀` is `≤ 0` ...
-    have hψd : HasDerivAt ψ (F (φ t₀) - ε * (c * Real.exp (c * t₀))) t₀ := by
+    have hψd : HasDerivAt ψ (F t₀ (φ t₀) - ε * (c * Real.exp (c * t₀))) t₀ := by
       have := (hφ t₀ ht₀I).sub (((hasDerivAt_id t₀).const_mul c).exp.const_mul ε)
       refine this.congr_deriv ?_
       simp only [id, mul_one]
       ring
     have hgd : HasDerivWithinAt (fun t ↦ u t x₀ - ψ t)
-        (ut t₀ x₀ - (F (φ t₀) - ε * (c * Real.exp (c * t₀)))) (Iio t₀) t₀ :=
+        (ut t₀ x₀ - (F t₀ (φ t₀) - ε * (c * Real.exp (c * t₀)))) (Iio t₀) t₀ :=
       ((hut t₀ ht₀I x₀).sub hψd).hasDerivWithinAt
-    have hle : ut t₀ x₀ - (F (φ t₀) - ε * (c * Real.exp (c * t₀))) ≤ 0 :=
+    have hle : ut t₀ x₀ - (F t₀ (φ t₀) - ε * (c * Real.exp (c * t₀))) ≤ 0 :=
       deriv_nonpos_of_pos_left hgd (fun t ht ↦ by linarith [hnot t ht x₀]) (by simp [heq])
         ht₀pos
     -- ... but the differential inequality at the minimum makes it `> 0`
-    have h1 : F (u t₀ x₀) ≤ ut t₀ x₀ := hmin t₀ ht₀I x₀ hmin₀
+    have h1 : F t₀ (u t₀ x₀) ≤ ut t₀ x₀ := hmin t₀ ht₀I x₀ hmin₀
     rw [heq] at h1
     set E := ε * Real.exp (c * t₀) with hE
     have hEpos : 0 < E := by positivity
-    have h2 : F (φ t₀) - K * E ≤ F (ψ t₀) := by
-      have := hF.dist_le_mul (φ t₀) (ψ t₀)
+    have h2 : F t₀ (φ t₀) - K * E ≤ F t₀ (ψ t₀) := by
+      have := (hF t₀).dist_le_mul (φ t₀) (ψ t₀)
       rw [Real.dist_eq, Real.dist_eq] at this
       have hd : |φ t₀ - ψ t₀| = E := by
         simp only [ψ, sub_sub_cancel]
@@ -179,6 +179,25 @@ theorem le_of_deriv_ge_at_min {u ut : ℝ → M → ℝ} {F φ : ℝ → ℝ} {K
   have := key (η / Real.exp (c * t)) (by positivity) t ht x
   rw [div_mul_cancel₀ η hexp.ne'] at this
   linarith
+
+-- BENCH: max-principle-scalar
+/-- **The scalar maximum principle, abstractly.** Let `M` be compact, `u : ℝ → M → ℝ` jointly
+continuous with time derivative `ut` on `[0, T]`, and `F` Lipschitz. Suppose that at every
+spatial minimum `x₀` of `u t` one has `F (u t x₀) ≤ ut t x₀` (on a manifold this is
+`∂ₜu = Δu + ⟨X, ∇u⟩ + F(u)` together with `Δu ≥ 0`, `∇u = 0` at a minimum). If `φ` solves
+`φ' = F(φ)` on `[0, T]` and `φ 0 ≤ u 0` everywhere, then `φ t ≤ u t x` for all `t ∈ [0, T]`
+and all `x`. The autonomous case of `le_of_deriv_ge_at_min_time`. -/
+theorem le_of_deriv_ge_at_min {u ut : ℝ → M → ℝ} {F φ : ℝ → ℝ} {K : NNReal} {T : ℝ}
+    (hT : 0 ≤ T)
+    (hu : Continuous fun p : ℝ × M ↦ u p.1 p.2)
+    (hut : ∀ t ∈ Icc 0 T, ∀ x, HasDerivAt (fun s ↦ u s x) (ut t x) t)
+    (hF : LipschitzWith K F)
+    (hmin : ∀ t ∈ Icc 0 T, ∀ x₀, (∀ x, u t x₀ ≤ u t x) → F (u t x₀) ≤ ut t x₀)
+    (hφ : ∀ t ∈ Icc 0 T, HasDerivAt φ (F (φ t)) t)
+    (h0 : ∀ x, φ 0 ≤ u 0 x) :
+    ∀ t ∈ Icc 0 T, ∀ x, φ t ≤ u t x :=
+  le_of_deriv_ge_at_min_time (F := fun _ ↦ F) hT hu hut (fun _ ↦ hF) hmin hφ h0
+
 
 /-- **The scalar maximum principle, upper bound.** The mirror image: if at every spatial
 maximum `x₀` of `u t` one has `ut t x₀ ≤ F (u t x₀)`, `φ' = F(φ)`, and `u 0 ≤ φ 0`

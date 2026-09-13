@@ -2680,7 +2680,9 @@ target actually requires.
 
 \begin{theorem}[Scalar maximum principle]
   \label{thm:max-scalar}
-  \lean{RicciFlowBlueprint.MaximumPrinciple.le_of_deriv_ge_at_min, RicciFlowBlueprint.MaximumPrinciple.le_of_laplacian}
+  \lean{RicciFlowBlueprint.MaximumPrinciple.le_of_deriv_ge_at_min,
+    RicciFlowBlueprint.MaximumPrinciple.le_of_deriv_ge_at_min_time,
+    RicciFlowBlueprint.MaximumPrinciple.le_of_laplacian}
   \leanok
   \uses{def:laplacian, lem:second-derivative-test}
   A solution of $\partial_t u = \Delta u + \langle X, \nab u\rangle + F(u)$ on
@@ -2722,7 +2724,10 @@ target actually requires.
 
 \begin{theorem}[Tensor maximum principle]
   \label{thm:max-tensor}
-  \lean{RicciFlowBlueprint.MaximumPrinciple.mem_of_deriv_le_at_max, RicciFlowBlueprint.MaximumPrinciple.mem_of_laplacian}
+  \lean{RicciFlowBlueprint.MaximumPrinciple.mem_of_deriv_le_at_max,
+    RicciFlowBlueprint.MaximumPrinciple.mem_of_deriv_le_at_max_time,
+    RicciFlowBlueprint.MaximumPrinciple.mem_of_laplacian,
+    RicciFlowBlueprint.MaximumPrinciple.mem_of_laplacian_time}
   \leanok
   \uses{thm:max-scalar, def:laplacian, lem:second-derivative-test}
   Hamilton's maximum principle for symmetric tensors: a closed convex subset of
@@ -2757,6 +2762,23 @@ target actually requires.
   second-derivative test applies unchanged. Hamilton's setting, a bundle with
   an evolving fibre metric, needs the Laplacian on sections together with
   Uhlenbeck's trick.
+
+  \textbf{The reaction may depend on time} (\texttt{mem\_of\_deriv\_le\_at\_max\_time},
+  and \texttt{mem\_of\_laplacian\_time} on the manifold). $F$ enters the proof at exactly
+  three points --- the hypothesis at the touching point, the Lipschitz comparison against
+  the nearest point of $K$, and subtangentiality --- and all three happen at the single
+  touching time, so nothing in the argument notices that $F$ moves. Only the Lipschitz
+  constant must be uniform in $t$.
+
+  \textbf{This is the generality a moving background geometry needs.} Hamilton 1982 \S9
+  applies the principle on a bundle whose fibre metric evolves, which makes the reaction
+  non-autonomous; Uhlenbeck's trick instead freezes the fibre metric, at the cost of an ODE
+  for the trivialising family. What the generalisation does \emph{not} buy is a moving inner
+  product on $V$ itself: $\operatorname{dist}(\cdot, K)$ and the nearest-point projection are
+  taken in $V$'s own metric at every time, and the first-touching-time argument compares them
+  \emph{across} times. That is the real content of Uhlenbeck's trick and it is untouched.
+  Nor is the time-dependent \emph{set} $K_t$ done --- that is a separate generalisation,
+  needed only for Hamilton 1999's $\log(1+t)$ improvement.
 \end{theorem}
 
 \begin{proof}
