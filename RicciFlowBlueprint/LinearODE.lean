@@ -296,22 +296,23 @@ theorem hasDerivAt_dysonSum_apply {A : ℝ → (F →L[ℝ] F)} {C : ℝ} (hA : 
 -- BENCH: linear-ode-uniqueness
 omit [CompleteSpace F] in
 /-- **Global uniqueness for a linear ODE.**  Two solutions of `ẋ = A(t)x` defined on all of `ℝ`
-and agreeing at `0` are equal.
+and agreeing at **any one** time are equal --- the base time is arbitrary, which is what makes
+the propagator invertible below.
 
 Mathlib's `ODE_solution_unique_univ` applies verbatim; the only thing to supply is a Lipschitz
 constant **uniform in `t`**, which a bounded `A` gives (`‖A t‖₊ ≤ C.toNNReal`).  No smallness
 hypothesis and no continuation argument: a linear field is globally Lipschitz, so the
 whole-line statement is available directly. -/
-theorem eq_of_hasDerivAt_linear {A : ℝ → (F →L[ℝ] F)} {C : ℝ} (hC : ∀ s, ‖A s‖ ≤ C)
+theorem eq_of_hasDerivAt_linear {A : ℝ → (F →L[ℝ] F)} {C t₀ : ℝ} (hC : ∀ s, ‖A s‖ ≤ C)
     {f g : ℝ → F} (hf : ∀ t, HasDerivAt f (A t (f t)) t) (hg : ∀ t, HasDerivAt g (A t (g t)) t)
-    (h0 : f 0 = g 0) : f = g := by
+    (h0 : f t₀ = g t₀) : f = g := by
   have hC0 : 0 ≤ C := le_trans (norm_nonneg _) (hC 0)
   have hlip : ∀ t : ℝ, LipschitzOnWith C.toNNReal (fun x ↦ A t x) (Set.univ : Set F) := by
     intro t
     refine ((A t).lipschitzWith.weaken ?_).lipschitzOnWith
     rw [← NNReal.coe_le_coe, coe_nnnorm, Real.coe_toNNReal C hC0]
     exact hC t
-  exact ODE_solution_unique_univ (t₀ := 0) hlip (fun t ↦ ⟨hf t, trivial⟩)
+  exact ODE_solution_unique_univ (t₀ := t₀) hlip (fun t ↦ ⟨hf t, trivial⟩)
     (fun t ↦ ⟨hg t, trivial⟩) h0
 
 /-- **The fundamental solution is the only one**: every global solution of `ẋ = A(t)x` is
@@ -320,7 +321,73 @@ line for a linear equation --- what mathlib's local theory does not give. -/
 theorem eq_dysonSum_apply {A : ℝ → (F →L[ℝ] F)} {C : ℝ} (hA : Continuous A)
     (hC : ∀ s, ‖A s‖ ≤ C) {f : ℝ → F} (hf : ∀ t, HasDerivAt f (A t (f t)) t) (t : ℝ) :
     f t = dysonSum A t (f 0) :=
-  congrFun (eq_of_hasDerivAt_linear hC hf
+  congrFun (eq_of_hasDerivAt_linear (t₀ := 0) hC hf
     (fun s ↦ hasDerivAt_dysonSum_apply hA hC (f 0) s) (by simp)) t
+
+/-- **The propagator based at `t₀`**: `U(t, t₀)`, the fundamental solution normalised at `t₀`
+rather than at `0`.  It is the Dyson sum of the time-shifted family. -/
+noncomputable def dysonFrom (A : ℝ → (F →L[ℝ] F)) (t₀ t : ℝ) : F →L[ℝ] F :=
+  dysonSum (fun r ↦ A (r + t₀)) (t - t₀)
+
+omit [CompleteSpace F] in
+@[simp] theorem dysonFrom_self (A : ℝ → (F →L[ℝ] F)) (t₀ : ℝ) : dysonFrom A t₀ t₀ = 1 := by
+  rw [dysonFrom, sub_self, dysonSum_zero]
+
+/-- `t ↦ U(t,t₀)v` solves `ẋ = A(t)x` with `x(t₀) = v`. -/
+theorem hasDerivAt_dysonFrom_apply {A : ℝ → (F →L[ℝ] F)} {C : ℝ} (hA : Continuous A)
+    (hC : ∀ s, ‖A s‖ ≤ C) (t₀ : ℝ) (v : F) (t : ℝ) :
+    HasDerivAt (fun s ↦ dysonFrom A t₀ s v) (A t (dysonFrom A t₀ t v)) t := by
+  have hA' : Continuous fun r ↦ A (r + t₀) := hA.comp (continuous_id.add continuous_const)
+  have hC' : ∀ r, ‖A (r + t₀)‖ ≤ C := fun r ↦ hC _
+  have hout := hasDerivAt_dysonSum_apply hA' hC' v (t - t₀)
+  have key := hout.comp_sub_const t t₀
+  rw [sub_add_cancel] at key
+  exact key
+
+-- BENCH: linear-ode-propagator-invertible
+/-- **The fundamental solution is invertible at every time.**
+
+Both halves come from uniqueness alone, with no second series and no adjoint.
+*Injective*: if `Φ(t)v = 0` then `s ↦ Φ(s)v` and the zero solution agree at `t`, hence
+everywhere, so `v = 0` --- this is **backward uniqueness**, and it is exactly what the
+arbitrary base time in `eq_of_hasDerivAt_linear` buys.
+*Surjective*: `s ↦ U(s,t)w` is a global solution taking the value `w` at `t`, so it is
+`Φ(s)` applied to its own value at `0`, and `w` is in the range. -/
+theorem bijective_dysonSum {A : ℝ → (F →L[ℝ] F)} {C : ℝ} (hA : Continuous A)
+    (hC : ∀ s, ‖A s‖ ≤ C) (t : ℝ) : Function.Bijective (dysonSum A t) := by
+  constructor
+  · intro v w hvw
+    -- reduce to injectivity at `0` by linearity
+    have hz : dysonSum A t (v - w) = 0 := by rw [map_sub, hvw, sub_self]
+    have hsol : ∀ s, HasDerivAt (fun r ↦ dysonSum A r (v - w)) (A s (dysonSum A s (v - w))) s :=
+      fun s ↦ hasDerivAt_dysonSum_apply hA hC _ s
+    have hzero : ∀ s : ℝ, HasDerivAt (fun _ : ℝ ↦ (0 : F)) (A s ((fun _ : ℝ ↦ (0 : F)) s)) s := by
+      intro s
+      simpa using (hasDerivAt_const s (0 : F))
+    have := eq_of_hasDerivAt_linear (t₀ := t) hC hsol hzero (by simpa using hz)
+    have h0 := congrFun this 0
+    simp only [dysonSum_zero] at h0
+    have : v - w = 0 := by simpa using h0
+    exact sub_eq_zero.mp this
+  · intro w
+    refine ⟨dysonFrom A t 0 w, ?_⟩
+    have hsol : ∀ s, HasDerivAt (fun r ↦ dysonFrom A t r w) (A s (dysonFrom A t s w)) s :=
+      fun s ↦ hasDerivAt_dysonFrom_apply hA hC t w s
+    have hsol' : ∀ s, HasDerivAt (fun r ↦ dysonSum A r (dysonFrom A t 0 w))
+        (A s (dysonSum A s (dysonFrom A t 0 w))) s :=
+      fun s ↦ hasDerivAt_dysonSum_apply hA hC _ s
+    have := eq_of_hasDerivAt_linear (t₀ := 0) hC hsol hsol' (by simp)
+    have ht := congrFun this t
+    simpa using ht.symm
+
+/-- **`Φ(t)` as a linear homeomorphism.**  Bijectivity plus the open mapping theorem. -/
+noncomputable def dysonEquiv {A : ℝ → (F →L[ℝ] F)} {C : ℝ} (hA : Continuous A)
+    (hC : ∀ s, ‖A s‖ ≤ C) (t : ℝ) : F ≃L[ℝ] F :=
+  ContinuousLinearEquiv.ofBijective (dysonSum A t)
+    (LinearMap.ker_eq_bot.mpr (bijective_dysonSum hA hC t).1)
+    (LinearMap.range_eq_top.mpr (bijective_dysonSum hA hC t).2)
+
+@[simp] theorem dysonEquiv_apply {A : ℝ → (F →L[ℝ] F)} {C : ℝ} (hA : Continuous A)
+    (hC : ∀ s, ‖A s‖ ≤ C) (t : ℝ) (v : F) : dysonEquiv hA hC t v = dysonSum A t v := rfl
 
 end RicciFlowBlueprint

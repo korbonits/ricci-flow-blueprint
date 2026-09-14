@@ -2537,7 +2537,11 @@ target actually requires.
     RicciFlowBlueprint.hasDerivAt_dysonSum,
     RicciFlowBlueprint.norm_dysonSum_le,
     RicciFlowBlueprint.eq_of_hasDerivAt_linear,
-    RicciFlowBlueprint.eq_dysonSum_apply}
+    RicciFlowBlueprint.eq_dysonSum_apply,
+    RicciFlowBlueprint.dysonFrom,
+    RicciFlowBlueprint.hasDerivAt_dysonFrom_apply,
+    RicciFlowBlueprint.bijective_dysonSum,
+    RicciFlowBlueprint.dysonEquiv}
   \leanok
   \uses{lem:dyson-iterates}
   Let $A : \R \to \mathcal{L}(F)$ be continuous with $\|A(s)\| \le C$, $F$ a Banach space.
@@ -2564,6 +2568,16 @@ target actually requires.
   Lipschitz with a constant uniform in $t$ (namely $C$), so
   \texttt{ODE\_solution\_unique\_univ} applies with no work; it is only \emph{existence}
   on a long interval that Mathlib cannot supply.
+
+  \textbf{$\Phi(t)$ is invertible, and both halves come from uniqueness alone} --- no second
+  series, no adjoint. \emph{Injective}: if $\Phi(t)v = 0$ then $s \mapsto \Phi(s)v$ and the
+  zero solution agree at $t$, hence everywhere, so $v = 0$; this is \emph{backward}
+  uniqueness, and it is exactly what an arbitrary base time in the uniqueness statement buys.
+  \emph{Surjective}: the propagator $U(\cdot,t)$ --- the Dyson sum of the time-shifted family
+  --- gives a global solution taking the value $w$ at $t$, and every global solution is
+  $\Phi(s)$ applied to its own value at $0$. The open mapping theorem then makes $\Phi(t)$ a
+  linear homeomorphism. This matters because Uhlenbeck's trivialising family must be a bundle
+  \emph{isomorphism}, not merely a bundle map.
 
   \textbf{What this is for.} Uhlenbeck's trick trivialises the bundle along a family
   $\iota(t)$ solving $\partial_t \iota = \Ric_{g_t}\circ\iota$, $\iota(0) = \mathrm{id}$,
