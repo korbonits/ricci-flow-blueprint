@@ -2497,6 +2497,40 @@ target actually requires.
   move with $t$, and the maximum principle does not mind.
 \end{theorem}
 
+\begin{lemma}[Linear ODEs: the Picard--Dyson iterates]
+  \label{lem:dyson-iterates}
+  \lean{RicciFlowBlueprint.dysonIter,
+    RicciFlowBlueprint.continuous_dysonIter,
+    RicciFlowBlueprint.norm_dysonIter_le}
+  \leanok
+  For a continuous family of bounded operators $A : \R \to \mathcal{L}(F)$ with
+  $\|A(s)\| \le C$, the Picard iterates for $\Phi' = A(t)\Phi$, $\Phi(0) = 1$ ---
+  $I_0 = 1$ and $I_{n+1}(t) = \int_0^t A(s) I_n(s)\,ds$ --- are continuous and satisfy
+  \[
+    \|I_n(t)\| \;\le\; \frac{(Ct)^n}{n!}, \qquad t \ge 0 .
+  \]
+
+  \textbf{Proved} (\texttt{LinearODE.lean}). This is scaffolding for the ODE that
+  \textbf{Uhlenbeck's trick} needs: the trivialising family solves
+  $\partial_t \iota = \Ric \circ \iota$, which is linear in $\iota$.
+
+  \textbf{Why it is built rather than taken from Mathlib.}
+  \texttt{Analysis/ODE/PicardLindelof.lean} does prove existence on a whole interval, but
+  gated on its field \texttt{mul\_max\_le}: $L \cdot \max(t_{\max} - t_0, t_0 - t_{\min})
+  \le a - r$, where $L$ bounds the vector field on a ball of radius $a$ about $x_0$. For a
+  \emph{linear} field the best available bound is $L = C(\|x_0\| + a)$, so on $[0,T]$ with
+  $r = 0$ the condition reads $a(1 - CT) \ge C\|x_0\|T$ --- that is, \textbf{$C \cdot T < 1$}.
+  Past that one must continue the solution across a chain of short intervals, and Mathlib has
+  no maximal-solution or continuation theory.
+
+  \textbf{The factorial is what removes the smallness hypothesis.} It beats the power at
+  every $t$, so $\sum_n I_n(t)$ converges however large $C\cdot T$ is, and no continuation is
+  needed. The cruder bound $\|I_n(t)\| \le (Ct)^n$ --- what one gets by estimating the
+  integrand by its endpoint value --- is useless past $C \cdot t = 1$, which is precisely the
+  regime where \texttt{mul\_max\_le} also gives out. The factorial comes from integrating
+  $s^n$ rather than bounding it.
+\end{lemma}
+
 \begin{theorem}[Evolution of the curvature tensor]
   \label{thm:evolution-rm}
   \lean{RicciFlowBlueprint.inner_derivCurvature_eq_curvatureLaplacian_add_of_isRicciFlowAt,

@@ -51,3 +51,4 @@ import RicciFlowBlueprint.CurvatureFlow
 import RicciFlowBlueprint.CurvatureEvolution
 import RicciFlowBlueprint.ScalarPreservation
 import RicciFlowBlueprint.ScalarLowerBound
+import RicciFlowBlueprint.LinearODE
