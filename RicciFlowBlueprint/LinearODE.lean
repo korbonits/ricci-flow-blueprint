@@ -478,6 +478,33 @@ theorem continuous_dysonDerivBound (C C' : ℝ) (n : ℕ) : Continuous (dysonDer
     show Continuous fun t ↦ C' * |t| * (C * |t|) ^ n / n.factorial
     fun_prop
 
+/-- The bound is summable at every `t`, for the same reason the iterate bound is --- it is the
+exponential series with one power of `|t|` in front, summing to `C'|t|e^{C|t|}`. -/
+theorem summable_dysonDerivBound (C C' : ℝ) (t : ℝ) :
+    Summable fun n ↦ dysonDerivBound C C' n t := by
+  have h1 : Summable fun n : ℕ ↦ C' * |t| * ((C * |t|) ^ n / n.factorial) :=
+    (Real.summable_pow_div_factorial (C * |t|)).mul_left (C' * |t|)
+  have h2 : (fun n : ℕ ↦ dysonDerivBound C C' (n + 1) t)
+      = fun n : ℕ ↦ C' * |t| * ((C * |t|) ^ n / n.factorial) := by
+    funext n
+    show C' * |t| * (C * |t|) ^ n / n.factorial = _
+    ring
+  exact (summable_nat_add_iff 1).mp (by rw [h2]; exact h1)
+
+/-- The bound is monotone in `|t|`, which is what lets a bound on an interval `(-R,R)` be taken
+at the endpoint --- the uniform bound termwise differentiation in `t` asks for. -/
+theorem dysonDerivBound_le_of_abs_le {C C' : ℝ} (hC : 0 ≤ C) (hC' : 0 ≤ C') (n : ℕ) {s r : ℝ}
+    (h : |s| ≤ |r|) : dysonDerivBound C C' n s ≤ dysonDerivBound C C' n r := by
+  cases n with
+  | zero => exact le_rfl
+  | succ n =>
+    show C' * |s| * (C * |s|) ^ n / n.factorial ≤ C' * |r| * (C * |r|) ^ n / n.factorial
+    have h1 : (C * |s|) ^ n ≤ (C * |r|) ^ n :=
+      pow_le_pow_left₀ (by positivity) (by nlinarith [abs_nonneg s]) n
+    have h2 : C' * |s| ≤ C' * |r| := by nlinarith [abs_nonneg s]
+    have hfac : (0 : ℝ) < n.factorial := by positivity
+    gcongr
+
 omit [CompleteSpace F] in
 /-- **The factorial bound for the parameter derivatives**: `‖Jₙ₊₁(x,t)‖ ≤ C'|t|(C|t|)ⁿ/n!`.
 
@@ -627,6 +654,36 @@ theorem hasFDerivAt_dysonIter {A : H → ℝ → (F →L[ℝ] F)}
       (hbndcont.intervalIntegrable 0 t)
       (Filter.Eventually.of_forall fun r _ y _ ↦ (hderiv y r).clm_comp (ih y r))
 
+omit [CompleteSpace F] in
+@[simp] theorem dysonIterDeriv_succ_zero (A : H → ℝ → (F →L[ℝ] F))
+    (A' : H → ℝ → (H →L[ℝ] (F →L[ℝ] F))) (n : ℕ) (x : H) :
+    dysonIterDeriv A A' (n + 1) x 0 = 0 := by
+  rw [dysonIterDeriv_succ, intervalIntegral.integral_same]
+
+/-- The derivative series converges at every `t`. -/
+theorem summable_dysonIterDeriv {A : H → ℝ → (F →L[ℝ] F)}
+    {A' : H → ℝ → (H →L[ℝ] (F →L[ℝ] F))} {C C' : ℝ}
+    (hA : ∀ x, Continuous (A x)) (hA' : ∀ x, Continuous (A' x))
+    (hC : ∀ x s, ‖A x s‖ ≤ C) (hC' : ∀ x s, ‖A' x s‖ ≤ C') (x : H) (t : ℝ) :
+    Summable fun n ↦ dysonIterDeriv A A' n x t :=
+  Summable.of_norm_bounded (summable_dysonDerivBound C C' t)
+    (fun n ↦ norm_dysonIterDeriv_le hA hA' hC hC' n x t)
+
+/-- The sum of the differentiated iterates --- the parameter derivative of `Φ`. -/
+noncomputable def dysonDerivSum (A : H → ℝ → (F →L[ℝ] F))
+    (A' : H → ℝ → (H →L[ℝ] (F →L[ℝ] F))) (x : H) (t : ℝ) : H →L[ℝ] (F →L[ℝ] F) :=
+  ∑' n, dysonIterDeriv A A' n x t
+
+omit [CompleteSpace F] in
+@[simp] theorem dysonDerivSum_zero (A : H → ℝ → (F →L[ℝ] F))
+    (A' : H → ℝ → (H →L[ℝ] (F →L[ℝ] F))) (x : H) : dysonDerivSum A A' x 0 = 0 := by
+  have hz : (fun n ↦ dysonIterDeriv A A' n x 0) = fun _ ↦ 0 := by
+    funext n
+    cases n with
+    | zero => rfl
+    | succ n => exact dysonIterDeriv_succ_zero A A' n x
+  rw [dysonDerivSum, hz, tsum_zero]
+
 -- BENCH: dyson-sum-parameter-derivative
 /-- **The fundamental solution is differentiable in the parameter**, with derivative `∑ₙ Jₙ`.
 
@@ -645,17 +702,8 @@ theorem hasFDerivAt_dysonSum {A : H → ℝ → (F →L[ℝ] F)}
     (hC : ∀ x s, ‖A x s‖ ≤ C) (hC' : ∀ x s, ‖A' x s‖ ≤ C')
     (hderiv : ∀ x s, HasFDerivAt (fun y ↦ A y s) (A' x s) x)
     (t : ℝ) (x : H) :
-    HasFDerivAt (fun y ↦ dysonSum (A y) t) (∑' n, dysonIterDeriv A A' n x t) x := by
-  have hu : Summable fun n ↦ dysonDerivBound C C' n t := by
-    have h1 : Summable fun n : ℕ ↦ C' * |t| * ((C * |t|) ^ n / n.factorial) :=
-      (Real.summable_pow_div_factorial (C * |t|)).mul_left (C' * |t|)
-    have h2 : (fun n : ℕ ↦ dysonDerivBound C C' (n + 1) t)
-        = fun n : ℕ ↦ C' * |t| * ((C * |t|) ^ n / n.factorial) := by
-      funext n
-      show C' * |t| * (C * |t|) ^ n / n.factorial = _
-      ring
-    exact (summable_nat_add_iff 1).mp (by rw [h2]; exact h1)
-  exact hasFDerivAt_tsum hu
+    HasFDerivAt (fun y ↦ dysonSum (A y) t) (dysonDerivSum A A' x t) x := by
+  exact hasFDerivAt_tsum (summable_dysonDerivBound C C' t)
     (fun n y ↦ hasFDerivAt_dysonIter hA hA' hC hC' hderiv n y t)
     (fun n y ↦ norm_dysonIterDeriv_le hA hA' hC hC' n y t)
     (summable_dysonIter (hA x) (fun r ↦ hC x r) t) x
@@ -668,6 +716,121 @@ theorem differentiable_dysonSum {A : H → ℝ → (F →L[ℝ] F)}
     (hderiv : ∀ x s, HasFDerivAt (fun y ↦ A y s) (A' x s) x) (t : ℝ) :
     Differentiable ℝ fun y ↦ dysonSum (A y) t :=
   fun x ↦ (hasFDerivAt_dysonSum hA hA' hC hC' hderiv t x).differentiableAt
+
+/-- Each `Jₙ₊₁` solves its own equation in `t` --- the fundamental theorem of calculus for a
+continuous integrand, exactly as for the iterates themselves. -/
+theorem hasDerivAt_dysonIterDeriv_succ {A : H → ℝ → (F →L[ℝ] F)}
+    {A' : H → ℝ → (H →L[ℝ] (F →L[ℝ] F))} (hA : ∀ x, Continuous (A x))
+    (hA' : ∀ x, Continuous (A' x)) (n : ℕ) (x : H) (t : ℝ) :
+    HasDerivAt (dysonIterDeriv A A' (n + 1) x)
+      (((ContinuousLinearMap.compL ℝ F F F) (A x t)).comp (dysonIterDeriv A A' n x t)
+        + ((ContinuousLinearMap.compL ℝ F F F).flip (dysonIter (A x) n t)).comp (A' x t)) t := by
+  have hcont := continuous_dysonIterDeriv_integrand hA hA' n x
+    (continuous_dysonIterDeriv hA hA' n x)
+  have h := (hcont.integral_hasStrictDerivAt 0 t).hasDerivAt
+  have heq : dysonIterDeriv A A' (n + 1) x = fun u : ℝ ↦ ∫ s in (0 : ℝ)..u,
+      (((ContinuousLinearMap.compL ℝ F F F) (A x s)).comp (dysonIterDeriv A A' n x s)
+        + ((ContinuousLinearMap.compL ℝ F F F).flip (dysonIter (A x) n s)).comp (A' x s)) := rfl
+  rw [heq]
+  exact h
+
+-- BENCH: dyson-variational-equation
+/-- **The variational equation**: `∂ₜ(D_xΦ) = (D_xA·)∘Φ + A∘(D_xΦ)`.
+
+The parameter derivative solves the *inhomogeneous* linear equation obtained by
+differentiating `∂ₜΦ = AΦ` in the parameter --- which is the classical statement that
+differentiation in the parameter and in time commute for this equation, proved here rather
+than assumed.
+
+**This is what makes the route to `C^k` a checked claim rather than an aspiration.** With it,
+the pair `(Φ, D_xΦ)` solves the *linear* block-triangular system
+`∂ₜ(u,v) = (A u, (A'·)u + A v)` on `(F →L F) × (H →L (F →L F))`, whose operator is bounded,
+continuous in `t`, and one derivative less regular in the parameter than `A`. So `C^k`
+dependence follows from the `C¹` theorem applied to the augmented system, by induction on `k`,
+with no second-order differentiation under the integral sign anywhere.
+
+Same termwise argument as `hasDerivAt_dysonSum`, one level up: the derivatives of the terms
+are `A∘Jₙ + (A'·)∘Iₙ`, dominated on `(-R,R)` by `C·dysonDerivBound C C' n R + C'(CR)ⁿ/n!`
+uniformly, which is summable. -/
+theorem hasDerivAt_dysonDerivSum {A : H → ℝ → (F →L[ℝ] F)}
+    {A' : H → ℝ → (H →L[ℝ] (F →L[ℝ] F))} {C C' : ℝ}
+    (hA : ∀ x, Continuous (A x)) (hA' : ∀ x, Continuous (A' x))
+    (hC : ∀ x s, ‖A x s‖ ≤ C) (hC' : ∀ x s, ‖A' x s‖ ≤ C') (x : H) (t : ℝ) :
+    HasDerivAt (dysonDerivSum A A' x)
+      (((ContinuousLinearMap.compL ℝ F F F) (A x t)).comp (dysonDerivSum A A' x t)
+        + ((ContinuousLinearMap.compL ℝ F F F).flip (dysonSum (A x) t)).comp (A' x t)) t := by
+  have hC0 : 0 ≤ C := le_trans (norm_nonneg _) (hC x 0)
+  have hC'0 : 0 ≤ C' := le_trans (norm_nonneg _) (hC' x 0)
+  set R : ℝ := |t| + 1 with hR
+  have hRpos : 0 < R := by positivity
+  have htR : t ∈ Set.Ioo (-R) R := by
+    constructor
+    · have := neg_abs_le t; simp only [hR]; linarith
+    · have := le_abs_self t; simp only [hR]; linarith
+  have h0R : (0 : ℝ) ∈ Set.Ioo (-R) R := ⟨by linarith, hRpos⟩
+  have hu : Summable fun n : ℕ ↦
+      C * dysonDerivBound C C' n R + C' * ((C * R) ^ n / n.factorial) :=
+    ((summable_dysonDerivBound C C' R).mul_left C).add
+      ((Real.summable_pow_div_factorial (C * R)).mul_left C')
+  have hg : ∀ (n : ℕ) (y : ℝ), y ∈ Set.Ioo (-R) R →
+      HasDerivAt (fun z ↦ dysonIterDeriv A A' (n + 1) x z)
+        (((ContinuousLinearMap.compL ℝ F F F) (A x y)).comp (dysonIterDeriv A A' n x y)
+          + ((ContinuousLinearMap.compL ℝ F F F).flip (dysonIter (A x) n y)).comp (A' x y)) y :=
+    fun n y _ ↦ hasDerivAt_dysonIterDeriv_succ hA hA' n x y
+  have hg' : ∀ (n : ℕ) (y : ℝ), y ∈ Set.Ioo (-R) R →
+      ‖(((ContinuousLinearMap.compL ℝ F F F) (A x y)).comp (dysonIterDeriv A A' n x y)
+        + ((ContinuousLinearMap.compL ℝ F F F).flip (dysonIter (A x) n y)).comp (A' x y))‖
+      ≤ C * dysonDerivBound C C' n R + C' * ((C * R) ^ n / n.factorial) := by
+    intro n y hy
+    have hyR : |y| ≤ R := by rw [abs_le]; exact ⟨hy.1.le, hy.2.le⟩
+    have habsR : |y| ≤ |R| := by rwa [abs_of_pos hRpos]
+    refine (norm_add_le _ _).trans (add_le_add ?_ ?_)
+    · exact (norm_compL_comp_le _ _).trans (mul_le_mul (hC x y)
+        ((norm_dysonIterDeriv_le hA hA' hC hC' n x y).trans
+          (dysonDerivBound_le_of_abs_le hC0 hC'0 n habsR)) (norm_nonneg _) hC0)
+    · refine (norm_compL_flip_comp_le _ _).trans
+        (mul_le_mul (hC' x y) ?_ (norm_nonneg _) hC'0)
+      refine (norm_dysonIter_le (hA x) (fun q ↦ hC x q) n y).trans ?_
+      have h1 : (C * |y|) ^ n ≤ (C * R) ^ n :=
+        pow_le_pow_left₀ (by positivity) (by nlinarith [abs_nonneg y]) n
+      have h2 : (0 : ℝ) < n.factorial := by positivity
+      gcongr
+  have hg0 : Summable fun n : ℕ ↦ dysonIterDeriv A A' (n + 1) x 0 := by simp
+  have key := hasDerivAt_tsum_of_isPreconnected hu isOpen_Ioo isPreconnected_Ioo hg hg' h0R hg0 htR
+  -- reassemble `D_xΦ = ∑ₙ Jₙ₊₁` (the zeroth term is `0`) and identify the derivative
+  have hsplit : dysonDerivSum A A' x = fun z ↦ ∑' n, dysonIterDeriv A A' (n + 1) x z := by
+    funext z
+    rw [dysonDerivSum, ← (summable_dysonIterDeriv hA hA' hC hC' x z).sum_add_tsum_nat_add 1]
+    simp
+  -- the two pieces of the derivative are the images of the two series under fixed maps
+  have hval : ∑' n, (((ContinuousLinearMap.compL ℝ F F F) (A x t)).comp
+        (dysonIterDeriv A A' n x t)
+      + ((ContinuousLinearMap.compL ℝ F F F).flip (dysonIter (A x) n t)).comp (A' x t))
+      = ((ContinuousLinearMap.compL ℝ F F F) (A x t)).comp (dysonDerivSum A A' x t)
+        + ((ContinuousLinearMap.compL ℝ F F F).flip (dysonSum (A x) t)).comp (A' x t) := by
+    have hsJ := summable_dysonIterDeriv hA hA' hC hC' x t
+    have hsI := summable_dysonIter (hA x) (fun q ↦ hC x q) t
+    have h1 : ∑' n, ((ContinuousLinearMap.compL ℝ F F F) (A x t)).comp
+        (dysonIterDeriv A A' n x t)
+        = ((ContinuousLinearMap.compL ℝ F F F) (A x t)).comp (dysonDerivSum A A' x t) :=
+      (((ContinuousLinearMap.compL ℝ H (F →L[ℝ] F) (F →L[ℝ] F))
+        ((ContinuousLinearMap.compL ℝ F F F) (A x t))).map_tsum hsJ).symm
+    have h2 : ∑' n, ((ContinuousLinearMap.compL ℝ F F F).flip
+        (dysonIter (A x) n t)).comp (A' x t)
+        = ((ContinuousLinearMap.compL ℝ F F F).flip (dysonSum (A x) t)).comp (A' x t) :=
+      ((((ContinuousLinearMap.compL ℝ H (F →L[ℝ] F) (F →L[ℝ] F)).flip (A' x t)).comp
+        (ContinuousLinearMap.compL ℝ F F F).flip).map_tsum hsI).symm
+    have hs1 : Summable fun n ↦ ((ContinuousLinearMap.compL ℝ F F F) (A x t)).comp
+        (dysonIterDeriv A A' n x t) :=
+      (((ContinuousLinearMap.compL ℝ H (F →L[ℝ] F) (F →L[ℝ] F))
+        ((ContinuousLinearMap.compL ℝ F F F) (A x t))).hasSum hsJ.hasSum).summable
+    have hs2 : Summable fun n ↦ ((ContinuousLinearMap.compL ℝ F F F).flip
+        (dysonIter (A x) n t)).comp (A' x t) :=
+      ((((ContinuousLinearMap.compL ℝ H (F →L[ℝ] F) (F →L[ℝ] F)).flip (A' x t)).comp
+        (ContinuousLinearMap.compL ℝ F F F).flip).hasSum hsI.hasSum).summable
+    rw [hs1.tsum_add hs2, h1, h2]
+  rw [← hval, hsplit]
+  exact key
 
 end Parameter
 
