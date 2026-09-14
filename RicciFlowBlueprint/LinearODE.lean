@@ -23,6 +23,7 @@ import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 import Mathlib.MeasureTheory.Integral.DominatedConvergence
 import Mathlib.Analysis.Calculus.SmoothSeries
 import Mathlib.Analysis.ODE.ExistUnique
+import Mathlib.Analysis.Calculus.ParametricIntervalIntegral
 
 open intervalIntegral Set
 
@@ -69,7 +70,49 @@ theorem continuous_dysonIter {A : ℝ → (F →L[ℝ] F)} (hA : Continuous A) (
     rw [heq]
     exact this
 omit [CompleteSpace F] in
-/-- **The factorial bound** `‖Iₙ(t)‖ ≤ (C t)ⁿ / n!`, for `‖A s‖ ≤ C` and `t ≥ 0`.
+/-- **The two-sided integral estimate**: a continuous integrand bounded by `K|s|ⁿ` has its
+primitive at `0` bounded by `K|t|ⁿ⁺¹/(n+1)`.
+
+This is the only place the sign of `t` is ever split, and both the iterate bound and the
+parameter-derivative bound are one line on top of it. The negative branch is the positive one
+run backwards: `∫₀ᵗ = −∫ₜ⁰`, and on `[t,0]` one has `|s| = −s`, so the model integral is
+`∫ₜ⁰ (−s)ⁿ ds = ∫₀^{−t} sⁿ ds` by `integral_comp_neg`. The two-sided form is what termwise
+differentiation of the series needs: `HasDerivAt` at `t = 0` looks at a two-sided
+neighbourhood, so a bound on `[0,∞)` alone will not do. -/
+theorem norm_integral_le_of_norm_le_pow {G : Type*} [NormedAddCommGroup G] [NormedSpace ℝ G]
+    {g : ℝ → G} (hg : Continuous g) {K : ℝ} {n : ℕ} (h : ∀ s, ‖g s‖ ≤ K * |s| ^ n) (t : ℝ) :
+    ‖∫ s in (0 : ℝ)..t, g s‖ ≤ K * |t| ^ (n + 1) / (n + 1) := by
+  have hK : 0 ≤ K := by have := h 1; simp at this; exact le_trans (norm_nonneg _) this
+  rcases le_total 0 t with ht | ht
+  · calc ‖∫ s in (0 : ℝ)..t, g s‖
+        ≤ ∫ s in (0 : ℝ)..t, ‖g s‖ := intervalIntegral.norm_integral_le_integral_norm ht
+      _ ≤ ∫ s in (0 : ℝ)..t, K * s ^ n := by
+          refine intervalIntegral.integral_mono_on ht (hg.norm.intervalIntegrable 0 t)
+            ((continuous_const.mul (continuous_pow n)).intervalIntegrable 0 t) fun s hs ↦ ?_
+          have := h s
+          rwa [abs_of_nonneg hs.1] at this
+      _ = K * |t| ^ (n + 1) / (n + 1) := by
+          rw [intervalIntegral.integral_const_mul, integral_pow, abs_of_nonneg ht]
+          ring
+  · have hneg : ∫ s in (0 : ℝ)..t, g s = -∫ s in t..(0 : ℝ), g s :=
+      intervalIntegral.integral_symm _ _
+    rw [hneg, norm_neg]
+    calc ‖∫ s in t..(0 : ℝ), g s‖
+        ≤ ∫ s in t..(0 : ℝ), ‖g s‖ := intervalIntegral.norm_integral_le_integral_norm ht
+      _ ≤ ∫ s in t..(0 : ℝ), K * (-s) ^ n := by
+          refine intervalIntegral.integral_mono_on ht (hg.norm.intervalIntegrable t 0)
+            ((continuous_const.mul (continuous_neg.pow n)).intervalIntegrable t 0) fun s hs ↦ ?_
+          have := h s
+          rwa [abs_of_nonpos hs.2] at this
+      _ = K * |t| ^ (n + 1) / (n + 1) := by
+          rw [intervalIntegral.integral_const_mul,
+            show (∫ s in t..(0 : ℝ), (-s) ^ n) = ∫ s in (0 : ℝ)..(-t), s ^ n by
+              rw [intervalIntegral.integral_comp_neg (fun s ↦ s ^ n)]; norm_num,
+            integral_pow, abs_of_nonpos ht]
+          ring
+
+omit [CompleteSpace F] in
+/-- **The factorial bound** `‖Iₙ(t)‖ ≤ (C|t|)ⁿ / n!`.
 
 This is the whole reason a linear ODE is solvable on *any* interval with no smallness
 hypothesis: the factorial beats the power at every `t`, so the series `∑ₙ Iₙ(t)` converges
@@ -77,49 +120,6 @@ however large `C·t` is. A cruder bound `‖Iₙ(t)‖ ≤ (Ct)ⁿ` --- what one
 integrand by its value at the endpoint --- would be useless past `C·t = 1`, which is exactly
 the regime where Mathlib's `IsPicardLindelof.mul_max_le` also gives out. The factorial comes
 from integrating `sⁿ` rather than bounding it. -/
-theorem norm_dysonIter_le_of_nonneg {A : ℝ → (F →L[ℝ] F)} {C : ℝ} (hA : Continuous A)
-    (hC : ∀ s, ‖A s‖ ≤ C) (n : ℕ) {t : ℝ} (ht : 0 ≤ t) :
-    ‖dysonIter A n t‖ ≤ (C * t) ^ n / n.factorial := by
-  have hC0 : 0 ≤ C := le_trans (norm_nonneg _) (hC 0)
-  induction n generalizing t with
-  | zero =>
-    have : ‖(1 : F →L[ℝ] F)‖ ≤ 1 := ContinuousLinearMap.norm_id_le
-    simpa using this
-  | succ n ih =>
-    have hcont : Continuous fun s ↦ (A s).comp (dysonIter A n s) :=
-      (ContinuousLinearMap.compL ℝ F F F).continuous₂.comp₂ hA (continuous_dysonIter hA n)
-    have hbdd : Continuous fun s : ℝ ↦ C ^ (n + 1) / n.factorial * s ^ n :=
-      continuous_const.mul (continuous_pow n)
-    rw [dysonIter_succ]
-    calc ‖∫ s in (0 : ℝ)..t, (A s).comp (dysonIter A n s)‖
-        ≤ ∫ s in (0 : ℝ)..t, ‖(A s).comp (dysonIter A n s)‖ :=
-          intervalIntegral.norm_integral_le_integral_norm ht
-      _ ≤ ∫ s in (0 : ℝ)..t, C ^ (n + 1) / n.factorial * s ^ n := by
-          refine intervalIntegral.integral_mono_on ht
-            (hcont.norm.intervalIntegrable 0 t) (hbdd.intervalIntegrable 0 t) fun s hs ↦ ?_
-          have hs0 : 0 ≤ s := hs.1
-          have h1 : ‖(A s).comp (dysonIter A n s)‖ ≤ ‖A s‖ * ‖dysonIter A n s‖ :=
-            ContinuousLinearMap.opNorm_comp_le _ _
-          have h2 : ‖A s‖ * ‖dysonIter A n s‖ ≤ C * ((C * s) ^ n / n.factorial) := by
-            refine mul_le_mul (hC s) (ih hs0) (norm_nonneg _) hC0
-          refine h1.trans (h2.trans (le_of_eq ?_))
-          rw [mul_pow]
-          field_simp
-          ring
-      _ = (C * t) ^ (n + 1) / (n + 1).factorial := by
-          rw [intervalIntegral.integral_const_mul, integral_pow]
-          rw [Nat.factorial_succ, mul_pow]
-          field_simp
-          push_cast
-          ring
-
-omit [CompleteSpace F] in
-/-- **The factorial bound at any sign of `t`**: `‖Iₙ(t)‖ ≤ (C|t|)ⁿ / n!`.
-
-The two-sided form is what the termwise differentiation of the series needs --- `HasDerivAt` at
-`t = 0` looks at a two-sided neighbourhood, so a bound on `[0,∞)` alone will not do. The
-negative branch is the positive one run backwards: `∫₀ᵗ = −∫ₜ⁰`, and on `[t,0]` one has
-`|s| = −s`, so the model integral is `∫ₜ⁰ (−s)ⁿ ds = ∫₀^{−t} sⁿ ds` by `integral_comp_neg`. -/
 theorem norm_dysonIter_le {A : ℝ → (F →L[ℝ] F)} {C : ℝ} (hA : Continuous A)
     (hC : ∀ s, ‖A s‖ ≤ C) (n : ℕ) (t : ℝ) :
     ‖dysonIter A n t‖ ≤ (C * |t|) ^ n / n.factorial := by
@@ -131,7 +131,6 @@ theorem norm_dysonIter_le {A : ℝ → (F →L[ℝ] F)} {C : ℝ} (hA : Continuo
   | succ n ih =>
     have hcont : Continuous fun s ↦ (A s).comp (dysonIter A n s) :=
       (ContinuousLinearMap.compL ℝ F F F).continuous₂.comp₂ hA (continuous_dysonIter hA n)
-    -- the pointwise bound on the integrand, valid at every `s`
     have hpt : ∀ s : ℝ, ‖(A s).comp (dysonIter A n s)‖ ≤ C ^ (n + 1) / n.factorial * |s| ^ n := by
       intro s
       have h1 : ‖(A s).comp (dysonIter A n s)‖ ≤ ‖A s‖ * ‖dysonIter A n s‖ :=
@@ -141,47 +140,11 @@ theorem norm_dysonIter_le {A : ℝ → (F →L[ℝ] F)} {C : ℝ} (hA : Continuo
       refine h1.trans (h2.trans (le_of_eq ?_))
       rw [mul_pow]; field_simp; ring
     rw [dysonIter_succ]
-    rcases le_total 0 t with ht | ht
-    · have habs : ∀ s ∈ Set.uIcc (0 : ℝ) t, |s| = s := by
-        intro s hs
-        rw [Set.uIcc_of_le ht] at hs
-        exact abs_of_nonneg hs.1
-      calc ‖∫ s in (0 : ℝ)..t, (A s).comp (dysonIter A n s)‖
-          ≤ ∫ s in (0 : ℝ)..t, ‖(A s).comp (dysonIter A n s)‖ :=
-            intervalIntegral.norm_integral_le_integral_norm ht
-        _ ≤ ∫ s in (0 : ℝ)..t, C ^ (n + 1) / n.factorial * s ^ n := by
-            refine intervalIntegral.integral_mono_on ht
-              (hcont.norm.intervalIntegrable 0 t)
-              ((continuous_const.mul (continuous_pow n)).intervalIntegrable 0 t) fun s hs ↦ ?_
-            have := hpt s
-            rwa [abs_of_nonneg hs.1] at this
-        _ = (C * |t|) ^ (n + 1) / (n + 1).factorial := by
-            rw [intervalIntegral.integral_const_mul, integral_pow, abs_of_nonneg ht,
-              Nat.factorial_succ, mul_pow]
-            field_simp
-            push_cast
-            ring
-    · have hneg : ∫ s in (0 : ℝ)..t, (A s).comp (dysonIter A n s)
-          = -∫ s in t..(0 : ℝ), (A s).comp (dysonIter A n s) :=
-        intervalIntegral.integral_symm _ _
-      rw [hneg, norm_neg]
-      calc ‖∫ s in t..(0 : ℝ), (A s).comp (dysonIter A n s)‖
-          ≤ ∫ s in t..(0 : ℝ), ‖(A s).comp (dysonIter A n s)‖ :=
-            intervalIntegral.norm_integral_le_integral_norm ht
-        _ ≤ ∫ s in t..(0 : ℝ), C ^ (n + 1) / n.factorial * (-s) ^ n := by
-            refine intervalIntegral.integral_mono_on ht
-              (hcont.norm.intervalIntegrable t 0)
-              ((continuous_const.mul ((continuous_neg).pow n)).intervalIntegrable t 0) fun s hs ↦ ?_
-            have := hpt s
-            rwa [abs_of_nonpos hs.2] at this
-        _ = (C * |t|) ^ (n + 1) / (n + 1).factorial := by
-            rw [intervalIntegral.integral_const_mul]
-            rw [show (∫ s in t..(0 : ℝ), (-s) ^ n) = ∫ s in (0 : ℝ)..(-t), s ^ n by
-              rw [intervalIntegral.integral_comp_neg (fun s ↦ s ^ n)]; norm_num]
-            rw [integral_pow, abs_of_nonpos ht, Nat.factorial_succ, mul_pow]
-            field_simp
-            push_cast
-            ring
+    refine (norm_integral_le_of_norm_le_pow hcont hpt t).trans (le_of_eq ?_)
+    rw [Nat.factorial_succ, mul_pow]
+    field_simp
+    push_cast
+    ring
 
 /-- **The series converges at every `t`**, with no smallness hypothesis: the factorial bound
 dominates it by `∑ₙ (C|t|)ⁿ/n!`, which is `Real.summable_pow_div_factorial`. -/
@@ -389,5 +352,323 @@ noncomputable def dysonEquiv {A : ℝ → (F →L[ℝ] F)} {C : ℝ} (hA : Conti
 
 @[simp] theorem dysonEquiv_apply {A : ℝ → (F →L[ℝ] F)} {C : ℝ} (hA : Continuous A)
     (hC : ∀ s, ‖A s‖ ≤ C) (t : ℝ) (v : F) : dysonEquiv hA hC t v = dysonSum A t v := rfl
+
+/-! ### Dependence on a parameter
+
+`Φ` depends on the family `A`, and the family may itself depend on a parameter.  Uhlenbeck's
+trick needs the solution of `∂ₜι = Ric_{g_t}(x)∘ι` to be a *differentiable section*, i.e. `C^k`
+in the base point `x`; the regularity of `exp` and the Jacobi equation need the same thing for
+the initial condition.  Mathlib has neither (its local flow is built by `choose` behind a
+`dite`, so as constructed it is not even continuous in the initial point).
+
+**The Dyson series gives it directly**, because each iterate is an integral of a product and
+differentiating under the integral sign is all that is needed.  The derivatives obey the same
+recursion with a Leibniz term, and their bound is the factorial bound with one extra power of
+`|t|` and a factor `n` --- which is still summable, to `C'|t|e^{C|t|}`. -/
+
+section Parameter
+
+variable {H : Type*} [NormedAddCommGroup H] [NormedSpace ℝ H]
+
+set_option maxSynthPendingDepth 3
+
+/-- The derivative in the parameter of the `n`-th Picard--Dyson iterate, defined by the
+recursion obtained from `dysonIter`'s by differentiating under the integral sign:
+`J₀ = 0` and `Jₙ₊₁(x,t) = ∫₀ᵗ A(x,s)∘Jₙ(x,s) + (A'(x,s)·)∘Iₙ(x,s) ds`.
+
+**The two terms are in Mathlib's order, not the natural one.**  `HasFDerivAt.clm_comp` states
+the product rule for `y ↦ (c y).comp (d y)` as `compL (c x) ∘ d' + (compL.flip (d x)) ∘ c'`;
+writing the recursion the other way round would cost an `add_comm` at every step of the
+induction, and matching it makes the differentiation step `clm_comp` verbatim. -/
+noncomputable def dysonIterDeriv (A : H → ℝ → (F →L[ℝ] F))
+    (A' : H → ℝ → (H →L[ℝ] (F →L[ℝ] F))) : ℕ → H → ℝ → (H →L[ℝ] (F →L[ℝ] F))
+  | 0, _, _ => 0
+  | n + 1, x, t => ∫ s in (0 : ℝ)..t,
+      (((ContinuousLinearMap.compL ℝ F F F) (A x s)).comp (dysonIterDeriv A A' n x s)
+        + ((ContinuousLinearMap.compL ℝ F F F).flip (dysonIter (A x) n s)).comp (A' x s))
+
+omit [CompleteSpace F] in
+@[simp] theorem dysonIterDeriv_zero (A : H → ℝ → (F →L[ℝ] F))
+    (A' : H → ℝ → (H →L[ℝ] (F →L[ℝ] F))) (x : H) (t : ℝ) : dysonIterDeriv A A' 0 x t = 0 := rfl
+
+omit [CompleteSpace F] in
+theorem dysonIterDeriv_succ (A : H → ℝ → (F →L[ℝ] F))
+    (A' : H → ℝ → (H →L[ℝ] (F →L[ℝ] F))) (n : ℕ) (x : H) (t : ℝ) :
+    dysonIterDeriv A A' (n + 1) x t = ∫ s in (0 : ℝ)..t,
+      (((ContinuousLinearMap.compL ℝ F F F) (A x s)).comp (dysonIterDeriv A A' n x s)
+        + ((ContinuousLinearMap.compL ℝ F F F).flip (dysonIter (A x) n s)).comp (A' x s)) := rfl
+
+omit [CompleteSpace F] in
+/-- The integrand of that recursion, at a fixed parameter, is continuous in `t`. -/
+theorem continuous_dysonIterDeriv_integrand {A : H → ℝ → (F →L[ℝ] F)}
+    {A' : H → ℝ → (H →L[ℝ] (F →L[ℝ] F))} (hA : ∀ x, Continuous (A x))
+    (hA' : ∀ x, Continuous (A' x)) (n : ℕ) (x : H)
+    (ih : Continuous (dysonIterDeriv A A' n x)) :
+    Continuous fun s ↦
+      (((ContinuousLinearMap.compL ℝ F F F) (A x s)).comp (dysonIterDeriv A A' n x s)
+        + ((ContinuousLinearMap.compL ℝ F F F).flip (dysonIter (A x) n s)).comp (A' x s)) := by
+  have h1 : Continuous fun s ↦
+      ((ContinuousLinearMap.compL ℝ F F F) (A x s)).comp (dysonIterDeriv A A' n x s) :=
+    (ContinuousLinearMap.compL ℝ H (F →L[ℝ] F) (F →L[ℝ] F)).continuous₂.comp₂
+      ((ContinuousLinearMap.compL ℝ F F F).continuous.comp (hA x)) ih
+  have h2 : Continuous fun s ↦
+      ((ContinuousLinearMap.compL ℝ F F F).flip (dysonIter (A x) n s)).comp (A' x s) :=
+    (ContinuousLinearMap.compL ℝ H (F →L[ℝ] F) (F →L[ℝ] F)).continuous₂.comp₂
+      ((ContinuousLinearMap.compL ℝ F F F).flip.continuous.comp
+        (continuous_dysonIter (hA x) n)) (hA' x)
+  exact h1.add h2
+
+omit [CompleteSpace F] in
+/-- Every `Jₙ` is continuous in `t`. -/
+theorem continuous_dysonIterDeriv {A : H → ℝ → (F →L[ℝ] F)}
+    {A' : H → ℝ → (H →L[ℝ] (F →L[ℝ] F))} (hA : ∀ x, Continuous (A x))
+    (hA' : ∀ x, Continuous (A' x)) (n : ℕ) (x : H) :
+    Continuous (dysonIterDeriv A A' n x) := by
+  induction n with
+  | zero =>
+    show Continuous fun _ : ℝ ↦ (0 : H →L[ℝ] (F →L[ℝ] F))
+    exact continuous_const
+  | succ n ih =>
+    have hcont := continuous_dysonIterDeriv_integrand hA hA' n x ih
+    have := intervalIntegral.continuous_primitive (μ := MeasureTheory.volume)
+      (f := fun s ↦
+        (((ContinuousLinearMap.compL ℝ F F F) (A x s)).comp (dysonIterDeriv A A' n x s)
+          + ((ContinuousLinearMap.compL ℝ F F F).flip (dysonIter (A x) n s)).comp (A' x s)))
+      (fun a b ↦ hcont.intervalIntegrable a b) 0
+    have heq : dysonIterDeriv A A' (n + 1) x = fun b : ℝ ↦ ∫ s in (0 : ℝ)..b,
+        (((ContinuousLinearMap.compL ℝ F F F) (A x s)).comp (dysonIterDeriv A A' n x s)
+          + ((ContinuousLinearMap.compL ℝ F F F).flip (dysonIter (A x) n s)).comp (A' x s)) := rfl
+    rw [heq]
+    exact this
+
+omit [CompleteSpace F] in
+/-- `‖h ↦ B ∘ (L h)‖ ≤ ‖B‖‖L‖`, proved from the definition rather than through the operator
+norm of `compL`. -/
+theorem norm_compL_comp_le (B : F →L[ℝ] F) (L : H →L[ℝ] (F →L[ℝ] F)) :
+    ‖((ContinuousLinearMap.compL ℝ F F F) B).comp L‖ ≤ ‖B‖ * ‖L‖ := by
+  refine ContinuousLinearMap.opNorm_le_bound _ (by positivity) fun h ↦ ?_
+  calc ‖(((ContinuousLinearMap.compL ℝ F F F) B).comp L) h‖
+      = ‖B.comp (L h)‖ := rfl
+    _ ≤ ‖B‖ * ‖L h‖ := ContinuousLinearMap.opNorm_comp_le _ _
+    _ ≤ ‖B‖ * (‖L‖ * ‖h‖) := by gcongr; exact L.le_opNorm h
+    _ = ‖B‖ * ‖L‖ * ‖h‖ := by ring
+
+omit [CompleteSpace F] in
+/-- `‖h ↦ (L h) ∘ B‖ ≤ ‖L‖‖B‖`. -/
+theorem norm_compL_flip_comp_le (B : F →L[ℝ] F) (L : H →L[ℝ] (F →L[ℝ] F)) :
+    ‖((ContinuousLinearMap.compL ℝ F F F).flip B).comp L‖ ≤ ‖L‖ * ‖B‖ := by
+  refine ContinuousLinearMap.opNorm_le_bound _ (by positivity) fun h ↦ ?_
+  calc ‖(((ContinuousLinearMap.compL ℝ F F F).flip B).comp L) h‖
+      = ‖(L h).comp B‖ := rfl
+    _ ≤ ‖L h‖ * ‖B‖ := ContinuousLinearMap.opNorm_comp_le _ _
+    _ ≤ ‖L‖ * ‖h‖ * ‖B‖ := by gcongr; exact L.le_opNorm h
+    _ = ‖L‖ * ‖B‖ * ‖h‖ := by ring
+
+/-- The bound on `‖Jₙ(x,t)‖`, as a function of `n` and `t` alone.  It has to be uniform in the
+parameter to serve as the dominating function when differentiating under the integral sign,
+and stated at every `n` (not only at `n+1`) to be usable as that function. -/
+noncomputable def dysonDerivBound (C C' : ℝ) : ℕ → ℝ → ℝ
+  | 0, _ => 0
+  | n + 1, t => C' * |t| * (C * |t|) ^ n / n.factorial
+
+theorem continuous_dysonDerivBound (C C' : ℝ) (n : ℕ) : Continuous (dysonDerivBound C C' n) := by
+  cases n with
+  | zero => exact continuous_const
+  | succ n =>
+    show Continuous fun t ↦ C' * |t| * (C * |t|) ^ n / n.factorial
+    fun_prop
+
+omit [CompleteSpace F] in
+/-- **The factorial bound for the parameter derivatives**: `‖Jₙ₊₁(x,t)‖ ≤ C'|t|(C|t|)ⁿ/n!`.
+
+One extra power of `|t|` against `norm_dysonIter_le`, and one factor of `C` traded for `C'` ---
+the Leibniz term contributes `A'` exactly once along the recursion.  The bound is still
+summable, to `C'|t|e^{C|t|}`, and that is what makes the *derivative* series converge and so
+lets the sum be differentiated termwise.
+
+The induction closes with equality, not slack: the two contributions at step `n+1` are
+`C'Cⁿ⁺¹|t|ⁿ⁺²/(n+2)!` and `C'Cⁿ⁺¹|t|ⁿ⁺²/((n+2)·n!)`, and `1/(n+2)! + 1/((n+2)n!) = 1/(n+1)!`
+exactly. -/
+theorem norm_dysonIterDeriv_succ_le {A : H → ℝ → (F →L[ℝ] F)}
+    {A' : H → ℝ → (H →L[ℝ] (F →L[ℝ] F))} {C C' : ℝ}
+    (hA : ∀ x, Continuous (A x)) (hA' : ∀ x, Continuous (A' x))
+    (hC : ∀ x s, ‖A x s‖ ≤ C) (hC' : ∀ x s, ‖A' x s‖ ≤ C') (n : ℕ) (x : H) (t : ℝ) :
+    ‖dysonIterDeriv A A' (n + 1) x t‖ ≤ C' * |t| * (C * |t|) ^ n / n.factorial := by
+  have hC0 : 0 ≤ C := le_trans (norm_nonneg _) (hC x 0)
+  have hC'0 : 0 ≤ C' := le_trans (norm_nonneg _) (hC' x 0)
+  induction n generalizing t with
+  | zero =>
+    have hcont := continuous_dysonIterDeriv_integrand hA hA' 0 x
+      (continuous_dysonIterDeriv hA hA' 0 x)
+    have hpt : ∀ s : ℝ,
+        ‖(((ContinuousLinearMap.compL ℝ F F F) (A x s)).comp (dysonIterDeriv A A' 0 x s)
+          + ((ContinuousLinearMap.compL ℝ F F F).flip (dysonIter (A x) 0 s)).comp
+              (A' x s))‖ ≤ C' * |s| ^ 0 := by
+      intro s
+      have hz : dysonIterDeriv A A' 0 x s = 0 := rfl
+      rw [hz, ContinuousLinearMap.comp_zero, zero_add]
+      refine (norm_compL_flip_comp_le _ _).trans ?_
+      have h1 : ‖dysonIter (A x) 0 s‖ ≤ 1 := by
+        have : ‖(1 : F →L[ℝ] F)‖ ≤ 1 := ContinuousLinearMap.norm_id_le
+        simpa [dysonIter_zero] using this
+      calc ‖A' x s‖ * ‖dysonIter (A x) 0 s‖ ≤ C' * 1 :=
+            mul_le_mul (hC' x s) h1 (norm_nonneg _) hC'0
+        _ = C' * |s| ^ 0 := by simp
+    rw [dysonIterDeriv_succ]
+    refine (norm_integral_le_of_norm_le_pow hcont hpt t).trans (le_of_eq ?_)
+    simp
+  | succ n ih =>
+    have hcont := continuous_dysonIterDeriv_integrand hA hA' (n + 1) x
+      (continuous_dysonIterDeriv hA hA' (n + 1) x)
+    have hpt : ∀ s : ℝ,
+        ‖(((ContinuousLinearMap.compL ℝ F F F) (A x s)).comp (dysonIterDeriv A A' (n + 1) x s)
+          + ((ContinuousLinearMap.compL ℝ F F F).flip (dysonIter (A x) (n + 1) s)).comp
+              (A' x s))‖
+        ≤ C' * C ^ (n + 1) * (n + 2) / (n + 1).factorial * |s| ^ (n + 1) := by
+      intro s
+      have hI : ‖dysonIter (A x) (n + 1) s‖ ≤ (C * |s|) ^ (n + 1) / (n + 1).factorial :=
+        norm_dysonIter_le (hA x) (fun r ↦ hC x r) (n + 1) s
+      have hJ : ‖dysonIterDeriv A A' (n + 1) x s‖ ≤ C' * |s| * (C * |s|) ^ n / n.factorial :=
+        ih s
+      have hfac : (0 : ℝ) < n.factorial := by positivity
+      have hfac1 : (0 : ℝ) < (n + 1).factorial := by positivity
+      refine (norm_add_le _ _).trans ?_
+      have e1 : ‖((ContinuousLinearMap.compL ℝ F F F) (A x s)).comp
+          (dysonIterDeriv A A' (n + 1) x s)‖
+          ≤ C * (C' * |s| * (C * |s|) ^ n / n.factorial) :=
+        (norm_compL_comp_le _ _).trans (mul_le_mul (hC x s) hJ (norm_nonneg _) hC0)
+      have e2 : ‖((ContinuousLinearMap.compL ℝ F F F).flip
+          (dysonIter (A x) (n + 1) s)).comp (A' x s)‖
+          ≤ C' * ((C * |s|) ^ (n + 1) / (n + 1).factorial) :=
+        (norm_compL_flip_comp_le _ _).trans (mul_le_mul (hC' x s) hI (norm_nonneg _) hC'0)
+      refine (add_le_add e1 e2).trans (le_of_eq ?_)
+      rw [Nat.factorial_succ]
+      push_cast
+      field_simp
+      ring
+    rw [dysonIterDeriv_succ]
+    refine (norm_integral_le_of_norm_le_pow hcont hpt t).trans (le_of_eq ?_)
+    rw [Nat.factorial_succ]
+    push_cast
+    field_simp
+    ring
+
+omit [CompleteSpace F] in
+/-- The same bound at every `n`, against `dysonDerivBound`. -/
+theorem norm_dysonIterDeriv_le {A : H → ℝ → (F →L[ℝ] F)}
+    {A' : H → ℝ → (H →L[ℝ] (F →L[ℝ] F))} {C C' : ℝ}
+    (hA : ∀ x, Continuous (A x)) (hA' : ∀ x, Continuous (A' x))
+    (hC : ∀ x s, ‖A x s‖ ≤ C) (hC' : ∀ x s, ‖A' x s‖ ≤ C') (n : ℕ) (x : H) (t : ℝ) :
+    ‖dysonIterDeriv A A' n x t‖ ≤ dysonDerivBound C C' n t := by
+  cases n with
+  | zero => simp [dysonDerivBound]
+  | succ n => exact norm_dysonIterDeriv_succ_le hA hA' hC hC' n x t
+
+-- BENCH: dyson-parameter-derivative
+omit [CompleteSpace F] in
+/-- **Each iterate is differentiable in the parameter**, with derivative `Jₙ`.
+
+The induction is one application of Mathlib's differentiation under the integral sign
+(`hasFDerivAt_integral_of_dominated_of_fderiv_le`) per step, and the differentiability
+hypothesis it asks for at each `s` is exactly `HasFDerivAt.clm_comp` of the inductive
+hypothesis against `hderiv` --- which is why `dysonIterDeriv` is written in Mathlib's term
+order.
+
+The dominating function is `bnd`, and it has to be uniform in the parameter: that is what the
+global bounds `hC`, `hC'` are for.  They are also what lets the set be all of `H`, so no
+neighbourhood bookkeeping appears. -/
+theorem hasFDerivAt_dysonIter {A : H → ℝ → (F →L[ℝ] F)}
+    {A' : H → ℝ → (H →L[ℝ] (F →L[ℝ] F))} {C C' : ℝ}
+    (hA : ∀ x, Continuous (A x)) (hA' : ∀ x, Continuous (A' x))
+    (hC : ∀ x s, ‖A x s‖ ≤ C) (hC' : ∀ x s, ‖A' x s‖ ≤ C')
+    (hderiv : ∀ x s, HasFDerivAt (fun y ↦ A y s) (A' x s) x)
+    (n : ℕ) (x : H) (t : ℝ) :
+    HasFDerivAt (fun y ↦ dysonIter (A y) n t) (dysonIterDeriv A A' n x t) x := by
+  have hC0 : 0 ≤ C := le_trans (norm_nonneg _) (hC x 0)
+  have hC'0 : 0 ≤ C' := le_trans (norm_nonneg _) (hC' x 0)
+  induction n generalizing x t with
+  | zero =>
+    show HasFDerivAt (fun _ : H ↦ (1 : F →L[ℝ] F)) 0 x
+    exact hasFDerivAt_const _ _
+  | succ n ih =>
+    have hFcont : ∀ y : H, Continuous fun s ↦ (A y s).comp (dysonIter (A y) n s) := fun y ↦
+      (ContinuousLinearMap.compL ℝ F F F).continuous₂.comp₂ (hA y) (continuous_dysonIter (hA y) n)
+    have hF'cont : ∀ y : H, Continuous fun s ↦
+        (((ContinuousLinearMap.compL ℝ F F F) (A y s)).comp (dysonIterDeriv A A' n y s)
+          + ((ContinuousLinearMap.compL ℝ F F F).flip (dysonIter (A y) n s)).comp (A' y s)) :=
+      fun y ↦ continuous_dysonIterDeriv_integrand hA hA' n y (continuous_dysonIterDeriv hA hA' n y)
+    have hbndcont : Continuous fun s : ℝ ↦
+        C * dysonDerivBound C C' n s + C' * ((C * |s|) ^ n / n.factorial) := by
+      refine (continuous_const.mul (continuous_dysonDerivBound C C' n)).add ?_
+      fun_prop
+    have hbound : ∀ (y : H) (r : ℝ),
+        ‖(((ContinuousLinearMap.compL ℝ F F F) (A y r)).comp (dysonIterDeriv A A' n y r)
+          + ((ContinuousLinearMap.compL ℝ F F F).flip (dysonIter (A y) n r)).comp (A' y r))‖
+        ≤ C * dysonDerivBound C C' n r + C' * ((C * |r|) ^ n / n.factorial) := by
+      intro y r
+      refine (norm_add_le _ _).trans (add_le_add ?_ ?_)
+      · exact (norm_compL_comp_le _ _).trans
+          (mul_le_mul (hC y r) (norm_dysonIterDeriv_le hA hA' hC hC' n y r) (norm_nonneg _) hC0)
+      · exact (norm_compL_flip_comp_le _ _).trans
+          (mul_le_mul (hC' y r) (norm_dysonIter_le (hA y) (fun q ↦ hC y q) n r)
+            (norm_nonneg _) hC'0)
+    exact intervalIntegral.hasFDerivAt_integral_of_dominated_of_fderiv_le
+      (μ := MeasureTheory.volume) (a := 0) (b := t) (s := Set.univ) (x₀ := x)
+      (F := fun y s ↦ (A y s).comp (dysonIter (A y) n s))
+      (F' := fun y s ↦
+        (((ContinuousLinearMap.compL ℝ F F F) (A y s)).comp (dysonIterDeriv A A' n y s)
+          + ((ContinuousLinearMap.compL ℝ F F F).flip (dysonIter (A y) n s)).comp (A' y s)))
+      (bound := fun s ↦ C * dysonDerivBound C C' n s + C' * ((C * |s|) ^ n / n.factorial))
+      Filter.univ_mem
+      (Filter.Eventually.of_forall fun y ↦ (hFcont y).aestronglyMeasurable)
+      ((hFcont x).intervalIntegrable 0 t)
+      (hF'cont x).aestronglyMeasurable
+      (Filter.Eventually.of_forall fun r _ y _ ↦ hbound y r)
+      (hbndcont.intervalIntegrable 0 t)
+      (Filter.Eventually.of_forall fun r _ y _ ↦ (hderiv y r).clm_comp (ih y r))
+
+-- BENCH: dyson-sum-parameter-derivative
+/-- **The fundamental solution is differentiable in the parameter**, with derivative `∑ₙ Jₙ`.
+
+This is what Mathlib does not have in any form --- its local flow is built by `choose` behind a
+`dite`, so as constructed it is not even continuous in the initial point --- and what both open
+lines of the roadmap are gated on: Uhlenbeck's trivialising family has to be a *differentiable
+section*, and the regularity of `exp` runs through the variational equation, which is linear.
+
+Nothing is needed beyond the two series: the iterates are differentiable by
+`hasFDerivAt_dysonIter`, their derivatives are dominated by `dysonDerivBound C C' n t`
+uniformly in the parameter, and that is summable (to `C'|t|e^{C|t|}`) for the same reason the
+solution series is --- the factorial. `hasFDerivAt_tsum` then differentiates termwise. -/
+theorem hasFDerivAt_dysonSum {A : H → ℝ → (F →L[ℝ] F)}
+    {A' : H → ℝ → (H →L[ℝ] (F →L[ℝ] F))} {C C' : ℝ}
+    (hA : ∀ x, Continuous (A x)) (hA' : ∀ x, Continuous (A' x))
+    (hC : ∀ x s, ‖A x s‖ ≤ C) (hC' : ∀ x s, ‖A' x s‖ ≤ C')
+    (hderiv : ∀ x s, HasFDerivAt (fun y ↦ A y s) (A' x s) x)
+    (t : ℝ) (x : H) :
+    HasFDerivAt (fun y ↦ dysonSum (A y) t) (∑' n, dysonIterDeriv A A' n x t) x := by
+  have hu : Summable fun n ↦ dysonDerivBound C C' n t := by
+    have h1 : Summable fun n : ℕ ↦ C' * |t| * ((C * |t|) ^ n / n.factorial) :=
+      (Real.summable_pow_div_factorial (C * |t|)).mul_left (C' * |t|)
+    have h2 : (fun n : ℕ ↦ dysonDerivBound C C' (n + 1) t)
+        = fun n : ℕ ↦ C' * |t| * ((C * |t|) ^ n / n.factorial) := by
+      funext n
+      show C' * |t| * (C * |t|) ^ n / n.factorial = _
+      ring
+    exact (summable_nat_add_iff 1).mp (by rw [h2]; exact h1)
+  exact hasFDerivAt_tsum hu
+    (fun n y ↦ hasFDerivAt_dysonIter hA hA' hC hC' hderiv n y t)
+    (fun n y ↦ norm_dysonIterDeriv_le hA hA' hC hC' n y t)
+    (summable_dysonIter (hA x) (fun r ↦ hC x r) t) x
+
+/-- `Φ` is differentiable in the parameter, and in particular continuous in it. -/
+theorem differentiable_dysonSum {A : H → ℝ → (F →L[ℝ] F)}
+    {A' : H → ℝ → (H →L[ℝ] (F →L[ℝ] F))} {C C' : ℝ}
+    (hA : ∀ x, Continuous (A x)) (hA' : ∀ x, Continuous (A' x))
+    (hC : ∀ x s, ‖A x s‖ ≤ C) (hC' : ∀ x s, ‖A' x s‖ ≤ C')
+    (hderiv : ∀ x s, HasFDerivAt (fun y ↦ A y s) (A' x s) x) (t : ℝ) :
+    Differentiable ℝ fun y ↦ dysonSum (A y) t :=
+  fun x ↦ (hasFDerivAt_dysonSum hA hA' hC hC' hderiv t x).differentiableAt
+
+end Parameter
 
 end RicciFlowBlueprint
