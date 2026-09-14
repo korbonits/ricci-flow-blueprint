@@ -2857,6 +2857,37 @@ target actually requires.
   needed only for Hamilton 1999's $\log(1+t)$ improvement.
 \end{theorem}
 
+\begin{theorem}[The maximum principles with a moving metric]
+  \label{thm:max-moving}
+  \lean{RicciFlowBlueprint.MaximumPrinciple.le_of_laplacian_moving,
+    RicciFlowBlueprint.MaximumPrinciple.mem_of_laplacian_moving}
+  \leanok
+  \uses{thm:max-tensor, def:laplacian, lem:second-derivative-test}
+  Let $g_t$ be a family of metrics on a closed manifold $M$, $V$ a fixed complete real
+  inner product space, and $u : [0,T] \times M \to V$ a solution of
+  \[
+    \partial_t u \;=\; \Delta_{g_t} u \;+\; F_t(u),
+  \]
+  read componentwise against each $n \in V$. If $K \subseteq V$ is closed, convex,
+  nonempty and preserved by the ODE $\dot v = F_t(v)$ in Nagumo's form, then
+  $u(0,\cdot) \in K$ gives $u(t,\cdot) \in K$ for all $t \in [0,T]$. The scalar statement
+  is the same with $V = \R$ and a comparison solution $\varphi' = F_t(\varphi)$.
+
+  \textbf{Proved} (\texttt{TensorPreservation.lean}). \textbf{A moving Laplacian costs
+  nothing.} The maximum principle never inspects $\Delta$ except to ask that
+  $\Delta\langle n, u(t,\cdot)\rangle \ge 0$ at a spatial minimum, and Lemma
+  \ref{lem:second-derivative-test} supplies that \emph{for each metric separately}. So the
+  abstract principle applies with the metric's instance introduced inside the proof, one
+  time at a time --- the manoeuvre Theorem \ref{thm:scal-lower-bound-preserved} makes
+  inline one level down.
+
+  \textbf{What is still not bought is a moving inner product on $V$}, and that is the
+  distinction that matters: here the fibre is a fixed vector space with a fixed metric and
+  only the base geometry evolves. Hamilton's curvature operator lives in $\Lambda^2T_xM$,
+  whose inner product moves with $g_t$; trivialising \emph{that} is the content of
+  Uhlenbeck's trick, and this theorem is what the trick is applied to.
+\end{theorem}
+
 \begin{proof}
   \leanok
   Same skeleton as the proof of \ref{thm:max-scalar}, with a supporting
