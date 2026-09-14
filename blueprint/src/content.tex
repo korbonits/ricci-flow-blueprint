@@ -2497,6 +2497,96 @@ target actually requires.
   move with $t$, and the maximum principle does not mind.
 \end{theorem}
 
+\begin{lemma}[Linear ODEs: the Picard--Dyson iterates]
+  \label{lem:dyson-iterates}
+  \lean{RicciFlowBlueprint.dysonIter,
+    RicciFlowBlueprint.continuous_dysonIter,
+    RicciFlowBlueprint.norm_dysonIter_le}
+  \leanok
+  For a continuous family of bounded operators $A : \R \to \mathcal{L}(F)$ with
+  $\|A(s)\| \le C$, the Picard iterates for $\Phi' = A(t)\Phi$, $\Phi(0) = 1$ ---
+  $I_0 = 1$ and $I_{n+1}(t) = \int_0^t A(s) I_n(s)\,ds$ --- are continuous and satisfy
+  \[
+    \|I_n(t)\| \;\le\; \frac{(Ct)^n}{n!}, \qquad t \ge 0 .
+  \]
+
+  \textbf{Proved} (\texttt{LinearODE.lean}). This is scaffolding for the ODE that
+  \textbf{Uhlenbeck's trick} needs: the trivialising family solves
+  $\partial_t \iota = \Ric \circ \iota$, which is linear in $\iota$.
+
+  \textbf{Why it is built rather than taken from Mathlib.}
+  \texttt{Analysis/ODE/PicardLindelof.lean} does prove existence on a whole interval, but
+  gated on its field \texttt{mul\_max\_le}: $L \cdot \max(t_{\max} - t_0, t_0 - t_{\min})
+  \le a - r$, where $L$ bounds the vector field on a ball of radius $a$ about $x_0$. For a
+  \emph{linear} field the best available bound is $L = C(\|x_0\| + a)$, so on $[0,T]$ with
+  $r = 0$ the condition reads $a(1 - CT) \ge C\|x_0\|T$ --- that is, \textbf{$C \cdot T < 1$}.
+  Past that one must continue the solution across a chain of short intervals, and Mathlib has
+  no maximal-solution or continuation theory.
+
+  \textbf{The factorial is what removes the smallness hypothesis.} It beats the power at
+  every $t$, so $\sum_n I_n(t)$ converges however large $C\cdot T$ is, and no continuation is
+  needed. The cruder bound $\|I_n(t)\| \le (Ct)^n$ --- what one gets by estimating the
+  integrand by its endpoint value --- is useless past $C \cdot t = 1$, which is precisely the
+  regime where \texttt{mul\_max\_le} also gives out. The factorial comes from integrating
+  $s^n$ rather than bounding it.
+\end{lemma}
+
+\begin{theorem}[Linear ODEs: global existence and uniqueness]
+  \label{thm:linear-ode}
+  \lean{RicciFlowBlueprint.dysonSum,
+    RicciFlowBlueprint.hasDerivAt_dysonSum,
+    RicciFlowBlueprint.norm_dysonSum_le,
+    RicciFlowBlueprint.eq_of_hasDerivAt_linear,
+    RicciFlowBlueprint.eq_dysonSum_apply,
+    RicciFlowBlueprint.dysonFrom,
+    RicciFlowBlueprint.hasDerivAt_dysonFrom_apply,
+    RicciFlowBlueprint.bijective_dysonSum,
+    RicciFlowBlueprint.dysonEquiv}
+  \leanok
+  \uses{lem:dyson-iterates}
+  Let $A : \R \to \mathcal{L}(F)$ be continuous with $\|A(s)\| \le C$, $F$ a Banach space.
+  Then $\Phi(t) := \sum_{n\ge 0} I_n(t)$ converges for every $t \in \R$ and
+  \[
+    \Phi'(t) = A(t)\circ\Phi(t), \qquad \Phi(0) = 1, \qquad \|\Phi(t)\| \le e^{C|t|} .
+  \]
+  Moreover any two solutions of $\dot x = A(t)x$ defined on all of $\R$ and agreeing at
+  $0$ are equal, so every global solution is $x(t) = \Phi(t)x(0)$.
+
+  \textbf{Proved} (\texttt{LinearODE.lean}). \textbf{No smallness hypothesis and no
+  continuation argument appears}, which is what Lemma \ref{lem:dyson-iterates} explains.
+
+  \textbf{The series is differentiated termwise, not swapped with the integral.} Mathlib's
+  \texttt{hasDerivAt\_tsum\_of\_isPreconnected} asks for a summable bound on the
+  derivatives, uniform on an open preconnected set; here the derivatives are
+  $A(y)I_n(y)$, bounded by $C(CR)^n/n!$ on $(-R,R)$, and the factorial makes that
+  summable. Swapping $\sum$ with $\int_0^t$ instead would have meant dominated
+  convergence for no gain. The index is shifted first --- the derivative of $I_{n+1}$ is
+  $A I_n$, so summing over $I_{n+1}$ is what makes the bound's index match the term's,
+  and the zeroth iterate is the constant $1$, which contributes nothing.
+
+  \textbf{Uniqueness, by contrast, is Mathlib's verbatim.} A linear field is globally
+  Lipschitz with a constant uniform in $t$ (namely $C$), so
+  \texttt{ODE\_solution\_unique\_univ} applies with no work; it is only \emph{existence}
+  on a long interval that Mathlib cannot supply.
+
+  \textbf{$\Phi(t)$ is invertible, and both halves come from uniqueness alone} --- no second
+  series, no adjoint. \emph{Injective}: if $\Phi(t)v = 0$ then $s \mapsto \Phi(s)v$ and the
+  zero solution agree at $t$, hence everywhere, so $v = 0$; this is \emph{backward}
+  uniqueness, and it is exactly what an arbitrary base time in the uniqueness statement buys.
+  \emph{Surjective}: the propagator $U(\cdot,t)$ --- the Dyson sum of the time-shifted family
+  --- gives a global solution taking the value $w$ at $t$, and every global solution is
+  $\Phi(s)$ applied to its own value at $0$. The open mapping theorem then makes $\Phi(t)$ a
+  linear homeomorphism. This matters because Uhlenbeck's trivialising family must be a bundle
+  \emph{isomorphism}, not merely a bundle map.
+
+  \textbf{What this is for.} Uhlenbeck's trick trivialises the bundle along a family
+  $\iota(t)$ solving $\partial_t \iota = \Ric_{g_t}\circ\iota$, $\iota(0) = \mathrm{id}$,
+  on all of $[0,T]$ --- a linear equation in $\iota$. What is \emph{still} missing after
+  this theorem is $C^k$ dependence of $\Phi$ on a parameter, since the pulled-back
+  curvature has to be a differentiable section; see the discussion at
+  \ref{thm:max-tensor}.
+\end{theorem}
+
 \begin{theorem}[Evolution of the curvature tensor]
   \label{thm:evolution-rm}
   \lean{RicciFlowBlueprint.inner_derivCurvature_eq_curvatureLaplacian_add_of_isRicciFlowAt,
@@ -2779,6 +2869,37 @@ target actually requires.
   \emph{across} times. That is the real content of Uhlenbeck's trick and it is untouched.
   Nor is the time-dependent \emph{set} $K_t$ done --- that is a separate generalisation,
   needed only for Hamilton 1999's $\log(1+t)$ improvement.
+\end{theorem}
+
+\begin{theorem}[The maximum principles with a moving metric]
+  \label{thm:max-moving}
+  \lean{RicciFlowBlueprint.MaximumPrinciple.le_of_laplacian_moving,
+    RicciFlowBlueprint.MaximumPrinciple.mem_of_laplacian_moving}
+  \leanok
+  \uses{thm:max-tensor, def:laplacian, lem:second-derivative-test}
+  Let $g_t$ be a family of metrics on a closed manifold $M$, $V$ a fixed complete real
+  inner product space, and $u : [0,T] \times M \to V$ a solution of
+  \[
+    \partial_t u \;=\; \Delta_{g_t} u \;+\; F_t(u),
+  \]
+  read componentwise against each $n \in V$. If $K \subseteq V$ is closed, convex,
+  nonempty and preserved by the ODE $\dot v = F_t(v)$ in Nagumo's form, then
+  $u(0,\cdot) \in K$ gives $u(t,\cdot) \in K$ for all $t \in [0,T]$. The scalar statement
+  is the same with $V = \R$ and a comparison solution $\varphi' = F_t(\varphi)$.
+
+  \textbf{Proved} (\texttt{TensorPreservation.lean}). \textbf{A moving Laplacian costs
+  nothing.} The maximum principle never inspects $\Delta$ except to ask that
+  $\Delta\langle n, u(t,\cdot)\rangle \ge 0$ at a spatial minimum, and Lemma
+  \ref{lem:second-derivative-test} supplies that \emph{for each metric separately}. So the
+  abstract principle applies with the metric's instance introduced inside the proof, one
+  time at a time --- the manoeuvre Theorem \ref{thm:scal-lower-bound-preserved} makes
+  inline one level down.
+
+  \textbf{What is still not bought is a moving inner product on $V$}, and that is the
+  distinction that matters: here the fibre is a fixed vector space with a fixed metric and
+  only the base geometry evolves. Hamilton's curvature operator lives in $\Lambda^2T_xM$,
+  whose inner product moves with $g_t$; trivialising \emph{that} is the content of
+  Uhlenbeck's trick, and this theorem is what the trick is applied to.
 \end{theorem}
 
 \begin{proof}
