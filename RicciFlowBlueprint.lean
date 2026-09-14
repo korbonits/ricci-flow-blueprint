@@ -30,6 +30,7 @@ import RicciFlowBlueprint.TraceCov
 import RicciFlowBlueprint.RicciForm
 import RicciFlowBlueprint.RicciSymm
 import RicciFlowBlueprint.CurvatureSymm
+import RicciFlowBlueprint.CurvatureOperator
 import RicciFlowBlueprint.ConstantCurvature
 import RicciFlowBlueprint.IveyConvex
 import RicciFlowBlueprint.CurvatureDeriv

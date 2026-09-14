@@ -520,6 +520,53 @@ gives the road, and the one thing it does not give yet.
   contraction of the second Bianchi identity will need.
 \end{lemma}
 
+\begin{lemma}[The Riemann tensor as a pointwise $(0,4)$ form]
+  \label{lem:curvature-tensor-at}
+  \lean{CovariantDerivative.curvatureTensorAt,
+    CovariantDerivative.curvatureTensorAt_apply_field,
+    CovariantDerivative.curvatureTensorAt_add_fst,
+    CovariantDerivative.curvatureTensorAt_smul_fst,
+    CovariantDerivative.curvatureTensorAt_add_thd,
+    CovariantDerivative.curvatureTensorAt_smul_thd,
+    CovariantDerivative.curvatureTensorAt_add_fth,
+    CovariantDerivative.curvatureTensorAt_antisymm_fst_snd,
+    CovariantDerivative.curvatureTensorAt_antisymm_thd_fth,
+    CovariantDerivative.curvatureTensorAt_pair_symm,
+    CovariantDerivative.curvatureTensorAt_bianchi}
+  \leanok
+  \uses{lem:curvature-symmetries, lem:global-extension}
+  $\Rm_x(v_1,v_2,v_3,v_4) = \langle \Riem(v_1,v_2)v_3, v_4\rangle$ is a well-defined
+  $4$-linear form on $T_x\M$, additive and homogeneous in each slot, and carries all four
+  symmetries of Lemma \ref{lem:curvature-symmetries} pointwise.
+
+  \textbf{Proved} (\texttt{CurvatureOperator.lean}). \textbf{What was missing was a genuinely
+  pointwise tensor.} The curvature was packaged only in pieces --- \texttt{curvatureEndoAt}
+  fixes the two field slots and varies a tangent vector in the third,
+  \texttt{curvatureBilinFst} fixes the last two fields and varies the first --- and nothing
+  took four tangent vectors at once, which is what factoring through $\Lambda^2$ requires.
+
+  \textbf{Three slots cost an extension; the fourth is free.} The first three vectors are
+  globalised to $C^2$ fields (Lemma \ref{lem:global-extension}) and the fourth is paired
+  against directly, so no regularity is asked of it at all --- the same observation
+  \texttt{inner\_bianchi\_first} already rested on. Slots 1 and 2 are then
+  \texttt{tensorialAt\_curvature\_fst}/\texttt{\_snd} cashed in through
+  \texttt{TensorialAt.pointwise}, and slot 3 is \texttt{curvature\_congr\_third} with
+  \texttt{curvature\_add\_right}/\texttt{curvature\_smul\_const\_right} --- the
+  \texttt{curvatureEndoAt} pattern one slot wider.
+
+  \textbf{Antisymmetry in the second pair is not proved from metric compatibility here}, but
+  deduced from pair symmetry and antisymmetry in the first pair, which is shorter: two
+  applications of $\Rm(a,b,c,d) = \Rm(c,d,a,b)$ around one sign flip.
+
+  This is the object Lemma \ref{lem:curvature-symmetries} says pair symmetry is \emph{for}.
+  What remains before the curvature operator on $\Lambda^2 T_x\M$ itself is the alternating
+  factorisation. Mathlib supplies the target --- $\bigwedge^2 E$ carries an inner product by
+  the Gram determinant, and an orthonormal basis of $E$ induces one of $\bigwedge^2 E$ --- and
+  \texttt{exteriorPower.alternatingMapLinearEquiv} is the universal property; what it does
+  \emph{not} supply is a constructor building a rank-$2$ alternating map from a bilinear one,
+  so the underlying \texttt{MultilinearMap} over \texttt{Fin 2} has to be built by hand.
+\end{lemma}
+
 \begin{proof}
   \leanok
   The classical octahedron argument. In the six unknowns
