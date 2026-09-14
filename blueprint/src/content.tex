@@ -2531,6 +2531,48 @@ target actually requires.
   $s^n$ rather than bounding it.
 \end{lemma}
 
+\begin{theorem}[Linear ODEs: global existence and uniqueness]
+  \label{thm:linear-ode}
+  \lean{RicciFlowBlueprint.dysonSum,
+    RicciFlowBlueprint.hasDerivAt_dysonSum,
+    RicciFlowBlueprint.norm_dysonSum_le,
+    RicciFlowBlueprint.eq_of_hasDerivAt_linear,
+    RicciFlowBlueprint.eq_dysonSum_apply}
+  \leanok
+  \uses{lem:dyson-iterates}
+  Let $A : \R \to \mathcal{L}(F)$ be continuous with $\|A(s)\| \le C$, $F$ a Banach space.
+  Then $\Phi(t) := \sum_{n\ge 0} I_n(t)$ converges for every $t \in \R$ and
+  \[
+    \Phi'(t) = A(t)\circ\Phi(t), \qquad \Phi(0) = 1, \qquad \|\Phi(t)\| \le e^{C|t|} .
+  \]
+  Moreover any two solutions of $\dot x = A(t)x$ defined on all of $\R$ and agreeing at
+  $0$ are equal, so every global solution is $x(t) = \Phi(t)x(0)$.
+
+  \textbf{Proved} (\texttt{LinearODE.lean}). \textbf{No smallness hypothesis and no
+  continuation argument appears}, which is what Lemma \ref{lem:dyson-iterates} explains.
+
+  \textbf{The series is differentiated termwise, not swapped with the integral.} Mathlib's
+  \texttt{hasDerivAt\_tsum\_of\_isPreconnected} asks for a summable bound on the
+  derivatives, uniform on an open preconnected set; here the derivatives are
+  $A(y)I_n(y)$, bounded by $C(CR)^n/n!$ on $(-R,R)$, and the factorial makes that
+  summable. Swapping $\sum$ with $\int_0^t$ instead would have meant dominated
+  convergence for no gain. The index is shifted first --- the derivative of $I_{n+1}$ is
+  $A I_n$, so summing over $I_{n+1}$ is what makes the bound's index match the term's,
+  and the zeroth iterate is the constant $1$, which contributes nothing.
+
+  \textbf{Uniqueness, by contrast, is Mathlib's verbatim.} A linear field is globally
+  Lipschitz with a constant uniform in $t$ (namely $C$), so
+  \texttt{ODE\_solution\_unique\_univ} applies with no work; it is only \emph{existence}
+  on a long interval that Mathlib cannot supply.
+
+  \textbf{What this is for.} Uhlenbeck's trick trivialises the bundle along a family
+  $\iota(t)$ solving $\partial_t \iota = \Ric_{g_t}\circ\iota$, $\iota(0) = \mathrm{id}$,
+  on all of $[0,T]$ --- a linear equation in $\iota$. What is \emph{still} missing after
+  this theorem is $C^k$ dependence of $\Phi$ on a parameter, since the pulled-back
+  curvature has to be a differentiable section; see the discussion at
+  \ref{thm:max-tensor}.
+\end{theorem}
+
 \begin{theorem}[Evolution of the curvature tensor]
   \label{thm:evolution-rm}
   \lean{RicciFlowBlueprint.inner_derivCurvature_eq_curvatureLaplacian_add_of_isRicciFlowAt,
