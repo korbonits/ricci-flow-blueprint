@@ -587,6 +587,71 @@ gives the road, and the one thing it does not give yet.
   supplied as hypotheses and \texttt{linarith} does the elimination.
 \end{proof}
 
+\begin{lemma}[The first pair of slots factored through $\Lambda^2$]
+  \label{lem:curvature-lambda-fst}
+  \lean{RicciFlowBlueprint.altOfBilin,
+    RicciFlowBlueprint.altOfBilin_apply,
+    CovariantDerivative.curvatureTensorAt_self_fst_snd,
+    CovariantDerivative.curvatureTensorAt_self_thd_fth,
+    CovariantDerivative.curvatureAltFst,
+    CovariantDerivative.curvatureAltFst_apply,
+    CovariantDerivative.curvatureFunctional,
+    CovariantDerivative.curvatureFunctional_apply_ιMulti,
+    CovariantDerivative.curvatureFunctional_add_thd,
+    CovariantDerivative.curvatureFunctional_smul_thd,
+    CovariantDerivative.curvatureFunctional_add_fth,
+    CovariantDerivative.curvatureFunctional_smul_fth,
+    CovariantDerivative.curvatureFunctional_self}
+  \leanok
+  \uses{lem:curvature-tensor-at}
+  For fixed $c,d \in T_x\M$, the map $(a,b) \mapsto \Rm_x(a,b,c,d)$ is alternating,
+  hence factors through $\Lambda^2 T_x\M$ as a linear functional
+  $\Phi_{c,d} \colon \Lambda^2 T_x\M \to \R$ with
+  $\Phi_{c,d}(a \wedge b) = \Rm_x(a,b,c,d)$; and $(c,d) \mapsto \Phi_{c,d}$ is
+  itself additive, homogeneous and alternating in each of its two slots.
+
+  \textbf{Proved} (\texttt{CurvatureLambda.lean}). \textbf{Mathlib has no constructor
+  for a rank-$2$ alternating map from a bilinear one}, so the underlying
+  \texttt{MultilinearMap} over \texttt{Fin 2} is built by hand
+  (\texttt{altOfBilin}): \texttt{map\_update\_add'} and \texttt{map\_update\_smul'}
+  each split on whether the updated index is $0$ or $1$, and the alternating
+  condition reduces to $\Rm_x(a,a,c,d) = 0$. The factorisation itself is then
+  \texttt{exteriorPower.alternatingMapLinearEquiv}, the universal property.
+
+  \textbf{The factorisation is characterised, not merely defined.}
+  \texttt{curvatureFunctional\_apply\_}$\iota$\texttt{Multi} evaluates it on a wedge, which is
+  what makes the object usable; the ten laws in the second pair of slots are each
+  proved at the alternating-map level and carried across by
+  \texttt{alternatingMapLinearEquiv} being a linear \emph{equivalence}. No
+  induction over $\Lambda^2$ is used, and none is available --- Mathlib has
+  \texttt{exteriorPower.}$\iota$\texttt{Multi\_span} but no span-induction eliminator.
+
+  \textbf{Everything is stated over $E$, never over $T_x\M$.} The two are
+  definitionally equal, but forming $\Lambda^2 T_x\M$ and unifying it against
+  $\Lambda^2 E$ sends \texttt{isDefEq} through the exterior algebra --- a quotient
+  of a tensor algebra --- and it does not return, even at four times the heartbeat
+  budget. This is the $E$ versus \texttt{TangentSpace} wall one type former up, and
+  the same remedy applies. No metric is used, so nothing is lost by it.
+
+  \textbf{Where this stops, and why.} The \emph{second} factorisation --- the
+  curvature form $\Lambda^2 T_x\M \times \Lambda^2 T_x\M \to \R$, i.e.\ the
+  curvature operator --- is deliberately \emph{absent}. It \emph{defines} without
+  complaint, but every application of it fails to elaborate: \texttt{isDefEq} again
+  enters the exterior algebra and does not return, at four times the heartbeats,
+  with both wedges replaced by opaque variables, with the proof fields extracted as
+  named theorems, and with only one of the two arguments applied. The culprit is
+  localised: it is the \emph{nested} codomain
+  $\Lambda^2 E \to_{\ell} (\Lambda^2 E \to_{\ell} \R)$, not $\Lambda^2$ itself,
+  since $\Phi_{c,d}$ --- a linear map out of $\Lambda^2 E$ into $\R$ --- applies
+  perfectly well. A definition whose only characterisation cannot be stated is
+  precisely the hazard this blueprint guards against, so it is not landed unusable.
+  The design lead for the next attempt: build the curvature \emph{operator}
+  $\Lambda^2 \to \Lambda^2$ directly through the inner product that
+  \texttt{Analysis/InnerProductSpace/ExteriorPower.lean} supplies, rather than a
+  bilinear form; or go through a bundled bilinear-map type; or define it on the
+  basis \texttt{OrthonormalBasis.exteriorPower} gives.
+\end{lemma}
+
 \begin{lemma}[Constant sectional curvature determines $\Rm$]
   \label{lem:const-sec-determines-rm}
   \lean{CovariantDerivative.inner_curvature_eq_of_const_sec,
@@ -2299,7 +2364,10 @@ target actually requires.
 
 \begin{lemma}[Evolution of the curvature tensor]
   \label{lem:evolution-rm}
-  \uses{def:ricci-flow, def:curvature, def:laplacian, lem:variation-connection, lem:variation-curvature, lem:bianchi-second, lem:metric-trace-variation, lem:variation-scalar, lem:metric-trace-cov}
+  \lean{RicciFlowBlueprint.inner_derivCurvature_eq_curvatureLaplacian_add_of_isRicciFlowAt,
+    RicciFlowBlueprint.hasDerivAt_inner_curvatureE_eq_curvatureLaplacian_add_of_isRicciFlowAt}
+  \leanok
+  \uses{def:ricci-flow, def:curvature, def:laplacian, lem:variation-connection, lem:variation-curvature, lem:bianchi-second, lem:metric-trace-variation, lem:variation-scalar, lem:metric-trace-cov, thm:evolution-rm}
   Under the flow, $\partial_t \Rm = \Delta \Rm + Q(\Rm)$, where $Q$ is
   quadratic in the curvature operator.
 
@@ -2308,14 +2376,20 @@ target actually requires.
   bundle. Formally this is a computation, not an estimate, but it is a long one
   and it is what every subsequent estimate is applied to.
 
-  \textbf{First half done.} Lemma \ref{lem:variation-curvature} gives
-  $\partial_t \Rm$ as $\nab \dot A$, second covariant derivatives of
-  $h = -2\Ric$. The second Bianchi identity is Lemma \ref{lem:bianchi-second}.
-  What remains is its trace against the metric, which rewrites the
-  antisymmetrised $\nab^2 \Ric$ as $\Delta \Rm$ plus terms quadratic in
-  $\Rm$ --- and that rewriting is a matter of moving covariant derivatives past
-  each other, for which Lemmas \ref{lem:bilin-ricci-identity} and
-  \ref{lem:curvature-ricci-identity} are the ingredients.
+  \textbf{Proved}, in the precise form of Theorem \ref{thm:evolution-rm}, which
+  names $Q$: pairing against the metric frozen at the time of differentiation,
+  $\partial_t\langle\Rm(X,Y)Z,W\rangle = \langle\Delta\Rm(X,Y)Z,W\rangle + Q_1 +
+  Q_2 + \Ric(R(X,Y)Z,W) + \Ric(Z,R(X,Y)W)$, every term on the right being either
+  $\Delta\Rm$ or quadratic in the curvature. \emph{Uhlenbeck's trick is not used
+  and is not needed for the identity} --- the paragraph above overstates what the
+  computation requires. What the trick buys is not the equation but the
+  \emph{tensor maximum principle applied to} it, where the fibre metric of the
+  bundle moves with $t$; the identity itself is proved with the pairing frozen,
+  so no time-dependence of the bundle metric ever enters.
+
+  \textbf{This node is kept, rather than merged into Theorem
+  \ref{thm:evolution-rm}}, because the downstream estimates reference it by name
+  in fifteen places. Read it as an alias.
 \end{lemma}
 
 \begin{lemma}[The Ricci identity for a bilinear form]
