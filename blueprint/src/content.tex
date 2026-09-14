@@ -2587,6 +2587,66 @@ target actually requires.
   \ref{thm:max-tensor}.
 \end{theorem}
 
+\begin{theorem}[Linear ODEs: dependence on a parameter]
+  \label{thm:linear-ode-parameter}
+  \lean{RicciFlowBlueprint.dysonIterDeriv,
+    RicciFlowBlueprint.norm_dysonIterDeriv_le,
+    RicciFlowBlueprint.hasFDerivAt_dysonIter,
+    RicciFlowBlueprint.hasFDerivAt_dysonSum,
+    RicciFlowBlueprint.differentiable_dysonSum,
+    RicciFlowBlueprint.dysonDerivSum,
+    RicciFlowBlueprint.hasDerivAt_dysonDerivSum}
+  \leanok
+  \uses{thm:linear-ode}
+  Let the family depend on a parameter: $A : H \times \R \to \mathcal{L}(F)$ with $H$ a normed
+  space, $A(x,\cdot)$ continuous, $\|A(x,s)\| \le C$, and $x \mapsto A(x,s)$ differentiable
+  with $\|D_xA(x,s)\| \le C'$, both bounds uniform. Then
+  \[
+    x \;\longmapsto\; \Phi(x,t) \quad\text{is differentiable, with } D_x\Phi(x,t)
+      = \sum_{n\ge 0} J_n(x,t),
+  \]
+  where $J_0 = 0$ and $J_{n+1}(x,t) = \int_0^t A(x,s)J_n(x,s) + (D_xA(x,s)\,\cdot\,)I_n(x,s)\,ds$
+  --- the recursion for $I_n$ differentiated under the integral sign.
+
+  \textbf{Proved} (\texttt{LinearODE.lean}). \textbf{Mathlib has this in no form}: its local
+  flow is built by \texttt{choose} behind a \texttt{dite}, so as constructed it is not even
+  continuous in the initial point, and only Lipschitz and continuous dependence on the
+  \emph{initial condition} are available. Both open lines of the roadmap are gated on exactly
+  this --- Uhlenbeck's trivialising family must be a \emph{differentiable section}, and the
+  regularity of $\exp$ runs through the variational equation, which is linear.
+
+  \textbf{The derivative bound is the factorial bound with one power of $|t|$ traded in.}
+  $\|J_{n+1}(x,t)\| \le C'|t|(C|t|)^n/n!$, summing to $C'|t|e^{C|t|}$: the Leibniz term
+  contributes $D_xA$ exactly once along the recursion, so one factor of $C$ becomes $C'$ and
+  one power of $|t|$ is gained. The induction closes with equality, not slack ---
+  $1/(n+2)! + 1/((n+2)n!) = 1/(n+1)!$.
+
+  \textbf{Two design points carry the proof.} The bounds are global in $x$, so the dominating
+  function for differentiation under the integral sign is uniform and the parameter set is all
+  of $H$: no neighbourhood bookkeeping appears anywhere. And $J_n$ is defined with its two
+  terms in \emph{Mathlib's} order rather than the natural one, because
+  \texttt{HasFDerivAt.clm\_comp} states the product rule for $y \mapsto c(y)\circ d(y)$ that
+  way; matching it makes the differentiation step that lemma verbatim instead of an
+  \texttt{add\_comm} at every step of the induction.
+
+  \textbf{The variational equation is proved too} (\texttt{hasDerivAt\_dysonDerivSum}):
+  \[
+    \partial_t\big(D_x\Phi\big) \;=\; \big(D_xA\,\cdot\,\big)\circ\Phi \;+\; A\circ\big(D_x\Phi\big),
+  \]
+  i.e. differentiation in the parameter and in time commute for this equation --- proved,
+  not assumed. The argument is the termwise one again, one level up: the terms differentiate
+  to $A\circ J_n + (D_xA\,\cdot)\circ I_n$, dominated uniformly on $(-R,R)$ by a summable
+  bound.
+
+  \textbf{This is what makes the route to $C^k$ a checked claim rather than an aspiration.}
+  With it the pair $(\Phi, D_x\Phi)$ solves the \emph{linear} block-triangular system
+  $\partial_t(u,v) = (Au,\ (D_xA\,\cdot)u + Av)$ on
+  $\mathcal{L}(F) \times \mathcal{L}(H,\mathcal{L}(F))$, whose operator is bounded, continuous
+  in $t$, and one derivative less regular in the parameter than $A$. So $C^k$ follows from the
+  $C^1$ theorem applied to the augmented system, by induction on $k$, with no second-order
+  differentiation under the integral sign anywhere. That induction is not yet carried out.
+\end{theorem}
+
 \begin{theorem}[Evolution of the curvature tensor]
   \label{thm:evolution-rm}
   \lean{RicciFlowBlueprint.inner_derivCurvature_eq_curvatureLaplacian_add_of_isRicciFlowAt,
