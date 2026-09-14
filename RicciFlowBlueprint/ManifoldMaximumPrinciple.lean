@@ -83,6 +83,40 @@ theorem le_of_laplacian' {u ut : ℝ → M → ℝ} {F φ : ℝ → ℝ} {K : NN
 
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [CompleteSpace V]
 
+-- BENCH: max-principle-tensor-manifold-time
+/-- **Hamilton's tensor maximum principle on a closed Riemannian manifold, with a
+time-dependent reaction.** As `mem_of_laplacian`, but the equation is `∂ₜu = Δu + F t (u)`
+and `K` is asked to be preserved by the non-autonomous ODE `v' = F t (v)`.
+
+This is the form a **moving background geometry** produces, and it is what the Hamilton 1982
+§9 route to Hamilton--Ivey needs in place of Uhlenbeck's trick: there the bundle's fibre
+metric evolves, so the reaction picks up the metric's time derivative and stops being
+autonomous. The cost is nil --- `F` is used only at the touching time. -/
+theorem mem_of_laplacian_time {u ut : ℝ → M → V} {F : ℝ → V → V} {K : Set V} {L : NNReal}
+    {T : ℝ}
+    (hKcl : IsClosed K) (hKc : Convex ℝ K) (hKne : K.Nonempty)
+    (hu : Continuous fun p : ℝ × M ↦ u p.1 p.2)
+    (hut : ∀ t ∈ Icc 0 T, ∀ x, HasDerivAt (fun s ↦ u s x) (ut t x) t)
+    (hreg : ∀ t ∈ Icc 0 T, ∀ x, ContMDiffAt I 𝓘(ℝ, V) 2 (u t) x)
+    (hF : ∀ t, LipschitzWith L (F t))
+    (heq : ∀ t ∈ Icc 0 T, ∀ x, ∀ n : V,
+      ⟪n, ut t x⟫ = cov.laplacianFun (fun y ↦ ⟪n, u t y⟫) x + ⟪n, F t (u t x)⟫)
+    (hK : ∀ t ∈ Icc 0 T, ∀ p ∈ K, ∀ n : V, (∀ q ∈ K, ⟪n, q - p⟫ ≤ 0) → ⟪n, F t p⟫ ≤ 0)
+    (h0 : ∀ x, u 0 x ∈ K) :
+    ∀ t ∈ Icc 0 T, ∀ x, u t x ∈ K := by
+  refine mem_of_deriv_le_at_max_time hKcl hKc hKne hu hut hF ?_ hK h0
+  intro t ht x₀ n hmax
+  -- a maximum of `⟪n, u t ·⟫` is a minimum of `⟪-n, u t ·⟫`
+  have hloc : IsLocalMin (fun y ↦ ⟪-n, u t y⟫) x₀ := Eventually.of_forall fun x ↦ by
+    simp only [inner_neg_left]
+    linarith [hmax x]
+  have hreg' : ContMDiffAt I 𝓘(ℝ, ℝ) 2 (fun y ↦ ⟪-n, u t y⟫) x₀ :=
+    ((innerSL ℝ (-n)).contMDiff.contMDiffAt).comp x₀ (hreg t ht x₀)
+  have h1 := laplacianFun_nonneg_of_isLocalMin cov hreg' hloc
+  have h2 := heq t ht x₀ (-n)
+  rw [inner_neg_left, inner_neg_left] at h2
+  linarith
+
 -- BENCH: max-principle-tensor-manifold
 /-- **Hamilton's tensor maximum principle on a closed Riemannian manifold**, for the trivial
 bundle `M × V`. If `u : ℝ → M → V` solves `∂ₜu = Δu + F(u)` on `[0, T]`, stated componentwise

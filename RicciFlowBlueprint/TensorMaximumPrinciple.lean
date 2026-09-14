@@ -87,28 +87,39 @@ theorem inner_sub_le_norm_mul_infDist {K : Set V} (hKne : K.Nonempty) {p n : V}
 
 variable {M : Type*} [TopologicalSpace M] [CompactSpace M]
 
--- BENCH: max-principle-tensor
-/-- **Hamilton's tensor maximum principle, abstractly.** Let `M` be compact, `V` a complete
-real inner product space, `K ⊆ V` closed, convex and nonempty, `u : ℝ → M → V` jointly
-continuous with time derivative `ut` on `[0, T]`, and `F` Lipschitz. Suppose
+-- BENCH: max-principle-tensor-time
+/-- **Hamilton's tensor maximum principle with a time-dependent reaction.** Let `M` be
+compact, `V` a complete real inner product space, `K ⊆ V` closed, convex and nonempty,
+`u : ℝ → M → V` jointly continuous with time derivative `ut` on `[0, T]`, and `F t`
+Lipschitz with a constant `L` **uniform in `t`**. Suppose
 
 * (`hmax`) at every spatial maximum `x₀` of `x ↦ ⟪n, u t x⟫` one has
-  `⟪n, ut t x₀⟫ ≤ ⟪n, F (u t x₀)⟫` — on a manifold this is `∂ₜu = Δu + F(u)` together with
-  `Δ⟪n, u⟫ ≤ 0` at a maximum;
-* (`hK`) `K` is preserved by the ODE `v' = F(v)`, in Nagumo's form: `⟪n, F p⟫ ≤ 0` for every
-  `p ∈ K` and every outward normal `n` at `p` (`subtangential_of_invariant` derives this
-  from invariance along solution curves).
+  `⟪n, ut t x₀⟫ ≤ ⟪n, F t (u t x₀)⟫` — on a manifold this is `∂ₜu = Δu + F t (u)` together
+  with `Δ⟪n, u⟫ ≤ 0` at a maximum;
+* (`hK`) `K` is preserved by the **non-autonomous** ODE `v' = F t (v)`, in Nagumo's form:
+  `⟪n, F t p⟫ ≤ 0` for every `t ∈ [0,T]`, every `p ∈ K` and every outward normal `n` at `p`.
 
-If `u 0 x ∈ K` for all `x`, then `u t x ∈ K` for all `t ∈ [0, T]` and all `x`. -/
-theorem mem_of_deriv_le_at_max [CompleteSpace V] {u ut : ℝ → M → V} {F : V → V}
+If `u 0 x ∈ K` for all `x`, then `u t x ∈ K` for all `t ∈ [0, T]` and all `x`.
+
+**Why the time dependence is the useful generality.** `F` enters the proof at exactly three
+points --- the hypothesis at the touching point, the Lipschitz comparison against the nearest
+point, and subtangentiality --- and all three happen at the single time `t₀`, so nothing in
+the argument notices that `F` moves. That matters because a *moving background geometry*
+produces exactly a time-dependent reaction: it is what one gets from Hamilton 1982 §9, where
+the bundle's fibre metric evolves, rather than from Uhlenbeck's trick, which freezes it. What
+the generalisation does **not** buy is a moving inner product on `V` itself: `infDist (·) K`
+and the nearest-point projection are taken in `V`'s own metric at every time, and the
+first-touching-time argument compares them across times. That is the real content of
+Uhlenbeck's trick, and it is untouched here. -/
+theorem mem_of_deriv_le_at_max_time [CompleteSpace V] {u ut : ℝ → M → V} {F : ℝ → V → V}
     {K : Set V} {L : NNReal} {T : ℝ}
     (hKcl : IsClosed K) (hKc : Convex ℝ K) (hKne : K.Nonempty)
     (hu : Continuous fun p : ℝ × M ↦ u p.1 p.2)
     (hut : ∀ t ∈ Icc 0 T, ∀ x, HasDerivAt (fun s ↦ u s x) (ut t x) t)
-    (hF : LipschitzWith L F)
+    (hF : ∀ t, LipschitzWith L (F t))
     (hmax : ∀ t ∈ Icc 0 T, ∀ x₀, ∀ n : V, (∀ x, ⟪n, u t x⟫ ≤ ⟪n, u t x₀⟫) →
-      ⟪n, ut t x₀⟫ ≤ ⟪n, F (u t x₀)⟫)
-    (hK : ∀ p ∈ K, ∀ n : V, (∀ q ∈ K, ⟪n, q - p⟫ ≤ 0) → ⟪n, F p⟫ ≤ 0)
+      ⟪n, ut t x₀⟫ ≤ ⟪n, F t (u t x₀)⟫)
+    (hK : ∀ t ∈ Icc 0 T, ∀ p ∈ K, ∀ n : V, (∀ q ∈ K, ⟪n, q - p⟫ ≤ 0) → ⟪n, F t p⟫ ≤ 0)
     (h0 : ∀ x, u 0 x ∈ K) :
     ∀ t ∈ Icc 0 T, ∀ x, u t x ∈ K := by
   set c : ℝ := 2 * L + 1 with hc
@@ -187,7 +198,7 @@ theorem mem_of_deriv_le_at_max [CompleteSpace V] {u ut : ℝ → M → V} {F : V
       have := hbound t₀ x
       have := hglob x
       nlinarith
-    have h1 : ⟪n, ut t₀ x₀⟫ ≤ ⟪n, F (u t₀ x₀)⟫ := hmax t₀ ht₀I x₀ n hmax₀
+    have h1 : ⟪n, ut t₀ x₀⟫ ≤ ⟪n, F t₀ (u t₀ x₀)⟫ := hmax t₀ ht₀I x₀ n hmax₀
     -- the left derivative of `t ↦ ⟪n, p⟫ + E ε e^{ct} - ⟪n, u t x₀⟫` at `t₀` is `≤ 0`
     have hgd : HasDerivWithinAt (fun t ↦ ⟪n, p⟫ + E * (ε * Real.exp (c * t)) - ⟪n, u t x₀⟫)
         (E * (ε * (c * Real.exp (c * t₀))) - ⟪n, ut t₀ x₀⟫) (Iio t₀) t₀ := by
@@ -210,13 +221,13 @@ theorem mem_of_deriv_le_at_max [CompleteSpace V] {u ut : ℝ → M → V} {F : V
         nlinarith
       · rw [hat]; ring
     -- Lipschitz and subtangentiality
-    have h2 : ⟪n, F (u t₀ x₀)⟫ ≤ ⟪n, F p⟫ + E * (L * E) := by
-      have hd := hF.dist_le_mul (u t₀ x₀) p
+    have h2 : ⟪n, F t₀ (u t₀ x₀)⟫ ≤ ⟪n, F t₀ p⟫ + E * (L * E) := by
+      have hd := (hF t₀).dist_le_mul (u t₀ x₀) p
       rw [dist_eq_norm, dist_eq_norm, ← hn_def, hnE] at hd
-      have := real_inner_le_norm n (F (u t₀ x₀) - F p)
+      have := real_inner_le_norm n (F t₀ (u t₀ x₀) - F t₀ p)
       rw [inner_sub_right, hnE] at this
       nlinarith [hEpos]
-    have h3 : ⟪n, F p⟫ ≤ 0 := hK p hp n hn
+    have h3 : ⟪n, F t₀ p⟫ ≤ 0 := hK t₀ ht₀I p hp n hn
     have h4 : E * (ε * (c * Real.exp (c * t₀))) = c * (E * E) := by rw [hE]; ring
     rw [h4] at hle
     have h5 : c * (E * E) ≤ L * (E * E) := by nlinarith
@@ -233,6 +244,24 @@ theorem mem_of_deriv_le_at_max [CompleteSpace V] {u ut : ℝ → M → V} {F : V
   have := key (η / Real.exp (c * t)) (by positivity) t ht x
   rw [div_mul_cancel₀ η hexp.ne'] at this
   linarith
+
+-- BENCH: max-principle-tensor
+/-- **Hamilton's tensor maximum principle, abstractly** --- the autonomous case, `F` not
+depending on `t`. This is the form `ManifoldMaximumPrinciple.lean` consumes; it is
+`mem_of_deriv_le_at_max_time` at a constant family. -/
+theorem mem_of_deriv_le_at_max [CompleteSpace V] {u ut : ℝ → M → V} {F : V → V}
+    {K : Set V} {L : NNReal} {T : ℝ}
+    (hKcl : IsClosed K) (hKc : Convex ℝ K) (hKne : K.Nonempty)
+    (hu : Continuous fun p : ℝ × M ↦ u p.1 p.2)
+    (hut : ∀ t ∈ Icc 0 T, ∀ x, HasDerivAt (fun s ↦ u s x) (ut t x) t)
+    (hF : LipschitzWith L F)
+    (hmax : ∀ t ∈ Icc 0 T, ∀ x₀, ∀ n : V, (∀ x, ⟪n, u t x⟫ ≤ ⟪n, u t x₀⟫) →
+      ⟪n, ut t x₀⟫ ≤ ⟪n, F (u t x₀)⟫)
+    (hK : ∀ p ∈ K, ∀ n : V, (∀ q ∈ K, ⟪n, q - p⟫ ≤ 0) → ⟪n, F p⟫ ≤ 0)
+    (h0 : ∀ x, u 0 x ∈ K) :
+    ∀ t ∈ Icc 0 T, ∀ x, u t x ∈ K :=
+  mem_of_deriv_le_at_max_time (F := fun _ ↦ F) hKcl hKc hKne hu hut (fun _ ↦ hF) hmax
+    (fun _ _ ↦ hK) h0
 
 end MaximumPrinciple
 end RicciFlowBlueprint

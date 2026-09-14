@@ -49,3 +49,5 @@ import RicciFlowBlueprint.RicciIdentity
 import RicciFlowBlueprint.BianchiDeriv
 import RicciFlowBlueprint.CurvatureFlow
 import RicciFlowBlueprint.CurvatureEvolution
+import RicciFlowBlueprint.ScalarPreservation
+import RicciFlowBlueprint.ScalarLowerBound
