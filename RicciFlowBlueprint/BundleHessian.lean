@@ -8,20 +8,24 @@ over a constant direction vector, and the object it differentiates is not a vect
 
 Two connections appear, and they are genuinely different: `cov` on `V`, which is what is
 being differentiated, and `covT` on `TM`, which supplies the correction `−∇_{∇_XY}σ`. For
-`V = TM` and `cov = covT` every definition here unfolds to its `Hessian.lean` counterpart;
-that identification is deliberately not stated as a lemma, because specialising the
-`[∀ x, NormedAddCommGroup (V x)]` binder to the norms a `RiemannianBundle` puts on `T_xM`
-is rejected as not definitionally equal — the fibre norms of `TM` come from a metric, not
-from the binder. Nothing downstream needs the bridge: `TM`-valued statements use
-`Hessian.lean` directly.
+`V = TM` and `cov = covT` every definition here **is** its `Hessian.lean` counterpart, by
+`rfl` (`hessianSection_eq_hessian`, `hessianSectionAt_eq_hessianAt`,
+`laplacianSection_eq_laplacian`).
 
-The fibre metric is on `TM` only: the trace defining `Δ` is over an orthonormal basis of
-`T_xM`, and `OrthonormalBasis.sum_apply_self_eq` traces a bilinear map into *any* normed
-space, so `V` needs a norm but no inner product for the Laplacian to be frame-independent.
-Following mathlib's own advice (`Topology/VectorBundle/Riemannian.lean`), `V` carries its
-fibre norms as plain `[∀ x, NormedAddCommGroup (V x)]` binders rather than a
-`RiemannianBundle` instance, which is reserved for bundles with a preexisting fibre
-topology such as `TM`.
+**Nothing here asks `V` for a norm, and that is what makes the bridge possible.** The
+fibres carry mathlib's standard general-bundle binders — `AddCommGroup`, `Module`,
+`TopologicalSpace` and the two continuity classes — and no more. A fibre *norm* would
+break the specialisation outright, and not for a plumbing reason: `TangentSpace I x`
+reduces to `E`, so `E`'s own norm typechecks as a fibre norm while instance search finds
+the Riemannian metric's, and the two are genuinely different norms on the same type
+(lean4#14949; mathlib's scoped priority-80 `RiemannianBundle` instances exist precisely to
+keep them apart). Dropping the norm removes the choice rather than resolving it.
+
+The trace defining `Δ` survives the loss because
+`OrthonormalBasis.sum_apply_self_eq` needs nothing metric in its *codomain* — it is an
+algebraic rearrangement of a finite sum, with no estimate anywhere. The inner product used
+is `T_xM`'s, in the slot being traced, and that one is unambiguous.
+
 -/
 import RicciFlowBlueprint.Hessian
 
@@ -37,8 +41,9 @@ variable
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
   {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
   {V : M → Type*} [TopologicalSpace (TotalSpace F V)]
-  [∀ x : M, NormedAddCommGroup (V x)] [∀ x : M, NormedSpace ℝ (V x)]
-  [FiberBundle F V] [VectorBundle ℝ F V]
+  [∀ x : M, AddCommGroup (V x)] [∀ x : M, Module ℝ (V x)]
+  [∀ x : M, TopologicalSpace (V x)] [∀ x : M, IsTopologicalAddGroup (V x)]
+  [∀ x : M, ContinuousSMul ℝ (V x)] [FiberBundle F V] [VectorBundle ℝ F V]
   (cov : CovariantDerivative I F V)
   (covT : CovariantDerivative I E (fun x : M ↦ TangentSpace I x))
 
@@ -183,5 +188,48 @@ theorem laplacianSection_eq_sum_frame {σ : Π y : M, V y} (hσ : CMDiff 2 (T% �
   rw [← hb i, cov.hessianSectionAt_apply covT hσ (hfr i) (hfr i)]
 
 end Laplacian
+
+section Tangent
+
+/-! ### The tangent bundle is a case of this file
+
+`Hessian.lean` builds `∇²` and `Δ` for vector fields directly. The two towers are not
+merely analogous: at `V = TM` with the same connection in both slots, every definition
+above **is** the corresponding one there, by `rfl`. These three lemmas are what make that
+a checked claim rather than a reading of the source, and they are what lets a fact proved
+on either side be used on the other.
+
+They need no `RiemannianBundle` except where the statement itself does (`laplacian` traces
+over `stdOrthonormalBasis`), because nothing above asks `TM`'s fibres for a norm — see the
+file header for why a fibre norm would have made this unstatable. -/
+
+variable
+  {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+    [FiniteDimensional ℝ E]
+  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
+  (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E] in
+/-- **`∇²` on a bundle section is `∇²` on a vector field**, at `V = TM`. -/
+theorem hessianSection_eq_hessian (X Y Z : Π x : M, TangentSpace I x) (x : M) :
+    cov.hessianSection cov X Y Z x = cov.hessian X Y Z x := rfl
+
+omit [CompleteSpace E] in
+/-- The bilinear packagings agree too. -/
+theorem hessianSectionAt_eq_hessianAt [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+    [ContMDiffCovariantDerivative cov 1] {Z : Π y : M, TangentSpace I y}
+    (hZ : CMDiff 2 (T% Z)) (x : M) :
+    cov.hessianSectionAt cov hZ x = cov.hessianAt hZ x := rfl
+
+omit [CompleteSpace E] in
+/-- **The rough Laplacian of a bundle section is the rough Laplacian of a vector field**,
+at `V = TM`. -/
+theorem laplacianSection_eq_laplacian [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+    [ContMDiffCovariantDerivative cov 1] {Z : Π y : M, TangentSpace I y}
+    (hZ : CMDiff 2 (T% Z)) (x : M) :
+    cov.laplacianSection cov hZ x = cov.laplacian hZ x := rfl
+
+end Tangent
 
 end CovariantDerivative

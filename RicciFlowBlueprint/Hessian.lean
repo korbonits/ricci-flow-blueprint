@@ -143,9 +143,17 @@ section OrthonormalTrace
 open scoped RealInnerProductSpace
 
 /-- The sum `∑ᵢ B(bᵢ, bᵢ)` of a bilinear map over an orthonormal basis does not depend on the
-basis: it is the metric trace of `B`. -/
+basis: it is the metric trace of `B`.
+
+**The codomain needs no norm**, only a topological `ℝ`-module structure: every step is an
+algebraic rearrangement of a finite sum, and nothing is estimated. That matters beyond
+economy — it is what lets the trace defining a rough Laplacian be taken in the fibre of a
+bundle carrying no metric of its own, and hence what lets `BundleHessian.lean` specialise
+to the tangent bundle (where a fibre norm would be ambiguous between the model space's and
+the Riemannian metric's). -/
 theorem OrthonormalBasis.sum_apply_self_eq {F G : Type*} [NormedAddCommGroup F]
-    [InnerProductSpace ℝ F] [NormedAddCommGroup G] [NormedSpace ℝ G]
+    [InnerProductSpace ℝ F] [AddCommGroup G] [Module ℝ G] [TopologicalSpace G]
+    [IsTopologicalAddGroup G] [ContinuousSMul ℝ G]
     {ι κ : Type*} [Fintype ι] [Fintype κ]
     (b : OrthonormalBasis ι ℝ F) (c : OrthonormalBasis κ ℝ F) (B : F →L[ℝ] F →L[ℝ] G) :
     ∑ i, B (b i) (b i) = ∑ j, B (c j) (c j) := by

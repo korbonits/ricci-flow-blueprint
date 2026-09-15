@@ -37,11 +37,14 @@ variable
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M] [T2Space M]
   {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
   {V : M → Type*} [TopologicalSpace (TotalSpace F V)]
-  [∀ x : M, NormedAddCommGroup (V x)] [∀ x : M, InnerProductSpace ℝ (V x)]
-  [FiberBundle F V] [VectorBundle ℝ F V]
+  [∀ x : M, AddCommGroup (V x)] [∀ x : M, Module ℝ (V x)]
+  [∀ x : M, TopologicalSpace (V x)] [∀ x : M, IsTopologicalAddGroup (V x)]
+  [∀ x : M, ContinuousSMul ℝ (V x)] [FiberBundle F V] [VectorBundle ℝ F V]
+  [RiemannianBundle V]
   (cov : CovariantDerivative I F V)
 
-omit [FiniteDimensional ℝ E] [T2Space M] [IsManifold I ω M] [FiniteDimensional ℝ F] in
+omit [FiniteDimensional ℝ E] [T2Space M] [IsManifold I ω M] [FiniteDimensional ℝ F]
+  [RiemannianBundle V] in
 /-- `∇` over a finite sum `∑ᵢ cᵢ • Wᵢ` of sections of `V`. The general-bundle form of
 `cov_sum_smul_section_apply`; the induction is mathlib's Leibniz rule at every step. -/
 theorem cov_sum_smul_section_apply_of_bundle {ι : Type*} (a : Finset ι)
@@ -74,7 +77,8 @@ theorem cov_sum_smul_section_apply_of_bundle {ι : Type*} (a : Finset ι)
         fun i hi ↦ hW i (Finset.mem_insert_of_mem hi)]
     rfl
 
-omit [FiniteDimensional ℝ E] [T2Space M] [IsManifold I ω M] [FiniteDimensional ℝ F] in
+omit [FiniteDimensional ℝ E] [T2Space M] [IsManifold I ω M] [FiniteDimensional ℝ F]
+  [RiemannianBundle V] in
 /-- `∇` over a finite sum of sections of `V`. -/
 theorem cov_sum_section_apply_of_bundle {ι : Type*} (a : Finset ι) {Zs : ι → Π y : M, V y}
     {y : M} (h : ∀ i ∈ a, MDiffAt (T% (Zs i)) y) (v : TangentSpace I y) :
@@ -142,14 +146,17 @@ variable
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M] [T2Space M]
   {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
   {V : M → Type*} [TopologicalSpace (TotalSpace F V)]
-  [∀ x : M, NormedAddCommGroup (V x)] [∀ x : M, InnerProductSpace ℝ (V x)]
-  [FiberBundle F V] [VectorBundle ℝ F V]
+  [∀ x : M, AddCommGroup (V x)] [∀ x : M, Module ℝ (V x)]
+  [∀ x : M, TopologicalSpace (V x)] [∀ x : M, IsTopologicalAddGroup (V x)]
+  [∀ x : M, ContinuousSMul ℝ (V x)] [FiberBundle F V] [VectorBundle ℝ F V]
+  [RiemannianBundle V]
   [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
   (cov : CovariantDerivative I F V)
   (covT : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
 
 omit [CompleteSpace E] [FiniteDimensional ℝ E] [T2Space M]
-  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] [FiniteDimensional ℝ F] in
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] [FiniteDimensional ℝ F]
+  [RiemannianBundle V] in
 /-- `∇_Y σ` is globally `C^k` for a `C^k` connection, a `C^{k+1}` section of `V` and a `C^k`
 vector field. The general-bundle form of `contMDiff_cov_apply`. -/
 lemma contMDiff_cov_apply_section {k : ℕ∞ω} [ContMDiffCovariantDerivative cov k]
@@ -169,7 +176,8 @@ lemma contMDiff_cov_apply_section {k : ℕ∞ω} [ContMDiffCovariantDerivative c
   exact h1.clm_bundle_apply (hY y)
 
 omit [CompleteSpace E] [FiniteDimensional ℝ E] [T2Space M]
-  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] [FiniteDimensional ℝ F] in
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] [FiniteDimensional ℝ F]
+  [RiemannianBundle V] in
 /-- **`∇²(f • W) = (∇²f) • W` at a point where `f` and `df` both vanish**, for a section `W`
 of `V`. Leibniz produces three corrections beyond the leading term and each carries a factor
 `f x` or `df x`. By the same token `∇(f • W)(x) = 0`, which is what lets a second-order
@@ -205,7 +213,7 @@ theorem hessianSection_smul_of_vanishing {f : M → ℝ} {W : Π y : M, V y}
 
 omit [CompleteSpace E] [FiniteDimensional ℝ E] [T2Space M]
   [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] [FiniteDimensional ℝ F]
-  [VectorBundle ℝ F V] in
+  [VectorBundle ℝ F V] [RiemannianBundle V] in
 /-- **`∇²` is additive in its section slot**, two-term case, for sections of `V`. -/
 theorem hessianSection_add {Z Z' : Π y : M, V y} {X Y : Π y : M, TangentSpace I y} {x : M}
     (hZ : ∀ y, MDiffAt (T% Z) y) (hZ' : ∀ y, MDiffAt (T% Z') y)
@@ -227,7 +235,8 @@ theorem hessianSection_add {Z Z' : Π y : M, V y} {X Y : Π y : M, TangentSpace 
   abel
 
 omit [CompleteSpace E] [FiniteDimensional ℝ E] [T2Space M]
-  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] [FiniteDimensional ℝ F] in
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] [FiniteDimensional ℝ F]
+  [RiemannianBundle V] in
 /-- **`∇²` is additive over a finite sum of sections of `V`.** -/
 theorem hessianSection_sum {ι : Type*} (a : Finset ι) {Zs : ι → Π y : M, V y}
     {X Y : Π y : M, TangentSpace I y} {x : M}
@@ -387,5 +396,35 @@ theorem exists_contMDiff_section_normal_of_bundle {x : M} (v : V x) :
     rw [hdiag, ha]
     simp only [neg_smul, Finset.sum_neg_distrib]
     rw [b.sum_repr' w, add_neg_cancel]
+
+section Tangent
+
+/-! ### `NormalSection.lean` is the tangent-bundle case
+
+Same check as in `BundleBochner.lean`, and for the same reason: until this section the
+general statement had no instantiations, so nothing tested that it says what it is meant
+to say. -/
+
+variable
+  {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+    [FiniteDimensional ℝ E]
+  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M] [T2Space M]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+  (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+  [ContMDiffCovariantDerivative cov 1]
+
+omit [CompleteSpace E] in
+/-- **The normal section of `NormalSection.lean`, derived from the general-bundle one.** -/
+theorem exists_contMDiff_section_normal_of_bundle' {x : M} (v : TangentSpace I x) :
+    ∃ (N : Π y : M, TangentSpace I y) (hN : CMDiff 2 (T% N)),
+      N x = v ∧ cov N x = 0 ∧ cov.laplacian hN x = 0 :=
+  exists_contMDiff_section_normal_of_bundle (F := E) cov cov v
+
+/-- The two statements are definitionally the same type. -/
+example : @exists_contMDiff_section_normal_of_bundle' = @exists_contMDiff_section_normal :=
+  rfl
+
+end Tangent
 
 end CovariantDerivative

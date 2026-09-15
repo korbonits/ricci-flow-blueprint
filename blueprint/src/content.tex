@@ -3229,7 +3229,10 @@ target actually requires.
     CovariantDerivative.hessianSectionAt_apply,
     CovariantDerivative.laplacianSection,
     CovariantDerivative.laplacianSection_eq_sum,
-    CovariantDerivative.laplacianSection_eq_sum_frame}
+    CovariantDerivative.laplacianSection_eq_sum_frame,
+    CovariantDerivative.hessianSection_eq_hessian,
+    CovariantDerivative.hessianSectionAt_eq_hessianAt,
+    CovariantDerivative.laplacianSection_eq_laplacian}
   \leanok
   \uses{lem:global-extension}
   For a connection $\nab$ on a vector bundle $V \to \M$ and a connection $\nab^{T}$ on
@@ -3250,16 +3253,25 @@ target actually requires.
   $-\nab_{\nab^T_X Y}\sigma$. Tensoriality in $Y$ is the cancellation between the two Leibniz
   rules --- $\nab_X(f\,\nab_Y\sigma)$ against $\nab_{\nab^T_X(fY)}\sigma$ --- and needs both.
 
-  \textbf{The fibre metric is on $T\M$ only.} The trace is over an orthonormal basis of
-  $T_x\M$, and \texttt{OrthonormalBasis.sum\_apply\_self\_eq} traces a bilinear map into an
-  \emph{arbitrary} normed space, so $V$ needs a norm on its fibres but no inner product for
-  $\Delta$ to be frame-independent. Following mathlib's own advice, $V$ carries those norms
-  as plain binders rather than a \texttt{RiemannianBundle} instance, which is reserved for
-  bundles with a preexisting fibre topology such as $T\M$. The price is that the
-  specialisation $V = T\M$ cannot be stated as a lemma --- the norms a
-  \texttt{RiemannianBundle} puts on $T_x\M$ are not definitionally the ones a binder
-  supplies --- and nothing needs it: $T\M$-valued statements use \texttt{Hessian.lean}
-  directly.
+  \textbf{Nothing here asks $V$ for a norm, and that is what makes $T\M$ a case of it.}
+  The fibres carry only mathlib's standard general-bundle binders, and
+  $\mathrm{hessianSection}$, its bilinear packaging and $\Delta$ all agree with
+  \texttt{Hessian.lean}'s by \texttt{rfl}. The trace survives the loss of the norm because
+  \texttt{OrthonormalBasis.sum\_apply\_self\_eq} needs nothing metric in its
+  \emph{codomain} --- it is an algebraic rearrangement of a finite sum, with no estimate
+  anywhere --- so only the slot being traced, $T_x\M$, needs an inner product, and that one
+  is unambiguous.
+
+  \textbf{A fibre norm would have broken the specialisation, and not for a plumbing
+  reason.} $T_x\M$ reduces to the model space $E$, so $E$'s own norm typechecks as a fibre
+  norm while instance search returns the Riemannian metric's, and those are genuinely
+  different norms on one type. (Mathlib's scoped priority-$80$
+  \texttt{RiemannianBundle} instances exist precisely to keep them apart.) Dropping the
+  norm removes the choice rather than resolving it; where a fibre \emph{metric} is
+  genuinely needed --- Lemmas \ref{lem:bundle-bochner} and
+  \ref{lem:bundle-normal-section} --- it is taken as a \texttt{RiemannianBundle}
+  instance, which at $V = T\M$ is the very instance the tangent-bundle files use, so the
+  specialisation survives there too.
 \end{lemma}
 
 \begin{lemma}[Bochner on a general bundle]
@@ -3267,7 +3279,8 @@ target actually requires.
   \lean{CovariantDerivative.hessianFun_inner_section_eq,
     CovariantDerivative.laplacianFun_inner_section_eq,
     CovariantDerivative.laplacianFun_inner_self_section_eq,
-    CovariantDerivative.two_mul_inner_laplacianSection_le}
+    CovariantDerivative.two_mul_inner_laplacianSection_le,
+    CovariantDerivative.laplacianFun_inner_eq_of_bundle}
   \leanok
   \uses{lem:bundle-hessian, thm:bochner}
   For a \emph{metric} connection $\nab$ on $V$ and any connection $\nab^T$ on $T\M$,
@@ -3287,6 +3300,13 @@ target actually requires.
   are unnecessary here: the fibre instances are binders, so there is nothing to see through.
   $\nab^T$ is required to be neither metric nor torsion-free.
 
+  \textbf{$T\M$ is a case of it, and that is a check rather than a tidiness.} Until the
+  bridge existed the general identity had \emph{no instantiations at all}, and an
+  unfalsified general theorem is a liability: nothing tested that it says what it is meant
+  to say. \texttt{laplacianFun\_inner\_eq\_of\_bundle} derives Theorem \ref{thm:bochner}
+  from this one, and a one-line \texttt{rfl} forces the two constants' \emph{types} to be
+  definitionally equal, so "the same statement" is checked and not asserted.
+
   \textbf{What it is for.} The maximum principle tests the scalar
   $y \mapsto \langle N(y), u(t,y)\rangle$ for a section $N$ spreading the direction $n$. At a
   \emph{normal} $N$ --- $\nab N(x) = 0$ and $\Delta N(x) = 0$ --- this identity collapses to
@@ -3303,7 +3323,8 @@ target actually requires.
     CovariantDerivative.hessianSection_smul_of_vanishing,
     CovariantDerivative.hessianSection_add,
     CovariantDerivative.hessianSection_sum,
-    CovariantDerivative.exists_contMDiff_section_normal_of_bundle}
+    CovariantDerivative.exists_contMDiff_section_normal_of_bundle,
+    CovariantDerivative.exists_contMDiff_section_normal_of_bundle'}
   \leanok
   \uses{lem:normal-section, lem:bundle-hessian, lem:global-extension}
   For every $v \in V_x$ there is a global $C^2$ section $N$ of $V$ with $N(x) = v$,
@@ -3327,6 +3348,9 @@ target actually requires.
   That leaves an edge case the tangent version never had: when $T_x\M$ is zero there is no
   unit covector. But then $\Delta$ is an empty sum, so $\Delta N_1(x) = 0$ already and $N_1$
   itself is the answer.
+
+  \textbf{Lemma \ref{lem:normal-section} is a case of this one}, with the same \texttt{rfl}
+  type check as in Lemma \ref{lem:bundle-bochner}, and for the same reason.
 
   \textbf{What remains before Lemma \ref{lem:pinching}} is no longer a missing primitive on
   the geometry side. It is the touching-point argument itself: on a bundle the target is a

@@ -21,6 +21,7 @@ Two connections appear, as in `BundleHessian.lean`: `cov` on `V`, which must be 
 to be metric or torsion-free.
 -/
 import RicciFlowBlueprint.BundleHessian
+import RicciFlowBlueprint.Bochner
 import Mathlib.Geometry.Manifold.VectorBundle.CovariantDerivative.Metric
 
 open Bundle Filter Module
@@ -35,8 +36,10 @@ variable
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
   {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
   {V : M → Type*} [TopologicalSpace (TotalSpace F V)]
-  [∀ x : M, NormedAddCommGroup (V x)] [∀ x : M, InnerProductSpace ℝ (V x)]
-  [FiberBundle F V] [VectorBundle ℝ F V] [IsContMDiffRiemannianBundle I 1 F V]
+  [∀ x : M, AddCommGroup (V x)] [∀ x : M, Module ℝ (V x)]
+  [∀ x : M, TopologicalSpace (V x)] [∀ x : M, IsTopologicalAddGroup (V x)]
+  [∀ x : M, ContinuousSMul ℝ (V x)] [FiberBundle F V] [VectorBundle ℝ F V]
+  [RiemannianBundle V] [IsContMDiffRiemannianBundle I 1 F V]
   [ContMDiffVectorBundle 1 F V I]
   [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
   (cov : CovariantDerivative I F V) [ContMDiffCovariantDerivative cov 1]
@@ -134,5 +137,47 @@ theorem two_mul_inner_laplacianSection_le (hmet : cov.IsMetricCompatible)
   have hnn : (0 : ℝ) ≤ ∑ i, ‖cov σ x (stdOrthonormalBasis ℝ (TangentSpace I x) i)‖ ^ 2 :=
     Finset.sum_nonneg fun i _ ↦ sq_nonneg _
   linarith
+
+section Tangent
+
+/-! ### `Bochner.lean` is the tangent-bundle case
+
+The general identity above had, until this section, **no instantiations at all** — and an
+unfalsified general theorem is a liability, not an asset. Specialising it to `V = TM` and
+landing on the statement `Bochner.lean` proves independently is the check.
+
+It only typechecks because nothing in `BundleHessian.lean` asks `V` for a norm and the
+fibre metric here arrives as a `RiemannianBundle` — the same instance `Bochner.lean` uses —
+rather than as a bare `NormedAddCommGroup` binder, which `T_xM` would match ambiguously
+(the model space's norm and the metric's are different norms on that one type). -/
+
+variable
+  {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+    [FiniteDimensional ℝ E]
+  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+  [IsContMDiffRiemannianBundle I 1 E (fun (x : M) ↦ TangentSpace I x)]
+  (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+  [ContMDiffCovariantDerivative cov 1]
+
+variable {σ τ : Π y : M, TangentSpace I y} {x : M}
+
+omit [CompleteSpace E] in
+/-- **The Bochner identity of `Bochner.lean`, derived from the general-bundle one.** -/
+theorem laplacianFun_inner_eq_of_bundle
+    (hmet : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    (hσ : CMDiff 2 (T% σ)) (hτ : CMDiff 2 (T% τ)) :
+    cov.laplacianFun (fun y ↦ ⟪σ y, τ y⟫) x
+      = ⟪cov.laplacian hσ x, τ x⟫ + ⟪σ x, cov.laplacian hτ x⟫
+        + 2 * ∑ i, ⟪cov σ x (stdOrthonormalBasis ℝ (TangentSpace I x) i),
+            cov τ x (stdOrthonormalBasis ℝ (TangentSpace I x) i)⟫ :=
+  cov.laplacianFun_inner_section_eq cov hmet hσ hτ
+
+/-- The statements really are the same one, not merely similar: this `rfl` forces the two
+constants' **types** to be definitionally equal, which is the whole claim. -/
+example : @laplacianFun_inner_eq_of_bundle = @laplacianFun_inner_eq := rfl
+
+end Tangent
 
 end CovariantDerivative
