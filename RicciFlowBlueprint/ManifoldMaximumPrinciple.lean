@@ -83,6 +83,39 @@ theorem le_of_laplacian' {u ut : ℝ → M → ℝ} {F φ : ℝ → ℝ} {K : NN
 
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [CompleteSpace V]
 
+-- BENCH: max-principle-tensor-manifold-set
+/-- **Hamilton's tensor maximum principle on a closed Riemannian manifold, with a moving
+target set.** `MaximumPrinciple.mem_of_deriv_le_at_max_set` with the touching-point hypothesis
+discharged exactly as in `mem_of_laplacian_time`: the step that inspects the geometry is
+`laplacianFun_nonneg_of_isLocalMin` at a single time, and it does not know or care that `K`
+moves. So the monotone moving-set principle costs nothing on the manifold either. -/
+theorem mem_of_laplacian_set {u ut : ℝ → M → V} {F : ℝ → V → V} {K : ℝ → Set V} {L : NNReal}
+    {T : ℝ}
+    (hKcl : ∀ t, IsClosed (K t)) (hKc : ∀ t, Convex ℝ (K t)) (hKne : ∀ t, (K t).Nonempty)
+    (hKmono : ∀ s t, s ≤ t → K s ⊆ K t)
+    (hKcont : Continuous fun q : ℝ × V ↦ Metric.infDist q.2 (K q.1))
+    (hu : Continuous fun p : ℝ × M ↦ u p.1 p.2)
+    (hut : ∀ t ∈ Icc 0 T, ∀ x, HasDerivAt (fun s ↦ u s x) (ut t x) t)
+    (hreg : ∀ t ∈ Icc 0 T, ∀ x, ContMDiffAt I 𝓘(ℝ, V) 2 (u t) x)
+    (hF : ∀ t, LipschitzWith L (F t))
+    (heq : ∀ t ∈ Icc 0 T, ∀ x, ∀ n : V,
+      ⟪n, ut t x⟫ = cov.laplacianFun (fun y ↦ ⟪n, u t y⟫) x + ⟪n, F t (u t x)⟫)
+    (hK : ∀ t ∈ Icc 0 T, ∀ p ∈ K t, ∀ n : V, (∀ q ∈ K t, ⟪n, q - p⟫ ≤ 0) → ⟪n, F t p⟫ ≤ 0)
+    (h0 : ∀ x, u 0 x ∈ K 0) :
+    ∀ t ∈ Icc 0 T, ∀ x, u t x ∈ K t := by
+  refine mem_of_deriv_le_at_max_set hKcl hKc hKne hKmono hKcont hu hut hF ?_ hK h0
+  intro t ht x₀ n hmax
+  -- a maximum of `⟪n, u t ·⟫` is a minimum of `⟪-n, u t ·⟫`
+  have hloc : IsLocalMin (fun y ↦ ⟪-n, u t y⟫) x₀ := Eventually.of_forall fun x ↦ by
+    simp only [inner_neg_left]
+    linarith [hmax x]
+  have hreg' : ContMDiffAt I 𝓘(ℝ, ℝ) 2 (fun y ↦ ⟪-n, u t y⟫) x₀ :=
+    ((innerSL ℝ (-n)).contMDiff.contMDiffAt).comp x₀ (hreg t ht x₀)
+  have h1 := laplacianFun_nonneg_of_isLocalMin cov hreg' hloc
+  have h2 := heq t ht x₀ (-n)
+  rw [inner_neg_left, inner_neg_left] at h2
+  linarith
+
 -- BENCH: max-principle-tensor-manifold-time
 /-- **Hamilton's tensor maximum principle on a closed Riemannian manifold, with a
 time-dependent reaction.** As `mem_of_laplacian`, but the equation is `∂ₜu = Δu + F t (u)`

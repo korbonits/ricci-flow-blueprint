@@ -3048,8 +3048,10 @@ target actually requires.
   product on $V$ itself: $\operatorname{dist}(\cdot, K)$ and the nearest-point projection are
   taken in $V$'s own metric at every time, and the first-touching-time argument compares them
   \emph{across} times. That is the real content of Uhlenbeck's trick and it is untouched.
-  Nor is the time-dependent \emph{set} $K_t$ done --- that is a separate generalisation,
-  needed only for Hamilton 1999's $\log(1+t)$ improvement.
+  The time-dependent \emph{set} $K_t$ is done, in the monotone case, by Theorem
+  \ref{thm:max-moving-set} --- and that turns out \emph{not} to be the separate,
+  $\log(1+t)$-only generalisation it was filed as here: a moving inner product reduces to a
+  moving set.
 \end{theorem}
 
 \begin{theorem}[The maximum principles with a moving metric]
@@ -3076,11 +3078,11 @@ target actually requires.
   time at a time --- the manoeuvre Theorem \ref{thm:scal-lower-bound-preserved} makes
   inline one level down.
 
-  \textbf{What is still not bought is a moving inner product on $V$}, and that is the
-  distinction that matters: here the fibre is a fixed vector space with a fixed metric and
-  only the base geometry evolves. Hamilton's curvature operator lives in $\Lambda^2T_xM$,
-  whose inner product moves with $g_t$; trivialising \emph{that} is the content of
-  Uhlenbeck's trick, and this theorem is what the trick is applied to.
+  \textbf{What is still not bought here is a moving inner product on $V$}, and that is the
+  distinction that matters: the fibre is a fixed vector space with a fixed metric and only
+  the base geometry evolves. Hamilton's curvature operator lives in $\Lambda^2T_xM$, whose
+  inner product moves with $g_t$. Theorem \ref{thm:max-moving-set} is the next step towards
+  it.
 \end{theorem}
 
 \begin{proof}
@@ -3102,6 +3104,56 @@ target actually requires.
   F(u_0)\rangle \le \langle n, F(p)\rangle + L|n|^2 \le L|n|^2$, absurd. Let
   $\epsilon \to 0$ and use closedness of $K$.
 \end{proof}
+
+\begin{theorem}[The maximum principle with a moving target set]
+  \label{thm:max-moving-set}
+  \lean{RicciFlowBlueprint.MaximumPrinciple.mem_of_deriv_le_at_max_set,
+    RicciFlowBlueprint.MaximumPrinciple.mem_of_laplacian_set,
+    RicciFlowBlueprint.MaximumPrinciple.mem_of_laplacian_moving_set}
+  \leanok
+  \uses{thm:max-tensor, thm:max-moving, def:laplacian, lem:second-derivative-test}
+  Let $K_t \subseteq V$ be a family of closed convex nonempty sets that is \emph{monotone},
+  $s \le t \Rightarrow K_s \subseteq K_t$, and varies continuously in the sense that
+  $(t,v) \mapsto \operatorname{dist}(v, K_t)$ is jointly continuous. If $u$ solves
+  $\partial_t u = \Delta_{g_t} u + F_t(u)$ and each $K_t$ is preserved by $\dot v = F_t(v)$
+  in Nagumo's form, then $u(0,\cdot) \in K_0$ gives $u(t,\cdot) \in K_t$ for all
+  $t \in [0,T]$.
+
+  \textbf{Proved} (\texttt{TensorMaximumPrinciple.lean},
+  \texttt{ManifoldMaximumPrinciple.lean}, \texttt{TensorPreservation.lean}), abstractly, on a
+  closed manifold, and with the metric moving as well.
+
+  \textbf{Monotonicity is the whole cost, and it is felt in exactly one place.} The nearest
+  point and the outward normal are taken in $K_{t_0}$, at the single first-touching time, so
+  every step \emph{at} $t_0$ is the fixed-set argument verbatim. What is new is that the
+  earlier times are controlled against $K_t$ rather than $K_{t_0}$, so the two must be
+  compared --- and $K_t \subseteq K_{t_0}$ for $t \le t_0$ gives
+  $\operatorname{dist}(v,K_{t_0}) \le \operatorname{dist}(v,K_t)$ for free. The continuity
+  hypothesis is stated directly on $\operatorname{dist}(v, K_t)$, which is the form the proof
+  consumes, rather than as a Hausdorff-distance condition whose $\mathtt{ENNReal}$ API would
+  have to be unpacked again.
+
+  \textbf{The other direction is genuinely not free.} A \emph{shrinking} family needs a
+  quantitative bound on how fast $K_t$ retreats, coupled to $F$: a set closing in faster than
+  the reaction pushes points inward is simply not preserved, so no hypothesis-free statement
+  exists there. Hamilton 1999's $\log(1+t)$ improvement is of that kind.
+
+  \textbf{Why this is more than the $\log(1+t)$ improvement it was filed under.} A moving
+  \emph{inner product} on $V$ reduces to a moving \emph{set}. If
+  $\langle v,w\rangle_t = \langle P_t v, w\rangle$ with $P_t$ positive self-adjoint and
+  $S_t = P_t^{1/2}$, then $S_t$ is an isometry from $(V, \langle\cdot,\cdot\rangle_t)$ to
+  $(V, \langle\cdot,\cdot\rangle)$, and $u(t,x) \in K$ is $S_t u(t,x) \in S_t(K)$ --- a
+  fixed-metric problem with a moving set. \emph{Uhlenbeck's trick is precisely the choice of
+  $S_t$ that makes $S_t(K)$ constant.} So this theorem and Uhlenbeck's trick are two ways of
+  paying the same bill, and the monotone case is the part of it that costs nothing.
+
+  \textbf{What this does not close.} The obstruction before the curvature operator is now not
+  the principle but its \emph{input}: $u$ takes values in a fixed inner product space, i.e.\ a
+  trivial bundle $M \times V$, whereas the curvature operator is a section of
+  $\mathrm{Sym}^2(\Lambda^2 TM)$. The maximum principle for sections of a \emph{non-trivial}
+  bundle is not in this repo at all, and is a prerequisite for either route.
+\end{theorem}
+
 
 \begin{theorem}[Shi's local derivative estimates]
   \label{thm:shi}
