@@ -43,6 +43,7 @@ step small as well. It is not done here.
 import RicciFlowBlueprint.GlobalExtension
 import RicciFlowBlueprint.CovariantAlongCurve
 import RicciFlowBlueprint.TraceCov
+import RicciFlowBlueprint.Hessian
 
 open Bundle Filter CovariantDerivative
 open scoped Manifold ContDiff Topology RealInnerProductSpace
@@ -176,3 +177,100 @@ theorem exists_contMDiff_two_section_cov_eq_zero {x : M} (v : TangentSpace I x) 
 end Section
 
 end RicciFlowBlueprint
+
+namespace CovariantDerivative
+
+open RicciFlowBlueprint
+
+variable
+  {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+    [FiniteDimensional ℝ E]
+  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+  (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
+
+/-! ### Towards `ΔN(x) = 0`
+
+The two second-order bricks. Together they say that adding `(a/2)·g² • W` to a section changes
+neither its value nor its covariant derivative at a zero `x` of `g`, and changes its Laplacian
+there by exactly `a·(∑ⱼ dg(bⱼ)²)·W(x)`. With `dg = ⟪bᵢ, ·⟫` that factor is `1`, so the
+Laplacian can be corrected component by component just as the first derivative was above.
+
+What is left to assemble the full statement is bookkeeping rather than analysis: additivity of
+`∇²` in its section slot, the finite-sum version of it, and the identification of `laplacian`
+with the frame sum `∑ⱼ ∇²_{bⱼ,bⱼ}`. -/
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] in
+/-- **The Hessian of `f • W` at a point where `f` and `df` both vanish is `(∇²f) • W`.**
+Leibniz produces three corrections beyond the leading term and every one of them carries a
+factor `f x` or `df x`, so all three die. This is what lets a *second*-order correction be
+added to a section without disturbing a first-order condition already arranged at the same
+point: `∇(f • W)(x) = 0` too, for the same reason. -/
+theorem hessian_smul_of_vanishing {f : M → ℝ} {W X Y : Π y : M, TangentSpace I y} {x : M}
+    (hfx : f x = 0) (hdf : mvfderiv I f x = 0)
+    (hf : ∀ y, MDifferentiableAt I 𝓘(ℝ, ℝ) f y) (hW : ∀ y, MDiffAt (T% W) y)
+    (hcw : MDiffAt (T% (fun y ↦ cov W y (Y y))) x)
+    (hu : MDifferentiableAt I 𝓘(ℝ, ℝ) (fun y ↦ mvfderiv I f y (Y y)) x) :
+    cov.hessian X Y (f • W) x = cov.hessianFun f X Y x • W x := by
+  have h2 : cov (f • W) x = 0 := by
+    rw [cov.isCovariantDerivativeOn.leibniz (hW x) (hf x), hfx, hdf, zero_smul,
+      ContinuousLinearMap.zero_smulRight, add_zero]
+  have hsplit : (fun y ↦ cov (f • W) y (Y y))
+      = f • (fun y ↦ cov W y (Y y)) + (fun y ↦ mvfderiv I f y (Y y)) • W := by
+    funext y
+    rw [cov.isCovariantDerivativeOn.leibniz (hW y) (hf y)]
+    show f y • cov W y (Y y) + (mvfderiv I f y).smulRight (W y) (Y y)
+      = f y • cov W y (Y y) + mvfderiv I f y (Y y) • W y
+    rw [ContinuousLinearMap.smulRight_apply]
+  show cov (fun y ↦ cov (f • W) y (Y y)) x (X x) - cov (f • W) x (cov Y x (X x)) = _
+  rw [h2, hsplit]
+  have hd1 : MDiffAt (T% (f • (fun y ↦ cov W y (Y y)))) x := (hf x).smul_section hcw
+  have hd2 : MDiffAt (T% ((fun y ↦ mvfderiv I f y (Y y)) • W)) x := hu.smul_section (hW x)
+  rw [cov.isCovariantDerivativeOn.add hd1 hd2,
+    cov.isCovariantDerivativeOn.leibniz hcw (hf x),
+    cov.isCovariantDerivativeOn.leibniz (hW x) hu]
+  simp only [ContinuousLinearMap.smulRight_apply, hfx, hdf, zero_smul,
+    zero_apply, zero_add, add_zero, ContinuousLinearMap.zero_smulRight, sub_zero]
+  rw [hessianFun, hdf]
+  simp
+
+
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] in
+/-- **`∇²(½a·g²) = a · dg ⊗ dg` at a zero of `g`.** A half-square is the cheapest function with
+prescribed value `0`, prescribed differential `0` and a *prescribed second* derivative: both
+first-order conditions hold automatically because every term of `d(g²) = 2g·dg` carries a
+factor `g`, and the second derivative is the rank-one form `dg ⊗ dg` scaled by `a`. Tracing it
+against an orthonormal basis and taking `dg = ⟪bᵢ, ·⟫` gives `Δ = a`, since
+`∑ⱼ ⟪bᵢ, bⱼ⟫² = 1` — which is why no chart-side second-derivative transport is needed anywhere
+in this construction. -/
+theorem hessianFun_half_sq {g : M → ℝ} {X Y : Π y : M, TangentSpace I y} {x : M} (a : ℝ)
+    (hgx : g x = 0) (hg : ∀ y, MDifferentiableAt I 𝓘(ℝ, ℝ) g y)
+    (hgd : MDifferentiableAt I 𝓘(ℝ, ℝ) (fun y ↦ mvfderiv I g y (Y y)) x) :
+    cov.hessianFun (fun y ↦ a / 2 * (g y * g y)) X Y x
+      = a * (mvfderiv I g x (X x)) * (mvfderiv I g x (Y x)) := by
+  have hfd : ∀ y, mvfderiv I (fun y ↦ a / 2 * (g y * g y)) y = (a * g y) • mvfderiv I g y := by
+    intro y
+    have hsqd : MDifferentiableAt I 𝓘(ℝ, ℝ) (fun z ↦ g z * g z) y := (hg y).mul (hg y)
+    have hsq : mvfderiv I (fun z ↦ g z * g z) y = (2 * g y) • mvfderiv I g y := by
+      rw [mvfderiv_fun_mul (hg y) (hg y)]; module
+    rw [mvfderiv_fun_mul mdifferentiableAt_const hsqd, mvfderiv_const, smul_zero, add_zero, hsq]
+    module
+  have hval : ∀ y, mvfderiv I (fun y ↦ a / 2 * (g y * g y)) y (Y y)
+      = (a * g y) * (mvfderiv I g y (Y y)) := by
+    intro y; rw [hfd y]; rfl
+  have hmul : MDifferentiableAt I 𝓘(ℝ, ℝ) (fun y ↦ a * g y) x :=
+    (mdifferentiableAt_const (c := a)).mul (hg x)
+  rw [hessianFun, hfd x, hgx, mul_zero, zero_smul]
+  have hfun : (fun y ↦ mvfderiv I (fun y ↦ a / 2 * (g y * g y)) y (Y y))
+      = (fun y ↦ (a * g y) * (mvfderiv I g y (Y y))) := by funext y; exact hval y
+  have hdmul : mvfderiv I (fun y ↦ a * g y) x = a • mvfderiv I g x := by
+    rw [mvfderiv_fun_mul mdifferentiableAt_const (hg x), mvfderiv_const, smul_zero, add_zero]
+  rw [hfun, mvfderiv_fun_mul hmul hgd, hgx, mul_zero, hdmul]
+  simp only [smul_apply, zero_smul, zero_add, zero_apply, sub_zero, smul_eq_mul]
+  ring
+
+end CovariantDerivative

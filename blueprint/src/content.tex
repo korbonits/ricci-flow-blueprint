@@ -3110,7 +3110,9 @@ target actually requires.
   \lean{RicciFlowBlueprint.mvfderiv_clm_comp,
     RicciFlowBlueprint.exists_contMDiff_fun_mvfderiv_eq,
     RicciFlowBlueprint.exists_contMDiff_section_cov_eq_zero,
-    RicciFlowBlueprint.exists_contMDiff_two_section_cov_eq_zero}
+    RicciFlowBlueprint.exists_contMDiff_two_section_cov_eq_zero,
+    CovariantDerivative.hessian_smul_of_vanishing,
+    CovariantDerivative.hessianFun_half_sq}
   \leanok
   \uses{lem:global-extension}
   For every $v \in T_x\M$ there is a global $C^k$ section $N$ with $N(x) = v$ and
@@ -3147,12 +3149,28 @@ target actually requires.
   with that inverse solves for the model-space covector, and a bump globalises without
   touching the germ.
 
-  \textbf{What is still missing is $\Delta N(x) = 0$.} The same construction with quadratic
-  coefficients gives it, and only the \emph{trace} of the second derivative has to be
-  prescribed, not the full Hessian, which keeps that step small too. Until it is done the
-  maximum principle for sections of a non-trivial bundle cannot be assembled, and that --- not
-  the moving fibre metric of Theorem \ref{thm:max-moving-set} --- is what now stands between
-  this repo and Lemma \ref{lem:pinching}.
+  \textbf{The second-order bricks are proved too}, and they are the analytic content of
+  $\Delta N(x) = 0$: \texttt{hessian\_smul\_of\_vanishing} says that at a point where $f$ and
+  $df$ both vanish, $\nab^2(f\cdot W) = (\nab^2 f)\cdot W$ --- Leibniz produces three
+  corrections beyond the leading term and each carries a factor $f(x)$ or $df(x)$, so all
+  three die, and by the same token $\nab(f\cdot W)(x) = 0$, which is what lets a second-order
+  correction be added \emph{without disturbing} the first-order condition already arranged
+  above. And \texttt{hessianFun\_half\_sq} computes the Hessian of a half-square:
+  $\nab^2(\tfrac12 a g^2)(x) = a\,dg \otimes dg$ at a zero of $g$. A half-square is the
+  cheapest function with value $0$, differential $0$ and a \emph{prescribed} second derivative
+  --- both first-order conditions hold automatically since every term of $d(g^2) = 2g\,dg$
+  carries a factor $g$ --- and its second derivative is rank one. Tracing against an
+  orthonormal basis with $dg = \langle b_i,\cdot\rangle$ gives $\Delta = a$, because
+  $\sum_j \langle b_i, b_j\rangle^2 = 1$: \emph{no chart-side second-derivative transport
+  appears anywhere in the construction}, which is what keeps this step the same size as the
+  first-order one.
+
+  \textbf{What remains is bookkeeping, not analysis}: additivity of $\nab^2$ in its section
+  slot, its finite-sum version, and the identification of \texttt{laplacian} with the frame sum
+  $\sum_j \nab^2_{b_j,b_j}$. Until that is assembled the maximum principle for sections of a
+  non-trivial bundle cannot be stated, and that --- not the moving fibre metric of Theorem
+  \ref{thm:max-moving-set} --- is what now stands between this repo and Lemma
+  \ref{lem:pinching}.
 \end{lemma}
 
 \begin{theorem}[The maximum principle with a moving target set]
