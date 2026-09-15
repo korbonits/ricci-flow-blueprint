@@ -3105,6 +3105,56 @@ target actually requires.
   $\epsilon \to 0$ and use closedness of $K$.
 \end{proof}
 
+\begin{lemma}[A section with vanishing covariant derivative at a point]
+  \label{lem:normal-section}
+  \lean{RicciFlowBlueprint.mvfderiv_clm_comp,
+    RicciFlowBlueprint.exists_contMDiff_fun_mvfderiv_eq,
+    RicciFlowBlueprint.exists_contMDiff_section_cov_eq_zero,
+    RicciFlowBlueprint.exists_contMDiff_two_section_cov_eq_zero}
+  \leanok
+  \uses{lem:global-extension}
+  For every $v \in T_x\M$ there is a global $C^k$ section $N$ with $N(x) = v$ and
+  $\nab N(x) = 0$.
+
+  \textbf{Proved} (\texttt{NormalSection.lean}). \textbf{Why the maximum principle needs
+  this.} Theorem \ref{thm:max-tensor} and everything over it take $u$ valued in a
+  \emph{fixed} inner product space --- the trivial bundle $\M \times V$. Its touching-point
+  hypothesis quantifies over a direction $n \in V$ and speaks of the function
+  $x \mapsto \langle n, u(t,x)\rangle$, which only makes sense because $n$ is the same vector
+  at every point. On a genuine bundle the direction lives in one fibre, $n \in V_{x_0}$, and
+  $\langle n, u(t,x)\rangle$ is meaningless for $x \ne x_0$. Hamilton's fix is to spread $n$
+  into a section; the Laplacian of $x \mapsto \langle n(x), u(t,x)\rangle$ then acquires
+  corrections in $\nab n$ and $\Delta n$, and the argument closes exactly when both vanish at
+  $x_0$.
+
+  \textbf{No parallel transport, and no exponential map.} The textbook construction transports
+  $n$ along radial geodesics, which would put this behind the regularity of $\exp$ --- an open
+  ODE-theory gap. It is not needed: only \emph{first-order} agreement at a single point is
+  wanted, and that is linear algebra. Take any extension $\tilde N$, set
+  $A = \nab\tilde N(x)$, and subtract $\sum_i f_i \cdot W_i$ where the $W_i$ are global
+  sections through an orthonormal basis of $T_x\M$ and $f_i(x) = 0$ with $df_i(x)$ the
+  matching component of $-A$. Leibniz then leaves $\nab(f_i W_i)(x) = df_i(x) \otimes W_i(x)$.
+
+  \textbf{An orthonormal basis is what makes it cheap.} Against a local \emph{frame} the
+  components of $A$ would have to be produced as continuous functionals by inverting a basis;
+  against an orthonormal basis they are $u \mapsto \langle b_i, Au\rangle$, a CLM by
+  construction. So no frame, no trivialisation, no \texttt{exists\_frame\_on\_open}: Lemma
+  \ref{lem:global-extension} applied to each $b_i$ is all the geometry used.
+
+  The enabling step is \texttt{exists\_contMDiff\_fun\_mvfderiv\_eq}: a global $C^k$ function
+  vanishing at $x$ with \emph{prescribed} differential there. The chart supplies the one fact
+  needed --- its differential at the base point is invertible --- so composing a functional
+  with that inverse solves for the model-space covector, and a bump globalises without
+  touching the germ.
+
+  \textbf{What is still missing is $\Delta N(x) = 0$.} The same construction with quadratic
+  coefficients gives it, and only the \emph{trace} of the second derivative has to be
+  prescribed, not the full Hessian, which keeps that step small too. Until it is done the
+  maximum principle for sections of a non-trivial bundle cannot be assembled, and that --- not
+  the moving fibre metric of Theorem \ref{thm:max-moving-set} --- is what now stands between
+  this repo and Lemma \ref{lem:pinching}.
+\end{lemma}
+
 \begin{theorem}[The maximum principle with a moving target set]
   \label{thm:max-moving-set}
   \lean{RicciFlowBlueprint.MaximumPrinciple.mem_of_deriv_le_at_max_set,
