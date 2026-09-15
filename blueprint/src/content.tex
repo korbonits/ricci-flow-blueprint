@@ -3112,7 +3112,12 @@ target actually requires.
     RicciFlowBlueprint.exists_contMDiff_section_cov_eq_zero,
     RicciFlowBlueprint.exists_contMDiff_two_section_cov_eq_zero,
     CovariantDerivative.hessian_smul_of_vanishing,
-    CovariantDerivative.hessianFun_half_sq}
+    CovariantDerivative.hessianFun_half_sq,
+    CovariantDerivative.mvfderiv_half_sq,
+    CovariantDerivative.cov_sum_section_apply,
+    CovariantDerivative.hessian_sum_section,
+    CovariantDerivative.hessian_add_section,
+    CovariantDerivative.exists_contMDiff_section_normal}
   \leanok
   \uses{lem:global-extension}
   For every $v \in T_x\M$ there is a global $C^k$ section $N$ with $N(x) = v$ and
@@ -3165,12 +3170,33 @@ target actually requires.
   appears anywhere in the construction}, which is what keeps this step the same size as the
   first-order one.
 
-  \textbf{What remains is bookkeeping, not analysis}: additivity of $\nab^2$ in its section
-  slot, its finite-sum version, and the identification of \texttt{laplacian} with the frame sum
-  $\sum_j \nab^2_{b_j,b_j}$. Until that is assembled the maximum principle for sections of a
-  non-trivial bundle cannot be stated, and that --- not the moving fibre metric of Theorem
-  \ref{thm:max-moving-set} --- is what now stands between this repo and Lemma
-  \ref{lem:pinching}.
+  \textbf{And the full statement is assembled}
+  (\texttt{exists\_contMDiff\_section\_normal}): for every $v \in T_x\M$ there is a global
+  $C^2$ section $N$ with $N(x) = v$, $\nab N(x) = 0$ \emph{and} $\Delta N(x) = 0$. The two
+  stages do not interact. Take $N_1$ from the first-order statement, then add
+  $\sum_i (a_i/2)\,g_i^2 \cdot W_i$ with $dg_i(x) = \langle b_i,\cdot\rangle$ and
+  $a_i = -\langle b_i, \Delta N_1(x)\rangle$; each summand vanishes to second order at $x$, so
+  it disturbs neither the value nor the covariant derivative already arranged, while
+  contributing $a_i\,\langle b_i,\cdot\rangle^{\otimes 2}\cdot b_i$ to the Hessian. Tracing
+  collapses $\sum_j \langle b_i,b_j\rangle^2$ to $1$, so the correction's Laplacian is
+  $\sum_i a_i b_i = -\Delta N_1(x)$ by $\mathtt{sum\_repr'}$.
+
+  \textbf{The frame is the same family $W_i$ used for the correction}, globalised through
+  Lemma \ref{lem:global-extension} rather than taken as \texttt{FiberBundle.extend}: the latter
+  is regular only \emph{near} $x$, while \texttt{contMDiff\_cov\_apply} --- which supplies
+  every differentiability hypothesis in the proof --- is a global statement. Reusing the
+  correction's own sections as the frame is what makes that free.
+
+  Supporting: \texttt{cov\_sum\_section\_apply} ($\nab$ over a finite sum, from the
+  $\nab$-Leibniz rule at unit coefficients), \texttt{hessian\_add\_section} and
+  \texttt{hessian\_sum\_section} ($\nab^2$ additive in its section slot). In those the $Y$ slot
+  is touched only at $x$, so its hypotheses are pointwise; the \emph{sections} need $\forall y$,
+  because the inner section $y \mapsto \nab_Y Z(y)$ has to be split as a function before
+  $\nab$ is applied to it.
+
+  \textbf{So the obstruction before Lemma \ref{lem:pinching} is no longer a missing primitive.}
+  What is left is to run the touching-point argument of Theorem \ref{thm:max-tensor} against a
+  section rather than a constant vector, which this lemma is exactly what makes possible.
 \end{lemma}
 
 \begin{theorem}[The maximum principle with a moving target set]

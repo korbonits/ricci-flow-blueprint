@@ -186,7 +186,7 @@ variable
   {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
     [FiniteDimensional ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
-  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M] [T2Space M]
   [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
   (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
 
@@ -201,7 +201,7 @@ What is left to assemble the full statement is bookkeeping rather than analysis:
 `∇²` in its section slot, the finite-sum version of it, and the identification of `laplacian`
 with the frame sum `∑ⱼ ∇²_{bⱼ,bⱼ}`. -/
 
-omit [CompleteSpace E] [FiniteDimensional ℝ E]
+omit [CompleteSpace E] [FiniteDimensional ℝ E] [T2Space M]
   [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] in
 /-- **The Hessian of `f • W` at a point where `f` and `df` both vanish is `(∇²f) • W`.**
 Leibniz produces three corrections beyond the leading term and every one of them carries a
@@ -238,7 +238,7 @@ theorem hessian_smul_of_vanishing {f : M → ℝ} {W X Y : Π y : M, TangentSpac
 
 
 
-omit [CompleteSpace E] [FiniteDimensional ℝ E]
+omit [CompleteSpace E] [FiniteDimensional ℝ E] [T2Space M]
   [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] in
 /-- **`∇²(½a·g²) = a · dg ⊗ dg` at a zero of `g`.** A half-square is the cheapest function with
 prescribed value `0`, prescribed differential `0` and a *prescribed second* derivative: both
@@ -272,5 +272,199 @@ theorem hessianFun_half_sq {g : M → ℝ} {X Y : Π y : M, TangentSpace I y} {x
   rw [hfun, mvfderiv_fun_mul hmul hgd, hgx, mul_zero, hdmul]
   simp only [smul_apply, zero_smul, zero_add, zero_apply, sub_zero, smul_eq_mul]
   ring
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] [T2Space M] in
+/-- `∇` over a finite sum of sections. -/
+theorem cov_sum_section_apply {ι : Type*} (a : Finset ι) {Zs : ι → Π y : M, TangentSpace I y}
+    {y : M} (h : ∀ i ∈ a, MDiffAt (T% (Zs i)) y) (v : TangentSpace I y) :
+    cov (fun z ↦ ∑ i ∈ a, Zs i z) y v = ∑ i ∈ a, cov (Zs i) y v := by
+  have hc : ∀ i ∈ a, MDifferentiableAt I 𝓘(ℝ, ℝ) (fun _ : M ↦ (1 : ℝ)) y :=
+    fun _ _ ↦ mdifferentiableAt_const
+  have := cov_sum_smul_section_apply cov a (c := fun _ _ ↦ (1 : ℝ)) hc h v
+  have hd : mvfderiv I (fun _ : M ↦ (1 : ℝ)) y = 0 := mvfderiv_const 1
+  simpa [hd] using this
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] [T2Space M] in
+/-- **`∇²` is additive over a finite sum of sections.** The `Y` slot is only ever touched at
+`x`, so the hypotheses about it are pointwise; the sections need `∀ y` because the inner
+section `y ↦ ∇_Y Zs y` has to be split as a *function* before `∇` is applied to it. -/
+theorem hessian_sum_section {ι : Type*} (a : Finset ι) {Zs : ι → Π y : M, TangentSpace I y}
+    {X Y : Π y : M, TangentSpace I y} {x : M}
+    (hZ : ∀ i ∈ a, ∀ y, MDiffAt (T% (Zs i)) y)
+    (hcz : ∀ i ∈ a, MDiffAt (T% (fun z ↦ cov (Zs i) z (Y z))) x) :
+    cov.hessian X Y (fun y ↦ ∑ i ∈ a, Zs i y) x = ∑ i ∈ a, cov.hessian X Y (Zs i) x := by
+  have hσ : (fun y ↦ cov (fun z ↦ ∑ i ∈ a, Zs i z) y (Y y))
+      = fun y ↦ ∑ i ∈ a, cov (Zs i) y (Y y) := by
+    funext y
+    exact cov.cov_sum_section_apply a (fun i hi ↦ hZ i hi y) (Y y)
+  show cov (fun y ↦ cov (fun z ↦ ∑ i ∈ a, Zs i z) y (Y y)) x (X x)
+      - cov (fun z ↦ ∑ i ∈ a, Zs i z) x (cov Y x (X x)) = _
+  rw [hσ, cov.cov_sum_section_apply a hcz (X x),
+    cov.cov_sum_section_apply a (fun i hi ↦ hZ i hi x) (cov Y x (X x)),
+    ← Finset.sum_sub_distrib]
+  rfl
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] [T2Space M] in
+/-- **`∇²` is additive in its section slot**, the two-term case. -/
+theorem hessian_add_section {Z Z' X Y : Π y : M, TangentSpace I y} {x : M}
+    (hZ : ∀ y, MDiffAt (T% Z) y) (hZ' : ∀ y, MDiffAt (T% Z') y)
+    (h1 : MDiffAt (T% (fun z ↦ cov Z z (Y z))) x)
+    (h2 : MDiffAt (T% (fun z ↦ cov Z' z (Y z))) x) :
+    cov.hessian X Y (fun y ↦ Z y + Z' y) x = cov.hessian X Y Z x + cov.hessian X Y Z' x := by
+  have hadd : (fun y : M ↦ Z y + Z' y) = Z + Z' := rfl
+  have hσ : (fun y ↦ cov (fun z ↦ Z z + Z' z) y (Y y))
+      = (fun z ↦ cov Z z (Y z)) + (fun z ↦ cov Z' z (Y z)) := by
+    funext y
+    rw [hadd, cov.isCovariantDerivativeOn.add (hZ y) (hZ' y)]
+    rfl
+  show cov (fun y ↦ cov (fun z ↦ Z z + Z' z) y (Y y)) x (X x)
+      - cov (fun z ↦ Z z + Z' z) x (cov Y x (X x)) = _
+  rw [hσ, cov.isCovariantDerivativeOn.add h1 h2, hadd,
+    cov.isCovariantDerivativeOn.add (hZ x) (hZ' x)]
+  simp only [_root_.add_apply, hessian]
+  abel
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] [T2Space M] [IsManifold I ω M] in
+/-- `d(½a·g²) = (a·g)·dg`: every term carries a factor `g`, which is why a half-square has
+vanishing value *and* differential at a zero of `g`. -/
+theorem mvfderiv_half_sq {g : M → ℝ} {x : M} (a : ℝ)
+    (hg : MDifferentiableAt I 𝓘(ℝ, ℝ) g x) :
+    mvfderiv I (fun y ↦ a / 2 * (g y * g y)) x = (a * g x) • mvfderiv I g x := by
+  have hsqd : MDifferentiableAt I 𝓘(ℝ, ℝ) (fun z ↦ g z * g z) x := hg.mul hg
+  have hsq : mvfderiv I (fun z ↦ g z * g z) x = (2 * g x) • mvfderiv I g x := by
+    rw [mvfderiv_fun_mul hg hg]; module
+  rw [mvfderiv_fun_mul mdifferentiableAt_const hsqd, mvfderiv_const, smul_zero, add_zero, hsq]
+  module
+
+variable [ContMDiffCovariantDerivative cov 1]
+
+omit [CompleteSpace E] in
+/-- **A global `C²` section through a prescribed vector with `∇N(x) = 0` AND `ΔN(x) = 0`** —
+the primitive Hamilton's maximum principle needs on a non-trivial bundle, complete.
+
+Built in two stages that **do not interact**. `exists_contMDiff_section_cov_eq_zero` supplies
+`N₁` with `N₁(x) = v` and `∇N₁(x) = 0`; the correction `∑ᵢ (aᵢ/2)·gᵢ² · Wᵢ` is then added with
+`dgᵢ(x) = ⟪bᵢ,·⟫` and `aᵢ = −⟪bᵢ, ΔN₁(x)⟫`. Each summand has vanishing value *and* differential
+at `x`, so by `hessian_smul_of_vanishing` it disturbs neither the value nor the covariant
+derivative already arranged, while contributing `∇²(½aᵢgᵢ²)(x) · Wᵢ(x) = aᵢ ⟪bᵢ,·⟫⊗⟪bᵢ,·⟫ · bᵢ`
+to the Hessian. Tracing over the frame collapses `∑ⱼ⟪bᵢ,bⱼ⟫²` to `1`, so the correction's
+Laplacian is `∑ᵢ aᵢ · bᵢ = −ΔN₁(x)` by `sum_repr'`.
+
+**The frame is the same family of sections `Wᵢ` used for the correction**, globalised through
+`exists_contMDiff_extension` rather than taken as `FiberBundle.extend`: the latter is regular
+only near `x`, and `contMDiff_cov_apply` — which supplies every differentiability hypothesis
+here — is a global statement. -/
+theorem exists_contMDiff_section_normal {x : M} (v : TangentSpace I x) :
+    ∃ (N : Π y : M, TangentSpace I y) (hN : CMDiff 2 (T% N)),
+      N x = v ∧ cov N x = 0 ∧ cov.laplacian hN x = 0 := by
+  classical
+  obtain ⟨N₁, hN₁, hN₁x, hN₁c⟩ :=
+    RicciFlowBlueprint.exists_contMDiff_section_cov_eq_zero cov (n := 2) two_ne_zero v
+  set b := stdOrthonormalBasis ℝ (TangentSpace I x) with hb
+  set w := cov.laplacian hN₁ x with hw
+  have hWex : ∀ i, ∃ W : Π y : M, TangentSpace I y, CMDiff 2 (T% W) ∧ W x = b i :=
+    fun i ↦ RicciFlowBlueprint.exists_contMDiff_two_extension (b i)
+  choose W hWreg hWx using hWex
+  have hgex : ∀ i, ∃ g : M → ℝ, ContMDiff I 𝓘(ℝ, ℝ) 2 g ∧ g x = 0 ∧
+      mvfderiv I g x = innerSL ℝ (b i) :=
+    fun i ↦ RicciFlowBlueprint.exists_contMDiff_fun_mvfderiv_eq (n := 2) _
+  choose g hgreg hgx hgd using hgex
+  set a : _ → ℝ := fun i ↦ -⟪b i, w⟫ with ha
+  set f : _ → M → ℝ := fun i y ↦ a i / 2 * (g i y * g i y) with hf
+  -- regularity of the corrections
+  have hfreg : ∀ i, ContMDiff I 𝓘(ℝ, ℝ) 2 (f i) := by
+    intro i
+    have hq : ContMDiff 𝓘(ℝ, ℝ) 𝓘(ℝ, ℝ) 2 (fun r : ℝ ↦ a i / 2 * (r * r)) :=
+      (contDiff_const.mul (contDiff_id.mul contDiff_id)).contMDiff.of_le le_top
+    exact hq.comp (hgreg i)
+  have hfx : ∀ i, f i x = 0 := by intro i; simp [hf, hgx i]
+  have hfd : ∀ i, mvfderiv I (f i) x = 0 := by
+    intro i
+    rw [hf]
+    simp only
+    rw [mvfderiv_half_sq (a i) ((hgreg i).mdifferentiableAt two_ne_zero), hgx i, mul_zero,
+      zero_smul]
+  set S : Π y : M, TangentSpace I y := fun y ↦ ∑ i, f i y • W i y with hS
+  have hSreg : CMDiff 2 (T% S) := ContMDiff.sum_section fun i _ ↦ (hfreg i).smul_section (hWreg i)
+  have hN : CMDiff 2 (T% (fun y ↦ N₁ y + S y)) := hN₁.add_section hSreg
+  have hfmd : ∀ i, ∀ y, MDifferentiableAt I 𝓘(ℝ, ℝ) (f i) y :=
+    fun i y ↦ (hfreg i).mdifferentiableAt two_ne_zero
+  have hgmd : ∀ i, ∀ y, MDifferentiableAt I 𝓘(ℝ, ℝ) (g i) y :=
+    fun i y ↦ (hgreg i).mdifferentiableAt two_ne_zero
+  have hWmd : ∀ i, ∀ y, MDiffAt (T% (W i)) y := fun i y ↦ (hWreg i).mdifferentiableAt two_ne_zero
+  have hW1 : ∀ i, CMDiff 1 (T% (W i)) := fun i ↦ (hWreg i).of_le (by norm_num)
+  have hSx : S x = 0 := by rw [hS]; simp [hfx]
+  have hcovS : cov S x = 0 := by
+    ext u
+    have hsm := cov_sum_smul_section_apply cov Finset.univ (fun i _ ↦ hfmd i x)
+      (fun i _ ↦ hWmd i x) u
+    show cov (fun y ↦ ∑ i, f i y • W i y) x u = 0
+    rw [hsm]
+    simp [hfx, hfd]
+  refine ⟨fun y ↦ N₁ y + S y, hN, ?_, ?_, ?_⟩
+  · show N₁ x + S x = v
+    rw [hSx, add_zero, hN₁x]
+  · show cov (N₁ + S) x = 0
+    rw [(cov.isCovariantDerivativeOn (s := Set.univ)).add (hN₁.mdifferentiableAt two_ne_zero)
+      (hSreg.mdifferentiableAt two_ne_zero) (Set.mem_univ x), hN₁c, hcovS, add_zero]
+  · have hfr : ∀ j, MDiffAt (T% (W j)) x := fun j ↦ hWmd j x
+    -- the pointwise value of each correction's Hessian
+    have hterm : ∀ i j, cov.hessian (W j) (W j) (fun y ↦ f i y • W i y) x
+        = (a i * ⟪b i, b j⟫ * ⟪b i, b j⟫) • b i := by
+      intro i j
+      have hcw : MDiffAt (T% (fun z ↦ cov (W i) z (W j z))) x :=
+        (cov.contMDiff_cov_apply (k := 1) (hWreg i) (hW1 j)).mdifferentiableAt one_ne_zero
+      have hu : MDifferentiableAt I 𝓘(ℝ, ℝ) (fun y ↦ mvfderiv I (f i) y (W j y)) x :=
+        (contMDiffAt_mvfderiv_apply (n := 2) (m := 1) ((hfreg i) x) ((hW1 j) x)
+          (by norm_num)).mdifferentiableAt one_ne_zero
+      have hgu : MDifferentiableAt I 𝓘(ℝ, ℝ) (fun y ↦ mvfderiv I (g i) y (W j y)) x :=
+        (contMDiffAt_mvfderiv_apply (n := 2) (m := 1) ((hgreg i) x) ((hW1 j) x)
+          (by norm_num)).mdifferentiableAt one_ne_zero
+      show cov.hessian (W j) (W j) (f i • W i) x = _
+      rw [cov.hessian_smul_of_vanishing (hfx i) (hfd i) (hfmd i) (hWmd i) hcw hu]
+      rw [show cov.hessianFun (f i) (W j) (W j) x
+          = cov.hessianFun (fun y ↦ a i / 2 * (g i y * g i y)) (W j) (W j) x from rfl,
+        cov.hessianFun_half_sq (a i) (hgx i) (hgmd i) hgu, hgd i, hWx j, hWx i]
+      rfl
+    have hsplit : ∀ j, cov.hessian (W j) (W j) (fun y ↦ N₁ y + S y) x
+        = cov.hessian (W j) (W j) N₁ x + ∑ i, (a i * ⟪b i, b j⟫ * ⟪b i, b j⟫) • b i := by
+      intro j
+      have hc1 : MDiffAt (T% (fun z ↦ cov N₁ z (W j z))) x :=
+        (cov.contMDiff_cov_apply (k := 1) hN₁ (hW1 j)).mdifferentiableAt one_ne_zero
+      have hc2 : MDiffAt (T% (fun z ↦ cov S z (W j z))) x :=
+        (cov.contMDiff_cov_apply (k := 1) hSreg (hW1 j)).mdifferentiableAt one_ne_zero
+      rw [cov.hessian_add_section (fun _ ↦ hN₁.mdifferentiableAt two_ne_zero)
+        (fun _ ↦ hSreg.mdifferentiableAt two_ne_zero) hc1 hc2]
+      congr 1
+      have hZs : ∀ i ∈ (Finset.univ : Finset _), ∀ y,
+          MDiffAt (T% (fun z ↦ f i z • W i z)) y :=
+        fun i _ _ ↦ ((hfreg i).smul_section (hWreg i)).mdifferentiableAt two_ne_zero
+      have hcz : ∀ i ∈ (Finset.univ : Finset _),
+          MDiffAt (T% (fun z ↦ cov (fun y ↦ f i y • W i y) z (W j z))) x :=
+        fun i _ ↦ (cov.contMDiff_cov_apply (k := 1) ((hfreg i).smul_section (hWreg i))
+          (hW1 j)).mdifferentiableAt one_ne_zero
+      show cov.hessian (W j) (W j) (fun y ↦ ∑ i, f i y • W i y) x = _
+      rw [cov.hessian_sum_section Finset.univ hZs hcz]
+      exact Finset.sum_congr rfl fun i _ ↦ hterm i j
+    rw [cov.laplacian_eq_sum_frame hN hfr b hWx,
+      Finset.sum_congr rfl (fun j (_ : j ∈ Finset.univ) ↦ hsplit j), Finset.sum_add_distrib,
+      ← cov.laplacian_eq_sum_frame hN₁ hfr b hWx, ← hw]
+    have hinner : ∀ i j, (⟪b i, b j⟫ : ℝ) = if i = j then 1 else 0 :=
+      fun i j ↦ orthonormal_iff_ite.mp b.orthonormal i j
+    have hdiag : ∀ i, ∑ j, (a i * ⟪b i, b j⟫ * ⟪b i, b j⟫) • b i = a i • b i := by
+      intro i
+      rw [← Finset.sum_smul]
+      congr 1
+      simp [hinner]
+    have hdouble : ∑ j, ∑ i, (a i * ⟪b i, b j⟫ * ⟪b i, b j⟫) • b i = -w := by
+      rw [Finset.sum_comm, Finset.sum_congr rfl fun i (_ : i ∈ Finset.univ) ↦ hdiag i, ha]
+      simp only [neg_smul, Finset.sum_neg_distrib]
+      rw [b.sum_repr' w]
+    rw [hdouble, add_neg_cancel]
+
 
 end CovariantDerivative
