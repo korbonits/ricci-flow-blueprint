@@ -59,3 +59,4 @@ import RicciFlowBlueprint.TensorPreservation
 import RicciFlowBlueprint.BundleHessian
 import RicciFlowBlueprint.BundleBochner
 import RicciFlowBlueprint.BundleNormalSection
+import RicciFlowBlueprint.ParallelTransport

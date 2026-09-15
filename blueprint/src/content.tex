@@ -4153,8 +4153,50 @@ Perelman's monotone functionals are what rule it out.
   \textbf{What is left} on this line is the regularity of $\exp$ --- smooth dependence on
   $(x,v)$, from the smooth dependence of ODE solutions on initial conditions, for which Mathlib
   has \texttt{ContDiffAt.exists\_eventually\_eq\_hasDerivAt} --- and then $\mathrm{d}\exp_0 =
-  \mathrm{id}$, parallel transport, and Jacobi fields.
+  \mathrm{id}$ and Jacobi fields. Parallel transport, which used to be listed here, is
+  \emph{not} behind that gap; see Lemma \ref{lem:parallel-transport}.
 \end{definition}
+
+\begin{lemma}[Parallel transport]
+  \label{lem:parallel-transport}
+  \lean{CovariantDerivative.transportCoeff,
+    CovariantDerivative.covAlong_eq_zero_iff_deriv,
+    CovariantDerivative.continuousOn_transportCoeff,
+    CovariantDerivative.exists_isParallelAlong,
+    CovariantDerivative.eqOn_of_isParallelAlong}
+  \leanok
+  \uses{lem:cov-along-curve-exists, lem:geodesic-chart, thm:linear-ode}
+  Along a curve $\gamma$, through every $v \in T_{\gamma(t_0)}\M$ there is a section parallel
+  along $\gamma$ on the whole of $[a,c]$, and it is unique.
+
+  \textbf{Proved} (\texttt{ParallelTransport.lean}). \textbf{Why this is reachable and
+  geodesics were not.} In a trivialisation the equation $D/dt\,V = 0$ reads
+  $q'(t) = -\Gamma(\gamma t)(\gamma'(t))(q(t))$, and $\Gamma$ is bilinear by construction --- so
+  in the unknown $q$ this is a \emph{linear} ODE $q' = A(t)q$, with all of the curve's data
+  inside the coefficient. The geodesic equation, by contrast, is
+  $p'' = -\tilde\Gamma(p)(p')(p')$, \emph{quadratic} in the unknown. That single difference is
+  the whole story: the Dyson series of Theorem \ref{thm:linear-ode} solves $q' = A(t)q$ on the
+  entire interval with no smallness hypothesis, where \texttt{exists\_isGeodesicOn} had to
+  accept whatever interval Picard--Lindel\"of gave it, and uniqueness is mathlib's interval
+  theorem with a Lipschitz constant that compactness supplies for free.
+
+  \textbf{So parallel transport is not behind the ODE-regularity gap that $\exp$ sits behind},
+  and the working notes had recorded it as though it were. What $\exp$ needs is smooth
+  dependence of a \emph{nonlinear} flow on its initial conditions; what transport needs is a
+  linear equation along a \emph{fixed} curve, and that is already paid for.
+
+  The coefficient is pushed through \texttt{Set.projIcc} before the series sees it: the Dyson
+  construction wants a continuous, globally bounded coefficient on all of $\R$, the curve
+  supplies one only on $[a,c]$, and reparametrising by $\mathrm{projIcc}$ extends it by its
+  boundary values --- continuous, bounded by compactness, and invisible on $[a,c]$ where
+  $\mathrm{projIcc}$ is the identity.
+
+  \textbf{What this is for.} Hamilton's tensor maximum principle on a genuine bundle takes a
+  target family $K_x \subseteq V_x$ of convex sets that is invariant under parallel transport,
+  and the first-touching-time argument compares $\mathrm{dist}(u(t,x),K_x)$ across fibres.
+  Transport is the comparison. It is also the first of the Jacobi-field substrate that
+  Definition \ref{def:reduced-volume} consumes.
+\end{lemma}
 
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
