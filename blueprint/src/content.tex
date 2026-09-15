@@ -3262,6 +3262,80 @@ target actually requires.
   directly.
 \end{lemma}
 
+\begin{lemma}[Bochner on a general bundle]
+  \label{lem:bundle-bochner}
+  \lean{CovariantDerivative.hessianFun_inner_section_eq,
+    CovariantDerivative.laplacianFun_inner_section_eq,
+    CovariantDerivative.laplacianFun_inner_self_section_eq,
+    CovariantDerivative.two_mul_inner_laplacianSection_le}
+  \leanok
+  \uses{lem:bundle-hessian, thm:bochner}
+  For a \emph{metric} connection $\nab$ on $V$ and any connection $\nab^T$ on $T\M$,
+  \[
+    \Delta\langle\sigma,\tau\rangle
+      = \langle\Delta\sigma,\tau\rangle + \langle\sigma,\Delta\tau\rangle
+        + 2\sum_i \langle\nab_{e_i}\sigma, \nab_{e_i}\tau\rangle,
+  \]
+  hence $\Delta|\sigma|^2 \ge 2\langle\Delta\sigma,\sigma\rangle$.
+
+  \textbf{Proved} (\texttt{BundleBochner.lean}), with no change to the argument: metric
+  compatibility twice, the Hessian's correction $-(\nab^T_X Y)\langle\sigma,\tau\rangle$
+  expanding into exactly the two corrections that turn the iterated derivatives into
+  $\nab^2\sigma$ and $\nab^2\tau$. Mathlib's
+  \texttt{IsMetricCompatible.mvfderiv\_inner\_eq} is already general, and the
+  \texttt{(V := \ldots)} annotations Theorem \ref{thm:bochner} needs against lean4\#14949
+  are unnecessary here: the fibre instances are binders, so there is nothing to see through.
+  $\nab^T$ is required to be neither metric nor torsion-free.
+
+  \textbf{What it is for.} The maximum principle tests the scalar
+  $y \mapsto \langle N(y), u(t,y)\rangle$ for a section $N$ spreading the direction $n$. At a
+  \emph{normal} $N$ --- $\nab N(x) = 0$ and $\Delta N(x) = 0$ --- this identity collapses to
+  $\langle N(x), \Delta u(x)\rangle$, which is the whole reason Lemma
+  \ref{lem:bundle-normal-section} is wanted.
+\end{lemma}
+
+\begin{lemma}[Normal sections of a general bundle]
+  \label{lem:bundle-normal-section}
+  \lean{RicciFlowBlueprint.cov_sum_smul_section_apply_of_bundle,
+    RicciFlowBlueprint.cov_sum_section_apply_of_bundle,
+    RicciFlowBlueprint.exists_contMDiff_section_cov_eq_zero_of_bundle,
+    CovariantDerivative.contMDiff_cov_apply_section,
+    CovariantDerivative.hessianSection_smul_of_vanishing,
+    CovariantDerivative.hessianSection_add,
+    CovariantDerivative.hessianSection_sum,
+    CovariantDerivative.exists_contMDiff_section_normal_of_bundle}
+  \leanok
+  \uses{lem:normal-section, lem:bundle-hessian, lem:global-extension}
+  For every $v \in V_x$ there is a global $C^2$ section $N$ of $V$ with $N(x) = v$,
+  $\nab N(x) = 0$ and $\Delta N(x) = 0$.
+
+  \textbf{Proved} (\texttt{BundleNormalSection.lean}). The construction is that of Lemma
+  \ref{lem:normal-section} one bundle up, and still uses no parallel transport and no
+  exponential map.
+
+  \textbf{One thing changes, and the general case is the \emph{simpler} one.} In the tangent
+  case the family $W_i$ of correction sections and the frame the Laplacian is traced over are
+  the same family, and the second-order step reads $\sum_j \langle b_i,b_j\rangle^2 = 1$ off
+  orthonormality of that one basis. Here they live in different bundles: the corrections run
+  through an orthonormal basis of $V_x$, the trace over one of $T_x\M$. What replaces the
+  identity is that a \emph{single} function $g$ suffices --- tracing
+  $\nab^2(\tfrac12 a g^2)(x) = a\,dg\otimes dg$ gives $a\sum_j dg(E_j)^2$, which is $a$ as
+  soon as $dg(x)$ is a \emph{unit covector} on $T_x\M$ --- so taking
+  $dg(x) = \langle E_{j_0},\cdot\rangle$ for any one frame vector corrects every component at
+  once, with one $g$ rather than a family.
+
+  That leaves an edge case the tangent version never had: when $T_x\M$ is zero there is no
+  unit covector. But then $\Delta$ is an empty sum, so $\Delta N_1(x) = 0$ already and $N_1$
+  itself is the answer.
+
+  \textbf{What remains before Lemma \ref{lem:pinching}} is no longer a missing primitive on
+  the geometry side. It is the touching-point argument itself: on a bundle the target is a
+  family $K_x \subseteq V_x$ of convex sets, and the first-touching-time argument compares
+  $\mathrm{dist}(u(t,x), K_x)$ \emph{across different fibres}. Making that comparison is what
+  a trivialisation --- Uhlenbeck's trick, or Hamilton's moving fibre metric --- is for, and
+  it is the one thing none of the machinery above supplies.
+\end{lemma}
+
 \begin{theorem}[The maximum principle with a moving target set]
   \label{thm:max-moving-set}
   \lean{RicciFlowBlueprint.MaximumPrinciple.mem_of_deriv_le_at_max_set,
