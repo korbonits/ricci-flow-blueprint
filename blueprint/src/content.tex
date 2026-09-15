@@ -346,6 +346,24 @@ gives the road, and the one thing it does not give yet.
   differentiable sections.
 
   These two are what the pointwise statement below is built from.
+
+  \textbf{Everything here is proved for an arbitrary $C^k$ vector bundle}
+  (\texttt{exists\_contMDiff\_eventuallyEq\_of\_bundle},
+  \texttt{exists\_contMDiff\_extension\_of\_bundle},
+  \texttt{forall\_contMDiff\_iff\_forall\_fiber}), the tangent-bundle statements above being
+  corollaries. Nothing in the bump-function argument is about $T\M$: mathlib's
+  \texttt{FiberBundle.exists\_contMDiffOn\_extend} and
+  \texttt{ContMDiffOn.smul\_section\_of\_tsupport} are already general. This is the form
+  Lemma \ref{lem:pinching} needs --- Hamilton's curvature operator is a section of
+  $\mathrm{Sym}^2(\Lambda^2 T\M)$, not a vector field, so the maximum principle for it cannot
+  quantify over a constant direction vector and must spread one into a section of that
+  bundle instead (Lemma \ref{lem:normal-section}).
+
+  One statement does not survive verbatim: the conclusion is
+  $\forall^f y \in \mathcal{N}(x),\ \tau(y) = \sigma(y)$ rather than
+  $\tau =^f_{\mathcal{N}(x)} \sigma$, because Lean's \texttt{Filter.EventuallyEq} wants a
+  non-dependent codomain and $\prod_y V_y$ is non-dependent only for the tangent bundle,
+  where $V_y$ reduces to the model space.
 \end{lemma}
 
 \begin{theorem}[Curvature is well defined]
@@ -3197,6 +3215,51 @@ target actually requires.
   \textbf{So the obstruction before Lemma \ref{lem:pinching} is no longer a missing primitive.}
   What is left is to run the touching-point argument of Theorem \ref{thm:max-tensor} against a
   section rather than a constant vector, which this lemma is exactly what makes possible.
+\end{lemma}
+
+\begin{lemma}[$\nab^2$ and $\Delta$ for a section of a general bundle]
+  \label{lem:bundle-hessian}
+  \lean{CovariantDerivative.mdiffAt_cov_apply_section,
+    CovariantDerivative.hessianSection,
+    CovariantDerivative.hessianSection_smul_right,
+    CovariantDerivative.hessianSection_add_right,
+    CovariantDerivative.tensorialAt_hessianSection_fst,
+    CovariantDerivative.tensorialAt_hessianSection_snd,
+    CovariantDerivative.hessianSectionAt,
+    CovariantDerivative.hessianSectionAt_apply,
+    CovariantDerivative.laplacianSection,
+    CovariantDerivative.laplacianSection_eq_sum,
+    CovariantDerivative.laplacianSection_eq_sum_frame}
+  \leanok
+  \uses{lem:global-extension}
+  For a connection $\nab$ on a vector bundle $V \to \M$ and a connection $\nab^{T}$ on
+  $T\M$, the second covariant derivative of a section $\sigma$ of $V$ is
+  $\nab^2_{X,Y}\sigma = \nab_X(\nab_Y \sigma) - \nab_{\nab^T_X Y}\sigma$; it is tensorial in
+  $X$ and in $Y$, hence a bilinear map $T_x\M \times T_x\M \to V_x$, and its metric trace
+  over an orthonormal basis of $T_x\M$ is the rough Laplacian $\Delta\sigma(x) \in V_x$,
+  independent of the basis.
+
+  \textbf{Proved} (\texttt{BundleHessian.lean}). The proofs are those of
+  \texttt{Hessian.lean} with the section slot moved off $T\M$; the only new brick is
+  \texttt{mdiffAt\_cov\_apply\_section}, which is the observation that
+  $y \mapsto \nab\sigma(y)$ is a section of $\mathrm{Hom}(T\M, V)$ --- precisely what the
+  class \texttt{ContMDiffCovariantDerivative} asserts to be $C^1$.
+
+  \textbf{Two connections appear and they are genuinely different}: $\nab$ on $V$, which is
+  what gets differentiated, and $\nab^T$ on $T\M$, which supplies the correction
+  $-\nab_{\nab^T_X Y}\sigma$. Tensoriality in $Y$ is the cancellation between the two Leibniz
+  rules --- $\nab_X(f\,\nab_Y\sigma)$ against $\nab_{\nab^T_X(fY)}\sigma$ --- and needs both.
+
+  \textbf{The fibre metric is on $T\M$ only.} The trace is over an orthonormal basis of
+  $T_x\M$, and \texttt{OrthonormalBasis.sum\_apply\_self\_eq} traces a bilinear map into an
+  \emph{arbitrary} normed space, so $V$ needs a norm on its fibres but no inner product for
+  $\Delta$ to be frame-independent. Following mathlib's own advice, $V$ carries those norms
+  as plain binders rather than a \texttt{RiemannianBundle} instance, which is reserved for
+  bundles with a preexisting fibre topology such as $T\M$. The price is that the
+  specialisation $V = T\M$ cannot be stated as a lemma --- the norms a
+  \texttt{RiemannianBundle} puts on $T_x\M$ are not definitionally the ones a binder
+  supplies --- and nothing needs it: $T\M$-valued statements use \texttt{Hessian.lean}
+  directly.
 \end{lemma}
 
 \begin{theorem}[The maximum principle with a moving target set]

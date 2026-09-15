@@ -56,3 +56,4 @@ import RicciFlowBlueprint.ScalarPreservation
 import RicciFlowBlueprint.ScalarLowerBound
 import RicciFlowBlueprint.LinearODE
 import RicciFlowBlueprint.TensorPreservation
+import RicciFlowBlueprint.BundleHessian
