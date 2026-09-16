@@ -78,6 +78,63 @@ noncomputable def altOfBilin (B : V → V → N)
 
 end AltTwo
 
+section LambdaSquared
+
+variable {V : Type*} [AddCommGroup V] [Module ℝ V]
+
+/-- **The second factorisation through `Λ²`, for an abstract family of functionals.**
+
+Given `Φ c d : ⋀²V →ₗ[ℝ] ℝ` bilinear and alternating in `(c,d)` — which is what the *first*
+factorisation of a `(0,4)` tensor produces — this is the induced map
+`⋀²V →ₗ[ℝ] (V [⋀^Fin 2]→ₗ[ℝ] ℝ)`.
+
+**Linearity in the `Λ²` argument is carried by hand, not by the universal property.** That is
+the point: `exteriorPower.alternatingMapLinearEquiv` is used only at codomain `ℝ`, never at a
+`LinearMap`-valued codomain. -/
+noncomputable def sndAux (Φ : V → V → (⋀[ℝ]^2 V →ₗ[ℝ] ℝ))
+    (ha₁ : ∀ c c' d w, Φ (c + c') d w = Φ c d w + Φ c' d w)
+    (hs₁ : ∀ (r : ℝ) c d w, Φ (r • c) d w = r • Φ c d w)
+    (ha₂ : ∀ c d d' w, Φ c (d + d') w = Φ c d w + Φ c d' w)
+    (hs₂ : ∀ (r : ℝ) c d w, Φ c (r • d) w = r • Φ c d w)
+    (hz : ∀ c w, Φ c c w = 0) :
+    ⋀[ℝ]^2 V →ₗ[ℝ] (V [⋀^Fin 2]→ₗ[ℝ] ℝ) where
+  toFun w := altOfBilin (fun c d ↦ Φ c d w) (fun c c' d ↦ ha₁ c c' d w)
+    (fun r c d ↦ hs₁ r c d w) (fun c d d' ↦ ha₂ c d d' w)
+    (fun r c d ↦ hs₂ r c d w) (fun c ↦ hz c w)
+  map_add' w w' := by ext v; show Φ (v 0) (v 1) (w + w') = _; rw [map_add]; rfl
+  map_smul' r w := by ext v; show Φ (v 0) (v 1) (r • w) = _; rw [map_smul]; rfl
+
+/-- **A bilinear form on `Λ²V` from a family of functionals alternating in two more slots.**
+This is the object a `(0,4)` tensor with both antisymmetries factors through. -/
+noncomputable def sndForm (Φ : V → V → (⋀[ℝ]^2 V →ₗ[ℝ] ℝ))
+    (ha₁ : ∀ c c' d w, Φ (c + c') d w = Φ c d w + Φ c' d w)
+    (hs₁ : ∀ (r : ℝ) c d w, Φ (r • c) d w = r • Φ c d w)
+    (ha₂ : ∀ c d d' w, Φ c (d + d') w = Φ c d w + Φ c d' w)
+    (hs₂ : ∀ (r : ℝ) c d w, Φ c (r • d) w = r • Φ c d w)
+    (hz : ∀ c w, Φ c c w = 0) :
+    ⋀[ℝ]^2 V →ₗ[ℝ] (⋀[ℝ]^2 V →ₗ[ℝ] ℝ) :=
+  (exteriorPower.alternatingMapLinearEquiv (R := ℝ) (M := V) (N := ℝ)
+    (n := 2)).toLinearMap ∘ₗ sndAux Φ ha₁ hs₁ ha₂ hs₂ hz
+
+/-- **The characterisation**, and the reason this is landed rather than merely defined:
+`sndForm Φ (w, c∧d) = Φ c d w`. Applying a map of type
+`⋀²V →ₗ[ℝ] (⋀²V →ₗ[ℝ] ℝ)` is exactly what the previous attempt could not do; here it goes
+through, because nothing in the term reduces past `Φ`. -/
+theorem sndForm_apply (Φ : V → V → (⋀[ℝ]^2 V →ₗ[ℝ] ℝ))
+    (ha₁ : ∀ c c' d w, Φ (c + c') d w = Φ c d w + Φ c' d w)
+    (hs₁ : ∀ (r : ℝ) c d w, Φ (r • c) d w = r • Φ c d w)
+    (ha₂ : ∀ c d d' w, Φ c (d + d') w = Φ c d w + Φ c d' w)
+    (hs₂ : ∀ (r : ℝ) c d w, Φ c (r • d) w = r • Φ c d w)
+    (hz : ∀ c w, Φ c c w = 0)
+    (w : ⋀[ℝ]^2 V) (d : Fin 2 → V) :
+    sndForm Φ ha₁ hs₁ ha₂ hs₂ hz w (exteriorPower.ιMulti ℝ 2 d) = Φ (d 0) (d 1) w := by
+  show exteriorPower.alternatingMapLinearEquiv
+      (sndAux Φ ha₁ hs₁ ha₂ hs₂ hz w) (exteriorPower.ιMulti ℝ 2 d) = _
+  rw [exteriorPower.alternatingMapLinearEquiv_apply_ιMulti]
+  rfl
+
+end LambdaSquared
+
 end RicciFlowBlueprint
 
 namespace CovariantDerivative
@@ -224,30 +281,41 @@ theorem curvatureFunctional_self
     cov.curvatureFunctional x c c = 0 := by
   simp only [curvatureFunctional, cov.curvatureAltFst_self hmetric htor, map_zero]
 
-/-! ### Where this stops, and why
+/-! ### Where this stops, and why --- diagnosis corrected 2026-09-16
 
-Everything above is the **first** pair of slots factored through `Λ²`, together with all ten
-laws the *second* factorisation needs. The second factorisation itself is **not** here, and the
-reason is worth recording precisely rather than retrying.
+An earlier version of this note recorded that the obstruction was **the nested codomain**
+`⋀[ℝ]^2 E →ₗ[ℝ] (⋀[ℝ]^2 E →ₗ[ℝ] ℝ)`. That was wrong, and the correction is worth more than
+the guess was:
 
-`curvatureAltSnd` would be an alternating map into `⋀[ℝ]^2 E →ₗ[ℝ] ℝ`, and `curvatureForm` its
-factorisation, a bilinear form on `Λ²`. Both *define* without complaint. But **any application
-of `curvatureForm` fails to elaborate** -- `isDefEq` runs into the exterior algebra (a quotient
-of a tensor algebra) and does not return, at 4x heartbeats, with both wedges replaced by opaque
-variables, with the proof fields extracted as named theorems, and with only one of the two
-arguments applied.
+* a map of **exactly** that type, taken as a variable, applies to two wedges by `rfl` under
+  this file's full instance pile;
+* Mathlib itself builds and applies one (`LinearMap.BilinForm.exteriorPower`, with a `simp`
+  lemma evaluating it on two `ιMulti`s);
+* and a map whose codomain is an `AlternatingMap` --- *not* nested --- fails in the same way,
+  which rules the codomain out entirely.
 
-**The culprit is the nested codomain, not `Λ²` itself.** `curvatureFunctional`, which is a
-`LinearMap` out of `⋀[ℝ]^2 E` into `ℝ`, applies perfectly well -- that is what
-`curvatureFunctional_apply_ιMulti` above is. It is specifically
-`⋀[ℝ]^2 E →ₗ[ℝ] (⋀[ℝ]^2 E →ₗ[ℝ] ℝ)` that the elaborator cannot handle here.
+**What the profiler says.** `set_option diagnostics true` on the smallest failing
+application reports `isDefEq` unfolding `RiemannianBundle.g` 202472 times and
+`RiemannianMetric.inner` 202476 times, through `innerSL`, `LinearMap.mkContinuousOfExistsBound`
+and `mkContinuous₂`, with the `f a =?= f b` heuristic firing on `toFun` 286390 times. **The
+cost is the Riemannian metric, not `Λ²`.** `curvatureTensorAt a b c d` is by definition
+`⟪Rm(a,b)c, d⟫`, so every definitional comparison of a term built from it descends into the
+metric's construction.
 
-A definition whose only characterisation cannot be stated is exactly the hazard this repo
-guards against, so `curvatureForm` is deliberately absent rather than landed unusable. The
-design lead for the next attempt: avoid the nested `LinearMap` codomain --- build the curvature
-*operator* `Λ² → Λ²` directly through the inner product that
-`Analysis/InnerProductSpace/ExteriorPower.lean` supplies, rather than a bilinear form, or go
-through a bundled bilinear-map type, or define it on a basis via
-`OrthonormalBasis.exteriorPower`. -/
+**The metric-free construction works.** `sndForm` above is the whole second factorisation, and
+it defines, applies and is characterised (`sndForm_apply`) for an abstract `Φ`. So the
+factorisation itself was never the problem either.
+
+**What remains.** Instantiating at `Φ = curvatureFunctional x` puts the metric back inside the
+term, and the application times out again --- unchanged by marking the inner definitions, the
+outer definition, or `curvatureTensorAt` itself `irreducible` (all three were tried). So
+`curvatureForm` is still deliberately absent.
+
+**The lead for the next attempt**, and it is a different one from before: keep the metric out
+of the *term*, not merely out of the construction. Build the `(0,4)` tensor once as a bundled
+`E →L[ℝ] E →L[ℝ] E →L[ℝ] E →L[ℝ] ℝ` so that `⟪·,·⟫` sits inside a single opaque continuous
+linear map, and factor that. This is the same lesson `Divergence.lean` paid for with
+`curvatureBilinFst` (declare at the `E` type, not the `TangentSpace` one) and `FlowKoszul.lean`
+paid for with `→ₗ` in place of `→L`. -/
 
 end CovariantDerivative

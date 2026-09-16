@@ -619,7 +619,10 @@ gives the road, and the one thing it does not give yet.
     CovariantDerivative.curvatureFunctional_smul_thd,
     CovariantDerivative.curvatureFunctional_add_fth,
     CovariantDerivative.curvatureFunctional_smul_fth,
-    CovariantDerivative.curvatureFunctional_self}
+    CovariantDerivative.curvatureFunctional_self,
+    RicciFlowBlueprint.sndAux,
+    RicciFlowBlueprint.sndForm,
+    RicciFlowBlueprint.sndForm_apply}
   \leanok
   \uses{lem:curvature-tensor-at}
   For fixed $c,d \in T_x\M$, the map $(a,b) \mapsto \Rm_x(a,b,c,d)$ is alternating,
@@ -651,23 +654,40 @@ gives the road, and the one thing it does not give yet.
   budget. This is the $E$ versus \texttt{TangentSpace} wall one type former up, and
   the same remedy applies. No metric is used, so nothing is lost by it.
 
-  \textbf{Where this stops, and why.} The \emph{second} factorisation --- the
-  curvature form $\Lambda^2 T_x\M \times \Lambda^2 T_x\M \to \R$, i.e.\ the
-  curvature operator --- is deliberately \emph{absent}. It \emph{defines} without
-  complaint, but every application of it fails to elaborate: \texttt{isDefEq} again
-  enters the exterior algebra and does not return, at four times the heartbeats,
-  with both wedges replaced by opaque variables, with the proof fields extracted as
-  named theorems, and with only one of the two arguments applied. The culprit is
-  localised: it is the \emph{nested} codomain
-  $\Lambda^2 E \to_{\ell} (\Lambda^2 E \to_{\ell} \R)$, not $\Lambda^2$ itself,
-  since $\Phi_{c,d}$ --- a linear map out of $\Lambda^2 E$ into $\R$ --- applies
-  perfectly well. A definition whose only characterisation cannot be stated is
-  precisely the hazard this blueprint guards against, so it is not landed unusable.
-  The design lead for the next attempt: build the curvature \emph{operator}
-  $\Lambda^2 \to \Lambda^2$ directly through the inner product that
-  \texttt{Analysis/InnerProductSpace/ExteriorPower.lean} supplies, rather than a
-  bilinear form; or go through a bundled bilinear-map type; or define it on the
-  basis \texttt{OrthonormalBasis.exteriorPower} gives.
+  \textbf{The second factorisation is built, abstractly}
+  (\texttt{sndAux}, \texttt{sndForm}, \texttt{sndForm\_apply}): for \emph{any} family
+  $\Phi_{c,d} \colon \Lambda^2 V \to \R$ bilinear and alternating in $(c,d)$, the induced
+  bilinear form on $\Lambda^2 V$, defined \emph{and applied and characterised}. Linearity in
+  the $\Lambda^2$ slot is carried by hand, so the universal property is used only at codomain
+  $\R$, never at a linear-map-valued one.
+
+  \textbf{Where this stops --- and the diagnosis, corrected.} The curvature form itself is
+  still absent: instantiating the above at $\Phi = \Phi_{c,d}$ puts the metric back into the
+  term and every application times out. An earlier version of this node blamed the
+  \emph{nested codomain} $\Lambda^2 E \to_\ell (\Lambda^2 E \to_\ell \R)$. \textbf{That was
+  wrong}, and three checks refute it: a variable of exactly that type applies to two wedges by
+  \texttt{rfl} under the full instance pile; Mathlib's own
+  \texttt{LinearMap.BilinForm.exteriorPower} has that type and a \texttt{simp} lemma applying
+  it to two wedges; and a map whose codomain is a plain alternating map --- not nested at all
+  --- fails identically. Nor is it $\Lambda^2$: the abstract \texttt{sndForm} works end to end.
+
+  \textbf{What the profiler says.} On the smallest failing application,
+  \texttt{set\_option diagnostics true} reports \texttt{isDefEq} unfolding
+  \texttt{RiemannianBundle.g} $202472$ times and \texttt{RiemannianMetric.inner} $202476$
+  times, through \texttt{innerSL} and \texttt{mkContinuousOfExistsBound}, with the
+  $f\,a \overset{?}{=} f\,b$ heuristic firing on \texttt{toFun} $286390$ times. \emph{The cost
+  is the metric.} $\Rm_x(a,b,c,d)$ is \emph{by definition} $\langle \Riem(a,b)c, d\rangle$, so
+  every definitional comparison of a term built from it descends into the metric's
+  construction. Marking things \texttt{irreducible} --- the inner definitions, the outer
+  definition, or $\Rm_x$ itself --- does not stop it.
+
+  A definition whose only characterisation cannot be stated is precisely the hazard this
+  blueprint guards against, so the curvature form is not landed unusable. \textbf{The lead for
+  the next attempt is a different one}: keep the metric out of the \emph{term}, not merely out
+  of the construction --- build the $(0,4)$ tensor once as a bundled
+  $E \to_L E \to_L E \to_L E \to_L \R$ so that $\langle\cdot,\cdot\rangle$ sits inside a single
+  opaque continuous linear map, and factor that. It is the same lesson
+  \texttt{curvatureBilinFst} and \texttt{FlowKoszul.lean} each paid for once.
 \end{lemma}
 
 \begin{lemma}[Constant sectional curvature determines $\Rm$]
