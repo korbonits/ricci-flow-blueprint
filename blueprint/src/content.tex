@@ -4162,7 +4162,12 @@ Perelman's monotone functionals are what rule it out.
   \lean{CovariantDerivative.transportCoeff,
     CovariantDerivative.covAlong_eq_zero_iff_deriv,
     CovariantDerivative.continuousOn_transportCoeff,
+    CovariantDerivative.transportCoeffExt,
+    CovariantDerivative.transportCoeffExt_of_mem,
+    CovariantDerivative.exists_bound_transportCoeffExt,
     CovariantDerivative.exists_isParallelAlong,
+    CovariantDerivative.coord_eq_dysonFrom,
+    CovariantDerivative.exists_parallelTransportEquiv,
     CovariantDerivative.eqOn_of_isParallelAlong}
   \leanok
   \uses{lem:cov-along-curve-exists, lem:geodesic-chart, thm:linear-ode}
@@ -4190,6 +4195,23 @@ Perelman's monotone functionals are what rule it out.
   supplies one only on $[a,c]$, and reparametrising by $\mathrm{projIcc}$ extends it by its
   boundary values --- continuous, bounded by compactness, and invisible on $[a,c]$ where
   $\mathrm{projIcc}$ is the identity.
+
+  \textbf{Transport is a linear isomorphism of fibres}
+  (\texttt{exists\_parallelTransportEquiv}): there is a continuous linear equivalence
+  $P : T_{\gamma(t_0)}\M \simeq T_{\gamma(t)}\M$ with $V(t) = P(V(t_0))$ for \emph{every}
+  parallel $V$. Invertibility is not extra work --- $P$ is the trivialisation at
+  $\gamma(t_0)$, then the Dyson propagator, then the inverse trivialisation at $\gamma(t)$,
+  and the middle factor is invertible by \texttt{bijective\_dysonSum}, itself two uniqueness
+  arguments run forwards and backwards. \emph{No metric appears in the statement}: the fibres
+  need only their topology and module structure for $\simeq_L$ to elaborate, and transport is
+  not an isometry until the connection is assumed metric.
+
+  All of that rests on one ODE-uniqueness argument, \texttt{coord\_eq\_dysonFrom}: in
+  coordinates every parallel section \emph{is} the Dyson solution through its own initial
+  value. Uniqueness of transport is then three rewrites, and it holds on the \emph{closed}
+  interval, endpoints included, because mathlib's \texttt{ODE\_solution\_unique\_of\_mem\_Icc}
+  asks for the equation only on the interior and continuity on the closure --- which
+  differentiability along the curve already gives.
 
   \textbf{What this is for.} Hamilton's tensor maximum principle on a genuine bundle takes a
   target family $K_x \subseteq V_x$ of convex sets that is invariant under parallel transport,
