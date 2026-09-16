@@ -3373,11 +3373,56 @@ target actually requires.
   type check as in Lemma \ref{lem:bundle-bochner}, and for the same reason.
 
   \textbf{What remains before Lemma \ref{lem:pinching}} is no longer a missing primitive on
-  the geometry side. It is the touching-point argument itself: on a bundle the target is a
-  family $K_x \subseteq V_x$ of convex sets, and the first-touching-time argument compares
-  $\mathrm{dist}(u(t,x), K_x)$ \emph{across different fibres}. Making that comparison is what
-  a trivialisation --- Uhlenbeck's trick, or Hamilton's moving fibre metric --- is for, and
-  it is the one thing none of the machinery above supplies.
+  the geometry side, and the touching-point step itself is now Lemma
+  \ref{lem:bundle-touching-point}. What is left is the \emph{cross-fibre} half of the
+  first-touching-time argument: on a bundle the target is a family $K_x \subseteq V_x$ of
+  convex sets, and the argument compares $\mathrm{dist}(u(t,x), K_x)$ across different
+  fibres. Making that comparison is what a trivialisation --- Uhlenbeck's trick, or
+  Hamilton's moving fibre metric --- is for, and it is the one thing none of the machinery
+  above supplies.
+\end{lemma}
+
+\begin{lemma}[The touching-point step on a general bundle]
+  \label{lem:bundle-touching-point}
+  \lean{RicciFlowBlueprint.laplacianFun_nonpos_of_isLocalMax,
+    CovariantDerivative.laplacianFun_inner_normal_eq,
+    CovariantDerivative.inner_laplacianSection_nonpos_of_isLocalMax,
+    CovariantDerivative.inner_laplacianSection_nonneg_of_isLocalMin,
+    CovariantDerivative.exists_section_inner_laplacianSection_nonpos,
+    CovariantDerivative.laplacianFun_inner_normal_eq_tangent,
+    CovariantDerivative.inner_laplacian_nonpos_of_isLocalMax_tangent}
+  \leanok
+  \uses{lem:bundle-bochner, lem:bundle-normal-section, lem:second-derivative-test}
+  Let $u$ be a $C^2$ section of $V$ and $x \in \M$. For every direction $n \in V_x$ there is
+  a global $C^2$ section $N$ of $V$ with $N(x) = n$ such that
+  \[
+    \Delta\langle N, u\rangle(x) = \langle n, \Delta u(x)\rangle ;
+  \]
+  consequently, if $x$ is a spatial maximum of $y \mapsto \langle N(y), u(y)\rangle$ then
+  $\langle n, \Delta u(x)\rangle \le 0$.
+
+  \textbf{Proved} (\texttt{BundleMaximumPrinciple.lean}). This is the step at which the
+  tensor maximum principle inspects the Laplacian, transposed from a trivial bundle --- where
+  the tested direction is literally the same vector at every point --- to a bundle where
+  $n$ lives in one fibre only.
+
+  \textbf{Both correction terms die on $\nab N(x) = 0$}, which is why the second-order
+  condition $\Delta N(x) = 0$ of Lemma \ref{lem:bundle-normal-section} is not a luxury: in
+  the Bochner expansion of Lemma \ref{lem:bundle-bochner} the gradient pairing
+  $2\sum_i\langle\nab_{e_i}N,\nab_{e_i}u\rangle$ vanishes term by term on the first-order
+  condition, and $\langle\Delta N, u\rangle$ vanishes on the second. What is left is a
+  statement about the \emph{scalar} $\langle N, u\rangle$, and the second-derivative test of
+  Lemma \ref{lem:second-derivative-test} closes it --- in the maximum form
+  $\Delta f(x_0) \le 0$, which is the minimum form applied to $-f$.
+
+  \textbf{No parallel transport and no exponential map appear}, and that is the point of
+  routing through Lemma \ref{lem:bundle-normal-section}: only the first- and second-order
+  behaviour of $N$ at the single point $x$ matters. The radial-transport construction of a
+  normal frame would have put this step behind the regularity of $\exp$, which is an open
+  gap in ODE theory.
+
+  Boundarylessness of the model enters exactly once, in the second-derivative test; the
+  connection $\nab^T$ on $T\M$ need be neither metric nor torsion-free.
 \end{lemma}
 
 \begin{theorem}[The maximum principle with a moving target set]

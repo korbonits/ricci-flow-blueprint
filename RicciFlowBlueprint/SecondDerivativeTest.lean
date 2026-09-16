@@ -286,6 +286,18 @@ theorem laplacianFun_nonneg_of_isLocalMin {f : M → ℝ} {x₀ : M}
   refine Finset.sum_nonneg fun i _ ↦ ?_
   exact hessianFun_nonneg_of_isLocalMin cov hf hmin (FiberBundle.mdifferentiableAt_extend I E _)
 
+-- BENCH: laplacian-nonpos-max-manifold
+/-- **The Laplacian is nonpositive at a local maximum**, the mirror of
+`laplacianFun_nonneg_of_isLocalMin`. A maximum of `f` is a minimum of `-f`, and the
+Laplacian is linear, so nothing is reproved. -/
+theorem laplacianFun_nonpos_of_isLocalMax {f : M → ℝ} {x₀ : M}
+    (hf : ContMDiffAt I 𝓘(ℝ, ℝ) 2 f x₀) (hmax : IsLocalMax f x₀) :
+    cov.laplacianFun f x₀ ≤ 0 := by
+  have hneg : (0 : ℝ) ≤ cov.laplacianFun (-f) x₀ :=
+    laplacianFun_nonneg_of_isLocalMin cov (f := -f) hf.neg hmax.neg
+  have e : cov.laplacianFun (-f) x₀ = -cov.laplacianFun f x₀ := cov.laplacianFun_neg f x₀
+  linarith
+
 end Manifold
 
 end RicciFlowBlueprint
