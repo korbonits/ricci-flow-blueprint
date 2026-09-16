@@ -4281,8 +4281,56 @@ Perelman's monotone functionals are what rule it out.
   \textbf{What this is for.} Hamilton's tensor maximum principle on a genuine bundle takes a
   target family $K_x \subseteq V_x$ of convex sets that is invariant under parallel transport,
   and the first-touching-time argument compares $\mathrm{dist}(u(t,x),K_x)$ across fibres.
-  Transport is the comparison. It is also the first of the Jacobi-field substrate that
+  Transport is the comparison --- once it is known to preserve the metric, which is Lemma
+  \ref{lem:transport-isometry}. It is also the first of the Jacobi-field substrate that
   Definition \ref{def:reduced-volume} consumes.
+\end{lemma}
+
+\begin{lemma}[Parallel transport is an isometry]
+  \label{lem:transport-isometry}
+  \lean{CovariantDerivative.inner_sum_smul_sum,
+    CovariantDerivative.inner_expansion_add,
+    CovariantDerivative.mvfderiv_inner_eq_apply,
+    CovariantDerivative.hasDerivAt_inner_along,
+    CovariantDerivative.inner_eq_of_isParallelAlong,
+    CovariantDerivative.norm_eq_of_isParallelAlong,
+    CovariantDerivative.exists_parallelTransportIsometry}
+  \leanok
+  \uses{lem:parallel-transport, lem:cov-along-curve-exists}
+  For a \emph{metric} connection, $\tfrac{d}{dt}\langle V,W\rangle
+  = \langle \tfrac{D}{dt}V, W\rangle + \langle V, \tfrac{D}{dt}W\rangle$ along any curve.
+  Consequently the pairing of two parallel sections is constant, lengths are preserved, and
+  the transport map of Lemma \ref{lem:parallel-transport} upgrades from a continuous linear
+  equivalence to a linear \emph{isometry} $T_{\gamma(t_0)}\M \simeq_{\ell i}
+  T_{\gamma(t)}\M$.
+
+  \textbf{Proved} (\texttt{TransportIsometry.lean}). Mathlib names exactly this as future
+  work: the header of its \texttt{CovariantDerivative/Metric.lean} says ``when Mathlib has a
+  notion of parallel transport, prove the equivalence of \texttt{IsMetricCompatible} with the
+  characterisation that parallel transport be an isometry''. One direction of that is settled
+  here.
+
+  \textbf{The whole cost is the Leibniz rule}, and that is the frame-expansion argument of
+  Lemma \ref{lem:cov-along-curve-exists} used once more. Expand both sections in local frames
+  --- \emph{not necessarily the same frame}, and neither orthonormal nor parallel --- so that
+  the pairing becomes a double sum $\sum_{i,j} f_i g_j \langle A_i\circ\gamma,
+  B_j\circ\gamma\rangle$. The product rule contributes the $f_i'$ and $g_j'$ terms, which are
+  precisely the coordinate parts of $\tfrac{D}{dt}V$ and $\tfrac{D}{dt}W$; metric
+  compatibility contributes the derivative of each frame pairing, which is precisely the
+  connection parts. Nothing is left over, which is why the frames need no hypotheses at all.
+
+  Everything after that is immediate: along a parallel pair the derivative is
+  $\langle 0,W\rangle + \langle V,0\rangle$, so
+  \texttt{constant\_of\_has\_deriv\_right\_zero} gives constancy on $[a,c]$; at $V = W$
+  that is preservation of length; and the isometry is the equivalence of Lemma
+  \ref{lem:parallel-transport} together with that, the parallel section through each vector
+  being supplied by \texttt{exists\_isParallelAlong}.
+
+  \textbf{Why it is wanted.} A maximum principle on a non-trivial bundle compares
+  $\mathrm{dist}(u(t,x),K_x)$ between \emph{different} fibres, and there is nothing to
+  compare unless the identification between them preserves the metric. Lemma
+  \ref{lem:bundle-touching-point} closes the touching-point half of that argument; this is
+  the first brick of the cross-fibre half.
 \end{lemma}
 
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]

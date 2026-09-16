@@ -61,3 +61,4 @@ import RicciFlowBlueprint.BundleBochner
 import RicciFlowBlueprint.BundleNormalSection
 import RicciFlowBlueprint.BundleMaximumPrinciple
 import RicciFlowBlueprint.ParallelTransport
+import RicciFlowBlueprint.TransportIsometry
