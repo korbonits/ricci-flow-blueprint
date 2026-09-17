@@ -136,3 +136,213 @@ theorem eqOn_of_isParallelAlong_global (hs : IsOpen s) (hconn : IsPreconnected s
   obtain ⟨p, hp, hwp⟩ := hw₁
   obtain ⟨q, hq, hwq⟩ := hw₂
   exact (hJbsub q hq ⟨hwq, hws⟩).2 (hJasub p hp ⟨hwp, hws⟩)
+
+/-- **Two parallel sections glue.** On overlapping open sets with preconnected intersection,
+parallel sections agreeing at one point of the overlap assemble into a parallel section on the
+union, restricting to each.
+
+**This is what global uniqueness buys.** Gluing by `if u ∈ J₁ then V₁ u else V₂ u` is only
+sound because the two agree on the *whole* overlap, not merely at the one point where they
+were matched — otherwise the glued function would jump at the boundary of `J₁` and be
+differentiable nowhere near it. Uniqueness upgrades the pointwise match to agreement on the
+overlap, after which the glued section is *locally equal* to one of the two everywhere, and
+differentiability and parallelism are both local. -/
+theorem exists_glue_isParallelAlong {J₁ J₂ : Set ℝ}
+    (hJ₁ : IsOpen J₁) (hJ₂ : IsOpen J₂) (hI : IsPreconnected (J₁ ∩ J₂))
+    (hγ : ∀ w ∈ J₁ ∪ J₂, MDifferentiableAt 𝓘(ℝ, ℝ) I γ w)
+    (hγv : ∀ w ∈ J₁ ∪ J₂, MDiffAlongAt γ (velocity (I := I) γ) w)
+    {V₁ V₂ : Π u : ℝ, TangentSpace I (γ u)}
+    (hV₁ : ∀ w ∈ J₁, MDiffAlongAt γ V₁ w) (hV₂ : ∀ w ∈ J₂, MDiffAlongAt γ V₂ w)
+    (hP₁ : IsParallelAlong cov γ V₁ J₁) (hP₂ : IsParallelAlong cov γ V₂ J₂)
+    {p : ℝ} (hp : p ∈ J₁ ∩ J₂) (heq : V₁ p = V₂ p) :
+    ∃ V : Π u : ℝ, TangentSpace I (γ u),
+      (∀ w ∈ J₁, V w = V₁ w) ∧ (∀ w ∈ J₂, V w = V₂ w) ∧
+      (∀ w ∈ J₁ ∪ J₂, MDiffAlongAt γ V w) ∧ IsParallelAlong cov γ V (J₁ ∪ J₂) := by
+  classical
+  have hagree : ∀ w ∈ J₁ ∩ J₂, V₁ w = V₂ w :=
+    eqOn_of_isParallelAlong_global cov (hJ₁.inter hJ₂) hI
+      (fun w hw ↦ hγ w (Or.inl hw.1)) (fun w hw ↦ hγv w (Or.inl hw.1))
+      (fun w hw ↦ hV₁ w hw.1) (fun w hw ↦ hV₂ w hw.2)
+      (fun w hw ↦ hP₁ w hw.1) (fun w hw ↦ hP₂ w hw.2) hp heq
+  set V : Π u : ℝ, TangentSpace I (γ u) := fun u ↦ if u ∈ J₁ then V₁ u else V₂ u with hVdef
+  have hVJ₁ : ∀ w ∈ J₁, V w = V₁ w := fun w hw ↦ by simp only [hVdef, hw, ↓reduceIte]
+  have hVJ₂ : ∀ w ∈ J₂, V w = V₂ w := by
+    intro w hw
+    by_cases h : w ∈ J₁
+    · rw [hVJ₁ w h]; exact hagree w ⟨h, hw⟩
+    · simp only [hVdef, h, ↓reduceIte]
+  -- near any point of `J₁` the glued section *is* `V₁`, and likewise for `J₂`
+  have hev₁ : ∀ w ∈ J₁, (fun u ↦ (⟨γ u, V u⟩ : TangentBundle I M))
+      =ᶠ[𝓝 w] fun u ↦ (⟨γ u, V₁ u⟩ : TangentBundle I M) := fun w hw ↦
+    Filter.eventually_of_mem (hJ₁.mem_nhds hw) fun y hy ↦ by
+      show (⟨γ y, V y⟩ : TangentBundle I M) = ⟨γ y, V₁ y⟩
+      rw [hVJ₁ y hy]
+  have hev₂ : ∀ w ∈ J₂, (fun u ↦ (⟨γ u, V u⟩ : TangentBundle I M))
+      =ᶠ[𝓝 w] fun u ↦ (⟨γ u, V₂ u⟩ : TangentBundle I M) := fun w hw ↦
+    Filter.eventually_of_mem (hJ₂.mem_nhds hw) fun y hy ↦ by
+      show (⟨γ y, V y⟩ : TangentBundle I M) = ⟨γ y, V₂ y⟩
+      rw [hVJ₂ y hy]
+  have hVsec₁ : ∀ w ∈ J₁, V =ᶠ[𝓝 w] V₁ := fun w hw ↦
+    Filter.eventually_of_mem (hJ₁.mem_nhds hw) fun y hy ↦ hVJ₁ y hy
+  have hVsec₂ : ∀ w ∈ J₂, V =ᶠ[𝓝 w] V₂ := fun w hw ↦
+    Filter.eventually_of_mem (hJ₂.mem_nhds hw) fun y hy ↦ hVJ₂ y hy
+  have hVd : ∀ w ∈ J₁ ∪ J₂, MDiffAlongAt γ V w := by
+    rintro w (hw | hw)
+    · exact (hV₁ w hw).congr_of_eventuallyEq (hev₁ w hw)
+    · exact (hV₂ w hw).congr_of_eventuallyEq (hev₂ w hw)
+  refine ⟨V, hVJ₁, hVJ₂, hVd, ?_⟩
+  rintro w (hw | hw)
+  · rw [(isCovDerivAlong_covAlong cov γ).congr_of_eventuallyEq (hVd w (Or.inl hw))
+      (hV₁ w hw) (hγ w (Or.inl hw)) (hVsec₁ w hw)]
+    exact hP₁ w hw
+  · rw [(isCovDerivAlong_covAlong cov γ).congr_of_eventuallyEq (hVd w (Or.inr hw))
+      (hV₂ w hw) (hγ w (Or.inr hw)) (hVsec₂ w hw)]
+    exact hP₂ w hw
+
+/-- **A transport interval.** Around any time there is an open preconnected interval inside
+`s` supporting parallel transport *from any of its points*, with any prescribed value there.
+
+Quantifying over the base point rather than fixing it at the centre is what makes this usable
+twice over: the reachability argument below needs to start a local section at whatever point
+it already knows about, not at the point the chart was built around. It costs nothing —
+`exists_isParallelAlong` already allows any base point in its interval.
+
+`exists_isParallelAlong` delivers a section on a *closed* interval and demands the curve stay
+in the chart on all of the ambient open set; both are arranged by shrinking twice — once to a
+closed interval inside the chart, once to an open one inside that. Open is what gluing
+consumes. -/
+theorem exists_transport_interval (hs : IsOpen s)
+    (hγ : ∀ w ∈ s, MDifferentiableAt 𝓘(ℝ, ℝ) I γ w)
+    (hγv : ∀ w ∈ s, MDiffAlongAt γ (velocity (I := I) γ) w)
+    {u : ℝ} (hu : u ∈ s) :
+    ∃ J : Set ℝ, IsOpen J ∧ IsPreconnected J ∧ u ∈ J ∧ J ⊆ s ∧
+      ∀ p ∈ J, ∀ x : TangentSpace I (γ p),
+        ∃ V : Π w : ℝ, TangentSpace I (γ w), V p = x ∧
+          (∀ w ∈ J, MDiffAlongAt γ V w) ∧ IsParallelAlong cov γ V J := by
+  obtain ⟨W, U, a', c', hUopen, hUe, hW, hWU, huIoo, hIccs, hγU⟩ :=
+    exists_chart_interval hs hγ hu
+  obtain ⟨a'', ha''⟩ := exists_between huIoo.1
+  obtain ⟨c'', hc''⟩ := exists_between huIoo.2
+  have hsubIcc : Icc a'' c'' ⊆ Ioo a' c' := fun w hw ↦
+    ⟨lt_of_lt_of_le ha''.1 hw.1, lt_of_le_of_lt hw.2 hc''.2⟩
+  have hIoo_s : Ioo a' c' ⊆ s := fun w hw ↦ hIccs (Ioo_subset_Icc_self hw)
+  have hac'' : a'' ≤ c'' := le_of_lt (ha''.2.trans hc''.1)
+  refine ⟨Ioo a'' c'', isOpen_Ioo, isPreconnected_Ioo, ⟨ha''.2, hc''.1⟩,
+    fun w hw ↦ hIoo_s (hsubIcc (Ioo_subset_Icc_self hw)), fun p hp x ↦ ?_⟩
+  obtain ⟨V, hVp, hVd, hVP⟩ :=
+    exists_isParallelAlong cov (Module.finBasis ℝ E) hUopen hUe hW hWU isOpen_Ioo
+      (fun w hw ↦ hγ w (hIoo_s hw)) (fun w hw ↦ hγv w (hIoo_s hw))
+      (fun w hw ↦ hγU w (Ioo_subset_Icc_self hw)) hac'' hsubIcc
+      (Ioo_subset_Icc_self hp) x
+  exact ⟨V, hVp, fun w hw ↦ hVd w (Ioo_subset_Icc_self hw),
+    fun w hw ↦ hVP w (Ioo_subset_Icc_self hw)⟩
+
+/-- **Parallel transport exists along any curve**, on a preconnected open set, with no chart
+hypotheses: through every `v ∈ T_{γ(t₀)}\M` there is a section parallel along `γ` on all of
+`s`.
+
+**Two connectedness arguments, and no subdivision.** First, the set of times *reachable* from
+`t₀` — joined to it by a connected open set carrying a parallel section through `v` — is open
+and has open complement, because a transport interval meeting it is swallowed by it: glue the
+reaching section to a local one started at the meeting point. So every time is reachable.
+Second, the reaching sections are assembled into one global section pointwise, `V r` being the
+value at `r` of *its own* witness. That is well defined because any two witnesses agree at
+`t₀` and so, by `eqOn_of_isParallelAlong_global` on their preconnected intersection, agree
+throughout it — which also makes `V` locally equal to a witness, hence differentiable and
+parallel.
+
+Nothing here chooses a subdivision, so nothing has to be proved independent of one. -/
+theorem exists_isParallelAlong_global (hs : IsOpen s) (hconn : IsPreconnected s)
+    (hγ : ∀ w ∈ s, MDifferentiableAt 𝓘(ℝ, ℝ) I γ w)
+    (hγv : ∀ w ∈ s, MDiffAlongAt γ (velocity (I := I) γ) w)
+    {t₀ : ℝ} (ht₀ : t₀ ∈ s) (v : TangentSpace I (γ t₀)) :
+    ∃ V : Π u : ℝ, TangentSpace I (γ u), V t₀ = v ∧
+      (∀ u ∈ s, MDiffAlongAt γ V u) ∧ IsParallelAlong cov γ V s := by
+  classical
+  have hord : ∀ {A B : Set ℝ}, IsPreconnected A → IsPreconnected B → IsPreconnected (A ∩ B) := by
+    intro A B hA hB
+    rw [isPreconnected_iff_ordConnected] at hA hB ⊢
+    exact hA.inter hB
+  set Reach : Set ℝ := {r | ∃ J : Set ℝ, IsOpen J ∧ IsPreconnected J ∧ t₀ ∈ J ∧ r ∈ J ∧ J ⊆ s ∧
+    ∃ V : Π w : ℝ, TangentSpace I (γ w), V t₀ = v ∧
+      (∀ w ∈ J, MDiffAlongAt γ V w) ∧ IsParallelAlong cov γ V J} with hReachDef
+  -- a transport interval that meets `Reach` is contained in it
+  have spread : ∀ J' : Set ℝ, IsOpen J' → IsPreconnected J' → J' ⊆ s →
+      (∀ p ∈ J', ∀ x : TangentSpace I (γ p), ∃ V' : Π w : ℝ, TangentSpace I (γ w), V' p = x ∧
+        (∀ w ∈ J', MDiffAlongAt γ V' w) ∧ IsParallelAlong cov γ V' J') →
+      ∀ p ∈ J', p ∈ Reach → J' ⊆ Reach := by
+    intro J' hJ'o hJ'c hJ's htr p hpJ' hpR q hqJ'
+    obtain ⟨J, hJo, hJc, ht₀J, hpJ, hJs, V, hVt₀, hVd, hVP⟩ := hpR
+    obtain ⟨V', hV'p, hV'd, hV'P⟩ := htr p hpJ' (V p)
+    have hun : ∀ w ∈ J ∪ J', w ∈ s := by
+      rintro w (h | h); exacts [hJs h, hJ's h]
+    obtain ⟨Vg, hgJ, hgJ', hgd, hgP⟩ :=
+      exists_glue_isParallelAlong cov hJo hJ'o (hord hJc hJ'c)
+        (fun w hw ↦ hγ w (hun w hw)) (fun w hw ↦ hγv w (hun w hw))
+        hVd hV'd hVP hV'P ⟨hpJ, hpJ'⟩ hV'p.symm
+    exact ⟨J ∪ J', hJo.union hJ'o, hJc.union p hpJ hpJ' hJ'c, Or.inl ht₀J, Or.inr hqJ',
+      hun, Vg, by rw [hgJ t₀ ht₀J]; exact hVt₀, hgd, hgP⟩
+  have hloc : ∀ r ∈ s, ∃ J : Set ℝ, IsOpen J ∧ IsPreconnected J ∧ r ∈ J ∧ J ⊆ s ∧
+      ∀ p ∈ J, ∀ x : TangentSpace I (γ p), ∃ V' : Π w : ℝ, TangentSpace I (γ w), V' p = x ∧
+        (∀ w ∈ J, MDiffAlongAt γ V' w) ∧ IsParallelAlong cov γ V' J :=
+    fun r hr ↦ exists_transport_interval cov hs hγ hγv hr
+  choose! J' hJ'o hJ'c hJ'mem hJ's hJ'tr using hloc
+  have ht₀R : t₀ ∈ Reach := by
+    obtain ⟨V, hVt₀, hVd, hVP⟩ :=
+      hJ'tr t₀ ht₀ t₀ (hJ'mem t₀ ht₀) v
+    exact ⟨J' t₀, hJ'o t₀ ht₀, hJ'c t₀ ht₀, hJ'mem t₀ ht₀, hJ'mem t₀ ht₀, hJ's t₀ ht₀,
+      V, hVt₀, hVd, hVP⟩
+  -- every time is reachable
+  have hall : ∀ r ∈ s, r ∈ Reach := by
+    by_contra hne
+    push Not at hne
+    obtain ⟨q, hqs, hqR⟩ := hne
+    obtain ⟨w, hws, hw₁, hw₂⟩ :=
+      hconn _ _ (isOpen_biUnion fun p hp ↦ hJ'o p hp.1) (isOpen_biUnion fun p hp ↦ hJ'o p hp.1)
+        (fun r hr ↦ by
+          by_cases hrR : r ∈ Reach
+          · exact Or.inl (Set.mem_biUnion (show r ∈ {z | z ∈ s ∧ z ∈ Reach} from ⟨hr, hrR⟩)
+              (hJ'mem r hr))
+          · exact Or.inr (Set.mem_biUnion (show r ∈ {z | z ∈ s ∧ z ∉ Reach} from ⟨hr, hrR⟩)
+              (hJ'mem r hr)))
+        ⟨t₀, ht₀, Set.mem_biUnion (show t₀ ∈ {z | z ∈ s ∧ z ∈ Reach} from ⟨ht₀, ht₀R⟩)
+          (hJ'mem t₀ ht₀)⟩
+        ⟨q, hqs, Set.mem_biUnion (show q ∈ {z | z ∈ s ∧ z ∉ Reach} from ⟨hqs, hqR⟩)
+          (hJ'mem q hqs)⟩
+    simp only [Set.mem_iUnion] at hw₁ hw₂
+    obtain ⟨p, hp, hwp⟩ := hw₁
+    obtain ⟨p', hp', hwp'⟩ := hw₂
+    -- `w` is reachable from the first family, so the second family's interval is too
+    have hwR : w ∈ Reach :=
+      spread (J' p) (hJ'o p hp.1) (hJ'c p hp.1) (hJ's p hp.1) (hJ'tr p hp.1) p
+        (hJ'mem p hp.1) hp.2 hwp
+    exact hp'.2 (spread (J' p') (hJ'o p' hp'.1) (hJ'c p' hp'.1) (hJ's p' hp'.1)
+      (hJ'tr p' hp'.1) w hwp' hwR (hJ'mem p' hp'.1))
+  -- assemble the witnesses into one section
+  have hreach : ∀ r ∈ s, ∃ J : Set ℝ, IsOpen J ∧ IsPreconnected J ∧ t₀ ∈ J ∧ r ∈ J ∧ J ⊆ s ∧
+      ∃ V : Π w : ℝ, TangentSpace I (γ w), V t₀ = v ∧
+        (∀ w ∈ J, MDiffAlongAt γ V w) ∧ IsParallelAlong cov γ V J := hall
+  choose! Jr hJro hJrc ht₀Jr hrJr hJrs Vr hVrt₀ hVrd hVrP using hreach
+  have hkey : ∀ r ∈ s, ∀ w ∈ Jr r, Vr w w = Vr r w := by
+    intro r hr w hw
+    have hws : w ∈ s := hJrs r hr hw
+    have h := eqOn_of_isParallelAlong_global cov ((hJro r hr).inter (hJro w hws))
+      (hord (hJrc r hr) (hJrc w hws))
+      (fun z hz ↦ hγ z (hJrs r hr hz.1)) (fun z hz ↦ hγv z (hJrs r hr hz.1))
+      (fun z hz ↦ hVrd r hr z hz.1) (fun z hz ↦ hVrd w hws z hz.2)
+      (fun z hz ↦ hVrP r hr z hz.1) (fun z hz ↦ hVrP w hws z hz.2)
+      ⟨ht₀Jr r hr, ht₀Jr w hws⟩ (by rw [hVrt₀ r hr, hVrt₀ w hws])
+    exact (h w ⟨hw, hrJr w hws⟩).symm
+  have hev : ∀ r ∈ s, (fun u ↦ (⟨γ u, Vr u u⟩ : TangentBundle I M))
+      =ᶠ[𝓝 r] fun u ↦ (⟨γ u, Vr r u⟩ : TangentBundle I M) := by
+    refine fun r hr ↦ Filter.eventually_of_mem ((hJro r hr).mem_nhds (hrJr r hr)) fun w hw ↦ ?_
+    show (⟨γ w, Vr w w⟩ : TangentBundle I M) = ⟨γ w, Vr r w⟩
+    rw [hkey r hr w hw]
+  have hevs : ∀ r ∈ s, (fun u ↦ Vr u u) =ᶠ[𝓝 r] Vr r := fun r hr ↦
+    Filter.eventually_of_mem ((hJro r hr).mem_nhds (hrJr r hr)) fun w hw ↦ hkey r hr w hw
+  have hVd : ∀ r ∈ s, MDiffAlongAt γ (fun u ↦ Vr u u) r := fun r hr ↦
+    (hVrd r hr r (hrJr r hr)).congr_of_eventuallyEq (hev r hr)
+  refine ⟨fun u ↦ Vr u u, hVrt₀ t₀ ht₀, hVd, fun r hr ↦ ?_⟩
+  rw [(isCovDerivAlong_covAlong cov γ).congr_of_eventuallyEq (hVd r hr)
+    (hVrd r hr r (hrJr r hr)) (hγ r hr) (hevs r hr)]
+  exact hVrP r hr r (hrJr r hr)
