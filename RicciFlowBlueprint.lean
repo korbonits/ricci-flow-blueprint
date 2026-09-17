@@ -31,6 +31,8 @@ import RicciFlowBlueprint.RicciForm
 import RicciFlowBlueprint.RicciSymm
 import RicciFlowBlueprint.CurvatureSymm
 import RicciFlowBlueprint.CurvatureOperator
+import RicciFlowBlueprint.CurvatureLambda
+import RicciFlowBlueprint.NormalSection
 import RicciFlowBlueprint.ConstantCurvature
 import RicciFlowBlueprint.IveyConvex
 import RicciFlowBlueprint.CurvatureDeriv
@@ -54,3 +56,9 @@ import RicciFlowBlueprint.ScalarPreservation
 import RicciFlowBlueprint.ScalarLowerBound
 import RicciFlowBlueprint.LinearODE
 import RicciFlowBlueprint.TensorPreservation
+import RicciFlowBlueprint.BundleHessian
+import RicciFlowBlueprint.BundleBochner
+import RicciFlowBlueprint.BundleNormalSection
+import RicciFlowBlueprint.BundleMaximumPrinciple
+import RicciFlowBlueprint.ParallelTransport
+import RicciFlowBlueprint.TransportIsometry

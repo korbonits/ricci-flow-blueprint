@@ -87,58 +87,64 @@ theorem inner_sub_le_norm_mul_infDist {K : Set V} (hKne : K.Nonempty) {p n : V}
 
 variable {M : Type*} [TopologicalSpace M] [CompactSpace M]
 
--- BENCH: max-principle-tensor-time
-/-- **Hamilton's tensor maximum principle with a time-dependent reaction.** Let `M` be
-compact, `V` a complete real inner product space, `K ⊆ V` closed, convex and nonempty,
-`u : ℝ → M → V` jointly continuous with time derivative `ut` on `[0, T]`, and `F t`
-Lipschitz with a constant `L` **uniform in `t`**. Suppose
+-- BENCH: max-principle-tensor-set
+/-- **Hamilton's tensor maximum principle with a MOVING target set.** The set `K t` is now a
+family, and the conclusion is `u t x ∈ K t`. Two hypotheses replace the closedness of a single
+`K`: the family is **monotone** (`hKmono`, `s ≤ t → K s ⊆ K t` --- the constraint relaxes as
+time goes on) and it varies **continuously**, in the form the proof actually consumes
+(`hKcont`, joint continuity of `(t, v) ↦ infDist v (K t)`, rather than a Hausdorff-distance
+hypothesis whose `ENNReal` API would have to be unpacked again here).
 
-* (`hmax`) at every spatial maximum `x₀` of `x ↦ ⟪n, u t x⟫` one has
-  `⟪n, ut t x₀⟫ ≤ ⟪n, F t (u t x₀)⟫` — on a manifold this is `∂ₜu = Δu + F t (u)` together
-  with `Δ⟪n, u⟫ ≤ 0` at a maximum;
-* (`hK`) `K` is preserved by the **non-autonomous** ODE `v' = F t (v)`, in Nagumo's form:
-  `⟪n, F t p⟫ ≤ 0` for every `t ∈ [0,T]`, every `p ∈ K` and every outward normal `n` at `p`.
+**Monotonicity is exactly what the first-touching-time argument needs, and it is the only
+place the family being a family is felt.** The nearest point and the outward normal are taken
+in `K t₀`, at the single touching time, so every step at `t₀` is the fixed-set argument
+verbatim; what is new is that the *earlier* times are controlled against `K t`, not `K t₀`, so
+the two have to be compared. `K t ⊆ K t₀` for `t ≤ t₀` gives
+`infDist v (K t₀) ≤ infDist v (K t)` and the comparison is free.
 
-If `u 0 x ∈ K` for all `x`, then `u t x ∈ K` for all `t ∈ [0, T]` and all `x`.
+**The other direction is not free and is not proved here.** For a *shrinking* family the same
+step needs a quantitative bound on how fast `K t` retreats, coupled to `F`: a set that closes
+in faster than the reaction pushes points inward is genuinely not preserved, so no hypothesis-
+free statement exists. Hamilton 1999's `log(1 + t)` improvement is of that kind.
 
-**Why the time dependence is the useful generality.** `F` enters the proof at exactly three
-points --- the hypothesis at the touching point, the Lipschitz comparison against the nearest
-point, and subtangentiality --- and all three happen at the single time `t₀`, so nothing in
-the argument notices that `F` moves. That matters because a *moving background geometry*
-produces exactly a time-dependent reaction: it is what one gets from Hamilton 1982 §9, where
-the bundle's fibre metric evolves, rather than from Uhlenbeck's trick, which freezes it. What
-the generalisation does **not** buy is a moving inner product on `V` itself: `infDist (·) K`
-and the nearest-point projection are taken in `V`'s own metric at every time, and the
-first-touching-time argument compares them across times. That is the real content of
-Uhlenbeck's trick, and it is untouched here. -/
-theorem mem_of_deriv_le_at_max_time [CompleteSpace V] {u ut : ℝ → M → V} {F : ℝ → V → V}
-    {K : Set V} {L : NNReal} {T : ℝ}
-    (hKcl : IsClosed K) (hKc : Convex ℝ K) (hKne : K.Nonempty)
+**What this buys, and it is more than the `log(1+t)` improvement it was filed under**: a
+moving *inner product* on `V` reduces to a moving *set*. If `⟪v,w⟫_t = ⟪P t v, w⟫` with `P t`
+positive self-adjoint and `S t = (P t)^{1/2}`, then `S t` is an isometry from `(V, ⟪·,·⟫_t)` to
+`(V, ⟪·,·⟫)`, and `u t x ∈ K` is `S t (u t x) ∈ S t '' K` --- a fixed-metric problem with a
+moving set. Uhlenbeck's trick is precisely the choice of `S t` that makes `S t '' K` constant.
+So this theorem and Uhlenbeck's trick are two ways of paying the same bill, and the monotone
+case is the part of it that costs nothing. -/
+theorem mem_of_deriv_le_at_max_set [CompleteSpace V] {u ut : ℝ → M → V} {F : ℝ → V → V}
+    {K : ℝ → Set V} {L : NNReal} {T : ℝ}
+    (hKcl : ∀ t, IsClosed (K t)) (hKc : ∀ t, Convex ℝ (K t)) (hKne : ∀ t, (K t).Nonempty)
+    (hKmono : ∀ s t, s ≤ t → K s ⊆ K t)
+    (hKcont : Continuous fun q : ℝ × V ↦ infDist q.2 (K q.1))
     (hu : Continuous fun p : ℝ × M ↦ u p.1 p.2)
     (hut : ∀ t ∈ Icc 0 T, ∀ x, HasDerivAt (fun s ↦ u s x) (ut t x) t)
     (hF : ∀ t, LipschitzWith L (F t))
     (hmax : ∀ t ∈ Icc 0 T, ∀ x₀, ∀ n : V, (∀ x, ⟪n, u t x⟫ ≤ ⟪n, u t x₀⟫) →
       ⟪n, ut t x₀⟫ ≤ ⟪n, F t (u t x₀)⟫)
-    (hK : ∀ t ∈ Icc 0 T, ∀ p ∈ K, ∀ n : V, (∀ q ∈ K, ⟪n, q - p⟫ ≤ 0) → ⟪n, F t p⟫ ≤ 0)
-    (h0 : ∀ x, u 0 x ∈ K) :
-    ∀ t ∈ Icc 0 T, ∀ x, u t x ∈ K := by
+    (hK : ∀ t ∈ Icc 0 T, ∀ p ∈ K t, ∀ n : V, (∀ q ∈ K t, ⟪n, q - p⟫ ≤ 0) → ⟪n, F t p⟫ ≤ 0)
+    (h0 : ∀ x, u 0 x ∈ K 0) :
+    ∀ t ∈ Icc 0 T, ∀ x, u t x ∈ K t := by
   set c : ℝ := 2 * L + 1 with hc
   have hcpos : 0 < c := by positivity
-  have hdc : Continuous fun p : ℝ × M ↦ infDist (u p.1 p.2) K :=
-    (continuous_infDist_pt K).comp hu
-  -- the distance to `K` stays strictly below `ε e^{ct}`
-  have key : ∀ ε > 0, ∀ t ∈ Icc 0 T, ∀ x, infDist (u t x) K < ε * Real.exp (c * t) := by
+  have hdc : Continuous fun p : ℝ × M ↦ infDist (u p.1 p.2) (K p.1) :=
+    hKcont.comp (continuous_fst.prodMk hu)
+  -- the distance to `K t` stays strictly below `ε e^{ct}`
+  have key : ∀ ε > 0, ∀ t ∈ Icc 0 T, ∀ x, infDist (u t x) (K t) < ε * Real.exp (c * t) := by
     intro ε hε
     by_contra hcon
     push Not at hcon
     -- the touching set and the first touching time
-    set S : Set ℝ := {t ∈ Icc (0:ℝ) T | ∃ x, ε * Real.exp (c * t) - infDist (u t x) K ≤ 0}
-      with hS
+    set S : Set ℝ :=
+      {t ∈ Icc (0:ℝ) T | ∃ x, ε * Real.exp (c * t) - infDist (u t x) (K t) ≤ 0} with hS
     have hSne : S.Nonempty := by
       obtain ⟨t, ht, x, hx⟩ := hcon
       exact ⟨t, ht, x, by linarith⟩
     have hScl : IsClosed S :=
-      isClosed_touching (f := fun p : ℝ × M ↦ ε * Real.exp (c * p.1) - infDist (u p.1 p.2) K)
+      isClosed_touching
+        (f := fun p : ℝ × M ↦ ε * Real.exp (c * p.1) - infDist (u p.1 p.2) (K p.1))
         ((continuous_const.mul (Real.continuous_exp.comp
           (continuous_const.mul continuous_fst))).sub hdc) T
     have hSbdd : BddBelow S := ⟨0, fun t ht ↦ ht.1.1⟩
@@ -147,13 +153,16 @@ theorem mem_of_deriv_le_at_max_time [CompleteSpace V] {u ut : ℝ → M → V} {
     obtain ⟨ht₀I, x₀, hx₀⟩ := ht₀S
     set E := ε * Real.exp (c * t₀) with hE
     have hEpos : 0 < E := by positivity
-    have hx₀' : E ≤ infDist (u t₀ x₀) K := by linarith
-    have hnot : ∀ t ∈ Ico 0 t₀, ∀ x, infDist (u t x) K < ε * Real.exp (c * t) := by
+    have hx₀' : E ≤ infDist (u t₀ x₀) (K t₀) := by linarith
+    have hnot : ∀ t ∈ Ico 0 t₀, ∀ x, infDist (u t x) (K t) < ε * Real.exp (c * t) := by
       intro t ht x
       by_contra h
       push Not at h
       have htS : t ∈ S := ⟨⟨ht.1, ht.2.le.trans ht₀I.2⟩, x, by linarith⟩
       exact absurd (csInf_le hSbdd htS) (not_le.2 ht.2)
+    -- the comparison the moving family costs: earlier sets are smaller, so they are farther
+    have hmono' : ∀ t, t ≤ t₀ → ∀ v : V, infDist v (K t₀) ≤ infDist v (K t) := fun t ht v ↦
+      infDist_le_infDist_of_subset (hKmono t t₀ ht) (hKne t)
     have ht₀pos : 0 < t₀ := by
       rcases ht₀I.1.lt_or_eq with h | h
       · exact h
@@ -164,26 +173,26 @@ theorem mem_of_deriv_le_at_max_time [CompleteSpace V] {u ut : ℝ → M → V} {
         rw [hE, ← h] at hx₀'
         linarith
     -- at time `t₀` the distance is `≤ E` everywhere, `= E` at `x₀`
-    have hglob : ∀ x, infDist (u t₀ x) K ≤ E := by
+    have hglob : ∀ x, infDist (u t₀ x) (K t₀) ≤ E := by
       intro x
       have hcont : ContinuousWithinAt
-          (fun t ↦ ε * Real.exp (c * t) - infDist (u t x) K) (Iio t₀) t₀ :=
+          (fun t ↦ ε * Real.exp (c * t) - infDist (u t x) (K t)) (Iio t₀) t₀ :=
         ((continuous_const.mul (Real.continuous_exp.comp (continuous_const.mul
           continuous_id))).sub (hdc.comp (continuous_id.prodMk continuous_const)))
           |>.continuousAt.continuousWithinAt
-      have : ∀ᶠ t in 𝓝[<] t₀, 0 ≤ ε * Real.exp (c * t) - infDist (u t x) K := by
+      have : ∀ᶠ t in 𝓝[<] t₀, 0 ≤ ε * Real.exp (c * t) - infDist (u t x) (K t) := by
         filter_upwards [mem_of_superset (Ioo_mem_nhdsLT ht₀pos) Ioo_subset_Ico_self] with t ht
         linarith [hnot t ht x]
       have hlim := ge_of_tendsto hcont.tendsto this
       linarith
-    have heq : infDist (u t₀ x₀) K = E := le_antisymm (hglob x₀) hx₀'
-    -- the nearest point of `K` and the outward normal
-    obtain ⟨p, hp, hnorm, hn⟩ := exists_nearest_point hKcl hKc hKne (u t₀ x₀)
+    have heq : infDist (u t₀ x₀) (K t₀) = E := le_antisymm (hglob x₀) hx₀'
+    -- the nearest point of `K t₀` and the outward normal
+    obtain ⟨p, hp, hnorm, hn⟩ := exists_nearest_point (hKcl t₀) (hKc t₀) (hKne t₀) (u t₀ x₀)
     set n := u t₀ x₀ - p with hn_def
     have hnE : ‖n‖ = E := by rw [hn_def, hnorm, heq]
-    have hbound : ∀ t x, ⟪n, u t x⟫ ≤ ⟪n, p⟫ + E * infDist (u t x) K := by
+    have hbound : ∀ t x, ⟪n, u t x⟫ ≤ ⟪n, p⟫ + E * infDist (u t x) (K t₀) := by
       intro t x
-      have := inner_sub_le_norm_mul_infDist hKne hn (u t x)
+      have := inner_sub_le_norm_mul_infDist (hKne t₀) hn (u t x)
       rw [inner_sub_right, hnE] at this
       linarith
     have hat : ⟪n, u t₀ x₀⟫ = ⟪n, p⟫ + E * E := by
@@ -218,6 +227,7 @@ theorem mem_of_deriv_le_at_max_time [CompleteSpace V] {u ut : ℝ → M → V} {
       · intro t ht
         have := hbound t x₀
         have := hnot t ht x₀
+        have := hmono' t ht.2.le (u t x₀)
         nlinarith
       · rw [hat]; ring
     -- Lipschitz and subtangentiality
@@ -237,13 +247,53 @@ theorem mem_of_deriv_le_at_max_time [CompleteSpace V] {u ut : ℝ → M → V} {
     linarith [NNReal.coe_nonneg L]
   -- let `ε → 0`
   intro t ht x
-  rw [← hKcl.closure_eq, mem_closure_iff_infDist_zero hKne]
+  rw [← (hKcl t).closure_eq, mem_closure_iff_infDist_zero (hKne t)]
   refine le_antisymm ?_ infDist_nonneg
   refine le_of_forall_pos_lt_add fun η hη ↦ ?_
   have hexp : 0 < Real.exp (c * t) := Real.exp_pos _
   have := key (η / Real.exp (c * t)) (by positivity) t ht x
   rw [div_mul_cancel₀ η hexp.ne'] at this
   linarith
+
+-- BENCH: max-principle-tensor-time
+/-- **Hamilton's tensor maximum principle with a time-dependent reaction.** Let `M` be
+compact, `V` a complete real inner product space, `K ⊆ V` closed, convex and nonempty,
+`u : ℝ → M → V` jointly continuous with time derivative `ut` on `[0, T]`, and `F t`
+Lipschitz with a constant `L` **uniform in `t`**. Suppose
+
+* (`hmax`) at every spatial maximum `x₀` of `x ↦ ⟪n, u t x⟫` one has
+  `⟪n, ut t x₀⟫ ≤ ⟪n, F t (u t x₀)⟫` — on a manifold this is `∂ₜu = Δu + F t (u)` together
+  with `Δ⟪n, u⟫ ≤ 0` at a maximum;
+* (`hK`) `K` is preserved by the **non-autonomous** ODE `v' = F t (v)`, in Nagumo's form:
+  `⟪n, F t p⟫ ≤ 0` for every `t ∈ [0,T]`, every `p ∈ K` and every outward normal `n` at `p`.
+
+If `u 0 x ∈ K` for all `x`, then `u t x ∈ K` for all `t ∈ [0, T]` and all `x`.
+
+**Why the time dependence is the useful generality.** `F` enters the proof at exactly three
+points --- the hypothesis at the touching point, the Lipschitz comparison against the nearest
+point, and subtangentiality --- and all three happen at the single time `t₀`, so nothing in
+the argument notices that `F` moves. That matters because a *moving background geometry*
+produces exactly a time-dependent reaction: it is what one gets from Hamilton 1982 §9, where
+the bundle's fibre metric evolves, rather than from Uhlenbeck's trick, which freezes it. What
+the generalisation does **not** buy on its own is a moving inner product on `V` itself:
+`infDist (·) K` and the nearest-point projection are taken in `V`'s own metric at every time,
+and the first-touching-time argument compares them across times. For that see
+`mem_of_deriv_le_at_max_set`, which moves the *set* --- an equivalent bill, since the square
+root of a moving inner product turns one into the other. -/
+theorem mem_of_deriv_le_at_max_time [CompleteSpace V] {u ut : ℝ → M → V} {F : ℝ → V → V}
+    {K : Set V} {L : NNReal} {T : ℝ}
+    (hKcl : IsClosed K) (hKc : Convex ℝ K) (hKne : K.Nonempty)
+    (hu : Continuous fun p : ℝ × M ↦ u p.1 p.2)
+    (hut : ∀ t ∈ Icc 0 T, ∀ x, HasDerivAt (fun s ↦ u s x) (ut t x) t)
+    (hF : ∀ t, LipschitzWith L (F t))
+    (hmax : ∀ t ∈ Icc 0 T, ∀ x₀, ∀ n : V, (∀ x, ⟪n, u t x⟫ ≤ ⟪n, u t x₀⟫) →
+      ⟪n, ut t x₀⟫ ≤ ⟪n, F t (u t x₀)⟫)
+    (hK : ∀ t ∈ Icc 0 T, ∀ p ∈ K, ∀ n : V, (∀ q ∈ K, ⟪n, q - p⟫ ≤ 0) → ⟪n, F t p⟫ ≤ 0)
+    (h0 : ∀ x, u 0 x ∈ K) :
+    ∀ t ∈ Icc 0 T, ∀ x, u t x ∈ K :=
+  mem_of_deriv_le_at_max_set (K := fun _ ↦ K) (fun _ ↦ hKcl) (fun _ ↦ hKc) (fun _ ↦ hKne)
+    (fun _ _ _ ↦ subset_rfl) ((continuous_infDist_pt K).comp continuous_snd) hu hut hF hmax
+    hK h0
 
 -- BENCH: max-principle-tensor
 /-- **Hamilton's tensor maximum principle, abstractly** --- the autonomous case, `F` not

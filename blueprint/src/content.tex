@@ -346,6 +346,24 @@ gives the road, and the one thing it does not give yet.
   differentiable sections.
 
   These two are what the pointwise statement below is built from.
+
+  \textbf{Everything here is proved for an arbitrary $C^k$ vector bundle}
+  (\texttt{exists\_contMDiff\_eventuallyEq\_of\_bundle},
+  \texttt{exists\_contMDiff\_extension\_of\_bundle},
+  \texttt{forall\_contMDiff\_iff\_forall\_fiber}), the tangent-bundle statements above being
+  corollaries. Nothing in the bump-function argument is about $T\M$: mathlib's
+  \texttt{FiberBundle.exists\_contMDiffOn\_extend} and
+  \texttt{ContMDiffOn.smul\_section\_of\_tsupport} are already general. This is the form
+  Lemma \ref{lem:pinching} needs --- Hamilton's curvature operator is a section of
+  $\mathrm{Sym}^2(\Lambda^2 T\M)$, not a vector field, so the maximum principle for it cannot
+  quantify over a constant direction vector and must spread one into a section of that
+  bundle instead (Lemma \ref{lem:normal-section}).
+
+  One statement does not survive verbatim: the conclusion is
+  $\forall^f y \in \mathcal{N}(x),\ \tau(y) = \sigma(y)$ rather than
+  $\tau =^f_{\mathcal{N}(x)} \sigma$, because Lean's \texttt{Filter.EventuallyEq} wants a
+  non-dependent codomain and $\prod_y V_y$ is non-dependent only for the tangent bundle,
+  where $V_y$ reduces to the model space.
 \end{lemma}
 
 \begin{theorem}[Curvature is well defined]
@@ -586,6 +604,91 @@ gives the road, and the one thing it does not give yet.
   $q - p + s + t = 0$; subtracting, $2(p-q) = 0$. In Lean the six links are
   supplied as hypotheses and \texttt{linarith} does the elimination.
 \end{proof}
+
+\begin{lemma}[The first pair of slots factored through $\Lambda^2$]
+  \label{lem:curvature-lambda-fst}
+  \lean{RicciFlowBlueprint.altOfBilin,
+    RicciFlowBlueprint.altOfBilin_apply,
+    CovariantDerivative.curvatureTensorAt_self_fst_snd,
+    CovariantDerivative.curvatureTensorAt_self_thd_fth,
+    CovariantDerivative.curvatureAltFst,
+    CovariantDerivative.curvatureAltFst_apply,
+    CovariantDerivative.curvatureFunctional,
+    CovariantDerivative.curvatureFunctional_apply_ιMulti,
+    CovariantDerivative.curvatureFunctional_add_thd,
+    CovariantDerivative.curvatureFunctional_smul_thd,
+    CovariantDerivative.curvatureFunctional_add_fth,
+    CovariantDerivative.curvatureFunctional_smul_fth,
+    CovariantDerivative.curvatureFunctional_self,
+    RicciFlowBlueprint.sndAux,
+    RicciFlowBlueprint.sndForm,
+    RicciFlowBlueprint.sndForm_apply}
+  \leanok
+  \uses{lem:curvature-tensor-at}
+  For fixed $c,d \in T_x\M$, the map $(a,b) \mapsto \Rm_x(a,b,c,d)$ is alternating,
+  hence factors through $\Lambda^2 T_x\M$ as a linear functional
+  $\Phi_{c,d} \colon \Lambda^2 T_x\M \to \R$ with
+  $\Phi_{c,d}(a \wedge b) = \Rm_x(a,b,c,d)$; and $(c,d) \mapsto \Phi_{c,d}$ is
+  itself additive, homogeneous and alternating in each of its two slots.
+
+  \textbf{Proved} (\texttt{CurvatureLambda.lean}). \textbf{Mathlib has no constructor
+  for a rank-$2$ alternating map from a bilinear one}, so the underlying
+  \texttt{MultilinearMap} over \texttt{Fin 2} is built by hand
+  (\texttt{altOfBilin}): \texttt{map\_update\_add'} and \texttt{map\_update\_smul'}
+  each split on whether the updated index is $0$ or $1$, and the alternating
+  condition reduces to $\Rm_x(a,a,c,d) = 0$. The factorisation itself is then
+  \texttt{exteriorPower.alternatingMapLinearEquiv}, the universal property.
+
+  \textbf{The factorisation is characterised, not merely defined.}
+  \texttt{curvatureFunctional\_apply\_}$\iota$\texttt{Multi} evaluates it on a wedge, which is
+  what makes the object usable; the ten laws in the second pair of slots are each
+  proved at the alternating-map level and carried across by
+  \texttt{alternatingMapLinearEquiv} being a linear \emph{equivalence}. No
+  induction over $\Lambda^2$ is used, and none is available --- Mathlib has
+  \texttt{exteriorPower.}$\iota$\texttt{Multi\_span} but no span-induction eliminator.
+
+  \textbf{Everything is stated over $E$, never over $T_x\M$.} The two are
+  definitionally equal, but forming $\Lambda^2 T_x\M$ and unifying it against
+  $\Lambda^2 E$ sends \texttt{isDefEq} through the exterior algebra --- a quotient
+  of a tensor algebra --- and it does not return, even at four times the heartbeat
+  budget. This is the $E$ versus \texttt{TangentSpace} wall one type former up, and
+  the same remedy applies. No metric is used, so nothing is lost by it.
+
+  \textbf{The second factorisation is built, abstractly}
+  (\texttt{sndAux}, \texttt{sndForm}, \texttt{sndForm\_apply}): for \emph{any} family
+  $\Phi_{c,d} \colon \Lambda^2 V \to \R$ bilinear and alternating in $(c,d)$, the induced
+  bilinear form on $\Lambda^2 V$, defined \emph{and applied and characterised}. Linearity in
+  the $\Lambda^2$ slot is carried by hand, so the universal property is used only at codomain
+  $\R$, never at a linear-map-valued one.
+
+  \textbf{Where this stops --- and the diagnosis, corrected.} The curvature form itself is
+  still absent: instantiating the above at $\Phi = \Phi_{c,d}$ puts the metric back into the
+  term and every application times out. An earlier version of this node blamed the
+  \emph{nested codomain} $\Lambda^2 E \to_\ell (\Lambda^2 E \to_\ell \R)$. \textbf{That was
+  wrong}, and three checks refute it: a variable of exactly that type applies to two wedges by
+  \texttt{rfl} under the full instance pile; Mathlib's own
+  \texttt{LinearMap.BilinForm.exteriorPower} has that type and a \texttt{simp} lemma applying
+  it to two wedges; and a map whose codomain is a plain alternating map --- not nested at all
+  --- fails identically. Nor is it $\Lambda^2$: the abstract \texttt{sndForm} works end to end.
+
+  \textbf{What the profiler says.} On the smallest failing application,
+  \texttt{set\_option diagnostics true} reports \texttt{isDefEq} unfolding
+  \texttt{RiemannianBundle.g} $202472$ times and \texttt{RiemannianMetric.inner} $202476$
+  times, through \texttt{innerSL} and \texttt{mkContinuousOfExistsBound}, with the
+  $f\,a \overset{?}{=} f\,b$ heuristic firing on \texttt{toFun} $286390$ times. \emph{The cost
+  is the metric.} $\Rm_x(a,b,c,d)$ is \emph{by definition} $\langle \Riem(a,b)c, d\rangle$, so
+  every definitional comparison of a term built from it descends into the metric's
+  construction. Marking things \texttt{irreducible} --- the inner definitions, the outer
+  definition, or $\Rm_x$ itself --- does not stop it.
+
+  A definition whose only characterisation cannot be stated is precisely the hazard this
+  blueprint guards against, so the curvature form is not landed unusable. \textbf{The lead for
+  the next attempt is a different one}: keep the metric out of the \emph{term}, not merely out
+  of the construction --- build the $(0,4)$ tensor once as a bundled
+  $E \to_L E \to_L E \to_L E \to_L \R$ so that $\langle\cdot,\cdot\rangle$ sits inside a single
+  opaque continuous linear map, and factor that. It is the same lesson
+  \texttt{curvatureBilinFst} and \texttt{FlowKoszul.lean} each paid for once.
+\end{lemma}
 
 \begin{lemma}[Constant sectional curvature determines $\Rm$]
   \label{lem:const-sec-determines-rm}
@@ -2299,7 +2402,10 @@ target actually requires.
 
 \begin{lemma}[Evolution of the curvature tensor]
   \label{lem:evolution-rm}
-  \uses{def:ricci-flow, def:curvature, def:laplacian, lem:variation-connection, lem:variation-curvature, lem:bianchi-second, lem:metric-trace-variation, lem:variation-scalar, lem:metric-trace-cov}
+  \lean{RicciFlowBlueprint.inner_derivCurvature_eq_curvatureLaplacian_add_of_isRicciFlowAt,
+    RicciFlowBlueprint.hasDerivAt_inner_curvatureE_eq_curvatureLaplacian_add_of_isRicciFlowAt}
+  \leanok
+  \uses{def:ricci-flow, def:curvature, def:laplacian, lem:variation-connection, lem:variation-curvature, lem:bianchi-second, lem:metric-trace-variation, lem:variation-scalar, lem:metric-trace-cov, thm:evolution-rm}
   Under the flow, $\partial_t \Rm = \Delta \Rm + Q(\Rm)$, where $Q$ is
   quadratic in the curvature operator.
 
@@ -2308,21 +2414,26 @@ target actually requires.
   bundle. Formally this is a computation, not an estimate, but it is a long one
   and it is what every subsequent estimate is applied to.
 
-  \textbf{First half done.} Lemma \ref{lem:variation-curvature} gives
-  $\partial_t \Rm$ as $\nab \dot A$, second covariant derivatives of
-  $h = -2\Ric$. The second Bianchi identity is Lemma \ref{lem:bianchi-second}.
-  What remains is its trace against the metric, which rewrites the
-  antisymmetrised $\nab^2 \Ric$ as $\Delta \Rm$ plus terms quadratic in
-  $\Rm$ --- and that rewriting is a matter of moving covariant derivatives past
-  each other, for which Lemmas \ref{lem:bilin-ricci-identity} and
-  \ref{lem:curvature-ricci-identity} are the ingredients.
+  \textbf{Proved}, in the precise form of Theorem \ref{thm:evolution-rm}, which
+  names $Q$: pairing against the metric frozen at the time of differentiation,
+  $\partial_t\langle\Rm(X,Y)Z,W\rangle = \langle\Delta\Rm(X,Y)Z,W\rangle + Q_1 +
+  Q_2 + \Ric(R(X,Y)Z,W) + \Ric(Z,R(X,Y)W)$, every term on the right being either
+  $\Delta\Rm$ or quadratic in the curvature. \emph{Uhlenbeck's trick is not used
+  and is not needed for the identity} --- the paragraph above overstates what the
+  computation requires. What the trick buys is not the equation but the
+  \emph{tensor maximum principle applied to} it, where the fibre metric of the
+  bundle moves with $t$; the identity itself is proved with the pairing frozen,
+  so no time-dependence of the bundle metric ever enters.
+
+  \textbf{This node is kept, rather than merged into Theorem
+  \ref{thm:evolution-rm}}, because the downstream estimates reference it by name
+  in fifteen places. Read it as an alias.
 \end{lemma}
 
 \begin{lemma}[The Ricci identity for a bilinear form]
   \label{lem:bilin-ricci-identity}
   \lean{CovariantDerivative.cov2Bilin_eq_hessianFun,
-    CovariantDerivative.cov2Bilin_sub_swap,
-    CovariantDerivative.cov2Curvature_eq_hessian}
+    CovariantDerivative.cov2Bilin_sub_swap}
   \leanok
   \uses{def:curvature, lem:ricci-identity}
   For a bilinear form field $h$ and a torsion-free connection,
@@ -2974,8 +3085,10 @@ target actually requires.
   product on $V$ itself: $\operatorname{dist}(\cdot, K)$ and the nearest-point projection are
   taken in $V$'s own metric at every time, and the first-touching-time argument compares them
   \emph{across} times. That is the real content of Uhlenbeck's trick and it is untouched.
-  Nor is the time-dependent \emph{set} $K_t$ done --- that is a separate generalisation,
-  needed only for Hamilton 1999's $\log(1+t)$ improvement.
+  The time-dependent \emph{set} $K_t$ is done, in the monotone case, by Theorem
+  \ref{thm:max-moving-set} --- and that turns out \emph{not} to be the separate,
+  $\log(1+t)$-only generalisation it was filed as here: a moving inner product reduces to a
+  moving set.
 \end{theorem}
 
 \begin{theorem}[The maximum principles with a moving metric]
@@ -3002,11 +3115,11 @@ target actually requires.
   time at a time --- the manoeuvre Theorem \ref{thm:scal-lower-bound-preserved} makes
   inline one level down.
 
-  \textbf{What is still not bought is a moving inner product on $V$}, and that is the
-  distinction that matters: here the fibre is a fixed vector space with a fixed metric and
-  only the base geometry evolves. Hamilton's curvature operator lives in $\Lambda^2T_xM$,
-  whose inner product moves with $g_t$; trivialising \emph{that} is the content of
-  Uhlenbeck's trick, and this theorem is what the trick is applied to.
+  \textbf{What is still not bought here is a moving inner product on $V$}, and that is the
+  distinction that matters: the fibre is a fixed vector space with a fixed metric and only
+  the base geometry evolves. Hamilton's curvature operator lives in $\Lambda^2T_xM$, whose
+  inner product moves with $g_t$. Theorem \ref{thm:max-moving-set} is the next step towards
+  it.
 \end{theorem}
 
 \begin{proof}
@@ -3028,6 +3141,338 @@ target actually requires.
   F(u_0)\rangle \le \langle n, F(p)\rangle + L|n|^2 \le L|n|^2$, absurd. Let
   $\epsilon \to 0$ and use closedness of $K$.
 \end{proof}
+
+\begin{lemma}[A section with vanishing covariant derivative at a point]
+  \label{lem:normal-section}
+  \lean{RicciFlowBlueprint.mvfderiv_clm_comp,
+    RicciFlowBlueprint.exists_contMDiff_fun_mvfderiv_eq,
+    RicciFlowBlueprint.exists_contMDiff_section_cov_eq_zero,
+    RicciFlowBlueprint.exists_contMDiff_two_section_cov_eq_zero,
+    CovariantDerivative.hessian_smul_of_vanishing,
+    CovariantDerivative.hessianFun_half_sq,
+    CovariantDerivative.mvfderiv_half_sq,
+    CovariantDerivative.cov_sum_section_apply,
+    CovariantDerivative.hessian_sum_section,
+    CovariantDerivative.hessian_add_section,
+    CovariantDerivative.exists_contMDiff_section_normal}
+  \leanok
+  \uses{lem:global-extension}
+  For every $v \in T_x\M$ there is a global $C^k$ section $N$ with $N(x) = v$ and
+  $\nab N(x) = 0$.
+
+  \textbf{Proved} (\texttt{NormalSection.lean}). \textbf{Why the maximum principle needs
+  this.} Theorem \ref{thm:max-tensor} and everything over it take $u$ valued in a
+  \emph{fixed} inner product space --- the trivial bundle $\M \times V$. Its touching-point
+  hypothesis quantifies over a direction $n \in V$ and speaks of the function
+  $x \mapsto \langle n, u(t,x)\rangle$, which only makes sense because $n$ is the same vector
+  at every point. On a genuine bundle the direction lives in one fibre, $n \in V_{x_0}$, and
+  $\langle n, u(t,x)\rangle$ is meaningless for $x \ne x_0$. Hamilton's fix is to spread $n$
+  into a section; the Laplacian of $x \mapsto \langle n(x), u(t,x)\rangle$ then acquires
+  corrections in $\nab n$ and $\Delta n$, and the argument closes exactly when both vanish at
+  $x_0$.
+
+  \textbf{No parallel transport, and no exponential map.} The textbook construction transports
+  $n$ along radial geodesics, which would put this behind the regularity of $\exp$ --- an open
+  ODE-theory gap. It is not needed: only \emph{first-order} agreement at a single point is
+  wanted, and that is linear algebra. Take any extension $\tilde N$, set
+  $A = \nab\tilde N(x)$, and subtract $\sum_i f_i \cdot W_i$ where the $W_i$ are global
+  sections through an orthonormal basis of $T_x\M$ and $f_i(x) = 0$ with $df_i(x)$ the
+  matching component of $-A$. Leibniz then leaves $\nab(f_i W_i)(x) = df_i(x) \otimes W_i(x)$.
+
+  \textbf{An orthonormal basis is what makes it cheap.} Against a local \emph{frame} the
+  components of $A$ would have to be produced as continuous functionals by inverting a basis;
+  against an orthonormal basis they are $u \mapsto \langle b_i, Au\rangle$, a CLM by
+  construction. So no frame, no trivialisation, no \texttt{exists\_frame\_on\_open}: Lemma
+  \ref{lem:global-extension} applied to each $b_i$ is all the geometry used.
+
+  The enabling step is \texttt{exists\_contMDiff\_fun\_mvfderiv\_eq}: a global $C^k$ function
+  vanishing at $x$ with \emph{prescribed} differential there. The chart supplies the one fact
+  needed --- its differential at the base point is invertible --- so composing a functional
+  with that inverse solves for the model-space covector, and a bump globalises without
+  touching the germ.
+
+  \textbf{The second-order bricks are proved too}, and they are the analytic content of
+  $\Delta N(x) = 0$: \texttt{hessian\_smul\_of\_vanishing} says that at a point where $f$ and
+  $df$ both vanish, $\nab^2(f\cdot W) = (\nab^2 f)\cdot W$ --- Leibniz produces three
+  corrections beyond the leading term and each carries a factor $f(x)$ or $df(x)$, so all
+  three die, and by the same token $\nab(f\cdot W)(x) = 0$, which is what lets a second-order
+  correction be added \emph{without disturbing} the first-order condition already arranged
+  above. And \texttt{hessianFun\_half\_sq} computes the Hessian of a half-square:
+  $\nab^2(\tfrac12 a g^2)(x) = a\,dg \otimes dg$ at a zero of $g$. A half-square is the
+  cheapest function with value $0$, differential $0$ and a \emph{prescribed} second derivative
+  --- both first-order conditions hold automatically since every term of $d(g^2) = 2g\,dg$
+  carries a factor $g$ --- and its second derivative is rank one. Tracing against an
+  orthonormal basis with $dg = \langle b_i,\cdot\rangle$ gives $\Delta = a$, because
+  $\sum_j \langle b_i, b_j\rangle^2 = 1$: \emph{no chart-side second-derivative transport
+  appears anywhere in the construction}, which is what keeps this step the same size as the
+  first-order one.
+
+  \textbf{And the full statement is assembled}
+  (\texttt{exists\_contMDiff\_section\_normal}): for every $v \in T_x\M$ there is a global
+  $C^2$ section $N$ with $N(x) = v$, $\nab N(x) = 0$ \emph{and} $\Delta N(x) = 0$. The two
+  stages do not interact. Take $N_1$ from the first-order statement, then add
+  $\sum_i (a_i/2)\,g_i^2 \cdot W_i$ with $dg_i(x) = \langle b_i,\cdot\rangle$ and
+  $a_i = -\langle b_i, \Delta N_1(x)\rangle$; each summand vanishes to second order at $x$, so
+  it disturbs neither the value nor the covariant derivative already arranged, while
+  contributing $a_i\,\langle b_i,\cdot\rangle^{\otimes 2}\cdot b_i$ to the Hessian. Tracing
+  collapses $\sum_j \langle b_i,b_j\rangle^2$ to $1$, so the correction's Laplacian is
+  $\sum_i a_i b_i = -\Delta N_1(x)$ by $\mathtt{sum\_repr'}$.
+
+  \textbf{The frame is the same family $W_i$ used for the correction}, globalised through
+  Lemma \ref{lem:global-extension} rather than taken as \texttt{FiberBundle.extend}: the latter
+  is regular only \emph{near} $x$, while \texttt{contMDiff\_cov\_apply} --- which supplies
+  every differentiability hypothesis in the proof --- is a global statement. Reusing the
+  correction's own sections as the frame is what makes that free.
+
+  Supporting: \texttt{cov\_sum\_section\_apply} ($\nab$ over a finite sum, from the
+  $\nab$-Leibniz rule at unit coefficients), \texttt{hessian\_add\_section} and
+  \texttt{hessian\_sum\_section} ($\nab^2$ additive in its section slot). In those the $Y$ slot
+  is touched only at $x$, so its hypotheses are pointwise; the \emph{sections} need $\forall y$,
+  because the inner section $y \mapsto \nab_Y Z(y)$ has to be split as a function before
+  $\nab$ is applied to it.
+
+  \textbf{So the obstruction before Lemma \ref{lem:pinching} is no longer a missing primitive.}
+  What is left is to run the touching-point argument of Theorem \ref{thm:max-tensor} against a
+  section rather than a constant vector, which this lemma is exactly what makes possible.
+\end{lemma}
+
+\begin{lemma}[$\nab^2$ and $\Delta$ for a section of a general bundle]
+  \label{lem:bundle-hessian}
+  \lean{CovariantDerivative.mdiffAt_cov_apply_section,
+    CovariantDerivative.hessianSection,
+    CovariantDerivative.hessianSection_smul_right,
+    CovariantDerivative.hessianSection_add_right,
+    CovariantDerivative.tensorialAt_hessianSection_fst,
+    CovariantDerivative.tensorialAt_hessianSection_snd,
+    CovariantDerivative.hessianSectionAt,
+    CovariantDerivative.hessianSectionAt_apply,
+    CovariantDerivative.laplacianSection,
+    CovariantDerivative.laplacianSection_eq_sum,
+    CovariantDerivative.laplacianSection_eq_sum_frame,
+    CovariantDerivative.hessianSection_eq_hessian,
+    CovariantDerivative.hessianSectionAt_eq_hessianAt,
+    CovariantDerivative.laplacianSection_eq_laplacian}
+  \leanok
+  \uses{lem:global-extension}
+  For a connection $\nab$ on a vector bundle $V \to \M$ and a connection $\nab^{T}$ on
+  $T\M$, the second covariant derivative of a section $\sigma$ of $V$ is
+  $\nab^2_{X,Y}\sigma = \nab_X(\nab_Y \sigma) - \nab_{\nab^T_X Y}\sigma$; it is tensorial in
+  $X$ and in $Y$, hence a bilinear map $T_x\M \times T_x\M \to V_x$, and its metric trace
+  over an orthonormal basis of $T_x\M$ is the rough Laplacian $\Delta\sigma(x) \in V_x$,
+  independent of the basis.
+
+  \textbf{Proved} (\texttt{BundleHessian.lean}). The proofs are those of
+  \texttt{Hessian.lean} with the section slot moved off $T\M$; the only new brick is
+  \texttt{mdiffAt\_cov\_apply\_section}, which is the observation that
+  $y \mapsto \nab\sigma(y)$ is a section of $\mathrm{Hom}(T\M, V)$ --- precisely what the
+  class \texttt{ContMDiffCovariantDerivative} asserts to be $C^1$.
+
+  \textbf{Two connections appear and they are genuinely different}: $\nab$ on $V$, which is
+  what gets differentiated, and $\nab^T$ on $T\M$, which supplies the correction
+  $-\nab_{\nab^T_X Y}\sigma$. Tensoriality in $Y$ is the cancellation between the two Leibniz
+  rules --- $\nab_X(f\,\nab_Y\sigma)$ against $\nab_{\nab^T_X(fY)}\sigma$ --- and needs both.
+
+  \textbf{Nothing here asks $V$ for a norm, and that is what makes $T\M$ a case of it.}
+  The fibres carry only mathlib's standard general-bundle binders, and
+  $\mathrm{hessianSection}$, its bilinear packaging and $\Delta$ all agree with
+  \texttt{Hessian.lean}'s by \texttt{rfl}. The trace survives the loss of the norm because
+  \texttt{OrthonormalBasis.sum\_apply\_self\_eq} needs nothing metric in its
+  \emph{codomain} --- it is an algebraic rearrangement of a finite sum, with no estimate
+  anywhere --- so only the slot being traced, $T_x\M$, needs an inner product, and that one
+  is unambiguous.
+
+  \textbf{A fibre norm would have broken the specialisation, and not for a plumbing
+  reason.} $T_x\M$ reduces to the model space $E$, so $E$'s own norm typechecks as a fibre
+  norm while instance search returns the Riemannian metric's, and those are genuinely
+  different norms on one type. (Mathlib's scoped priority-$80$
+  \texttt{RiemannianBundle} instances exist precisely to keep them apart.) Dropping the
+  norm removes the choice rather than resolving it; where a fibre \emph{metric} is
+  genuinely needed --- Lemmas \ref{lem:bundle-bochner} and
+  \ref{lem:bundle-normal-section} --- it is taken as a \texttt{RiemannianBundle}
+  instance, which at $V = T\M$ is the very instance the tangent-bundle files use, so the
+  specialisation survives there too.
+\end{lemma}
+
+\begin{lemma}[Bochner on a general bundle]
+  \label{lem:bundle-bochner}
+  \lean{CovariantDerivative.hessianFun_inner_section_eq,
+    CovariantDerivative.laplacianFun_inner_section_eq,
+    CovariantDerivative.laplacianFun_inner_self_section_eq,
+    CovariantDerivative.two_mul_inner_laplacianSection_le,
+    CovariantDerivative.laplacianFun_inner_eq_of_bundle}
+  \leanok
+  \uses{lem:bundle-hessian, thm:bochner}
+  For a \emph{metric} connection $\nab$ on $V$ and any connection $\nab^T$ on $T\M$,
+  \[
+    \Delta\langle\sigma,\tau\rangle
+      = \langle\Delta\sigma,\tau\rangle + \langle\sigma,\Delta\tau\rangle
+        + 2\sum_i \langle\nab_{e_i}\sigma, \nab_{e_i}\tau\rangle,
+  \]
+  hence $\Delta|\sigma|^2 \ge 2\langle\Delta\sigma,\sigma\rangle$.
+
+  \textbf{Proved} (\texttt{BundleBochner.lean}), with no change to the argument: metric
+  compatibility twice, the Hessian's correction $-(\nab^T_X Y)\langle\sigma,\tau\rangle$
+  expanding into exactly the two corrections that turn the iterated derivatives into
+  $\nab^2\sigma$ and $\nab^2\tau$. Mathlib's
+  \texttt{IsMetricCompatible.mvfderiv\_inner\_eq} is already general, and the
+  \texttt{(V := \ldots)} annotations Theorem \ref{thm:bochner} needs against lean4\#14949
+  are unnecessary here: the fibre instances are binders, so there is nothing to see through.
+  $\nab^T$ is required to be neither metric nor torsion-free.
+
+  \textbf{$T\M$ is a case of it, and that is a check rather than a tidiness.} Until the
+  bridge existed the general identity had \emph{no instantiations at all}, and an
+  unfalsified general theorem is a liability: nothing tested that it says what it is meant
+  to say. \texttt{laplacianFun\_inner\_eq\_of\_bundle} derives Theorem \ref{thm:bochner}
+  from this one, and a one-line \texttt{rfl} forces the two constants' \emph{types} to be
+  definitionally equal, so "the same statement" is checked and not asserted.
+
+  \textbf{What it is for.} The maximum principle tests the scalar
+  $y \mapsto \langle N(y), u(t,y)\rangle$ for a section $N$ spreading the direction $n$. At a
+  \emph{normal} $N$ --- $\nab N(x) = 0$ and $\Delta N(x) = 0$ --- this identity collapses to
+  $\langle N(x), \Delta u(x)\rangle$, which is the whole reason Lemma
+  \ref{lem:bundle-normal-section} is wanted.
+\end{lemma}
+
+\begin{lemma}[Normal sections of a general bundle]
+  \label{lem:bundle-normal-section}
+  \lean{RicciFlowBlueprint.cov_sum_smul_section_apply_of_bundle,
+    RicciFlowBlueprint.cov_sum_section_apply_of_bundle,
+    RicciFlowBlueprint.exists_contMDiff_section_cov_eq_zero_of_bundle,
+    CovariantDerivative.contMDiff_cov_apply_section,
+    CovariantDerivative.hessianSection_smul_of_vanishing,
+    CovariantDerivative.hessianSection_add,
+    CovariantDerivative.hessianSection_sum,
+    CovariantDerivative.exists_contMDiff_section_normal_of_bundle,
+    CovariantDerivative.exists_contMDiff_section_normal_of_bundle'}
+  \leanok
+  \uses{lem:normal-section, lem:bundle-hessian, lem:global-extension}
+  For every $v \in V_x$ there is a global $C^2$ section $N$ of $V$ with $N(x) = v$,
+  $\nab N(x) = 0$ and $\Delta N(x) = 0$.
+
+  \textbf{Proved} (\texttt{BundleNormalSection.lean}). The construction is that of Lemma
+  \ref{lem:normal-section} one bundle up, and still uses no parallel transport and no
+  exponential map.
+
+  \textbf{One thing changes, and the general case is the \emph{simpler} one.} In the tangent
+  case the family $W_i$ of correction sections and the frame the Laplacian is traced over are
+  the same family, and the second-order step reads $\sum_j \langle b_i,b_j\rangle^2 = 1$ off
+  orthonormality of that one basis. Here they live in different bundles: the corrections run
+  through an orthonormal basis of $V_x$, the trace over one of $T_x\M$. What replaces the
+  identity is that a \emph{single} function $g$ suffices --- tracing
+  $\nab^2(\tfrac12 a g^2)(x) = a\,dg\otimes dg$ gives $a\sum_j dg(E_j)^2$, which is $a$ as
+  soon as $dg(x)$ is a \emph{unit covector} on $T_x\M$ --- so taking
+  $dg(x) = \langle E_{j_0},\cdot\rangle$ for any one frame vector corrects every component at
+  once, with one $g$ rather than a family.
+
+  That leaves an edge case the tangent version never had: when $T_x\M$ is zero there is no
+  unit covector. But then $\Delta$ is an empty sum, so $\Delta N_1(x) = 0$ already and $N_1$
+  itself is the answer.
+
+  \textbf{Lemma \ref{lem:normal-section} is a case of this one}, with the same \texttt{rfl}
+  type check as in Lemma \ref{lem:bundle-bochner}, and for the same reason.
+
+  \textbf{What remains before Lemma \ref{lem:pinching}} is no longer a missing primitive on
+  the geometry side, and the touching-point step itself is now Lemma
+  \ref{lem:bundle-touching-point}. What is left is the \emph{cross-fibre} half of the
+  first-touching-time argument: on a bundle the target is a family $K_x \subseteq V_x$ of
+  convex sets, and the argument compares $\mathrm{dist}(u(t,x), K_x)$ across different
+  fibres. Making that comparison is what a trivialisation --- Uhlenbeck's trick, or
+  Hamilton's moving fibre metric --- is for, and it is the one thing none of the machinery
+  above supplies.
+\end{lemma}
+
+\begin{lemma}[The touching-point step on a general bundle]
+  \label{lem:bundle-touching-point}
+  \lean{RicciFlowBlueprint.laplacianFun_nonpos_of_isLocalMax,
+    CovariantDerivative.laplacianFun_inner_normal_eq,
+    CovariantDerivative.inner_laplacianSection_nonpos_of_isLocalMax,
+    CovariantDerivative.inner_laplacianSection_nonneg_of_isLocalMin,
+    CovariantDerivative.exists_section_inner_laplacianSection_nonpos,
+    CovariantDerivative.laplacianFun_inner_normal_eq_tangent,
+    CovariantDerivative.inner_laplacian_nonpos_of_isLocalMax_tangent}
+  \leanok
+  \uses{lem:bundle-bochner, lem:bundle-normal-section, lem:second-derivative-test}
+  Let $u$ be a $C^2$ section of $V$ and $x \in \M$. For every direction $n \in V_x$ there is
+  a global $C^2$ section $N$ of $V$ with $N(x) = n$ such that
+  \[
+    \Delta\langle N, u\rangle(x) = \langle n, \Delta u(x)\rangle ;
+  \]
+  consequently, if $x$ is a spatial maximum of $y \mapsto \langle N(y), u(y)\rangle$ then
+  $\langle n, \Delta u(x)\rangle \le 0$.
+
+  \textbf{Proved} (\texttt{BundleMaximumPrinciple.lean}). This is the step at which the
+  tensor maximum principle inspects the Laplacian, transposed from a trivial bundle --- where
+  the tested direction is literally the same vector at every point --- to a bundle where
+  $n$ lives in one fibre only.
+
+  \textbf{Both correction terms die on $\nab N(x) = 0$}, which is why the second-order
+  condition $\Delta N(x) = 0$ of Lemma \ref{lem:bundle-normal-section} is not a luxury: in
+  the Bochner expansion of Lemma \ref{lem:bundle-bochner} the gradient pairing
+  $2\sum_i\langle\nab_{e_i}N,\nab_{e_i}u\rangle$ vanishes term by term on the first-order
+  condition, and $\langle\Delta N, u\rangle$ vanishes on the second. What is left is a
+  statement about the \emph{scalar} $\langle N, u\rangle$, and the second-derivative test of
+  Lemma \ref{lem:second-derivative-test} closes it --- in the maximum form
+  $\Delta f(x_0) \le 0$, which is the minimum form applied to $-f$.
+
+  \textbf{No parallel transport and no exponential map appear}, and that is the point of
+  routing through Lemma \ref{lem:bundle-normal-section}: only the first- and second-order
+  behaviour of $N$ at the single point $x$ matters. The radial-transport construction of a
+  normal frame would have put this step behind the regularity of $\exp$, which is an open
+  gap in ODE theory.
+
+  Boundarylessness of the model enters exactly once, in the second-derivative test; the
+  connection $\nab^T$ on $T\M$ need be neither metric nor torsion-free.
+\end{lemma}
+
+\begin{theorem}[The maximum principle with a moving target set]
+  \label{thm:max-moving-set}
+  \lean{RicciFlowBlueprint.MaximumPrinciple.mem_of_deriv_le_at_max_set,
+    RicciFlowBlueprint.MaximumPrinciple.mem_of_laplacian_set,
+    RicciFlowBlueprint.MaximumPrinciple.mem_of_laplacian_moving_set}
+  \leanok
+  \uses{thm:max-tensor, thm:max-moving, def:laplacian, lem:second-derivative-test}
+  Let $K_t \subseteq V$ be a family of closed convex nonempty sets that is \emph{monotone},
+  $s \le t \Rightarrow K_s \subseteq K_t$, and varies continuously in the sense that
+  $(t,v) \mapsto \operatorname{dist}(v, K_t)$ is jointly continuous. If $u$ solves
+  $\partial_t u = \Delta_{g_t} u + F_t(u)$ and each $K_t$ is preserved by $\dot v = F_t(v)$
+  in Nagumo's form, then $u(0,\cdot) \in K_0$ gives $u(t,\cdot) \in K_t$ for all
+  $t \in [0,T]$.
+
+  \textbf{Proved} (\texttt{TensorMaximumPrinciple.lean},
+  \texttt{ManifoldMaximumPrinciple.lean}, \texttt{TensorPreservation.lean}), abstractly, on a
+  closed manifold, and with the metric moving as well.
+
+  \textbf{Monotonicity is the whole cost, and it is felt in exactly one place.} The nearest
+  point and the outward normal are taken in $K_{t_0}$, at the single first-touching time, so
+  every step \emph{at} $t_0$ is the fixed-set argument verbatim. What is new is that the
+  earlier times are controlled against $K_t$ rather than $K_{t_0}$, so the two must be
+  compared --- and $K_t \subseteq K_{t_0}$ for $t \le t_0$ gives
+  $\operatorname{dist}(v,K_{t_0}) \le \operatorname{dist}(v,K_t)$ for free. The continuity
+  hypothesis is stated directly on $\operatorname{dist}(v, K_t)$, which is the form the proof
+  consumes, rather than as a Hausdorff-distance condition whose $\mathtt{ENNReal}$ API would
+  have to be unpacked again.
+
+  \textbf{The other direction is genuinely not free.} A \emph{shrinking} family needs a
+  quantitative bound on how fast $K_t$ retreats, coupled to $F$: a set closing in faster than
+  the reaction pushes points inward is simply not preserved, so no hypothesis-free statement
+  exists there. Hamilton 1999's $\log(1+t)$ improvement is of that kind.
+
+  \textbf{Why this is more than the $\log(1+t)$ improvement it was filed under.} A moving
+  \emph{inner product} on $V$ reduces to a moving \emph{set}. If
+  $\langle v,w\rangle_t = \langle P_t v, w\rangle$ with $P_t$ positive self-adjoint and
+  $S_t = P_t^{1/2}$, then $S_t$ is an isometry from $(V, \langle\cdot,\cdot\rangle_t)$ to
+  $(V, \langle\cdot,\cdot\rangle)$, and $u(t,x) \in K$ is $S_t u(t,x) \in S_t(K)$ --- a
+  fixed-metric problem with a moving set. \emph{Uhlenbeck's trick is precisely the choice of
+  $S_t$ that makes $S_t(K)$ constant.} So this theorem and Uhlenbeck's trick are two ways of
+  paying the same bill, and the monotone case is the part of it that costs nothing.
+
+  \textbf{What this does not close.} The obstruction before the curvature operator is now not
+  the principle but its \emph{input}: $u$ takes values in a fixed inner product space, i.e.\ a
+  trivial bundle $M \times V$, whereas the curvature operator is a section of
+  $\mathrm{Sym}^2(\Lambda^2 TM)$. The maximum principle for sections of a \emph{non-trivial}
+  bundle is not in this repo at all, and is a prerequisite for either route.
+\end{theorem}
+
 
 \begin{theorem}[Shi's local derivative estimates]
   \label{thm:shi}
@@ -3772,8 +4217,120 @@ Perelman's monotone functionals are what rule it out.
   \textbf{What is left} on this line is the regularity of $\exp$ --- smooth dependence on
   $(x,v)$, from the smooth dependence of ODE solutions on initial conditions, for which Mathlib
   has \texttt{ContDiffAt.exists\_eventually\_eq\_hasDerivAt} --- and then $\mathrm{d}\exp_0 =
-  \mathrm{id}$, parallel transport, and Jacobi fields.
+  \mathrm{id}$ and Jacobi fields. Parallel transport, which used to be listed here, is
+  \emph{not} behind that gap; see Lemma \ref{lem:parallel-transport}.
 \end{definition}
+
+\begin{lemma}[Parallel transport]
+  \label{lem:parallel-transport}
+  \lean{CovariantDerivative.transportCoeff,
+    CovariantDerivative.covAlong_eq_zero_iff_deriv,
+    CovariantDerivative.continuousOn_transportCoeff,
+    CovariantDerivative.transportCoeffExt,
+    CovariantDerivative.transportCoeffExt_of_mem,
+    CovariantDerivative.exists_bound_transportCoeffExt,
+    CovariantDerivative.exists_isParallelAlong,
+    CovariantDerivative.coord_eq_dysonFrom,
+    CovariantDerivative.exists_parallelTransportEquiv,
+    CovariantDerivative.eqOn_of_isParallelAlong}
+  \leanok
+  \uses{lem:cov-along-curve-exists, lem:geodesic-chart, thm:linear-ode}
+  Along a curve $\gamma$, through every $v \in T_{\gamma(t_0)}\M$ there is a section parallel
+  along $\gamma$ on the whole of $[a,c]$, and it is unique.
+
+  \textbf{Proved} (\texttt{ParallelTransport.lean}). \textbf{Why this is reachable and
+  geodesics were not.} In a trivialisation the equation $D/dt\,V = 0$ reads
+  $q'(t) = -\Gamma(\gamma t)(\gamma'(t))(q(t))$, and $\Gamma$ is bilinear by construction --- so
+  in the unknown $q$ this is a \emph{linear} ODE $q' = A(t)q$, with all of the curve's data
+  inside the coefficient. The geodesic equation, by contrast, is
+  $p'' = -\tilde\Gamma(p)(p')(p')$, \emph{quadratic} in the unknown. That single difference is
+  the whole story: the Dyson series of Theorem \ref{thm:linear-ode} solves $q' = A(t)q$ on the
+  entire interval with no smallness hypothesis, where \texttt{exists\_isGeodesicOn} had to
+  accept whatever interval Picard--Lindel\"of gave it, and uniqueness is mathlib's interval
+  theorem with a Lipschitz constant that compactness supplies for free.
+
+  \textbf{So parallel transport is not behind the ODE-regularity gap that $\exp$ sits behind},
+  and the working notes had recorded it as though it were. What $\exp$ needs is smooth
+  dependence of a \emph{nonlinear} flow on its initial conditions; what transport needs is a
+  linear equation along a \emph{fixed} curve, and that is already paid for.
+
+  The coefficient is pushed through \texttt{Set.projIcc} before the series sees it: the Dyson
+  construction wants a continuous, globally bounded coefficient on all of $\R$, the curve
+  supplies one only on $[a,c]$, and reparametrising by $\mathrm{projIcc}$ extends it by its
+  boundary values --- continuous, bounded by compactness, and invisible on $[a,c]$ where
+  $\mathrm{projIcc}$ is the identity.
+
+  \textbf{Transport is a linear isomorphism of fibres}
+  (\texttt{exists\_parallelTransportEquiv}): there is a continuous linear equivalence
+  $P : T_{\gamma(t_0)}\M \simeq T_{\gamma(t)}\M$ with $V(t) = P(V(t_0))$ for \emph{every}
+  parallel $V$. Invertibility is not extra work --- $P$ is the trivialisation at
+  $\gamma(t_0)$, then the Dyson propagator, then the inverse trivialisation at $\gamma(t)$,
+  and the middle factor is invertible by \texttt{bijective\_dysonSum}, itself two uniqueness
+  arguments run forwards and backwards. \emph{No metric appears in the statement}: the fibres
+  need only their topology and module structure for $\simeq_L$ to elaborate, and transport is
+  not an isometry until the connection is assumed metric.
+
+  All of that rests on one ODE-uniqueness argument, \texttt{coord\_eq\_dysonFrom}: in
+  coordinates every parallel section \emph{is} the Dyson solution through its own initial
+  value. Uniqueness of transport is then three rewrites, and it holds on the \emph{closed}
+  interval, endpoints included, because mathlib's \texttt{ODE\_solution\_unique\_of\_mem\_Icc}
+  asks for the equation only on the interior and continuity on the closure --- which
+  differentiability along the curve already gives.
+
+  \textbf{What this is for.} Hamilton's tensor maximum principle on a genuine bundle takes a
+  target family $K_x \subseteq V_x$ of convex sets that is invariant under parallel transport,
+  and the first-touching-time argument compares $\mathrm{dist}(u(t,x),K_x)$ across fibres.
+  Transport is the comparison --- once it is known to preserve the metric, which is Lemma
+  \ref{lem:transport-isometry}. It is also the first of the Jacobi-field substrate that
+  Definition \ref{def:reduced-volume} consumes.
+\end{lemma}
+
+\begin{lemma}[Parallel transport is an isometry]
+  \label{lem:transport-isometry}
+  \lean{CovariantDerivative.inner_sum_smul_sum,
+    CovariantDerivative.inner_expansion_add,
+    CovariantDerivative.mvfderiv_inner_eq_apply,
+    CovariantDerivative.hasDerivAt_inner_along,
+    CovariantDerivative.inner_eq_of_isParallelAlong,
+    CovariantDerivative.norm_eq_of_isParallelAlong,
+    CovariantDerivative.exists_parallelTransportIsometry}
+  \leanok
+  \uses{lem:parallel-transport, lem:cov-along-curve-exists}
+  For a \emph{metric} connection, $\tfrac{d}{dt}\langle V,W\rangle
+  = \langle \tfrac{D}{dt}V, W\rangle + \langle V, \tfrac{D}{dt}W\rangle$ along any curve.
+  Consequently the pairing of two parallel sections is constant, lengths are preserved, and
+  the transport map of Lemma \ref{lem:parallel-transport} upgrades from a continuous linear
+  equivalence to a linear \emph{isometry} $T_{\gamma(t_0)}\M \simeq_{\ell i}
+  T_{\gamma(t)}\M$.
+
+  \textbf{Proved} (\texttt{TransportIsometry.lean}). Mathlib names exactly this as future
+  work: the header of its \texttt{CovariantDerivative/Metric.lean} says ``when Mathlib has a
+  notion of parallel transport, prove the equivalence of \texttt{IsMetricCompatible} with the
+  characterisation that parallel transport be an isometry''. One direction of that is settled
+  here.
+
+  \textbf{The whole cost is the Leibniz rule}, and that is the frame-expansion argument of
+  Lemma \ref{lem:cov-along-curve-exists} used once more. Expand both sections in local frames
+  --- \emph{not necessarily the same frame}, and neither orthonormal nor parallel --- so that
+  the pairing becomes a double sum $\sum_{i,j} f_i g_j \langle A_i\circ\gamma,
+  B_j\circ\gamma\rangle$. The product rule contributes the $f_i'$ and $g_j'$ terms, which are
+  precisely the coordinate parts of $\tfrac{D}{dt}V$ and $\tfrac{D}{dt}W$; metric
+  compatibility contributes the derivative of each frame pairing, which is precisely the
+  connection parts. Nothing is left over, which is why the frames need no hypotheses at all.
+
+  Everything after that is immediate: along a parallel pair the derivative is
+  $\langle 0,W\rangle + \langle V,0\rangle$, so
+  \texttt{constant\_of\_has\_deriv\_right\_zero} gives constancy on $[a,c]$; at $V = W$
+  that is preservation of length; and the isometry is the equivalence of Lemma
+  \ref{lem:parallel-transport} together with that, the parallel section through each vector
+  being supplied by \texttt{exists\_isParallelAlong}.
+
+  \textbf{Why it is wanted.} A maximum principle on a non-trivial bundle compares
+  $\mathrm{dist}(u(t,x),K_x)$ between \emph{different} fibres, and there is nothing to
+  compare unless the identification between them preserves the metric. Lemma
+  \ref{lem:bundle-touching-point} closes the touching-point half of that argument; this is
+  the first brick of the cross-fibre half.
+\end{lemma}
 
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
