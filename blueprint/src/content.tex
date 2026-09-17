@@ -4332,6 +4332,60 @@ Perelman's monotone functionals are what rule it out.
   the first brick of the cross-fibre half.
 \end{lemma}
 
+\begin{lemma}[Parallel transport along an arbitrary curve]
+  \label{lem:transport-global}
+  \lean{CovariantDerivative.exists_chart_interval,
+    CovariantDerivative.eqOn_of_isParallelAlong_global,
+    CovariantDerivative.exists_glue_isParallelAlong,
+    CovariantDerivative.exists_transport_interval,
+    CovariantDerivative.exists_isParallelAlong_global,
+    CovariantDerivative.isParallelAlong_add,
+    CovariantDerivative.isParallelAlong_const_smul,
+    CovariantDerivative.exists_parallelTransportIsometry_global}
+  \leanok
+  \uses{lem:parallel-transport, lem:transport-isometry, lem:cov-along-curve-exists}
+  Let $\nab$ be metric and let $\gamma$ be differentiable on a preconnected open
+  $s \subseteq \R$. Through every $v \in T_{\gamma(t_0)}\M$ there is a section parallel along
+  $\gamma$ on all of $s$; it is unique; and the resulting map is a linear isometry
+  $T_{\gamma(t_0)}\M \simeq_{\ell i} T_{\gamma(t)}\M$.
+
+  \textbf{Proved} (\texttt{ParallelTransportGlobal.lean}). \textbf{What this removes.} Lemma
+  \ref{lem:parallel-transport} proves transport \emph{inside a trivialisation}: its statements
+  carry a trivialisation, a basis, a frame, an open $U$ inside the base set, and the
+  hypothesis that the curve never leaves $U$. A curve on a manifold does not stay in a chart,
+  so as a tool that is not usable. Here the only hypotheses are that the connection is metric
+  and the curve differentiable.
+
+  \textbf{Only half of it was ever chart-local.} The constancy results behind Lemma
+  \ref{lem:transport-isometry} carry no frame hypotheses at all --- they need only
+  differentiability and parallelism. So the isometry was global already, and what had to be
+  freed was exactly \emph{existence} and \emph{uniqueness} of the parallel section.
+
+  \textbf{And the mechanism is connectedness, not subdivision.} The expected proof chains
+  finitely many local transports along a Lebesgue subdivision and then argues the chain is
+  independent of the subdivision chosen. None of that is needed.
+
+  For uniqueness, the chart-local statement propagates agreement across a whole subinterval at
+  once, so the agreement set of two parallel sections is open \emph{and has open complement};
+  preconnectedness finishes it. For existence, the times joined to $t_0$ by a connected open
+  set carrying a parallel section through $v$ form a set that is again open with open
+  complement, because a transport interval meeting it is swallowed by it --- glue the reaching
+  section to a local one started at the meeting point. The witnesses are then assembled
+  pointwise, $V(r)$ being the value at $r$ of \emph{its own} witness, which is well defined
+  because two witnesses agree at $t_0$ and hence throughout their preconnected intersection.
+  No subdivision is ever chosen, so nothing has to be proved independent of one.
+
+  Gluing is where global uniqueness earns its place: a case split on which open set a time
+  lies in is only sound because the two sections agree on the \emph{whole} overlap, not merely
+  where they were matched --- otherwise the glued section jumps at the boundary and is
+  differentiable nowhere near it. With agreement on the overlap it is locally equal to one of
+  the two everywhere, and differentiability and parallelism are both local.
+
+  Linearity of the transport map is the two axioms of $D/dt$: additivity, and the Leibniz rule
+  with a constant scalar, whose derivative term vanishes. Invertibility is transport in the
+  other direction, the two composing to the identity by uniqueness.
+\end{lemma}
+
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
   \uses{def:ricci-flow}

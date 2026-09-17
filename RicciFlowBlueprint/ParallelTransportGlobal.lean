@@ -22,7 +22,8 @@ chart-local uniqueness statement propagates agreement — and disagreement — a
 subinterval at once. On a preconnected `s` that settles it, with no choice of subdivision to
 be well-defined against.
 -/
-import RicciFlowBlueprint.ParallelTransport
+import RicciFlowBlueprint.TransportIsometry
+import Mathlib.Geometry.Manifold.VectorBundle.CovariantDerivative.Metric
 
 open Bundle Filter Set RicciFlowBlueprint
 open scoped Manifold ContDiff Topology
@@ -346,3 +347,132 @@ theorem exists_isParallelAlong_global (hs : IsOpen s) (hconn : IsPreconnected s)
   rw [(isCovDerivAlong_covAlong cov γ).congr_of_eventuallyEq (hVd r hr)
     (hVrd r hr r (hrJr r hr)) (hγ r hr) (hevs r hr)]
   exact hVrP r hr r (hrJr r hr)
+
+omit [CompleteSpace E] [ContMDiffVectorBundle 2 E (fun (x : M) ↦ TangentSpace I x) I]
+  [ContMDiffCovariantDerivative cov 1] in
+/-- Parallel sections add. -/
+theorem isParallelAlong_add (hγ : ∀ w ∈ s, MDifferentiableAt 𝓘(ℝ, ℝ) I γ w)
+    {V₁ V₂ : Π u : ℝ, TangentSpace I (γ u)}
+    (hV₁ : ∀ w ∈ s, MDiffAlongAt γ V₁ w) (hV₂ : ∀ w ∈ s, MDiffAlongAt γ V₂ w)
+    (hP₁ : IsParallelAlong cov γ V₁ s) (hP₂ : IsParallelAlong cov γ V₂ s) :
+    IsParallelAlong cov γ (V₁ + V₂) s := fun u hu ↦ by
+  rw [(isCovDerivAlong_covAlong cov γ).add (hV₁ u hu) (hV₂ u hu) (hγ u hu), hP₁ u hu, hP₂ u hu,
+    add_zero]
+
+omit [CompleteSpace E] [ContMDiffVectorBundle 2 E (fun (x : M) ↦ TangentSpace I x) I]
+  [ContMDiffCovariantDerivative cov 1] in
+/-- Parallel sections scale. The Leibniz term dies because the scalar is constant. -/
+theorem isParallelAlong_const_smul (hγ : ∀ w ∈ s, MDifferentiableAt 𝓘(ℝ, ℝ) I γ w)
+    {V₁ : Π u : ℝ, TangentSpace I (γ u)} (r : ℝ)
+    (hV₁ : ∀ w ∈ s, MDiffAlongAt γ V₁ w) (hP₁ : IsParallelAlong cov γ V₁ s) :
+    IsParallelAlong cov γ ((fun _ : ℝ ↦ r) • V₁) s := fun u hu ↦ by
+  rw [(isCovDerivAlong_covAlong cov γ).leibniz (hV₁ u hu) (differentiableAt_const r) (hγ u hu),
+    hP₁ u hu, deriv_const]
+  simp
+
+section Isometry
+
+variable [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+  [IsContMDiffRiemannianBundle I 1 E (fun (x : M) ↦ TangentSpace I x)]
+
+/-- **Parallel transport along an arbitrary curve, as a linear isometry of fibres.**
+
+This is the usable form. `ParallelTransport.lean`'s isometry carries a trivialisation, a
+basis, a frame, an open set inside the base set and the hypothesis that the curve never
+leaves it; here the only hypotheses are that the connection is metric and that `γ` is
+differentiable on a preconnected open `s`.
+
+Everything is assembled from parts already proved: existence and uniqueness with no chart
+(above), linearity from the two axioms of `D/dt` (addition, and the Leibniz rule with a
+constant scalar, whose derivative term vanishes), and the norm identity from
+`norm_eq_of_isParallelAlong`, which never needed a chart to begin with. Invertibility is
+transport in the other direction, and the two compose to the identity by uniqueness. -/
+theorem exists_parallelTransportIsometry_global
+    (hmet : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    (hs : IsOpen s) (hconn : IsPreconnected s)
+    (hγ : ∀ w ∈ s, MDifferentiableAt 𝓘(ℝ, ℝ) I γ w)
+    (hγv : ∀ w ∈ s, MDiffAlongAt γ (velocity (I := I) γ) w)
+    {t₀ : ℝ} (ht₀ : t₀ ∈ s) {t : ℝ} (ht : t ∈ s) :
+    ∃ P : TangentSpace I (γ t₀) ≃ₗᵢ[ℝ] TangentSpace I (γ t),
+      ∀ V : Π u : ℝ, TangentSpace I (γ u), (∀ u ∈ s, MDiffAlongAt γ V u) →
+        IsParallelAlong cov γ V s → V t = P (V t₀) := by
+  classical
+  have hex : ∀ {p : ℝ}, p ∈ s → ∀ x : TangentSpace I (γ p),
+      ∃ V : Π u : ℝ, TangentSpace I (γ u), V p = x ∧
+        (∀ u ∈ s, MDiffAlongAt γ V u) ∧ IsParallelAlong cov γ V s :=
+    fun hp x ↦ exists_isParallelAlong_global cov hs hconn hγ hγv hp x
+  -- two parallel sections agreeing at one of the two times agree at the other
+  have key : ∀ {p q : ℝ}, p ∈ s → q ∈ s → ∀ V₁ V₂ : Π u : ℝ, TangentSpace I (γ u),
+      (∀ u ∈ s, MDiffAlongAt γ V₁ u) → IsParallelAlong cov γ V₁ s →
+      (∀ u ∈ s, MDiffAlongAt γ V₂ u) → IsParallelAlong cov γ V₂ s →
+      V₁ p = V₂ p → V₁ q = V₂ q := fun hp hq V₁ V₂ h₁d h₁P h₂d h₂P h ↦
+    eqOn_of_isParallelAlong_global cov hs hconn hγ hγv h₁d h₂d h₁P h₂P hp h _ hq
+  -- transport from `p` to `q`, characterised by computing every parallel section
+  have transp : ∀ {p q : ℝ}, p ∈ s → q ∈ s →
+      ∃ F : TangentSpace I (γ p) → TangentSpace I (γ q),
+        ∀ V : Π u : ℝ, TangentSpace I (γ u), (∀ u ∈ s, MDiffAlongAt γ V u) →
+          IsParallelAlong cov γ V s → V q = F (V p) := by
+    intro p q hp hq
+    refine ⟨fun x ↦ (Classical.choose (hex hp x)) q, fun V hVd hVP ↦ ?_⟩
+    obtain ⟨h0, hd, hP⟩ := Classical.choose_spec (hex hp (V p))
+    exact key hp hq V _ hVd hVP hd hP h0.symm
+  obtain ⟨F, hF⟩ := transp ht₀ ht
+  obtain ⟨G, hG⟩ := transp ht ht₀
+  -- the section realising `F x`
+  have hsec : ∀ x : TangentSpace I (γ t₀), ∃ V : Π u : ℝ, TangentSpace I (γ u), V t₀ = x ∧
+      (∀ u ∈ s, MDiffAlongAt γ V u) ∧ IsParallelAlong cov γ V s ∧ V t = F x := by
+    intro x
+    obtain ⟨V, h0, hd, hP⟩ := hex ht₀ x
+    exact ⟨V, h0, hd, hP, by rw [hF V hd hP, h0]⟩
+  have hsec' : ∀ y : TangentSpace I (γ t), ∃ V : Π u : ℝ, TangentSpace I (γ u), V t = y ∧
+      (∀ u ∈ s, MDiffAlongAt γ V u) ∧ IsParallelAlong cov γ V s ∧ V t₀ = G y := by
+    intro y
+    obtain ⟨V, h0, hd, hP⟩ := hex ht y
+    exact ⟨V, h0, hd, hP, by rw [hG V hd hP, h0]⟩
+  have hadd : ∀ x y, F (x + y) = F x + F y := by
+    intro x y
+    obtain ⟨V₁, h10, h1d, h1P, h1t⟩ := hsec x
+    obtain ⟨V₂, h20, h2d, h2P, h2t⟩ := hsec y
+    have hsumd : ∀ u ∈ s, MDiffAlongAt γ (V₁ + V₂) u := fun u hu ↦
+      MDiffAlongAt.add (hγ u hu) (h1d u hu) (h2d u hu)
+    have hsumP := isParallelAlong_add cov hγ h1d h2d h1P h2P
+    have h := hF (V₁ + V₂) hsumd hsumP
+    have e₀ : (V₁ + V₂) t₀ = x + y := by show V₁ t₀ + V₂ t₀ = x + y; rw [h10, h20]
+    have e₁ : (V₁ + V₂) t = F x + F y := by show V₁ t + V₂ t = F x + F y; rw [h1t, h2t]
+    rw [e₀] at h
+    rw [← h, e₁]
+  have hsmul : ∀ (r : ℝ) x, F (r • x) = r • F x := by
+    intro r x
+    obtain ⟨V₁, h10, h1d, h1P, h1t⟩ := hsec x
+    have hrd : ∀ u ∈ s, MDiffAlongAt γ ((fun _ : ℝ ↦ r) • V₁) u := fun u hu ↦
+      MDiffAlongAt.smul (hγ u hu) (differentiableAt_const r) (h1d u hu)
+    have hrP := isParallelAlong_const_smul cov hγ r h1d h1P
+    have h := hF ((fun _ : ℝ ↦ r) • V₁) hrd hrP
+    have e₀ : ((fun _ : ℝ ↦ r) • V₁) t₀ = r • x := by show r • V₁ t₀ = r • x; rw [h10]
+    have e₁ : ((fun _ : ℝ ↦ r) • V₁) t = r • F x := by show r • V₁ t = r • F x; rw [h1t]
+    rw [e₀] at h
+    rw [← h, e₁]
+  have hGF : ∀ x, G (F x) = x := by
+    intro x
+    obtain ⟨V, h0, hd, hP, hVt⟩ := hsec x
+    rw [← hVt, ← hG V hd hP, h0]
+  have hFG : ∀ y, F (G y) = y := by
+    intro y
+    obtain ⟨V, h0, hd, hP, hVt₀⟩ := hsec' y
+    rw [← hVt₀, ← hF V hd hP, h0]
+  have hnorm : ∀ x, ‖F x‖ = ‖x‖ := by
+    intro x
+    obtain ⟨V, h0, hd, hP, hVt⟩ := hsec x
+    have hI : Icc (t₀ ⊓ t) (t₀ ⊔ t) ⊆ s :=
+      (isPreconnected_iff_ordConnected.mp hconn).uIcc_subset ht₀ ht
+    have hmem₀ : t₀ ∈ Icc (t₀ ⊓ t) (t₀ ⊔ t) := ⟨inf_le_left, le_sup_left⟩
+    have hmemt : t ∈ Icc (t₀ ⊓ t) (t₀ ⊔ t) := ⟨inf_le_right, le_sup_right⟩
+    have h₁ := norm_eq_of_isParallelAlong cov hmet (fun u hu ↦ hγ u (hI hu))
+      (fun u hu ↦ hd u (hI hu)) (fun u hu ↦ hP u (hI hu)) hmemt
+    have h₂ := norm_eq_of_isParallelAlong cov hmet (fun u hu ↦ hγ u (hI hu))
+      (fun u hu ↦ hd u (hI hu)) (fun u hu ↦ hP u (hI hu)) hmem₀
+    rw [← hVt, h₁, ← h₂, h0]
+  exact ⟨{ toFun := F, map_add' := hadd, map_smul' := hsmul, invFun := G,
+           left_inv := hGF, right_inv := hFG, norm_map' := hnorm }, hF⟩
+
+end Isometry
