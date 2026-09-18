@@ -4386,6 +4386,72 @@ Perelman's monotone functionals are what rule it out.
   other direction, the two composing to the identity by uniqueness.
 \end{lemma}
 
+\begin{lemma}[The induced connection on a Hom bundle, and $\mathrm{End}(T\M)$]
+  \label{lem:hom-bundle-connection}
+  \lean{CovariantDerivative.covHom,
+    CovariantDerivative.covHom_smul_dir,
+    CovariantDerivative.covHom_add_dir,
+    CovariantDerivative.covHom_congr_dir,
+    CovariantDerivative.covHom_smul_snd,
+    CovariantDerivative.covHom_add_snd,
+    CovariantDerivative.IsMDiffHomAt,
+    CovariantDerivative.isMDiffHomAt_of_section,
+    CovariantDerivative.tensorialAt_covHom_dir,
+    CovariantDerivative.tensorialAt_covHom_snd,
+    CovariantDerivative.covHomAt,
+    CovariantDerivative.covHomAt_apply,
+    CovariantDerivative.covHomAt_apply_extend,
+    CovariantDerivative.covHom_add_hom,
+    CovariantDerivative.covHom_smul_hom,
+    CovariantDerivative.homCov,
+    CovariantDerivative.homCov_apply,
+    CovariantDerivative.endCov,
+    CovariantDerivative.endCov_apply}
+  \leanok
+  \uses{lem:bundle-hessian, lem:bundle-touching-point, lem:pinching-ode}
+  Let $V_1, V_2$ be $C^1$ vector bundles over $\M$ carrying covariant derivatives
+  $\nab^1, \nab^2$. Then
+  \[
+    (\nab_X A)(\sigma) \;=\; \nab^2_X(A\sigma) \;-\; A(\nab^1_X\sigma)
+  \]
+  defines a covariant derivative on the bundle $\mathrm{Hom}(V_1,V_2)$. In particular
+  $\mathrm{End}(T\M) = \mathrm{Hom}(T\M,T\M)$ carries one.
+
+  \textbf{Proved} (\texttt{HomBundle.lean}). \textbf{What this removes.} Every tensor
+  constructed so far in this development is either pointwise (Definition \ref{def:ricci-form},
+  the curvature tensor) or an operator on \emph{fields} ($\nab h$, $\nab\Rm$,
+  $\nab A$). None is a \emph{section of a vector bundle}, and consequently the
+  general-bundle layer --- Lemmas \ref{lem:bundle-hessian}, \ref{lem:bundle-bochner},
+  \ref{lem:bundle-normal-section}, \ref{lem:bundle-touching-point} --- had never been
+  instantiated at any bundle but $T\M$ itself. Those lemmas all take
+  $\nab$ on $V$ as a hypothesis; a maximum principle for a tensor needs a bundle that
+  actually satisfies it. Mathlib supplies $\mathrm{Hom}(V_1,V_2)$ as a $C^n$ vector bundle
+  but supplies no connection on it.
+
+  \textbf{Both slots are free of a frame argument}, and for the reason that already made
+  $\nab\omega$ cheap: $\nab A$ has \emph{two} terms, against $\nab\Rm$'s four. The direction
+  is a continuous linear map by construction, and in the section slot the two Leibniz terms
+  $(Xf)\cdot A\sigma$ --- one from $\nab^2$, one from $\nab^1$ --- are literally equal and
+  cancel, so only differentiability of the data is used and $\mathrm{mkHom}_2$ applies
+  directly. Additivity and the Leibniz rule \emph{in $A$} are the two axioms of a covariant
+  derivative, and the correction there is $dg\otimes A$, not $dg\otimes(A\sigma)$: the
+  derivative falls on $A$ as a section of $\mathrm{Hom}(V_1,V_2)$.
+
+  \textbf{Why $\mathrm{End}(T\M)$ is the bundle Hamilton--Ivey needs.} In dimension three the
+  Weyl tensor vanishes and the Hamilton curvature operator is
+  $\mathrm{scal}\cdot\mathrm{Id} - 2\,\mathrm{Ric}^\sharp$, whose eigenvalues are exactly the
+  $\lambda \ge \mu \ge \nu$ of Lemma \ref{lem:pinching-ode}: with
+  $r_1 = (\mu+\nu)/2$ etc.\ one has $\lambda = R - 2r_1$, and on the unit $S^3$,
+  $6 - 4 = 2 = 2\cdot 1$. So the three-dimensional pinching argument runs on an
+  \emph{endomorphism} field and needs no $\Lambda^2$ at all --- in particular it does not
+  wait on the elaboration obstruction recorded for the curvature operator on
+  $\Lambda^2 T\M$.
+
+  The $\mathrm{End}(T\M)$ instantiation is also the falsification check: \texttt{homCov} is
+  stated for two arbitrary bundles, and a general construction with no instantiations is
+  unverified.
+\end{lemma}
+
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
   \uses{def:ricci-flow}

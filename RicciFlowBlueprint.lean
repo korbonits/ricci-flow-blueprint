@@ -63,3 +63,4 @@ import RicciFlowBlueprint.BundleMaximumPrinciple
 import RicciFlowBlueprint.ParallelTransport
 import RicciFlowBlueprint.TransportIsometry
 import RicciFlowBlueprint.ParallelTransportGlobal
+import RicciFlowBlueprint.HomBundle
