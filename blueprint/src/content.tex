@@ -4500,6 +4500,57 @@ Perelman's monotone functionals are what rule it out.
   $\Lambda^2$.
 \end{lemma}
 
+\begin{lemma}[The Leibniz rule for a one-form along a curve; the Hessian along a geodesic]
+  \label{lem:oneform-along-curve}
+  \lean{CovariantDerivative.map_sum_smul,
+    CovariantDerivative.map_sum_add_smul,
+    CovariantDerivative.hasDerivAt_oneForm_along,
+    CovariantDerivative.covOneFormAt_mvfderiv_eq_hessianFun,
+    CovariantDerivative.hasDerivAt_mvfderiv_velocity_of_geodesic}
+  \leanok
+  \uses{lem:cov-along-curve-exists, def:one-form-divergence, lem:geodesic-exists,
+    lem:parallel-transport, lem:transport-isometry}
+  For a one-form field $\omega$ and a section $V$ along a curve $\gamma$,
+  \[
+    \tfrac{d}{dt}\,\omega(V) \;=\; (\nab_{\gamma'}\omega)(V) \;+\; \omega\!\left(\tfrac{D}{dt}V\right),
+  \]
+  and consequently, at $\omega = df$ along a geodesic,
+  $(f\circ\gamma)''(t) = \nab^2 f(\gamma'(t),\gamma'(t))$.
+
+  \textbf{Proved} (\texttt{OneFormAlongCurve.lean}). \textbf{No metric is used}: unlike the
+  pairing rule of Lemma \ref{lem:transport-isometry}, which needs metric compatibility to
+  differentiate $\langle A_i, B_j\rangle$, here the derivative of $\omega(A_i)$ along the
+  curve is the \emph{definition} of $\nab\omega$ rearranged. Expanding $V$ in a local frame,
+  the product rule contributes the $c_i'$ terms --- exactly the coordinate part of $D/dt$ ---
+  and the connection part matches term for term, so the frame carries no hypotheses.
+
+  \textbf{Why this is wanted: it removes the exponential map from the cross-fibre argument.}
+  Hamilton's proof extends the tested direction $n$ to a \emph{parallel} section over a
+  neighbourhood, so that $|N|$ and the support function $h_{K_y}(N(y))$ are constant and a
+  maximum of the distance to $K$ is a maximum of $\langle N, u\rangle$. That extension is
+  radial parallel transport, hence the regularity of $\exp$, which is a genuine Mathlib gap
+  (there is no smooth dependence of ODE solutions on initial conditions).
+
+  But the conclusion is only ever consumed through $\Delta$, and $\Delta$ at a point is a sum
+  of $n$ ordinary second derivatives along $n$ geodesics --- which this lemma supplies, one
+  curve at a time. Along a \emph{single} fixed curve, parallel transport is Lemma
+  \ref{lem:parallel-transport}, whose equation is linear in the unknown and needs no
+  dependence-on-initial-conditions theory at all. Nothing in the argument ever varies the
+  curve, so the gap is never touched.
+
+  Concretely: transporting $n$ along $\gamma_i$ gives $N_i$ with $|N_i|$ and
+  $h_K(N_i)$ constant (Lemma \ref{lem:transport-isometry}), so $s = 0$ is a maximum of the
+  one-variable function $s \mapsto \langle N_i(s), u(\gamma_i(s))\rangle$ and its second
+  derivative there is $\le 0$; differentiating twice with $D/dt\,\gamma_i' = 0$ turns that
+  into $\langle n, \nab^2_{e_i,e_i}u\rangle \le 0$, and summing over $i$ gives
+  $\langle n, \Delta u\rangle \le 0$.
+
+  The two bilinearity helpers are stated over a bare \emph{topological module}, not a normed
+  space, and that is load-bearing rather than tidiness: $T_x\M$ carries a norm only through a
+  \texttt{RiemannianBundle} instance, i.e.\ only once a metric is chosen, and a continuous
+  linear functional into $\R$ needs no norm on its source.
+\end{lemma}
+
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
   \uses{def:ricci-flow}
