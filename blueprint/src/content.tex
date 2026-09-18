@@ -4452,6 +4452,54 @@ Perelman's monotone functionals are what rule it out.
   unverified.
 \end{lemma}
 
+\begin{lemma}[The curvature operator in dimension three, from Ricci alone]
+  \label{lem:curvature-three}
+  \lean{CovariantDerivative.ricciAt_eq_sum_curvatureTensorAt,
+    CovariantDerivative.curvatureTensorAt_self_fst,
+    CovariantDerivative.curvatureTensorAt_self_thd,
+    CovariantDerivative.curvatureTensorAt_sec_comm,
+    CovariantDerivative.ricciAt_diag_eq_sum_sec,
+    CovariantDerivative.scalarCurvatureAt_sub_two_ricciAt,
+    CovariantDerivative.curvatureTensorAt_eq_zero_of_ricciAt_eq_zero}
+  \leanok
+  \uses{lem:curvature-tensor-at, lem:curvature-symmetries, def:ricci-form,
+    lem:hom-bundle-connection}
+  Let $\dim \M = 3$ and let $b$ be an orthonormal basis of $T_x\M$. Then
+  \[
+    \mathrm{scal} - 2\,\mathrm{Ric}(b_0,b_0) \;=\; 2\,\Rm(b_1,b_2,b_2,b_1),
+  \]
+  and if $b$ diagonalises $\mathrm{Ric}$ then $\Rm(b_2,b_0,b_1,b_2) = 0$.
+
+  \textbf{Proved} (\texttt{CurvatureThree.lean}). Together these say that in dimension three
+  the endomorphism $\mathrm{scal}\cdot\mathrm{Id} - 2\,\mathrm{Ric}^\sharp$ \emph{is} the
+  Hamilton curvature operator: it is diagonal in a Ricci eigenbasis, and its diagonal entries
+  are twice the sectional curvatures of the opposite planes --- exactly the normalisation of
+  Lemma \ref{lem:pinching-ode}, in which $\lambda,\mu,\nu$ are twice the sectional curvatures
+  and $R = \lambda+\mu+\nu$. On the unit $S^3$ the identity reads $6 - 4 = 2 = 2\cdot 1$.
+
+  \textbf{Neither statement needs the vanishing of the Weyl tensor}, and neither needs an
+  expansion of a four-linear form over a basis. The literature obtains both from the
+  algebraic decomposition $\Rm = f(\mathrm{Ric})$ in dimension three; that decomposition is a
+  genuine theorem, and it is not required here.
+
+  For the dictionary, $\mathrm{Ric}(b_m,b_m) = \sum_n K(b_m,b_n)$ is the definition of Ricci
+  as a trace, true in every dimension; pair symmetry gives $K(b_i,b_j) = K(b_j,b_i)$. In
+  dimension three that is $r_0 = p+q$, $r_1 = p+r$, $r_2 = q+r$, hence $R = 2(p+q+r)$ and
+  $R - 2r_0 = 2r$.
+
+  For the diagonalisation, read the same trace identity off-diagonally:
+  $\mathrm{Ric}(b_0,b_1) = \sum_j \Rm(b_j,b_0,b_1,b_j)$ has \emph{one} surviving summand in
+  dimension three, since at $j=0$ the first pair is $(b_0,b_0)$ and at $j=1$ the second pair
+  is $(b_1,b_1)$, and the two antisymmetries kill those. So the off-diagonal curvature
+  component \emph{is} the off-diagonal Ricci component and vanishes with it.
+
+  \textbf{Consequence for Lemma \ref{lem:pinching}.} The three-dimensional pinching argument
+  therefore runs on a section of $\mathrm{End}(T\M)$, which Lemma
+  \ref{lem:hom-bundle-connection} equips with a connection. It does not run on
+  $\Lambda^2 T\M$, and so does not wait on the elaboration obstruction recorded for
+  $\Lambda^2$.
+\end{lemma}
+
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
   \uses{def:ricci-flow}
