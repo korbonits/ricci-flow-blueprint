@@ -74,3 +74,4 @@ import RicciFlowBlueprint.CurvatureOperatorThree
 import RicciFlowBlueprint.RicciSection
 import RicciFlowBlueprint.CurvatureOperatorSection
 import RicciFlowBlueprint.CurvatureOperatorMaxPrinciple
+import RicciFlowBlueprint.CurvatureTrace

@@ -4825,6 +4825,56 @@ Perelman's monotone functionals are what rule it out.
   and nothing more.
 \end{lemma}
 
+\begin{lemma}[The first-slot trace commutes with $\nab^2$, and $\mathrm{tr}_1(\Delta\Riem) = \Delta_g\Ric$]
+  \label{lem:curvature-trace-second}
+  \lean{CovariantDerivative.sum_antisymm_pair_eq_zero,
+    CovariantDerivative.sum_inner_cov2Curvature_fst_eq_cov2Bilin,
+    CovariantDerivative.sum_inner_curvatureLaplacian_fst_eq_laplacianBilin}
+  \leanok
+  \uses{def:cov2-curvature, def:bilin-laplacian, lem:traced-bianchi, lem:metric-trace-cov}
+  For a metric connection and a local orthonormal frame $(e_i)$,
+  \[
+    \sum_i \big\langle (\nab^2_{U,V}\Riem)(e_i,X)Z,\ e_i\big\rangle
+      = (\nab^2_{U,V}\Ric)(X,Z),
+    \qquad
+    \sum_i \big\langle (\Delta\Riem)(e_i,X)Z,\ e_i\big\rangle
+      = (\Delta_g\Ric)(X,Z).
+  \]
+
+  \textbf{Proved} (\texttt{CurvatureTrace.lean}). This is the first-slot trace lemma of
+  \hyperref[lem:traced-bianchi]{the divergence file} one derivative up, and it is what the
+  evolution equation of the dimension-three curvature operator
+  $\Riem_3 = \mathrm{scal}\cdot\mathrm{Id} - 2\Ric^\sharp$ consumes: tracing
+  $\partial_t\Riem = \Delta\Riem + Q$ in its first slot turns the left-hand side into
+  $\partial_t\Ric$ and $\Delta\Riem$ into $\Delta_g\Ric$.
+
+  \emph{The five corrections of $\nab^2\Riem$ meet the three of $\nab^2 h$ exactly.} Three of
+  the five are $\nab\Riem$ with one of $V$, $X$, $Z$ differentiated, and each traces to the
+  matching term of $\nab^2\Ric$ by the one-derivative lemma. The remaining two --- the
+  leading $\nab_U$ of the traced section, and the correction in the \emph{frame} slot ---
+  must together produce the derivative of the traced function, and the difference between
+  them is the frame-derivative residue
+  \[
+    \sum_i \Big[\big\langle (\nab_V\Riem)(\nab_U e_i, X)Z, e_i\big\rangle
+      + \big\langle (\nab_V\Riem)(e_i,X)Z, \nab_U e_i\big\rangle\Big] = 0,
+  \]
+  antisymmetric coefficients against a symmetric pairing, as for the metric trace.
+
+  \emph{But the antisymmetry lemma of \hyperref[lem:metric-trace-cov]{the metric-trace
+  argument} does not apply here}, and that is the one real obstacle. That lemma wants a
+  bundled continuous bilinear form, and the pairing at hand is $\nab\Riem$ in its
+  \emph{second} slot, where tensoriality demands a $C^2$ coefficient --- so the construction
+  that would bundle it, which quantifies over merely differentiable sections, is
+  unavailable. The remedy is to expand the frame derivative in the frame with \emph{constant}
+  coefficients $c_{ij} = \langle \nab_U e_i, e_j\rangle$, legitimate because the second slot
+  is \emph{pointwise} and constants are smooth; the cancellation is then purely combinatorial
+  and no bilinear form is ever bundled.
+
+  The second statement is the first traced once more over the two derivative slots. Both
+  Laplacians are read off the same frame, so the only work is exchanging the two independent
+  sums.
+\end{lemma}
+
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
   \uses{def:ricci-flow}
