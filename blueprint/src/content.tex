@@ -4825,6 +4825,37 @@ Perelman's monotone functionals are what rule it out.
   and nothing more.
 \end{lemma}
 
+\begin{lemma}[Evolution of the Ricci tensor]
+  \label{lem:evolution-ric}
+  \lean{RicciFlowBlueprint.derivRicciFormOfMetric_eq_sum,
+    RicciFlowBlueprint.derivRicciFormOfMetric_eq_laplacianBilin_add_of_isRicciFlowAt}
+  \leanok
+  \uses{lem:evolution-rm, lem:curvature-trace-second, lem:koszul-second-derivative}
+  Under the flow,
+  \[
+    \partial_t\Ric(Y,Z) = (\Delta_\g\Ric)(Y,Z)
+      + Q_1 + Q_2
+      + \sum_i \Ric\big(\Riem(e_i,Y)Z,\ e_i\big)
+      + \sum_i \Ric\big(Z,\ \Riem(e_i,Y)e_i\big),
+  \]
+  every term on the right being either $\Delta_\g\Ric$ or algebraic in $\Riem$ and $\Ric$.
+
+  \textbf{Proved} (\texttt{RicciEvolution.lean}). This is the first-slot trace of
+  \hyperref[lem:evolution-rm]{the curvature evolution equation}, taken at $X = W = e_j$ and
+  summed. \emph{Nothing new is computed.} The left-hand side is the trace of
+  $\partial_t\Riem$, which is $\partial_t\Ric$ because the time derivative passes through the
+  trace --- the inner half of the double-trace argument that
+  $\operatorname{tr}_\g(\partial_t\Ric)$ already used, extracted. The leading term on the
+  right is $\operatorname{tr}_1(\Delta\Riem) = \Delta_\g\Ric$, which is
+  \hyperref[lem:curvature-trace-second]{the previous lemma}. The remaining four terms are
+  sums of the two commutator terms and the two $\Ric$-against-$\Riem$ terms, and carry no
+  derivatives.
+
+  Together with $\partial_t R = \Delta R + 2|\Ric|^2$ this is what the dimension-three
+  curvature operator $\Riem_3 = R\cdot\mathrm{Id} - 2\Ric^\sharp$ evolves by, since $\Riem_3$
+  is built from exactly those two.
+\end{lemma}
+
 \begin{lemma}[The first-slot trace commutes with $\nab^2$, and $\mathrm{tr}_1(\Delta\Riem) = \Delta_g\Ric$]
   \label{lem:curvature-trace-second}
   \lean{CovariantDerivative.sum_antisymm_pair_eq_zero,
