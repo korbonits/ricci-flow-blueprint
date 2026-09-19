@@ -4592,6 +4592,58 @@ Perelman's monotone functionals are what rule it out.
   $\|A\| \le \dim W$).
 \end{lemma}
 
+\begin{lemma}[The Hilbert--Schmidt metric on $\mathrm{End}(T\M)$]
+  \label{lem:end-bundle-metric}
+  \lean{RicciFlowBlueprint.inCoordinates_bilin,
+    RicciFlowBlueprint.localFrame_eq_symmL',
+    RicciFlowBlueprint.hsFibre,
+    RicciFlowBlueprint.hsFibre_eq,
+    RicciFlowBlueprint.hsFibre_symm,
+    RicciFlowBlueprint.hsFibre_self_pos,
+    RicciFlowBlueprint.isVonNBounded_hsFibre,
+    RicciFlowBlueprint.contMDiffAt_hsFibre_apply,
+    RicciFlowBlueprint.contMDiff_hsFibre,
+    RicciFlowBlueprint.endMetric,
+    RicciFlowBlueprint.EndTangent,
+    RicciFlowBlueprint.endTangentMetric,
+    RicciFlowBlueprint.isContMDiffRiemannianBundle_endTangent}
+  \leanok
+  \uses{lem:hs-form, lem:hom-bundle-connection}
+  On a $C^n$ Riemannian manifold the Hilbert--Schmidt form is a $C^n$ Riemannian metric on the
+  endomorphism bundle $\mathrm{End}(T\M)$, and $\mathrm{End}(T\M)$ is a $C^n$ Riemannian
+  bundle.
+
+  \textbf{Proved} (\texttt{EndBundleMetric.lean}). Together with
+  \hyperref[lem:hom-bundle-connection]{the induced connection} this gives the first bundle
+  other than $T\M$ itself carrying both a connection and a fibre metric, which is what the
+  general-bundle layer --- $\nabla^2$, $\Delta$, Bochner, normal sections, the touching-point
+  maximum principle --- has never had an instantiation at.
+
+  \textbf{The smoothness field.} It goes through \texttt{contMDiffAt\_hom\_bundle}, which
+  reduces smoothness of a section of $\mathrm{Hom}(\mathrm{End}\,T\M,
+  \mathrm{Hom}(\mathrm{End}\,T\M,\R))$ to smoothness of its coordinate representative. For a
+  \emph{bilinear form on the fibre} that representative is the form itself evaluated on the
+  trivialisation's inverse, $\Phi \mapsto \Phi(\sigma u, \sigma u')$: the nested hom bundle
+  unfolds twice and the inner unfolding lands on the \emph{trivial} bundle $\M \times \R$,
+  whose trivialisation is the identity, so no coordinate change survives. Since the model
+  fibre is finite-dimensional, two applications of the basis criterion reduce everything to
+  the scalar functions $y \mapsto \langle \sigma_y u, \sigma_y u'\rangle_{HS}$, and those are
+  smooth because a local \emph{orthonormal} frame of $T\M$ computes the Hilbert--Schmidt form
+  as a finite sum of inner products of tangent vectors.
+
+  \textbf{The real obstruction is a type-class one, and it is the content of the file.} The
+  metric cannot be attached to $y \mapsto T_y\M \to_L T_y\M$ at all: that fibre already carries
+  the \emph{operator norm} at default instance priority, while the norm a Riemannian bundle
+  structure induces is a scoped instance at priority $80$. So the inner product on the fibre
+  never resolves --- the operator-norm normed group wins the first search and no inner product
+  space matches it. The tangent space escapes this only because it is a non-reducible type
+  synonym with no competing head symbol. The fix is the same synonym one type former up:
+  $\mathrm{EndTangent}$, with the fibre and bundle instances transported. The transport of the
+  metric itself is definitional, which is what lets the proofs stay in the raw world, where
+  every Mathlib hom-bundle lemma applies syntactically, while the statement lives on the
+  synonym, where instance search behaves.
+\end{lemma}
+
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
   \uses{def:ricci-flow}
