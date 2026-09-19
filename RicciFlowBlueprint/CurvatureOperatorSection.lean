@@ -128,6 +128,41 @@ theorem contMDiffAt_ricciSharp_apply {X : Π y : M, TangentSpace I y} {x₀ : M}
   filter_upwards [hWeq] with y hy
   rw [cov.inner_ricciSharp, hy]
 
+omit [IsContMDiffRiemannianBundle I 4 E (fun (x : M) ↦ TangentSpace I x)] in
+/-- **`Ric♯` is a `C²` section of `End(TM)`.** The same criterion as for the curvature
+operator, with only the sharp term: its values on the trivialisation's local frame are
+`contMDiffAt_ricciSharp_apply`, and the frame is globalised first so that a globally `C³`
+field is available. -/
+theorem contMDiffAt_ricciSharp (x₀ : M) :
+    ContMDiffAt I (I.prod 𝓘(ℝ, E →L[ℝ] E)) 2
+      (fun y ↦ TotalSpace.mk' (E →L[ℝ] E)
+        (E := fun z : M ↦ TangentSpace I z →L[ℝ] TangentSpace I z) y
+        (cov.ricciSharp y)) x₀ := by
+  classical
+  set e := trivializationAt E (fun z : M ↦ TangentSpace I z) x₀ with he
+  have hx₀ : x₀ ∈ e.baseSet := mem_baseSet_trivializationAt E _ x₀
+  set bE : Module.Basis (Fin (Module.finrank ℝ E)) ℝ E := Module.finBasis ℝ E with hbE
+  refine contMDiffAt_end_section_of_symmL (n := 2) bE (fun i ↦ ?_)
+  obtain ⟨W, hW, hWeq⟩ : ∃ τ : Π y : M, TangentSpace I y,
+      CMDiff 3 (T% τ) ∧ τ =ᶠ[𝓝 x₀] e.localFrame bE i :=
+    exists_contMDiff_eventuallyEq (n := 3) (e.open_baseSet.mem_nhds hx₀)
+      (e.contMDiffOn_localFrame_baseSet 3 bE i)
+  refine (cov.contMDiffAt_ricciSharp_apply hW).congr_of_eventuallyEq ?_
+  filter_upwards [hWeq, e.open_baseSet.mem_nhds hx₀] with y hy hy'
+  have hval : e.symmL ℝ y (bE i) = W y := by
+    rw [hy, RicciFlowBlueprint.localFrame_eq_symmL' e bE hy' i]
+  show TotalSpace.mk' E y _ = TotalSpace.mk' E y _
+  rw [hval]
+
+omit [IsContMDiffRiemannianBundle I 4 E (fun (x : M) ↦ TangentSpace I x)] in
+/-- `Ric♯` is a `C²` section of `End(TM)`. -/
+theorem contMDiff_ricciSharp :
+    ContMDiff I (I.prod 𝓘(ℝ, E →L[ℝ] E)) 2
+      (fun y ↦ TotalSpace.mk' (E →L[ℝ] E)
+        (E := fun z : M ↦ TangentSpace I z →L[ℝ] TangentSpace I z) y
+        (cov.ricciSharp y)) :=
+  fun x₀ ↦ cov.contMDiffAt_ricciSharp x₀
+
 /-- **Hamilton's curvature operator is a `C²` section of `End(TM)`.** Everything it is built
 from is now known smooth: the scalar curvature by `RicciSection.lean`, and `Ric♯` because the
 Riesz isomorphism never has to be differentiated. -/

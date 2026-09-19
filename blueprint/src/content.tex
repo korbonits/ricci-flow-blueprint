@@ -4906,6 +4906,48 @@ Perelman's monotone functionals are what rule it out.
   sums.
 \end{lemma}
 
+\begin{lemma}[Index raising commutes with $\nab$, $\nab^2$ and $\Delta$]
+  \label{lem:sharp-laplacian}
+  \lean{CovariantDerivative.inner_endCov_eq_covBilin,
+    CovariantDerivative.inner_hessianSection_eq_cov2Bilin,
+    CovariantDerivative.inner_laplacianSection_eq_laplacianBilin,
+    CovariantDerivative.contMDiffAt_ricciSharp,
+    CovariantDerivative.contMDiff_ricciSharp,
+    CovariantDerivative.inner_laplacianSection_ricciSharp_eq_laplacianBilin}
+  \leanok
+  \uses{lem:hom-bundle-connection, def:bilin-laplacian, lem:end-metric-compat,
+    lem:curvature-operator-three, lem:bundle-touching-point}
+  Let $A$ be an endomorphism field of $T\M$ and $h$ a bilinear form field with
+  $\langle Av, w\rangle = h(v,w)$ --- index raising, $A = h^\sharp$. Then for a metric
+  connection
+  \[
+    \langle (\nab_X A)v, w\rangle = (\nab_X h)(v,w),\quad
+    \langle (\nab^2_{X,Y}A)v, w\rangle = (\nab^2_{X,Y}h)(v,w),\quad
+    \langle (\Delta A)v, w\rangle = (\Delta_\g h)(v,w).
+  \]
+
+  \textbf{Proved} (\texttt{SharpLaplacian.lean}). \emph{This is the bridge the
+  dimension-three maximum principle needs.} Hamilton's curvature operator is a section of
+  $\mathrm{End}(T\M)$ and the touching-point principle on that bundle speaks of the
+  connection Laplacian of the induced connection; every evolution equation proved here is
+  about bilinear forms and produces $\Delta_\g$. Without this lemma the two say nothing to
+  each other.
+
+  There is no sharp in the statements and none in the proofs: the interface is the hypothesis
+  $\langle Av,w\rangle = h(v,w)$, which the Ricci operator satisfies on the nose. Metric
+  compatibility is the whole content and is used once per derivative --- $\nab A$ is
+  $\nab(A\sigma) - A(\nab\sigma)$ by definition, and moving $\nab$ off the first term and
+  onto the pairing turns it into $\nab h$ written out. The second derivative is that argument
+  applied twice, with the connection corrections matching term for term, and the trace is
+  then free, both Laplacians being read off the same frame.
+
+  The last statement is the falsification check, $\Delta(\Ric^\sharp) =
+  (\Delta_\g\Ric)^\sharp$: a general theorem with no instantiations is unverified, and
+  $\Ric^\sharp$ is the object the bridge exists for. It needs $\Ric^\sharp$ to be a $C^2$
+  \emph{section} of $\mathrm{End}(T\M)$, which is the criterion used for the curvature
+  operator with only the sharp term.
+\end{lemma}
+
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
   \uses{def:ricci-flow}
