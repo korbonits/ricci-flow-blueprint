@@ -4677,6 +4677,51 @@ Perelman's monotone functionals are what rule it out.
   the sum vanishes. Nothing here asks the frame to be parallel and nothing constructs one.
 \end{lemma}
 
+\begin{lemma}[Hamilton's curvature operator in dimension three]
+  \label{lem:curvature-operator-three}
+  \lean{RicciFlowBlueprint.sharp,
+    RicciFlowBlueprint.inner_sharp,
+    RicciFlowBlueprint.inner_sharp_comm,
+    CovariantDerivative.ricciSharp,
+    CovariantDerivative.inner_ricciSharp,
+    CovariantDerivative.curvatureOperator,
+    CovariantDerivative.inner_curvatureOperator,
+    CovariantDerivative.inner_curvatureOperator_comm,
+    CovariantDerivative.inner_curvatureOperator_self,
+    CovariantDerivative.inner_curvatureOperator_eq_zero,
+    CovariantDerivative.sum_inner_curvatureOperator_self}
+  \leanok
+  \uses{lem:curvature-three, lem:end-metric-compat, thm:ricci-symm}
+  The endomorphism $\mathrm{Rm}_3 = \mathrm{scal}\cdot\mathrm{Id} - 2\,\mathrm{Ric}^\sharp$ of
+  $T_x\M$ is self-adjoint; in dimension three it is diagonal in any Ricci eigenbasis, with
+  diagonal entries twice the sectional curvature of the opposite plane, and its trace is
+  $\mathrm{scal}$.
+
+  \textbf{Proved} (\texttt{CurvatureOperatorThree.lean}). In dimension three the Weyl tensor
+  vanishes, so the whole $(0,4)$ curvature tensor is carried by this \emph{endomorphism}
+  field. That is what lets the three-dimensional pinching argument run on
+  $\mathrm{End}(T\M)$ --- which now carries a connection, a fibre metric and their
+  compatibility --- rather than on $\mathrm{Sym}^2(\Lambda^2 T\M)$, so the $\Lambda^2$
+  elaboration wall is not on the critical path.
+
+  \textbf{The dimension-three content is cheap}, for the reason recorded at
+  \hyperref[lem:curvature-three]{the dictionary}: the trace identity
+  $\mathrm{Ric}(b_m,b_m) = \sum_n K(b_m,b_n)$ with pair symmetry gives the diagonal, and the
+  same identity read off-diagonally gives that a Ricci eigenbasis diagonalises the operator
+  --- in dimension three $\mathrm{Ric}(b_0,b_1)$ has a single surviving summand, so the
+  off-diagonal curvature component \emph{is} the off-diagonal Ricci component. No vanishing
+  of the Weyl tensor is used, and no four-linear expansion over a basis; the literature's
+  route through the decomposition $\mathrm{Rm} = f(\mathrm{Ric})$ is a genuine theorem and is
+  not required.
+
+  Three checks against the normalisation of \hyperref[lem:pinching-ode]{the curvature ODE},
+  where $\lambda,\mu,\nu$ are \emph{twice} the sectional curvatures and
+  $R = \lambda+\mu+\nu$: the diagonal entries are twice the sectional curvature of the
+  opposite plane, the off-diagonal entries vanish in a Ricci eigenbasis (needing neither
+  metric compatibility nor torsion-freeness), and the trace is $\mathrm{scal}$. On the unit
+  $S^3$ the first reads $6 - 4 = 2 = 2\cdot 1$.
+\end{lemma}
+
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
   \uses{def:ricci-flow}
