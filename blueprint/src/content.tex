@@ -4644,6 +4644,39 @@ Perelman's monotone functionals are what rule it out.
   synonym, where instance search behaves.
 \end{lemma}
 
+\begin{lemma}[$\mathrm{End}(T\M)$ carries a compatible connection and metric]
+  \label{lem:end-metric-compat}
+  \lean{RicciFlowBlueprint.mvfderiv_hsFibre_eq_of_frame,
+    RicciFlowBlueprint.mvfderiv_hsFibre_eq,
+    RicciFlowBlueprint.endTangentCov,
+    RicciFlowBlueprint.isMetricCompatible_endTangentCov,
+    RicciFlowBlueprint.inner_endTangentRiemannianBundle,
+    RicciFlowBlueprint.isMetricCompatible_endTangentCov_hs}
+  \leanok
+  \uses{lem:end-bundle-metric, lem:hom-bundle-connection, lem:metric-trace-cov}
+  For a metric connection on $T\M$, the induced connection on $\mathrm{End}(T\M)$ is metric
+  for the Hilbert--Schmidt form:
+  $X\langle A,B\rangle = \langle \nabla_X A, B\rangle + \langle A, \nabla_X B\rangle$.
+
+  \textbf{Proved} (\texttt{EndMetricCompat.lean}). Together with
+  \hyperref[lem:end-bundle-metric]{the fibre metric} this makes $\mathrm{End}(T\M)$ the first
+  bundle in this development other than $T\M$ itself carrying a \emph{compatible} connection
+  and metric --- which is exactly what the Bochner identity and the touching-point maximum
+  principle require of the pair, and so the first real instantiation the general bundle layer
+  has ever had.
+
+  \textbf{The argument is the metric-trace one, with one new ingredient.} Expand
+  $\langle A,B\rangle$ over a local orthonormal frame of $T\M$, differentiate each term by
+  metric compatibility downstairs, and substitute
+  $\nabla_X(A e_i) = (\nabla_X A)(e_i) + A(\nabla_X e_i)$ --- which is the definition of
+  $\nabla A$ rearranged. Four groups of terms result: two are the Hilbert--Schmidt forms of
+  $\nabla_X A$ and $\nabla_X B$ read off the same frame, and the other two cancel for the
+  reason the metric trace commutes with $\nabla$. The frame is \emph{not} parallel, so the
+  coefficients $\langle \nabla_X e_i, e_j\rangle$ survive individually; they are
+  antisymmetric, while $\langle A v, B w\rangle + \langle A w, B v\rangle$ is symmetric, so
+  the sum vanishes. Nothing here asks the frame to be parallel and nothing constructs one.
+\end{lemma}
+
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
   \uses{def:ricci-flow}

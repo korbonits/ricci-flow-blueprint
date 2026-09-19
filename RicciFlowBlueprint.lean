@@ -68,3 +68,4 @@ import RicciFlowBlueprint.CurvatureThree
 import RicciFlowBlueprint.OneFormAlongCurve
 import RicciFlowBlueprint.EndMetric
 import RicciFlowBlueprint.EndBundleMetric
+import RicciFlowBlueprint.EndMetricCompat

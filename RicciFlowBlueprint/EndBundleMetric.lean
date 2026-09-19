@@ -152,6 +152,22 @@ theorem hsFibre_eq {x : M} {ι : Type*} [Fintype ι]
   have : FiniteDimensional ℝ (TangentSpace I x) := VectorBundle.finiteDimensional ℝ E _ x
   exact hsForm_congr _ b A B
 
+omit [IsContMDiffRiemannianBundle I n E (fun (x : M) ↦ TangentSpace I x)]
+  [IsContMDiffRiemannianBundle I 1 E (fun (x : M) ↦ TangentSpace I x)]
+  [ContMDiffVectorBundle n E (fun (x : M) ↦ TangentSpace I x) I] in
+/-- **`hsFibre` over a local orthonormal frame of `TM`.** The Hilbert–Schmidt form of two
+endomorphisms of a fibre is the sum of the inner products of their values on any frame that
+is orthonormal there — frame independence, cashed in on the frames a manifold actually
+supplies. -/
+theorem hsFibre_eq_sum_frame {ιf : Type*} [Fintype ιf]
+    {fr : ιf → Π y : M, TangentSpace I y} {u : Set M}
+    (hs : IsOrthonormalFrameOn I E 1 fr u) {y : M} (hy : y ∈ u)
+    (A B : TangentSpace I y →L[ℝ] TangentSpace I y) :
+    hsFibre (I := I) y A B = ∑ i, ⟪A (fr i y), B (fr i y)⟫ := by
+  obtain ⟨c, hc⟩ := CovariantDerivative.exists_orthonormalBasis_of_isOrthonormalFrameOn hs hy
+  rw [hsFibre_eq c, hsForm_apply]
+  exact Finset.sum_congr rfl fun i _ ↦ by rw [hc i]
+
 omit [IsContMDiffRiemannianBundle I 1 E (fun (x : M) ↦ TangentSpace I x)] in
 /-- The Hilbert–Schmidt form is symmetric. -/
 theorem hsFibre_symm (x : M) (A B : TangentSpace I x →L[ℝ] TangentSpace I x) :
@@ -200,11 +216,8 @@ theorem contMDiffAt_hsFibre_apply
   have h1 : IsOrthonormalFrameOn I E 1 fr e.baseSet :=
     bE.orthonormalFrame_isOrthonormalFrameOn e
   have key : ∀ y ∈ e.baseSet,
-      hsFibre (I := I) y (A y) (B y) = ∑ i, ⟪A y (fr i y), B y (fr i y)⟫ := by
-    intro y hy
-    obtain ⟨b, hb⟩ := CovariantDerivative.exists_orthonormalBasis_of_isOrthonormalFrameOn h1 hy
-    rw [hsFibre_eq b, hsForm_apply]
-    exact Finset.sum_congr rfl fun i _ ↦ by rw [hb i]
+      hsFibre (I := I) y (A y) (B y) = ∑ i, ⟪A y (fr i y), B y (fr i y)⟫ :=
+    fun y hy ↦ hsFibre_eq_sum_frame h1 hy (A y) (B y)
   have hsum : ContMDiffAt I 𝓘(ℝ, ℝ) n
       (fun y ↦ ∑ i, ⟪A y (fr i y), B y (fr i y)⟫) x₀ := by
     refine ContMDiffAt.sum (fun i _ ↦ ?_)
