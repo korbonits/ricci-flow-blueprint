@@ -4551,6 +4551,47 @@ Perelman's monotone functionals are what rule it out.
   linear functional into $\R$ needs no norm on its source.
 \end{lemma}
 
+\begin{lemma}[The Hilbert--Schmidt form on $\mathrm{End}(W)$]
+  \label{lem:hs-form}
+  \lean{RicciFlowBlueprint.hsForm,
+    RicciFlowBlueprint.hsForm_apply,
+    RicciFlowBlueprint.hsForm_congr,
+    RicciFlowBlueprint.hsForm_symm,
+    RicciFlowBlueprint.hsForm_self_nonneg,
+    RicciFlowBlueprint.sq_norm_apply_le_hsForm,
+    RicciFlowBlueprint.opNorm_le_sum_norm_apply,
+    RicciFlowBlueprint.isVonNBounded_hsForm_lt_one,
+    RicciFlowBlueprint.hsForm_self_eq_zero,
+    RicciFlowBlueprint.hsForm_self_pos}
+  \leanok
+  \uses{lem:hom-bundle-connection}
+  For a finite-dimensional real inner product space $W$,
+  $\langle A, B\rangle = \sum_i \langle A e_i, B e_i\rangle$ is a continuous bilinear form on
+  $\mathrm{End}(W)$, independent of the orthonormal basis, symmetric, positive definite, and
+  with bounded unit set.
+
+  \textbf{Proved} (\texttt{EndMetric.lean}). These are exactly the fields of a
+  \texttt{RiemannianMetric} other than smoothness, so this is the pointwise half of the fibre
+  metric that $\mathrm{End}(T\M)$ needs before any maximum principle can run on a section of
+  it. Mathlib supplies no inner product on $\to_L$, and its only
+  \texttt{IsContMDiffRiemannianBundle} instances are the trivial bundle and index lowering,
+  so the form has to be built.
+
+  \textbf{Bilinearity and continuity are free.} The form is assembled from
+  \texttt{ContinuousLinearMap.bilinearComp} applied to $\mathrm{innerSL}$ and to evaluation at
+  $e_i$, so there is no $\mathrm{mk}_2$ and no boundedness estimate anywhere. Frame
+  independence is then immediate: $(v,w) \mapsto \langle A v, B w\rangle$ is itself a
+  continuous bilinear form, and
+  \texttt{OrthonormalBasis.sum\_apply\_self\_eq} traces it --- the same mechanism that makes
+  $\mathrm{scal}$ and $\Delta$ frame-independent elsewhere in this development.
+
+  The only genuinely metric estimate is $\|A\| \le \sum_i \|A e_i\|$, from expanding $v$ in the
+  basis and bounding $|\langle e_i, v\rangle| \le \|v\|$. It gives both remaining fields at
+  once: definiteness (if $\langle A,A\rangle = 0$ then every $A e_i = 0$, so $\|A\| \le 0$),
+  and boundedness of $\{\langle A,A\rangle < 1\}$ (there every $\|A e_i\| \le 1$, so
+  $\|A\| \le \dim W$).
+\end{lemma}
+
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
   \uses{def:ricci-flow}
