@@ -70,3 +70,4 @@ import RicciFlowBlueprint.EndMetric
 import RicciFlowBlueprint.EndBundleMetric
 import RicciFlowBlueprint.EndMetricCompat
 import RicciFlowBlueprint.CurvatureOperatorThree
+import RicciFlowBlueprint.RicciSection

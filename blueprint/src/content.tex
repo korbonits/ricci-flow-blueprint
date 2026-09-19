@@ -4722,6 +4722,38 @@ Perelman's monotone functionals are what rule it out.
   $S^3$ the first reads $6 - 4 = 2 = 2\cdot 1$.
 \end{lemma}
 
+\begin{lemma}[Ricci and the scalar curvature are smooth]
+  \label{lem:ricci-section}
+  \lean{RicciFlowBlueprint.exists_orthonormal_frame_on_open,
+    CovariantDerivative.contMDiffAt_ricciForm_apply,
+    CovariantDerivative.contMDiffAt_ricciForm_apply_two,
+    CovariantDerivative.contMDiffAt_scalarCurvatureAt,
+    CovariantDerivative.contMDiffAt_scalarCurvatureAt_two,
+    CovariantDerivative.contMDiff_scalarCurvatureAt,
+    CovariantDerivative.contMDiff_scalarCurvatureAt_two}
+  \leanok
+  \uses{def:ricci-form, lem:ricci-frame-sum}
+  For a $C^k$ connection, $y \mapsto \mathrm{Ric}_y(V_y, W_y)$ is $C^1$ on $C^2/C^3$ fields
+  and $C^2$ on $C^3/C^4$ fields, and the scalar curvature is a $C^2$ function on $\M$.
+
+  \textbf{Proved} (\texttt{RicciSection.lean}). \hyperref[def:ricci-form]{Making
+  $\mathrm{Ric}$ a bilinear form} says nothing about how it varies with the point, and that
+  gap was load-bearing: the scalar-curvature preservation results carry smoothness of
+  $\mathrm{scal}$ as an \emph{explicit hypothesis}, because nothing in the development proved
+  it.
+
+  \textbf{The one real obstacle is locality.} $\mathrm{Ric}$ is a trace, so it is computed by
+  an orthonormal frame; but a frame is local, while every smoothness statement in the
+  curvature tower is for \emph{globally} $C^k$ sections. So the trivialisation's orthonormal
+  frame is globalised one section at a time --- which gives agreement only near the point ---
+  and the finitely many agreement sets are intersected and the interior taken, exactly as for
+  the plain local frame used by the covariant derivative along a curve. The globalised frame
+  is then orthonormal on a whole \emph{open} neighbourhood, so the frame sum computes
+  $\mathrm{Ric}$ at every point of it, and a germ is all that smoothness needs. After that
+  each summand is smooth by smoothness of the curvature section, and $\mathrm{scal}$ is the
+  same sum on the diagonal.
+\end{lemma}
+
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
   \uses{def:ricci-flow}
