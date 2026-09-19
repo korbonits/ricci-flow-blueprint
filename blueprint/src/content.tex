@@ -4754,6 +4754,37 @@ Perelman's monotone functionals are what rule it out.
   same sum on the diagonal.
 \end{lemma}
 
+\begin{lemma}[$\mathrm{Rm}_3$ is a $C^2$ section of $\mathrm{End}(T\M)$]
+  \label{lem:curvature-operator-section}
+  \lean{RicciFlowBlueprint.contMDiffAt_end_section_of_symmL,
+    CovariantDerivative.contMDiffAt_ricciSharp_apply,
+    CovariantDerivative.curvatureOperator_apply,
+    CovariantDerivative.contMDiffAt_curvatureOperator,
+    CovariantDerivative.contMDiff_curvatureOperator,
+    CovariantDerivative.contMDiff_curvatureOperator_endTangent}
+  \leanok
+  \uses{lem:curvature-operator-three, lem:ricci-section, lem:end-metric-compat}
+  Hamilton's curvature operator is a $C^2$ section of $\mathrm{End}(T\M)$, and of the type
+  synonym that carries the Hilbert--Schmidt metric and the induced connection.
+
+  \textbf{Proved} (\texttt{CurvatureOperatorSection.lean}). This is the point at which the
+  object the three-dimensional pinching argument runs on exists \emph{with all its
+  structure}: a $C^2$ section of a bundle that has a connection, a fibre metric, and their
+  compatibility.
+
+  \textbf{Two bricks.} First, a section of $\mathrm{End}(T\M)$ is $C^n$ as soon as its values
+  on the trivialisation's local frame are --- the converse of the statement that a smooth
+  bundle morphism applied to a smooth section is smooth, and what a \emph{constructed}
+  endomorphism field needs. It is cheap because for a $\mathrm{Hom}(V,V)$ section the
+  coordinate representative is literally the trivialisation coordinate of
+  $y \mapsto A_y(e^{-1}_y u)$, so no coordinate change survives. Second, $\mathrm{Ric}^\sharp$
+  applied to a $C^3$ field is a $C^2$ section, and \emph{the Riesz isomorphism is never
+  differentiated}: a section of a Riemannian bundle is $C^n$ as soon as its inner products
+  with a local frame are, and those inner products are the Ricci form, whose smoothness is
+  \hyperref[lem:ricci-section]{the previous lemma}. Everything else is the algebra of smooth
+  sections.
+\end{lemma}
+
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
   \uses{def:ricci-flow}

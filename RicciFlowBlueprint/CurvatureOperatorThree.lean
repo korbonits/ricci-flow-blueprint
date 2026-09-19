@@ -120,6 +120,12 @@ theorem inner_curvatureOperator (v w : TangentSpace I x) :
     ContinuousLinearMap.id_apply, real_inner_smul_left, real_inner_smul_left,
     inner_ricciSharp]
 
+omit [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I] in
+/-- `Rm₃` applied to a vector, unfolded. -/
+theorem curvatureOperator_apply (v : TangentSpace I x) :
+    cov.curvatureOperator x v
+      = cov.scalarCurvatureAt x • v - (2 : ℝ) • cov.ricciSharp x v := rfl
+
 /-- The curvature operator is self-adjoint, `Ric` being symmetric. -/
 theorem inner_curvatureOperator_comm
     (hmetric : cov.IsMetricCompatible (M := M) (V := TangentSpace I)) (htor : cov.torsion = 0)
