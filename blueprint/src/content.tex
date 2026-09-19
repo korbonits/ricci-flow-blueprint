@@ -4785,6 +4785,46 @@ Perelman's monotone functionals are what rule it out.
   sections.
 \end{lemma}
 
+\begin{lemma}[The induced connection is $C^1$, and the maximum principle accepts
+  $\mathrm{End}(T\M)$]
+  \label{lem:hom-bundle-smooth}
+  \lean{RicciFlowBlueprint.contMDiffAt_hom_section_of_symmL,
+    CovariantDerivative.contMDiffCovariantDerivative_homCov,
+    CovariantDerivative.contMDiffCovariantDerivative_endCov,
+    RicciFlowBlueprint.contMDiffCovariantDerivative_endTangentCov,
+    RicciFlowBlueprint.exists_section_inner_laplacian_curvatureOperator_nonpos}
+  \leanok
+  \uses{lem:hom-bundle-connection, lem:curvature-operator-section, lem:end-metric-compat,
+    lem:bundle-touching-point}
+  The induced connection on a $\mathrm{Hom}$ bundle is $C^1$; consequently the
+  touching-point maximum principle applies to Hamilton's curvature operator as a section of
+  $\mathrm{End}(T\M)$.
+
+  \textbf{Proved} (\texttt{HomBundleSmooth.lean}, \texttt{CurvatureOperatorMaxPrinciple.lean}).
+  The induced connection was built as a covariant derivative, but nothing said it was
+  \emph{smooth} --- and the connection Laplacian, hence the whole
+  $\nabla^2$/$\Delta$/Bochner layer, needs exactly that. This was found by attempting the
+  composition rather than by inspection: every other hypothesis discharged, and this one did
+  not.
+
+  The proof is two applications of a criterion worth isolating: \emph{a section of
+  $\mathrm{Hom}(W_1,W_2)$ is $C^n$ as soon as its values on the source trivialisation's local
+  frame are.} That is the converse of ``a smooth bundle morphism applied to a smooth section
+  is smooth'', and it is what a \emph{constructed} morphism field needs; it is cheap because
+  the coordinate representative is literally the target trivialisation's coordinate of
+  $y \mapsto A_y(e_1^{-1}(y)u)$, so no coordinate change survives. Applying it once per
+  $\mathrm{Hom}$ reduces the claim to the two terms of
+  $\nabla A = \nabla^2(A\sigma) - A(\nabla^1\sigma)$ on a pair of local frames, each of which
+  is smoothness of a covariant derivative composed with application of a smooth morphism. The
+  frames are globalised first, since every smoothness statement in the covariant layer is for
+  globally $C^k$ sections and smoothness is a germ property.
+
+  The second statement is the falsification check for the whole $\mathrm{End}(T\M)$ line: the
+  general bundle layer is stated for an arbitrary bundle, and until now the only thing it
+  could be applied to was the tangent bundle itself, where the bridges check well-typedness
+  and nothing more.
+\end{lemma}
+
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
   \uses{def:ricci-flow}

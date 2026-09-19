@@ -64,6 +64,7 @@ import RicciFlowBlueprint.ParallelTransport
 import RicciFlowBlueprint.TransportIsometry
 import RicciFlowBlueprint.ParallelTransportGlobal
 import RicciFlowBlueprint.HomBundle
+import RicciFlowBlueprint.HomBundleSmooth
 import RicciFlowBlueprint.CurvatureThree
 import RicciFlowBlueprint.OneFormAlongCurve
 import RicciFlowBlueprint.EndMetric
@@ -72,3 +73,4 @@ import RicciFlowBlueprint.EndMetricCompat
 import RicciFlowBlueprint.CurvatureOperatorThree
 import RicciFlowBlueprint.RicciSection
 import RicciFlowBlueprint.CurvatureOperatorSection
+import RicciFlowBlueprint.CurvatureOperatorMaxPrinciple

@@ -161,10 +161,11 @@ section Synonym
 variable
   {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
-  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M] [T2Space M]
   [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
   [IsContMDiffRiemannianBundle I 1 E (fun (x : M) ↦ TangentSpace I x)]
   [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
+  [ContMDiffVectorBundle 2 E (fun (x : M) ↦ TangentSpace I x) I]
   [RiemannianBundle (EndTangent I (M := M))]
   [IsContMDiffRiemannianBundle I 1 (E →L[ℝ] E) (EndTangent I (M := M))]
   (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
@@ -177,6 +178,15 @@ noncomputable def endTangentCov :
     CovariantDerivative I (E →L[ℝ] E) (EndTangent I (M := M)) :=
   endCov cov
 
+omit [RiemannianBundle (EndTangent I (M := M))]
+  [IsContMDiffRiemannianBundle I 1 (E →L[ℝ] E) (EndTangent I (M := M))] in
+/-- The transported connection is `C¹`, `endCov` being so. -/
+instance contMDiffCovariantDerivative_endTangentCov
+    [ContMDiffCovariantDerivative cov 1] :
+    ContMDiffCovariantDerivative (endTangentCov cov) 1 :=
+  contMDiffCovariantDerivative_endCov cov
+
+omit [T2Space M] in
 /-- **`endCov` is a metric connection for the Hilbert–Schmidt metric.** Stated against an
 ambient `RiemannianBundle` binder whose inner product is `hsFibre`, which is the only shape
 `IsMetricCompatible` elaborates in (see `CLAUDE.md`). -/
@@ -203,20 +213,23 @@ section Instantiated
 variable
   {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
-  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M]
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ω M] [T2Space M]
   [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
   [IsContMDiffRiemannianBundle I 1 E (fun (x : M) ↦ TangentSpace I x)]
   [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
+  [ContMDiffVectorBundle 2 E (fun (x : M) ↦ TangentSpace I x) I]
   (cov : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
 
 set_option maxSynthPendingDepth 4
 
+omit [T2Space M] [ContMDiffVectorBundle 2 E (fun (x : M) ↦ TangentSpace I x) I] in
 /-- The Hilbert–Schmidt metric's inner product **is** `hsFibre`, by `rfl`. -/
 theorem inner_endTangentRiemannianBundle :
     letI : RiemannianBundle (EndTangent I (M := M)) := endTangentRiemannianBundle (n := 1)
     ∀ (y : M) (P Q : EndTangent I y), ⟪P, Q⟫ = hsFibre (I := I) y P Q :=
   fun _ _ _ ↦ rfl
 
+omit [T2Space M] in
 /-- **`endCov` is metric for the Hilbert–Schmidt metric it is actually paired with.** The
 falsification check for the file: the abstract statement above is instantiated at the metric
 `EndBundleMetric.lean` builds, so connection and fibre metric now sit on the same non-tangent

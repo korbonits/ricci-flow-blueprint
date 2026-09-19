@@ -58,6 +58,7 @@ and `endTangentRiemannianBundle` must be `@[instance_reducible]`, since mathlib'
 -/
 import RicciFlowBlueprint.EndMetric
 import RicciFlowBlueprint.TraceCov
+import RicciFlowBlueprint.HomBundleSmooth
 
 open Bundle Manifold ContinuousLinearMap
 open scoped Manifold ContDiff RealInnerProductSpace
@@ -97,28 +98,6 @@ theorem inCoordinates_bilin (x₀ x : B) (hx : x ∈ (trivializationAt F₁ E₁
   rfl
 
 end General
-
-section LocalFrame
-
-variable
-  {EB : Type*} [NormedAddCommGroup EB] [NormedSpace ℝ EB]
-  {HB : Type*} [TopologicalSpace HB] {IB : ModelWithCorners ℝ EB HB}
-  {B : Type*} [TopologicalSpace B] [ChartedSpace HB B]
-  {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
-  {V : B → Type*} [TopologicalSpace (TotalSpace F V)] [∀ y, AddCommGroup (V y)]
-  [∀ y, Module ℝ (V y)] [∀ y, TopologicalSpace (V y)]
-  [FiberBundle F V] [VectorBundle ℝ F V] {m : ℕ∞ω} [ContMDiffVectorBundle m F V IB]
-  {ι : Type*}
-
-/-- **The local frame of a trivialisation is the trivialisation's inverse on a basis**, on its
-base set — the general-bundle form of `localFrame_eq_symmL`. -/
-theorem localFrame_eq_symmL' (e : Trivialization F (TotalSpace.proj : TotalSpace F V → B))
-    [MemTrivializationAtlas e] (b : Module.Basis ι ℝ F) {x : B} (hx : x ∈ e.baseSet) (i : ι) :
-    e.localFrame b i x = e.symmL ℝ x (b i) := by
-  simp [e.localFrame_apply_of_mem_baseSet b hx, Trivialization.basisAt,
-    Module.Basis.map_apply, Trivialization.linearEquivAt_symm_apply, e.symmL_apply hx]
-
-end LocalFrame
 
 section EndBundle
 
