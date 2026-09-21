@@ -5172,6 +5172,56 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   (Lemma \ref{lem:evolution-rm}).
 \end{proof}
 
+\begin{lemma}[The pinching set as a convex set of endomorphisms]
+  \label{lem:ivey-endo}
+  \lean{RicciFlowBlueprint.lambdaMin,
+        RicciFlowBlueprint.lambdaMin_concave,
+        RicciFlowBlueprint.lipschitzWith_lambdaMin,
+        RicciFlowBlueprint.lambdaMin_eq_of_diagonal,
+        RicciFlowBlueprint.trace_eq_sum_of_diagonal,
+        RicciFlowBlueprint.Pinching.antitone_iveyG,
+        RicciFlowBlueprint.Pinching.iveyEndoSet,
+        RicciFlowBlueprint.Pinching.convex_iveyEndoSet,
+        RicciFlowBlueprint.Pinching.isClosed_iveyEndoSet,
+        RicciFlowBlueprint.Pinching.mem_iveyEndoSet_iff_isIveyPinched}
+  \leanok
+  \uses{lem:ivey-convex, lem:curvature-operator-three}
+  On a real inner product space $W$ put $\lambda_{\min}(A) = \inf\{\langle Av,v\rangle :
+  \|v\| = 1\}$. Then
+  \[
+    \mathcal{K} = \{A \in \mathrm{End}(W) : -3 \le \operatorname{tr} A
+      \ \wedge\ G(\lambda_{\min} A) \le \operatorname{tr} A\}
+  \]
+  is closed and convex; and if $A$ is diagonalised by an orthonormal basis of a
+  three-dimensional $W$ with entries $\nu \le \mu \le \lambda$, then $A \in \mathcal{K}$ if
+  and only if $(\lambda,\mu,\nu)$ lies in Hamilton's set.
+
+  \textbf{Proved} (\texttt{IveyEndo.lean}). Lemma \ref{lem:ivey-convex} gives the set in
+  $\R^3$, in eigenvalue coordinates. But the tensor maximum principle is applied to a section
+  of a bundle, and in dimension three that bundle is $\mathrm{End}(T\M)$ --- so what has to
+  be closed and convex is a set of \emph{endomorphisms of a fibre}, with no eigenvalue
+  coordinates anywhere.
+
+  \emph{The ordering conditions disappear.} In $\R^3$ the set carries $\nu \le \mu \le
+  \lambda$, which is not a property of an operator at all --- it is a choice of labelling for
+  its eigenvalues. On endomorphisms only two conditions remain, and convexity comes from two
+  facts about $\lambda_{\min}$ and one about $G$: the trace is linear; $\lambda_{\min}$ is
+  concave, being an infimum of \emph{linear} functionals $A \mapsto \langle Av,v\rangle$; and
+  $G$ is convex \emph{and antitone}, so $G \circ \lambda_{\min}$ is convex.
+
+  \emph{$\lambda_{\min}$ is defined as a Rayleigh infimum, not as an eigenvalue}, and that is
+  what makes the argument cheap. Concavity and the Lipschitz estimate $|\lambda_{\min} A -
+  \lambda_{\min} B| \le \|A - B\|$ --- which is what gives closedness --- are each two lines
+  from the universal properties of the infimum, where a spectral definition would first need
+  the eigenvalues to depend continuously on $A$. No self-adjointness is assumed anywhere.
+
+  The spectral reading is recovered only in the bridge, which is the falsification check: an
+  unidentified convex set would be worth nothing. Both halves of it rest on one identity,
+  $\langle Av,v\rangle = \sum_i e_i \langle b_i,v\rangle^2$ for $A$ diagonal, and Parseval is
+  not needed for the normalisation --- applying that identity at $A = \mathrm{id}$ gives
+  $\sum_i \langle b_i,v\rangle^2 = \langle v,v\rangle$.
+\end{lemma}
+
 \begin{lemma}[Hamilton--Ivey for the curvature ODE]
   \label{lem:ivey-ode}
   \lean{RicciFlowBlueprint.Pinching.IsCurvatureODE.hamiltonIvey,

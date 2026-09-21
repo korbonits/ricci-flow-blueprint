@@ -77,3 +77,4 @@ import RicciFlowBlueprint.CurvatureOperatorMaxPrinciple
 import RicciFlowBlueprint.CurvatureTrace
 import RicciFlowBlueprint.RicciEvolution
 import RicciFlowBlueprint.SharpLaplacian
+import RicciFlowBlueprint.IveyEndo
