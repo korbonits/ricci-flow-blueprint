@@ -5222,6 +5222,33 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   $\sum_i \langle b_i,v\rangle^2 = \langle v,v\rangle$.
 \end{lemma}
 
+\begin{lemma}[Hamilton's pinching condition on the curvature operator]
+  \label{lem:curvature-operator-pinched}
+  \lean{CovariantDerivative.isSymmetric_curvatureOperator,
+        CovariantDerivative.exists_orthonormalBasis_curvatureOperator,
+        RicciFlowBlueprint.Pinching.mem_iveyEndoSet_iff_isIveyPinched_antitone,
+        CovariantDerivative.exists_mem_iveyEndoSet_iff}
+  \leanok
+  \uses{lem:ivey-endo, lem:curvature-operator-three, lem:ivey-convex}
+  At every point of a three-dimensional manifold there are reals $\lambda \ge \mu \ge \nu$ ---
+  the eigenvalues of $\Riem_3$ --- for which $\Riem_3 \in \mathcal{K}$ exactly when
+  $(\lambda,\mu,\nu)$ satisfies Hamilton's pinching condition.
+
+  \textbf{Proved} (\texttt{CurvatureOperatorPinched.lean}). The spectral theorem is used once
+  and Mathlib does all of it: $\Riem_3$ is self-adjoint, which rests on nothing but symmetry
+  of $\Ric$, so an orthonormal eigenbasis is immediate --- and Mathlib's eigenvalue function
+  is \emph{already sorted in decreasing order}, which is exactly $\lambda \ge \mu \ge \nu$, so
+  no sorting permutation and no reindexing appear.
+
+  \emph{This is the composition the dimension-three route has been claiming.} Between the
+  curvature ODE of Lemma \ref{lem:ivey-ode} and a section of $\mathrm{End}(T\M)$ that a
+  maximum principle can be run against sit four lemmas --- the operator, its
+  self-adjointness, the endomorphism set, the eigenvalue dictionary. Every one was present
+  and none said anything to the others until they were composed. Composing them is what
+  checks that the convexity of Lemma \ref{lem:ivey-endo} is convexity of \emph{Hamilton's}
+  set and not of some other one.
+\end{lemma}
+
 \begin{lemma}[Hamilton--Ivey for the curvature ODE]
   \label{lem:ivey-ode}
   \lean{RicciFlowBlueprint.Pinching.IsCurvatureODE.hamiltonIvey,

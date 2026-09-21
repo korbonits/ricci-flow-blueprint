@@ -298,6 +298,15 @@ theorem mem_iveyEndoSet_iff_isIveyPinched (b : OrthonormalBasis (Fin 3) ℝ W)
     simp
   rw [mem_iveyEndoSet_iff, hlam, htr, isIveyPinched_iff_iveyG]
 
+/-- The bridge with the entries given as an **antitone** family, which is the form the
+spectral theorem hands over: mathlib's `LinearMap.IsSymmetric.eigenvalues` is already sorted
+in decreasing order, so no reindexing is needed anywhere. -/
+theorem mem_iveyEndoSet_iff_isIveyPinched_antitone (b : OrthonormalBasis (Fin 3) ℝ W)
+    {A : W →L[ℝ] W} {e : Fin 3 → ℝ} (hA : ∀ i, A (b i) = e i • (b i : W)) (he : Antitone e) :
+    A ∈ iveyEndoSet W ↔ IsIveyPinched (e 0) (e 1) (e 2) :=
+  mem_iveyEndoSet_iff_isIveyPinched b (hA 0) (hA 1) (hA 2)
+    (he (by decide)) (he (by decide))
+
 end Set
 
 end Pinching

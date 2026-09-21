@@ -78,3 +78,4 @@ import RicciFlowBlueprint.CurvatureTrace
 import RicciFlowBlueprint.RicciEvolution
 import RicciFlowBlueprint.SharpLaplacian
 import RicciFlowBlueprint.IveyEndo
+import RicciFlowBlueprint.CurvatureOperatorPinched
