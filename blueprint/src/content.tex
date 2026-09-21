@@ -4906,6 +4906,32 @@ Perelman's monotone functionals are what rule it out.
   sums.
 \end{lemma}
 
+\begin{lemma}[The metric is parallel]
+  \label{lem:metric-parallel}
+  \lean{CovariantDerivative.metricForm,
+        CovariantDerivative.isMDiffBilinAt_metricForm,
+        CovariantDerivative.covBilin_metricForm,
+        CovariantDerivative.isMDiffCovBilinAt_metricForm,
+        CovariantDerivative.cov2Bilin_metricForm,
+        CovariantDerivative.laplacianBilin_metricForm}
+  \leanok
+  \uses{def:bilin-laplacian, lem:cov-bilin-tensor}
+  For a metric connection, $\nab \g = 0$, $\nab^2 \g = 0$ and $\Delta_\g \g = 0$.
+
+  \textbf{Proved} (\texttt{MetricParallel.lean}). $\nab \g = 0$ is metric compatibility
+  rearranged: the derivative of $\langle Y,Z\rangle$ is $\langle \nab Y,Z\rangle + \langle
+  Y,\nab Z\rangle$, which are exactly the two corrections $\nab \g$ subtracts. Every term of
+  $\nab^2\g$ is then $\nab\g$ --- the three corrections directly, and the leading one because
+  it differentiates the zero function --- and $\Delta_\g\g$ is the trace of that.
+
+  This had never been stated: every earlier use went through metric compatibility directly,
+  so the metric itself was not an input to the bilinear-form calculus. With it, a term like
+  $R\cdot\g$ differentiates as if $\g$ were constant, which is what the $(0,2)$ form
+  $R\cdot\g - 2\Ric$ of the dimension-three curvature operator needs. That form has no index
+  raising in it, and index raising is where the moving fibre metric bites
+  (Lemma \ref{lem:sharp-laplacian}).
+\end{lemma}
+
 \begin{lemma}[Index raising commutes with $\nab$, $\nab^2$ and $\Delta$]
   \label{lem:sharp-laplacian}
   \lean{CovariantDerivative.inner_endCov_eq_covBilin,

@@ -80,3 +80,4 @@ import RicciFlowBlueprint.SharpLaplacian
 import RicciFlowBlueprint.IveyEndo
 import RicciFlowBlueprint.CurvatureOperatorPinched
 import RicciFlowBlueprint.IveyParallel
+import RicciFlowBlueprint.MetricParallel
