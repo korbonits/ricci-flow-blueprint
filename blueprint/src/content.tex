@@ -4332,6 +4332,622 @@ Perelman's monotone functionals are what rule it out.
   the first brick of the cross-fibre half.
 \end{lemma}
 
+\begin{lemma}[Parallel transport along an arbitrary curve]
+  \label{lem:transport-global}
+  \lean{CovariantDerivative.exists_chart_interval,
+    CovariantDerivative.eqOn_of_isParallelAlong_global,
+    CovariantDerivative.exists_glue_isParallelAlong,
+    CovariantDerivative.exists_transport_interval,
+    CovariantDerivative.exists_isParallelAlong_global,
+    CovariantDerivative.isParallelAlong_add,
+    CovariantDerivative.isParallelAlong_const_smul,
+    CovariantDerivative.exists_parallelTransportIsometry_global}
+  \leanok
+  \uses{lem:parallel-transport, lem:transport-isometry, lem:cov-along-curve-exists}
+  Let $\nab$ be metric and let $\gamma$ be differentiable on a preconnected open
+  $s \subseteq \R$. Through every $v \in T_{\gamma(t_0)}\M$ there is a section parallel along
+  $\gamma$ on all of $s$; it is unique; and the resulting map is a linear isometry
+  $T_{\gamma(t_0)}\M \simeq_{\ell i} T_{\gamma(t)}\M$.
+
+  \textbf{Proved} (\texttt{ParallelTransportGlobal.lean}). \textbf{What this removes.} Lemma
+  \ref{lem:parallel-transport} proves transport \emph{inside a trivialisation}: its statements
+  carry a trivialisation, a basis, a frame, an open $U$ inside the base set, and the
+  hypothesis that the curve never leaves $U$. A curve on a manifold does not stay in a chart,
+  so as a tool that is not usable. Here the only hypotheses are that the connection is metric
+  and the curve differentiable.
+
+  \textbf{Only half of it was ever chart-local.} The constancy results behind Lemma
+  \ref{lem:transport-isometry} carry no frame hypotheses at all --- they need only
+  differentiability and parallelism. So the isometry was global already, and what had to be
+  freed was exactly \emph{existence} and \emph{uniqueness} of the parallel section.
+
+  \textbf{And the mechanism is connectedness, not subdivision.} The expected proof chains
+  finitely many local transports along a Lebesgue subdivision and then argues the chain is
+  independent of the subdivision chosen. None of that is needed.
+
+  For uniqueness, the chart-local statement propagates agreement across a whole subinterval at
+  once, so the agreement set of two parallel sections is open \emph{and has open complement};
+  preconnectedness finishes it. For existence, the times joined to $t_0$ by a connected open
+  set carrying a parallel section through $v$ form a set that is again open with open
+  complement, because a transport interval meeting it is swallowed by it --- glue the reaching
+  section to a local one started at the meeting point. The witnesses are then assembled
+  pointwise, $V(r)$ being the value at $r$ of \emph{its own} witness, which is well defined
+  because two witnesses agree at $t_0$ and hence throughout their preconnected intersection.
+  No subdivision is ever chosen, so nothing has to be proved independent of one.
+
+  Gluing is where global uniqueness earns its place: a case split on which open set a time
+  lies in is only sound because the two sections agree on the \emph{whole} overlap, not merely
+  where they were matched --- otherwise the glued section jumps at the boundary and is
+  differentiable nowhere near it. With agreement on the overlap it is locally equal to one of
+  the two everywhere, and differentiability and parallelism are both local.
+
+  Linearity of the transport map is the two axioms of $D/dt$: additivity, and the Leibniz rule
+  with a constant scalar, whose derivative term vanishes. Invertibility is transport in the
+  other direction, the two composing to the identity by uniqueness.
+\end{lemma}
+
+\begin{lemma}[The induced connection on a Hom bundle, and $\mathrm{End}(T\M)$]
+  \label{lem:hom-bundle-connection}
+  \lean{CovariantDerivative.covHom,
+    CovariantDerivative.covHom_smul_dir,
+    CovariantDerivative.covHom_add_dir,
+    CovariantDerivative.covHom_congr_dir,
+    CovariantDerivative.covHom_smul_snd,
+    CovariantDerivative.covHom_add_snd,
+    CovariantDerivative.IsMDiffHomAt,
+    CovariantDerivative.isMDiffHomAt_of_section,
+    CovariantDerivative.tensorialAt_covHom_dir,
+    CovariantDerivative.tensorialAt_covHom_snd,
+    CovariantDerivative.covHomAt,
+    CovariantDerivative.covHomAt_apply,
+    CovariantDerivative.covHomAt_apply_extend,
+    CovariantDerivative.covHom_add_hom,
+    CovariantDerivative.covHom_smul_hom,
+    CovariantDerivative.homCov,
+    CovariantDerivative.homCov_apply,
+    CovariantDerivative.endCov,
+    CovariantDerivative.endCov_apply}
+  \leanok
+  \uses{lem:bundle-hessian, lem:bundle-touching-point, lem:pinching-ode}
+  Let $V_1, V_2$ be $C^1$ vector bundles over $\M$ carrying covariant derivatives
+  $\nab^1, \nab^2$. Then
+  \[
+    (\nab_X A)(\sigma) \;=\; \nab^2_X(A\sigma) \;-\; A(\nab^1_X\sigma)
+  \]
+  defines a covariant derivative on the bundle $\mathrm{Hom}(V_1,V_2)$. In particular
+  $\mathrm{End}(T\M) = \mathrm{Hom}(T\M,T\M)$ carries one.
+
+  \textbf{Proved} (\texttt{HomBundle.lean}). \textbf{What this removes.} Every tensor
+  constructed so far in this development is either pointwise (Definition \ref{def:ricci-form},
+  the curvature tensor) or an operator on \emph{fields} ($\nab h$, $\nab\Rm$,
+  $\nab A$). None is a \emph{section of a vector bundle}, and consequently the
+  general-bundle layer --- Lemmas \ref{lem:bundle-hessian}, \ref{lem:bundle-bochner},
+  \ref{lem:bundle-normal-section}, \ref{lem:bundle-touching-point} --- had never been
+  instantiated at any bundle but $T\M$ itself. Those lemmas all take
+  $\nab$ on $V$ as a hypothesis; a maximum principle for a tensor needs a bundle that
+  actually satisfies it. Mathlib supplies $\mathrm{Hom}(V_1,V_2)$ as a $C^n$ vector bundle
+  but supplies no connection on it.
+
+  \textbf{Both slots are free of a frame argument}, and for the reason that already made
+  $\nab\omega$ cheap: $\nab A$ has \emph{two} terms, against $\nab\Rm$'s four. The direction
+  is a continuous linear map by construction, and in the section slot the two Leibniz terms
+  $(Xf)\cdot A\sigma$ --- one from $\nab^2$, one from $\nab^1$ --- are literally equal and
+  cancel, so only differentiability of the data is used and $\mathrm{mkHom}_2$ applies
+  directly. Additivity and the Leibniz rule \emph{in $A$} are the two axioms of a covariant
+  derivative, and the correction there is $dg\otimes A$, not $dg\otimes(A\sigma)$: the
+  derivative falls on $A$ as a section of $\mathrm{Hom}(V_1,V_2)$.
+
+  \textbf{Why $\mathrm{End}(T\M)$ is the bundle Hamilton--Ivey needs.} In dimension three the
+  Weyl tensor vanishes and the Hamilton curvature operator is
+  $\mathrm{scal}\cdot\mathrm{Id} - 2\,\mathrm{Ric}^\sharp$, whose eigenvalues are exactly the
+  $\lambda \ge \mu \ge \nu$ of Lemma \ref{lem:pinching-ode}: with
+  $r_1 = (\mu+\nu)/2$ etc.\ one has $\lambda = R - 2r_1$, and on the unit $S^3$,
+  $6 - 4 = 2 = 2\cdot 1$. So the three-dimensional pinching argument runs on an
+  \emph{endomorphism} field and needs no $\Lambda^2$ at all --- in particular it does not
+  wait on the elaboration obstruction recorded for the curvature operator on
+  $\Lambda^2 T\M$.
+
+  The $\mathrm{End}(T\M)$ instantiation is also the falsification check: \texttt{homCov} is
+  stated for two arbitrary bundles, and a general construction with no instantiations is
+  unverified.
+\end{lemma}
+
+\begin{lemma}[The curvature operator in dimension three, from Ricci alone]
+  \label{lem:curvature-three}
+  \lean{CovariantDerivative.ricciAt_eq_sum_curvatureTensorAt,
+    CovariantDerivative.curvatureTensorAt_self_fst,
+    CovariantDerivative.curvatureTensorAt_self_thd,
+    CovariantDerivative.curvatureTensorAt_sec_comm,
+    CovariantDerivative.ricciAt_diag_eq_sum_sec,
+    CovariantDerivative.scalarCurvatureAt_sub_two_ricciAt,
+    CovariantDerivative.curvatureTensorAt_eq_zero_of_ricciAt_eq_zero}
+  \leanok
+  \uses{lem:curvature-tensor-at, lem:curvature-symmetries, def:ricci-form,
+    lem:hom-bundle-connection}
+  Let $\dim \M = 3$ and let $b$ be an orthonormal basis of $T_x\M$. Then
+  \[
+    \mathrm{scal} - 2\,\mathrm{Ric}(b_0,b_0) \;=\; 2\,\Rm(b_1,b_2,b_2,b_1),
+  \]
+  and if $b$ diagonalises $\mathrm{Ric}$ then $\Rm(b_2,b_0,b_1,b_2) = 0$.
+
+  \textbf{Proved} (\texttt{CurvatureThree.lean}). Together these say that in dimension three
+  the endomorphism $\mathrm{scal}\cdot\mathrm{Id} - 2\,\mathrm{Ric}^\sharp$ \emph{is} the
+  Hamilton curvature operator: it is diagonal in a Ricci eigenbasis, and its diagonal entries
+  are twice the sectional curvatures of the opposite planes --- exactly the normalisation of
+  Lemma \ref{lem:pinching-ode}, in which $\lambda,\mu,\nu$ are twice the sectional curvatures
+  and $R = \lambda+\mu+\nu$. On the unit $S^3$ the identity reads $6 - 4 = 2 = 2\cdot 1$.
+
+  \textbf{Neither statement needs the vanishing of the Weyl tensor}, and neither needs an
+  expansion of a four-linear form over a basis. The literature obtains both from the
+  algebraic decomposition $\Rm = f(\mathrm{Ric})$ in dimension three; that decomposition is a
+  genuine theorem, and it is not required here.
+
+  For the dictionary, $\mathrm{Ric}(b_m,b_m) = \sum_n K(b_m,b_n)$ is the definition of Ricci
+  as a trace, true in every dimension; pair symmetry gives $K(b_i,b_j) = K(b_j,b_i)$. In
+  dimension three that is $r_0 = p+q$, $r_1 = p+r$, $r_2 = q+r$, hence $R = 2(p+q+r)$ and
+  $R - 2r_0 = 2r$.
+
+  For the diagonalisation, read the same trace identity off-diagonally:
+  $\mathrm{Ric}(b_0,b_1) = \sum_j \Rm(b_j,b_0,b_1,b_j)$ has \emph{one} surviving summand in
+  dimension three, since at $j=0$ the first pair is $(b_0,b_0)$ and at $j=1$ the second pair
+  is $(b_1,b_1)$, and the two antisymmetries kill those. So the off-diagonal curvature
+  component \emph{is} the off-diagonal Ricci component and vanishes with it.
+
+  \textbf{Consequence for Lemma \ref{lem:pinching}.} The three-dimensional pinching argument
+  therefore runs on a section of $\mathrm{End}(T\M)$, which Lemma
+  \ref{lem:hom-bundle-connection} equips with a connection. It does not run on
+  $\Lambda^2 T\M$, and so does not wait on the elaboration obstruction recorded for
+  $\Lambda^2$.
+\end{lemma}
+
+\begin{lemma}[The Leibniz rule for a one-form along a curve; the Hessian along a geodesic]
+  \label{lem:oneform-along-curve}
+  \lean{CovariantDerivative.map_sum_smul,
+    CovariantDerivative.map_sum_add_smul,
+    CovariantDerivative.hasDerivAt_oneForm_along,
+    CovariantDerivative.covOneFormAt_mvfderiv_eq_hessianFun,
+    CovariantDerivative.hasDerivAt_mvfderiv_velocity_of_geodesic}
+  \leanok
+  \uses{lem:cov-along-curve-exists, def:one-form-divergence, lem:geodesic-exists,
+    lem:parallel-transport, lem:transport-isometry}
+  For a one-form field $\omega$ and a section $V$ along a curve $\gamma$,
+  \[
+    \tfrac{d}{dt}\,\omega(V) \;=\; (\nab_{\gamma'}\omega)(V) \;+\; \omega\!\left(\tfrac{D}{dt}V\right),
+  \]
+  and consequently, at $\omega = df$ along a geodesic,
+  $(f\circ\gamma)''(t) = \nab^2 f(\gamma'(t),\gamma'(t))$.
+
+  \textbf{Proved} (\texttt{OneFormAlongCurve.lean}). \textbf{No metric is used}: unlike the
+  pairing rule of Lemma \ref{lem:transport-isometry}, which needs metric compatibility to
+  differentiate $\langle A_i, B_j\rangle$, here the derivative of $\omega(A_i)$ along the
+  curve is the \emph{definition} of $\nab\omega$ rearranged. Expanding $V$ in a local frame,
+  the product rule contributes the $c_i'$ terms --- exactly the coordinate part of $D/dt$ ---
+  and the connection part matches term for term, so the frame carries no hypotheses.
+
+  \textbf{Why this is wanted: it removes the exponential map from the cross-fibre argument.}
+  Hamilton's proof extends the tested direction $n$ to a \emph{parallel} section over a
+  neighbourhood, so that $|N|$ and the support function $h_{K_y}(N(y))$ are constant and a
+  maximum of the distance to $K$ is a maximum of $\langle N, u\rangle$. That extension is
+  radial parallel transport, hence the regularity of $\exp$, which is a genuine Mathlib gap
+  (there is no smooth dependence of ODE solutions on initial conditions).
+
+  But the conclusion is only ever consumed through $\Delta$, and $\Delta$ at a point is a sum
+  of $n$ ordinary second derivatives along $n$ geodesics --- which this lemma supplies, one
+  curve at a time. Along a \emph{single} fixed curve, parallel transport is Lemma
+  \ref{lem:parallel-transport}, whose equation is linear in the unknown and needs no
+  dependence-on-initial-conditions theory at all. Nothing in the argument ever varies the
+  curve, so the gap is never touched.
+
+  Concretely: transporting $n$ along $\gamma_i$ gives $N_i$ with $|N_i|$ and
+  $h_K(N_i)$ constant (Lemma \ref{lem:transport-isometry}), so $s = 0$ is a maximum of the
+  one-variable function $s \mapsto \langle N_i(s), u(\gamma_i(s))\rangle$ and its second
+  derivative there is $\le 0$; differentiating twice with $D/dt\,\gamma_i' = 0$ turns that
+  into $\langle n, \nab^2_{e_i,e_i}u\rangle \le 0$, and summing over $i$ gives
+  $\langle n, \Delta u\rangle \le 0$.
+
+  The two bilinearity helpers are stated over a bare \emph{topological module}, not a normed
+  space, and that is load-bearing rather than tidiness: $T_x\M$ carries a norm only through a
+  \texttt{RiemannianBundle} instance, i.e.\ only once a metric is chosen, and a continuous
+  linear functional into $\R$ needs no norm on its source.
+\end{lemma}
+
+\begin{lemma}[The Hilbert--Schmidt form on $\mathrm{End}(W)$]
+  \label{lem:hs-form}
+  \lean{RicciFlowBlueprint.hsForm,
+    RicciFlowBlueprint.hsForm_apply,
+    RicciFlowBlueprint.hsForm_congr,
+    RicciFlowBlueprint.hsForm_symm,
+    RicciFlowBlueprint.hsForm_self_nonneg,
+    RicciFlowBlueprint.sq_norm_apply_le_hsForm,
+    RicciFlowBlueprint.opNorm_le_sum_norm_apply,
+    RicciFlowBlueprint.isVonNBounded_hsForm_lt_one,
+    RicciFlowBlueprint.hsForm_self_eq_zero,
+    RicciFlowBlueprint.hsForm_self_pos}
+  \leanok
+  \uses{lem:hom-bundle-connection}
+  For a finite-dimensional real inner product space $W$,
+  $\langle A, B\rangle = \sum_i \langle A e_i, B e_i\rangle$ is a continuous bilinear form on
+  $\mathrm{End}(W)$, independent of the orthonormal basis, symmetric, positive definite, and
+  with bounded unit set.
+
+  \textbf{Proved} (\texttt{EndMetric.lean}). These are exactly the fields of a
+  \texttt{RiemannianMetric} other than smoothness, so this is the pointwise half of the fibre
+  metric that $\mathrm{End}(T\M)$ needs before any maximum principle can run on a section of
+  it. Mathlib supplies no inner product on $\to_L$, and its only
+  \texttt{IsContMDiffRiemannianBundle} instances are the trivial bundle and index lowering,
+  so the form has to be built.
+
+  \textbf{Bilinearity and continuity are free.} The form is assembled from
+  \texttt{ContinuousLinearMap.bilinearComp} applied to $\mathrm{innerSL}$ and to evaluation at
+  $e_i$, so there is no $\mathrm{mk}_2$ and no boundedness estimate anywhere. Frame
+  independence is then immediate: $(v,w) \mapsto \langle A v, B w\rangle$ is itself a
+  continuous bilinear form, and
+  \texttt{OrthonormalBasis.sum\_apply\_self\_eq} traces it --- the same mechanism that makes
+  $\mathrm{scal}$ and $\Delta$ frame-independent elsewhere in this development.
+
+  The only genuinely metric estimate is $\|A\| \le \sum_i \|A e_i\|$, from expanding $v$ in the
+  basis and bounding $|\langle e_i, v\rangle| \le \|v\|$. It gives both remaining fields at
+  once: definiteness (if $\langle A,A\rangle = 0$ then every $A e_i = 0$, so $\|A\| \le 0$),
+  and boundedness of $\{\langle A,A\rangle < 1\}$ (there every $\|A e_i\| \le 1$, so
+  $\|A\| \le \dim W$).
+\end{lemma}
+
+\begin{lemma}[The Hilbert--Schmidt metric on $\mathrm{End}(T\M)$]
+  \label{lem:end-bundle-metric}
+  \lean{RicciFlowBlueprint.inCoordinates_bilin,
+    RicciFlowBlueprint.localFrame_eq_symmL',
+    RicciFlowBlueprint.hsFibre,
+    RicciFlowBlueprint.hsFibre_eq,
+    RicciFlowBlueprint.hsFibre_symm,
+    RicciFlowBlueprint.hsFibre_self_pos,
+    RicciFlowBlueprint.isVonNBounded_hsFibre,
+    RicciFlowBlueprint.contMDiffAt_hsFibre_apply,
+    RicciFlowBlueprint.contMDiff_hsFibre,
+    RicciFlowBlueprint.endMetric,
+    RicciFlowBlueprint.EndTangent,
+    RicciFlowBlueprint.endTangentMetric,
+    RicciFlowBlueprint.isContMDiffRiemannianBundle_endTangent}
+  \leanok
+  \uses{lem:hs-form, lem:hom-bundle-connection}
+  On a $C^n$ Riemannian manifold the Hilbert--Schmidt form is a $C^n$ Riemannian metric on the
+  endomorphism bundle $\mathrm{End}(T\M)$, and $\mathrm{End}(T\M)$ is a $C^n$ Riemannian
+  bundle.
+
+  \textbf{Proved} (\texttt{EndBundleMetric.lean}). Together with
+  \hyperref[lem:hom-bundle-connection]{the induced connection} this gives the first bundle
+  other than $T\M$ itself carrying both a connection and a fibre metric, which is what the
+  general-bundle layer --- $\nabla^2$, $\Delta$, Bochner, normal sections, the touching-point
+  maximum principle --- has never had an instantiation at.
+
+  \textbf{The smoothness field.} It goes through \texttt{contMDiffAt\_hom\_bundle}, which
+  reduces smoothness of a section of $\mathrm{Hom}(\mathrm{End}\,T\M,
+  \mathrm{Hom}(\mathrm{End}\,T\M,\R))$ to smoothness of its coordinate representative. For a
+  \emph{bilinear form on the fibre} that representative is the form itself evaluated on the
+  trivialisation's inverse, $\Phi \mapsto \Phi(\sigma u, \sigma u')$: the nested hom bundle
+  unfolds twice and the inner unfolding lands on the \emph{trivial} bundle $\M \times \R$,
+  whose trivialisation is the identity, so no coordinate change survives. Since the model
+  fibre is finite-dimensional, two applications of the basis criterion reduce everything to
+  the scalar functions $y \mapsto \langle \sigma_y u, \sigma_y u'\rangle_{HS}$, and those are
+  smooth because a local \emph{orthonormal} frame of $T\M$ computes the Hilbert--Schmidt form
+  as a finite sum of inner products of tangent vectors.
+
+  \textbf{The real obstruction is a type-class one, and it is the content of the file.} The
+  metric cannot be attached to $y \mapsto T_y\M \to_L T_y\M$ at all: that fibre already carries
+  the \emph{operator norm} at default instance priority, while the norm a Riemannian bundle
+  structure induces is a scoped instance at priority $80$. So the inner product on the fibre
+  never resolves --- the operator-norm normed group wins the first search and no inner product
+  space matches it. The tangent space escapes this only because it is a non-reducible type
+  synonym with no competing head symbol. The fix is the same synonym one type former up:
+  $\mathrm{EndTangent}$, with the fibre and bundle instances transported. The transport of the
+  metric itself is definitional, which is what lets the proofs stay in the raw world, where
+  every Mathlib hom-bundle lemma applies syntactically, while the statement lives on the
+  synonym, where instance search behaves.
+\end{lemma}
+
+\begin{lemma}[$\mathrm{End}(T\M)$ carries a compatible connection and metric]
+  \label{lem:end-metric-compat}
+  \lean{RicciFlowBlueprint.mvfderiv_hsFibre_eq_of_frame,
+    RicciFlowBlueprint.mvfderiv_hsFibre_eq,
+    RicciFlowBlueprint.endTangentCov,
+    RicciFlowBlueprint.isMetricCompatible_endTangentCov,
+    RicciFlowBlueprint.inner_endTangentRiemannianBundle,
+    RicciFlowBlueprint.isMetricCompatible_endTangentCov_hs}
+  \leanok
+  \uses{lem:end-bundle-metric, lem:hom-bundle-connection, lem:metric-trace-cov}
+  For a metric connection on $T\M$, the induced connection on $\mathrm{End}(T\M)$ is metric
+  for the Hilbert--Schmidt form:
+  $X\langle A,B\rangle = \langle \nabla_X A, B\rangle + \langle A, \nabla_X B\rangle$.
+
+  \textbf{Proved} (\texttt{EndMetricCompat.lean}). Together with
+  \hyperref[lem:end-bundle-metric]{the fibre metric} this makes $\mathrm{End}(T\M)$ the first
+  bundle in this development other than $T\M$ itself carrying a \emph{compatible} connection
+  and metric --- which is exactly what the Bochner identity and the touching-point maximum
+  principle require of the pair, and so the first real instantiation the general bundle layer
+  has ever had.
+
+  \textbf{The argument is the metric-trace one, with one new ingredient.} Expand
+  $\langle A,B\rangle$ over a local orthonormal frame of $T\M$, differentiate each term by
+  metric compatibility downstairs, and substitute
+  $\nabla_X(A e_i) = (\nabla_X A)(e_i) + A(\nabla_X e_i)$ --- which is the definition of
+  $\nabla A$ rearranged. Four groups of terms result: two are the Hilbert--Schmidt forms of
+  $\nabla_X A$ and $\nabla_X B$ read off the same frame, and the other two cancel for the
+  reason the metric trace commutes with $\nabla$. The frame is \emph{not} parallel, so the
+  coefficients $\langle \nabla_X e_i, e_j\rangle$ survive individually; they are
+  antisymmetric, while $\langle A v, B w\rangle + \langle A w, B v\rangle$ is symmetric, so
+  the sum vanishes. Nothing here asks the frame to be parallel and nothing constructs one.
+\end{lemma}
+
+\begin{lemma}[Hamilton's curvature operator in dimension three]
+  \label{lem:curvature-operator-three}
+  \lean{RicciFlowBlueprint.sharp,
+    RicciFlowBlueprint.inner_sharp,
+    RicciFlowBlueprint.inner_sharp_comm,
+    CovariantDerivative.ricciSharp,
+    CovariantDerivative.inner_ricciSharp,
+    CovariantDerivative.curvatureOperator,
+    CovariantDerivative.inner_curvatureOperator,
+    CovariantDerivative.inner_curvatureOperator_comm,
+    CovariantDerivative.inner_curvatureOperator_self,
+    CovariantDerivative.inner_curvatureOperator_eq_zero,
+    CovariantDerivative.sum_inner_curvatureOperator_self}
+  \leanok
+  \uses{lem:curvature-three, lem:end-metric-compat, thm:ricci-symm}
+  The endomorphism $\mathrm{Rm}_3 = \mathrm{scal}\cdot\mathrm{Id} - 2\,\mathrm{Ric}^\sharp$ of
+  $T_x\M$ is self-adjoint; in dimension three it is diagonal in any Ricci eigenbasis, with
+  diagonal entries twice the sectional curvature of the opposite plane, and its trace is
+  $\mathrm{scal}$.
+
+  \textbf{Proved} (\texttt{CurvatureOperatorThree.lean}). In dimension three the Weyl tensor
+  vanishes, so the whole $(0,4)$ curvature tensor is carried by this \emph{endomorphism}
+  field. That is what lets the three-dimensional pinching argument run on
+  $\mathrm{End}(T\M)$ --- which now carries a connection, a fibre metric and their
+  compatibility --- rather than on $\mathrm{Sym}^2(\Lambda^2 T\M)$, so the $\Lambda^2$
+  elaboration wall is not on the critical path.
+
+  \textbf{The dimension-three content is cheap}, for the reason recorded at
+  \hyperref[lem:curvature-three]{the dictionary}: the trace identity
+  $\mathrm{Ric}(b_m,b_m) = \sum_n K(b_m,b_n)$ with pair symmetry gives the diagonal, and the
+  same identity read off-diagonally gives that a Ricci eigenbasis diagonalises the operator
+  --- in dimension three $\mathrm{Ric}(b_0,b_1)$ has a single surviving summand, so the
+  off-diagonal curvature component \emph{is} the off-diagonal Ricci component. No vanishing
+  of the Weyl tensor is used, and no four-linear expansion over a basis; the literature's
+  route through the decomposition $\mathrm{Rm} = f(\mathrm{Ric})$ is a genuine theorem and is
+  not required.
+
+  Three checks against the normalisation of \hyperref[lem:pinching-ode]{the curvature ODE},
+  where $\lambda,\mu,\nu$ are \emph{twice} the sectional curvatures and
+  $R = \lambda+\mu+\nu$: the diagonal entries are twice the sectional curvature of the
+  opposite plane, the off-diagonal entries vanish in a Ricci eigenbasis (needing neither
+  metric compatibility nor torsion-freeness), and the trace is $\mathrm{scal}$. On the unit
+  $S^3$ the first reads $6 - 4 = 2 = 2\cdot 1$.
+\end{lemma}
+
+\begin{lemma}[Ricci and the scalar curvature are smooth]
+  \label{lem:ricci-section}
+  \lean{RicciFlowBlueprint.exists_orthonormal_frame_on_open,
+    CovariantDerivative.contMDiffAt_ricciForm_apply,
+    CovariantDerivative.contMDiffAt_ricciForm_apply_two,
+    CovariantDerivative.contMDiffAt_scalarCurvatureAt,
+    CovariantDerivative.contMDiffAt_scalarCurvatureAt_two,
+    CovariantDerivative.contMDiff_scalarCurvatureAt,
+    CovariantDerivative.contMDiff_scalarCurvatureAt_two}
+  \leanok
+  \uses{def:ricci-form, lem:ricci-frame-sum}
+  For a $C^k$ connection, $y \mapsto \mathrm{Ric}_y(V_y, W_y)$ is $C^1$ on $C^2/C^3$ fields
+  and $C^2$ on $C^3/C^4$ fields, and the scalar curvature is a $C^2$ function on $\M$.
+
+  \textbf{Proved} (\texttt{RicciSection.lean}). \hyperref[def:ricci-form]{Making
+  $\mathrm{Ric}$ a bilinear form} says nothing about how it varies with the point, and that
+  gap was load-bearing: the scalar-curvature preservation results carry smoothness of
+  $\mathrm{scal}$ as an \emph{explicit hypothesis}, because nothing in the development proved
+  it.
+
+  \textbf{The one real obstacle is locality.} $\mathrm{Ric}$ is a trace, so it is computed by
+  an orthonormal frame; but a frame is local, while every smoothness statement in the
+  curvature tower is for \emph{globally} $C^k$ sections. So the trivialisation's orthonormal
+  frame is globalised one section at a time --- which gives agreement only near the point ---
+  and the finitely many agreement sets are intersected and the interior taken, exactly as for
+  the plain local frame used by the covariant derivative along a curve. The globalised frame
+  is then orthonormal on a whole \emph{open} neighbourhood, so the frame sum computes
+  $\mathrm{Ric}$ at every point of it, and a germ is all that smoothness needs. After that
+  each summand is smooth by smoothness of the curvature section, and $\mathrm{scal}$ is the
+  same sum on the diagonal.
+\end{lemma}
+
+\begin{lemma}[$\mathrm{Rm}_3$ is a $C^2$ section of $\mathrm{End}(T\M)$]
+  \label{lem:curvature-operator-section}
+  \lean{RicciFlowBlueprint.contMDiffAt_end_section_of_symmL,
+    CovariantDerivative.contMDiffAt_ricciSharp_apply,
+    CovariantDerivative.curvatureOperator_apply,
+    CovariantDerivative.contMDiffAt_curvatureOperator,
+    CovariantDerivative.contMDiff_curvatureOperator,
+    CovariantDerivative.contMDiff_curvatureOperator_endTangent}
+  \leanok
+  \uses{lem:curvature-operator-three, lem:ricci-section, lem:end-metric-compat}
+  Hamilton's curvature operator is a $C^2$ section of $\mathrm{End}(T\M)$, and of the type
+  synonym that carries the Hilbert--Schmidt metric and the induced connection.
+
+  \textbf{Proved} (\texttt{CurvatureOperatorSection.lean}). This is the point at which the
+  object the three-dimensional pinching argument runs on exists \emph{with all its
+  structure}: a $C^2$ section of a bundle that has a connection, a fibre metric, and their
+  compatibility.
+
+  \textbf{Two bricks.} First, a section of $\mathrm{End}(T\M)$ is $C^n$ as soon as its values
+  on the trivialisation's local frame are --- the converse of the statement that a smooth
+  bundle morphism applied to a smooth section is smooth, and what a \emph{constructed}
+  endomorphism field needs. It is cheap because for a $\mathrm{Hom}(V,V)$ section the
+  coordinate representative is literally the trivialisation coordinate of
+  $y \mapsto A_y(e^{-1}_y u)$, so no coordinate change survives. Second, $\mathrm{Ric}^\sharp$
+  applied to a $C^3$ field is a $C^2$ section, and \emph{the Riesz isomorphism is never
+  differentiated}: a section of a Riemannian bundle is $C^n$ as soon as its inner products
+  with a local frame are, and those inner products are the Ricci form, whose smoothness is
+  \hyperref[lem:ricci-section]{the previous lemma}. Everything else is the algebra of smooth
+  sections.
+\end{lemma}
+
+\begin{lemma}[The induced connection is $C^1$, and the maximum principle accepts
+  $\mathrm{End}(T\M)$]
+  \label{lem:hom-bundle-smooth}
+  \lean{RicciFlowBlueprint.contMDiffAt_hom_section_of_symmL,
+    CovariantDerivative.contMDiffCovariantDerivative_homCov,
+    CovariantDerivative.contMDiffCovariantDerivative_endCov,
+    RicciFlowBlueprint.contMDiffCovariantDerivative_endTangentCov,
+    RicciFlowBlueprint.exists_section_inner_laplacian_curvatureOperator_nonpos}
+  \leanok
+  \uses{lem:hom-bundle-connection, lem:curvature-operator-section, lem:end-metric-compat,
+    lem:bundle-touching-point}
+  The induced connection on a $\mathrm{Hom}$ bundle is $C^1$; consequently the
+  touching-point maximum principle applies to Hamilton's curvature operator as a section of
+  $\mathrm{End}(T\M)$.
+
+  \textbf{Proved} (\texttt{HomBundleSmooth.lean}, \texttt{CurvatureOperatorMaxPrinciple.lean}).
+  The induced connection was built as a covariant derivative, but nothing said it was
+  \emph{smooth} --- and the connection Laplacian, hence the whole
+  $\nabla^2$/$\Delta$/Bochner layer, needs exactly that. This was found by attempting the
+  composition rather than by inspection: every other hypothesis discharged, and this one did
+  not.
+
+  The proof is two applications of a criterion worth isolating: \emph{a section of
+  $\mathrm{Hom}(W_1,W_2)$ is $C^n$ as soon as its values on the source trivialisation's local
+  frame are.} That is the converse of ``a smooth bundle morphism applied to a smooth section
+  is smooth'', and it is what a \emph{constructed} morphism field needs; it is cheap because
+  the coordinate representative is literally the target trivialisation's coordinate of
+  $y \mapsto A_y(e_1^{-1}(y)u)$, so no coordinate change survives. Applying it once per
+  $\mathrm{Hom}$ reduces the claim to the two terms of
+  $\nabla A = \nabla^2(A\sigma) - A(\nabla^1\sigma)$ on a pair of local frames, each of which
+  is smoothness of a covariant derivative composed with application of a smooth morphism. The
+  frames are globalised first, since every smoothness statement in the covariant layer is for
+  globally $C^k$ sections and smoothness is a germ property.
+
+  The second statement is the falsification check for the whole $\mathrm{End}(T\M)$ line: the
+  general bundle layer is stated for an arbitrary bundle, and until now the only thing it
+  could be applied to was the tangent bundle itself, where the bridges check well-typedness
+  and nothing more.
+\end{lemma}
+
+\begin{lemma}[Evolution of the Ricci tensor]
+  \label{lem:evolution-ric}
+  \lean{RicciFlowBlueprint.derivRicciFormOfMetric_eq_sum,
+    RicciFlowBlueprint.derivRicciFormOfMetric_eq_laplacianBilin_add_of_isRicciFlowAt}
+  \leanok
+  \uses{lem:evolution-rm, lem:curvature-trace-second, lem:koszul-second-derivative}
+  Under the flow,
+  \[
+    \partial_t\Ric(Y,Z) = (\Delta_\g\Ric)(Y,Z)
+      + Q_1 + Q_2
+      + \sum_i \Ric\big(\Riem(e_i,Y)Z,\ e_i\big)
+      + \sum_i \Ric\big(Z,\ \Riem(e_i,Y)e_i\big),
+  \]
+  every term on the right being either $\Delta_\g\Ric$ or algebraic in $\Riem$ and $\Ric$.
+
+  \textbf{Proved} (\texttt{RicciEvolution.lean}). This is the first-slot trace of
+  \hyperref[lem:evolution-rm]{the curvature evolution equation}, taken at $X = W = e_j$ and
+  summed. \emph{Nothing new is computed.} The left-hand side is the trace of
+  $\partial_t\Riem$, which is $\partial_t\Ric$ because the time derivative passes through the
+  trace --- the inner half of the double-trace argument that
+  $\operatorname{tr}_\g(\partial_t\Ric)$ already used, extracted. The leading term on the
+  right is $\operatorname{tr}_1(\Delta\Riem) = \Delta_\g\Ric$, which is
+  \hyperref[lem:curvature-trace-second]{the previous lemma}. The remaining four terms are
+  sums of the two commutator terms and the two $\Ric$-against-$\Riem$ terms, and carry no
+  derivatives.
+
+  Together with $\partial_t R = \Delta R + 2|\Ric|^2$ this is what the dimension-three
+  curvature operator $\Riem_3 = R\cdot\mathrm{Id} - 2\Ric^\sharp$ evolves by, since $\Riem_3$
+  is built from exactly those two.
+\end{lemma}
+
+\begin{lemma}[The first-slot trace commutes with $\nab^2$, and $\mathrm{tr}_1(\Delta\Riem) = \Delta_g\Ric$]
+  \label{lem:curvature-trace-second}
+  \lean{CovariantDerivative.sum_antisymm_pair_eq_zero,
+    CovariantDerivative.sum_inner_cov2Curvature_fst_eq_cov2Bilin,
+    CovariantDerivative.sum_inner_curvatureLaplacian_fst_eq_laplacianBilin}
+  \leanok
+  \uses{def:cov2-curvature, def:bilin-laplacian, lem:traced-bianchi, lem:metric-trace-cov}
+  For a metric connection and a local orthonormal frame $(e_i)$,
+  \[
+    \sum_i \big\langle (\nab^2_{U,V}\Riem)(e_i,X)Z,\ e_i\big\rangle
+      = (\nab^2_{U,V}\Ric)(X,Z),
+    \qquad
+    \sum_i \big\langle (\Delta\Riem)(e_i,X)Z,\ e_i\big\rangle
+      = (\Delta_g\Ric)(X,Z).
+  \]
+
+  \textbf{Proved} (\texttt{CurvatureTrace.lean}). This is the first-slot trace lemma of
+  \hyperref[lem:traced-bianchi]{the divergence file} one derivative up, and it is what the
+  evolution equation of the dimension-three curvature operator
+  $\Riem_3 = \mathrm{scal}\cdot\mathrm{Id} - 2\Ric^\sharp$ consumes: tracing
+  $\partial_t\Riem = \Delta\Riem + Q$ in its first slot turns the left-hand side into
+  $\partial_t\Ric$ and $\Delta\Riem$ into $\Delta_g\Ric$.
+
+  \emph{The five corrections of $\nab^2\Riem$ meet the three of $\nab^2 h$ exactly.} Three of
+  the five are $\nab\Riem$ with one of $V$, $X$, $Z$ differentiated, and each traces to the
+  matching term of $\nab^2\Ric$ by the one-derivative lemma. The remaining two --- the
+  leading $\nab_U$ of the traced section, and the correction in the \emph{frame} slot ---
+  must together produce the derivative of the traced function, and the difference between
+  them is the frame-derivative residue
+  \[
+    \sum_i \Big[\big\langle (\nab_V\Riem)(\nab_U e_i, X)Z, e_i\big\rangle
+      + \big\langle (\nab_V\Riem)(e_i,X)Z, \nab_U e_i\big\rangle\Big] = 0,
+  \]
+  antisymmetric coefficients against a symmetric pairing, as for the metric trace.
+
+  \emph{But the antisymmetry lemma of \hyperref[lem:metric-trace-cov]{the metric-trace
+  argument} does not apply here}, and that is the one real obstacle. That lemma wants a
+  bundled continuous bilinear form, and the pairing at hand is $\nab\Riem$ in its
+  \emph{second} slot, where tensoriality demands a $C^2$ coefficient --- so the construction
+  that would bundle it, which quantifies over merely differentiable sections, is
+  unavailable. The remedy is to expand the frame derivative in the frame with \emph{constant}
+  coefficients $c_{ij} = \langle \nab_U e_i, e_j\rangle$, legitimate because the second slot
+  is \emph{pointwise} and constants are smooth; the cancellation is then purely combinatorial
+  and no bilinear form is ever bundled.
+
+  The second statement is the first traced once more over the two derivative slots. Both
+  Laplacians are read off the same frame, so the only work is exchanging the two independent
+  sums.
+\end{lemma}
+
+\begin{lemma}[Index raising commutes with $\nab$, $\nab^2$ and $\Delta$]
+  \label{lem:sharp-laplacian}
+  \lean{CovariantDerivative.inner_endCov_eq_covBilin,
+    CovariantDerivative.inner_hessianSection_eq_cov2Bilin,
+    CovariantDerivative.inner_laplacianSection_eq_laplacianBilin,
+    CovariantDerivative.contMDiffAt_ricciSharp,
+    CovariantDerivative.contMDiff_ricciSharp,
+    CovariantDerivative.inner_laplacianSection_ricciSharp_eq_laplacianBilin}
+  \leanok
+  \uses{lem:hom-bundle-connection, def:bilin-laplacian, lem:end-metric-compat,
+    lem:curvature-operator-three, lem:bundle-touching-point}
+  Let $A$ be an endomorphism field of $T\M$ and $h$ a bilinear form field with
+  $\langle Av, w\rangle = h(v,w)$ --- index raising, $A = h^\sharp$. Then for a metric
+  connection
+  \[
+    \langle (\nab_X A)v, w\rangle = (\nab_X h)(v,w),\quad
+    \langle (\nab^2_{X,Y}A)v, w\rangle = (\nab^2_{X,Y}h)(v,w),\quad
+    \langle (\Delta A)v, w\rangle = (\Delta_\g h)(v,w).
+  \]
+
+  \textbf{Proved} (\texttt{SharpLaplacian.lean}). \emph{This is the bridge the
+  dimension-three maximum principle needs.} Hamilton's curvature operator is a section of
+  $\mathrm{End}(T\M)$ and the touching-point principle on that bundle speaks of the
+  connection Laplacian of the induced connection; every evolution equation proved here is
+  about bilinear forms and produces $\Delta_\g$. Without this lemma the two say nothing to
+  each other.
+
+  There is no sharp in the statements and none in the proofs: the interface is the hypothesis
+  $\langle Av,w\rangle = h(v,w)$, which the Ricci operator satisfies on the nose. Metric
+  compatibility is the whole content and is used once per derivative --- $\nab A$ is
+  $\nab(A\sigma) - A(\nab\sigma)$ by definition, and moving $\nab$ off the first term and
+  onto the pairing turns it into $\nab h$ written out. The second derivative is that argument
+  applied twice, with the connection corrections matching term for term, and the trace is
+  then free, both Laplacians being read off the same frame.
+
+  The last statement is the falsification check, $\Delta(\Ric^\sharp) =
+  (\Delta_\g\Ric)^\sharp$: a general theorem with no instantiations is unverified, and
+  $\Ric^\sharp$ is the object the bridge exists for. It needs $\Ric^\sharp$ to be a $C^2$
+  \emph{section} of $\mathrm{End}(T\M)$, which is the criterion used for the curvature
+  operator with only the sharp term.
+\end{lemma}
+
 \begin{definition}[$\mathcal{L}$-length, $\mathcal{L}$-geodesics, reduced volume]
   \label{def:reduced-volume}
   \uses{def:ricci-flow}
