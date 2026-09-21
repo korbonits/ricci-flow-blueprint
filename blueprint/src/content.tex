@@ -5249,6 +5249,37 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   set and not of some other one.
 \end{lemma}
 
+\begin{lemma}[The pinching set is a parallel subbundle]
+  \label{lem:ivey-parallel}
+  \lean{RicciFlowBlueprint.endoConj,
+        RicciFlowBlueprint.lambdaMin_conj,
+        RicciFlowBlueprint.Pinching.traceEndo_conj,
+        RicciFlowBlueprint.Pinching.mem_iveyEndoSet_conj_iff,
+        RicciFlowBlueprint.exists_parallelTransport_mem_iveyEndoSet_iff}
+  \leanok
+  \uses{lem:ivey-endo, lem:transport-global}
+  The pinching set is invariant under conjugation by any linear isometry of fibres, and
+  therefore --- parallel transport for a metric connection being an isometry --- under
+  parallel transport along any curve.
+
+  \textbf{Proved} (\texttt{IveyEndo.lean}, \texttt{IveyParallel.lean}). Both conditions
+  cutting the set out, the trace and $\lambda_{\min}$, are conjugation-invariant, so
+  $\mathcal{K}$ is \emph{natural}: it is attached to an inner product space with no further
+  choice.
+
+  \emph{This is what the cross-fibre half of the maximum principle asks for, and it costs no
+  transport computation.} That argument compares $\mathrm{dist}(u(t,x), \mathcal{K}_x)$
+  between different fibres, and Hamilton's version requires the family $x \mapsto
+  \mathcal{K}_x$ to be preserved by parallel transport. Here that is not a condition to be
+  checked against a connection: \emph{every} fibre isometry preserves the set, and transport
+  is one.
+
+  The two halves are stated separately and then joined, because neither on its own is the
+  hypothesis the maximum principle wants --- the naturality lemma knows nothing about a
+  connection, and the transport theorem knows nothing about the set --- and a general lemma
+  that is never instantiated is a liability.
+\end{lemma}
+
 \begin{lemma}[Hamilton--Ivey for the curvature ODE]
   \label{lem:ivey-ode}
   \lean{RicciFlowBlueprint.Pinching.IsCurvatureODE.hamiltonIvey,

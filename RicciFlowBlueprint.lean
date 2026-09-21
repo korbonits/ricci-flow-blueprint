@@ -79,3 +79,4 @@ import RicciFlowBlueprint.RicciEvolution
 import RicciFlowBlueprint.SharpLaplacian
 import RicciFlowBlueprint.IveyEndo
 import RicciFlowBlueprint.CurvatureOperatorPinched
+import RicciFlowBlueprint.IveyParallel

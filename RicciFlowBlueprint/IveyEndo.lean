@@ -198,6 +198,38 @@ theorem trace_eq_sum_of_diagonal (b : OrthonormalBasis ι ℝ W) {A : W →L[ℝ
 
 end Diagonal
 
+section Conj
+
+variable {W : Type*} [NormedAddCommGroup W] [InnerProductSpace ℝ W]
+  {W' : Type*} [NormedAddCommGroup W'] [InnerProductSpace ℝ W']
+
+/-- **Conjugation of an endomorphism by a linear isometry equivalence**, `A ↦ S A S⁻¹`. -/
+noncomputable def endoConj (S : W ≃ₗᵢ[ℝ] W') (A : W →L[ℝ] W) : W' →L[ℝ] W' :=
+  S.toContinuousLinearEquiv.toContinuousLinearMap.comp
+    (A.comp S.symm.toContinuousLinearEquiv.toContinuousLinearMap)
+
+@[simp] theorem endoConj_apply (S : W ≃ₗᵢ[ℝ] W') (A : W →L[ℝ] W) (v : W') :
+    endoConj S A v = S (A (S.symm v)) := rfl
+
+/-- **`λ_min` is conjugation-invariant.** An isometry carries unit vectors to unit vectors
+and preserves the pairing, so the two Rayleigh ranges are the same set. -/
+theorem lambdaMin_conj [Nontrivial W] [Nontrivial W'] (S : W ≃ₗᵢ[ℝ] W') (A : W →L[ℝ] W) :
+    lambdaMin (endoConj S A) = lambdaMin A := by
+  refine le_antisymm (le_lambdaMin fun v hv ↦ ?_) (le_lambdaMin fun w hw ↦ ?_)
+  · have hSv : ‖S v‖ = 1 := by rw [S.norm_map]; exact hv
+    have h := lambdaMin_le (endoConj S A) hSv
+    rwa [endoConj_apply, S.symm_apply_apply, S.inner_map_map] at h
+  · have hSw : ‖S.symm w‖ = 1 := by rw [S.symm.norm_map]; exact hw
+    have key : ∀ a b : W, ⟪a, b⟫ = ⟪S a, S b⟫ := fun a b ↦ (S.inner_map_map a b).symm
+    have e : ⟪endoConj S A w, w⟫ = ⟪A (S.symm w), S.symm w⟫ := by
+      rw [key (A (S.symm w)) (S.symm w), S.apply_symm_apply]
+      rfl
+    rw [e]
+    exact lambdaMin_le A hSw
+
+end Conj
+
+
 namespace Pinching
 
 /-- **`G` is antitone.** `ν ↦ max(-ν, e²)` is antitone and lands in `[e², ∞)`, where `f`
@@ -306,6 +338,40 @@ theorem mem_iveyEndoSet_iff_isIveyPinched_antitone (b : OrthonormalBasis (Fin 3)
     A ∈ iveyEndoSet W ↔ IsIveyPinched (e 0) (e 1) (e 2) :=
   mem_iveyEndoSet_iff_isIveyPinched b (hA 0) (hA 1) (hA 2)
     (he (by decide)) (he (by decide))
+
+section Naturality
+
+variable {W' : Type*} [NormedAddCommGroup W'] [InnerProductSpace ℝ W'] [Nontrivial W']
+  [FiniteDimensional ℝ W']
+
+omit [Nontrivial W] [Nontrivial W'] in
+/-- **The trace is conjugation-invariant**, Mathlib's `LinearMap.trace_conj'` through the
+coercion. -/
+theorem traceEndo_conj (S : W ≃ₗᵢ[ℝ] W') (A : W →L[ℝ] W) :
+    traceEndo W' (endoConj S A) = traceEndo W A := by
+  rw [traceEndo_apply, traceEndo_apply]
+  have he : ((endoConj S A : W' →L[ℝ] W') : W' →ₗ[ℝ] W')
+      = S.toLinearEquiv.conj (A : W →ₗ[ℝ] W) := by
+    ext v
+    rfl
+  rw [he, LinearMap.trace_conj']
+
+-- BENCH: ivey-endo-natural
+/-- **The pinching set is invariant under every fibre isometry.**
+
+Both conditions cutting it out — the trace and `λ_min` — are conjugation-invariant, so
+`iveyEndoSet` is *natural*: it is attached to an inner product space with no further choice.
+
+**This is what makes `x ↦ iveyEndoSet (V x)` a parallel subbundle, with no transport
+computation.** The cross-fibre half of the maximum principle compares `dist(u(t,x), K_x)`
+between different fibres, and Hamilton's argument asks for `K` to be preserved by parallel
+transport. Here that is not a hypothesis to be checked against a connection: transport is an
+isometry (`TransportIsometry.lean`), and *every* isometry preserves this set. -/
+theorem mem_iveyEndoSet_conj_iff (S : W ≃ₗᵢ[ℝ] W') (A : W →L[ℝ] W) :
+    endoConj S A ∈ iveyEndoSet W' ↔ A ∈ iveyEndoSet W := by
+  rw [mem_iveyEndoSet_iff, mem_iveyEndoSet_iff, lambdaMin_conj, traceEndo_conj]
+
+end Naturality
 
 end Set
 
