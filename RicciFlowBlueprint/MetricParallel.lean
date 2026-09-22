@@ -21,6 +21,7 @@ Argument order follows `CovariantDerivative`: `cov σ x (X x)` is `(∇_X σ) x`
 -/
 import RicciFlowBlueprint.BilinLaplacian
 import RicciFlowBlueprint.Bochner
+import RicciFlowBlueprint.OneForm
 import Mathlib.Geometry.Manifold.VectorBundle.CovariantDerivative.Metric
 
 open Bundle Filter Module
@@ -135,5 +136,165 @@ theorem laplacianBilin_metricForm
   exact cov.cov2Bilin_metricForm hmet
     ((exists_contMDiff_two_extension
       (stdOrthonormalBasis ℝ (TangentSpace I x) i)).choose_spec.1.mdifferentiable h2 x) hY hZ
+
+section FunSmul
+
+/-! ### A function times a bilinear form
+
+The Leibniz rule `∇(f·h) = df ⊗ h + f ∇h` for a *varying* scalar. The repo had only the
+constant case (`covBilin_smul_form`), which is all a rescaling `-2 Ric` needs; a term like
+`scal · g` needs the general one. Specialised at `h = g`, where `∇g` vanishes, every
+derivative of `f · g` is a derivative of `f` tensored with `g`, and the trace is `Δf · g`. -/
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E]
+  [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]
+  [IsContMDiffRiemannianBundle I 1 E (fun (x : M) ↦ TangentSpace I x)]
+  [ContMDiffCovariantDerivative cov 1] [T2Space M] in
+/-- **`∇(f·h) = df ⊗ h + f ∇h`**, the Leibniz rule in the form slot with a varying scalar.
+The two corrections `∇h` subtracts each pick up the factor `f x`, and the Leibniz term of
+the leading derivative is the tensor `df ⊗ h`. -/
+theorem covBilin_fun_smul (f : M → ℝ) (h : M → E →L[ℝ] E →L[ℝ] ℝ)
+    {X Y Z : Π y : M, TangentSpace I y} {x : M}
+    (hf : MDiffAt f x) (hh : MDiffAt (fun y ↦ h y (Y y) (Z y)) x) :
+    cov.covBilin (fun y ↦ (f y • h y : E →L[ℝ] E →L[ℝ] ℝ)) X Y Z x
+      = mvfderiv I f x (X x) * h x (Y x) (Z x) + f x * cov.covBilin h X Y Z x := by
+  have hfun : (fun y ↦ (f y • h y : E →L[ℝ] E →L[ℝ] ℝ) (Y y) (Z y))
+      = fun y ↦ f y * h y (Y y) (Z y) := by
+    funext y; rfl
+  have hd : mvfderiv I (fun y ↦ f y * h y (Y y) (Z y)) x (X x)
+      = f x * mvfderiv I (fun y ↦ h y (Y y) (Z y)) x (X x)
+        + mvfderiv I f x (X x) * h x (Y x) (Z x) := by
+    rw [mvfderiv_fun_mul hf hh]
+    simp only [add_apply, smul_apply, smul_eq_mul]
+    ring
+  have e₁ : (f x • h x : E →L[ℝ] E →L[ℝ] ℝ) (cov Y x (X x)) (Z x)
+      = f x * h x (cov Y x (X x)) (Z x) := rfl
+  have e₂ : (f x • h x : E →L[ℝ] E →L[ℝ] ℝ) (Y x) (cov Z x (X x))
+      = f x * h x (Y x) (cov Z x (X x)) := rfl
+  simp only [covBilin, hfun]
+  rw [hd, e₁, e₂]
+  ring
+
+omit [CompleteSpace E] [ContMDiffCovariantDerivative cov 1] [T2Space M] in
+/-- **`∇(f·g) = df ⊗ g`**: the metric contributes nothing, being parallel. -/
+theorem covBilin_fun_smul_metricForm
+    (hmet : cov.IsMetricCompatible (M := M) (V := TangentSpace I)) (f : M → ℝ)
+    {X Y Z : Π y : M, TangentSpace I y} {x : M} (hf : MDiffAt f x)
+    (hY : MDiffAt (T% Y) x) (hZ : MDiffAt (T% Z) x) :
+    cov.covBilin (fun y ↦ (f y • metricForm I y : E →L[ℝ] E →L[ℝ] ℝ)) X Y Z x
+      = mvfderiv I f x (X x) * ⟪Y x, Z x⟫ := by
+  rw [cov.covBilin_fun_smul f (metricForm I) hf (MDifferentiableAt.inner_bundle' hY hZ),
+    cov.covBilin_metricForm hmet X hY hZ]
+  simp
+
+omit [CompleteSpace E] [ContMDiffCovariantDerivative cov 1] [T2Space M] in
+/-- `∇(f·g) = df ⊗ g` as a function of the base point, which is what differentiating it
+needs. -/
+theorem covBilin_fun_smul_metricForm_eq
+    (hmet : cov.IsMetricCompatible (M := M) (V := TangentSpace I)) (f : M → ℝ)
+    {X Y Z : Π y : M, TangentSpace I y} (hf : ∀ y, MDiffAt f y)
+    (hY : ∀ y, MDiffAt (T% Y) y) (hZ : ∀ y, MDiffAt (T% Z) y) :
+    (fun y ↦ cov.covBilin (fun z ↦ (f z • metricForm I z : E →L[ℝ] E →L[ℝ] ℝ)) X Y Z y)
+      = fun y ↦ mvfderiv I f y (X y) * ⟪Y y, Z y⟫ :=
+  funext fun y ↦ cov.covBilin_fun_smul_metricForm hmet f (hf y) (hY y) (hZ y)
+
+omit [CompleteSpace E] [FiniteDimensional ℝ E] [ContMDiffCovariantDerivative cov 1]
+  [T2Space M] in
+/-- `f · g` is differentiable against differentiable fields. -/
+theorem isMDiffBilinAt_fun_smul_metricForm {f : M → ℝ} {x : M} (hf : MDiffAt f x) :
+    IsMDiffBilinAt (I := I) (fun y ↦ (f y • metricForm I y : E →L[ℝ] E →L[ℝ] ℝ)) x := by
+  intro U V hU hV
+  have : (fun y ↦ (f y • metricForm I y : E →L[ℝ] E →L[ℝ] ℝ) (U y) (V y))
+      = fun y ↦ f y * ⟪U y, V y⟫ := by funext y; rfl
+  rw [this]
+  exact hf.mul (MDifferentiableAt.inner_bundle' hU hV)
+
+omit [CompleteSpace E] [ContMDiffCovariantDerivative cov 1] [T2Space M] in
+/-- `∇(f·g)` is differentiable in the base point: it is `df ⊗ g`, so what it asks of `f` is
+exactly that `df` be a differentiable one-form. -/
+theorem isMDiffCovBilinAt_fun_smul_metricForm
+    (hmet : cov.IsMetricCompatible (M := M) (V := TangentSpace I)) {f : M → ℝ}
+    {Y Z : Π y : M, TangentSpace I y} {x : M} (hf : ∀ y, MDiffAt f y)
+    (hdf : IsMDiffOneFormAt (I := I)
+      (fun y ↦ (mvfderiv I f y : TangentSpace I y →L[ℝ] ℝ)) x)
+    (hY : ∀ y, MDiffAt (T% Y) y) (hZ : ∀ y, MDiffAt (T% Z) y) :
+    cov.IsMDiffCovBilinAt (fun y ↦ (f y • metricForm I y : E →L[ℝ] E →L[ℝ] ℝ)) Y Z x := by
+  intro V hV
+  have h1 : (1 : ℕ∞ω) ≠ 0 := by norm_num
+  rw [cov.covBilin_fun_smul_metricForm_eq hmet f hf hY hZ]
+  exact (hdf V (hV.mdifferentiable h1 x)).mul (MDifferentiableAt.inner_bundle' (hY x) (hZ x))
+
+omit [CompleteSpace E] [T2Space M] in
+-- BENCH: metric-parallel-fun-second
+/-- **`∇²(f·g) = ∇²f ⊗ g`.** The leading term splits by the product rule; metric
+compatibility turns the derivative of `⟪Y,Z⟫` into the two corrections in `Y` and `Z`, which
+cancel against the ones `∇²` subtracts, and what is left is the Hessian of `f` times `g`. -/
+theorem cov2Bilin_fun_smul_metricForm
+    (hmet : cov.IsMetricCompatible (M := M) (V := TangentSpace I)) {f : M → ℝ}
+    {W X Y Z : Π y : M, TangentSpace I y} {x : M} (hf : ∀ y, MDiffAt f y)
+    (hdf : IsMDiffOneFormAt (I := I)
+      (fun y ↦ (mvfderiv I f y : TangentSpace I y →L[ℝ] ℝ)) x)
+    (hW : MDiffAt (T% W) x) (hX : MDiffAt (T% X) x)
+    (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z)) :
+    cov.cov2Bilin (fun y ↦ (f y • metricForm I y : E →L[ℝ] E →L[ℝ] ℝ)) W X Y Z x
+      = cov.hessianFun f W X x * ⟪Y x, Z x⟫ := by
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  have hYm : ∀ y, MDiffAt (T% Y) y := hY.mdifferentiable h2
+  have hZm : ∀ y, MDiffAt (T% Z) y := hZ.mdifferentiable h2
+  have hDY : MDiffAt (T% (fun z ↦ cov Y z (W z))) x := cov.mdiffAt_cov_apply hY hW
+  have hDZ : MDiffAt (T% (fun z ↦ cov Z z (W z))) x := cov.mdiffAt_cov_apply hZ hW
+  -- the derivative of `⟪Y,Z⟫`, read off `∇g = 0`
+  have hinner : mvfderiv I (fun y ↦ (⟪Y y, Z y⟫ : ℝ)) x (W x)
+      = ⟪cov Y x (W x), Z x⟫ + ⟪Y x, cov Z x (W x)⟫ := by
+    have h := cov.covBilin_metricForm hmet W (hYm x) (hZm x)
+    rw [covBilin] at h
+    have h' : mvfderiv I (fun y ↦ (metricForm I (M := M) y) (Y y) (Z y)) x (W x)
+        - ⟪cov Y x (W x), Z x⟫ - ⟪Y x, cov Z x (W x)⟫ = 0 := h
+    have h'' : mvfderiv I (fun y ↦ (⟪Y y, Z y⟫ : ℝ)) x (W x)
+        - ⟪cov Y x (W x), Z x⟫ - ⟪Y x, cov Z x (W x)⟫ = 0 := h'
+    linarith
+  -- the leading term
+  have hlead : mvfderiv I (fun y ↦ cov.covBilin
+        (fun z ↦ (f z • metricForm I z : E →L[ℝ] E →L[ℝ] ℝ)) X Y Z y) x (W x)
+      = mvfderiv I (fun y ↦ mvfderiv I f y (X y)) x (W x) * ⟪Y x, Z x⟫
+        + mvfderiv I f x (X x) * (⟪cov Y x (W x), Z x⟫ + ⟪Y x, cov Z x (W x)⟫) := by
+    have hdfX : MDiffAt (fun y ↦ mvfderiv I f y (X y)) x := hdf X hX
+    rw [cov.covBilin_fun_smul_metricForm_eq hmet f hf hYm hZm,
+      mvfderiv_fun_mul hdfX (MDifferentiableAt.inner_bundle' (hYm x) (hZm x))]
+    simp only [add_apply, smul_apply, smul_eq_mul, hinner]
+    ring
+  rw [cov2Bilin, hlead,
+    cov.covBilin_fun_smul_metricForm hmet f (hf x) (hYm x) (hZm x),
+    cov.covBilin_fun_smul_metricForm hmet f (hf x) hDY (hZm x),
+    cov.covBilin_fun_smul_metricForm hmet f (hf x) (hYm x) hDZ, hessianFun]
+  ring
+
+omit [CompleteSpace E] in
+-- BENCH: metric-parallel-fun-laplacian
+/-- **`Δ_g(f·g) = (Δf)·g`.** Both traces are read off the same frame --- the left by
+`laplacianBilin_eq_sum_frame`, the right by `laplacianFun_eq_sum_frame`, which is free
+because `∇²f` *is* `∇` of the one-form `df` --- and then it is `cov2Bilin_fun_smul_metricForm`
+termwise. -/
+theorem laplacianBilin_fun_smul_metricForm
+    (hmet : cov.IsMetricCompatible (M := M) (V := TangentSpace I)) {f : M → ℝ}
+    {Y Z : Π y : M, TangentSpace I y} {x : M} (hf : ∀ y, MDiffAt f y)
+    (hdf : IsMDiffOneFormAt (I := I)
+      (fun y ↦ (mvfderiv I f y : TangentSpace I y →L[ℝ] ℝ)) x)
+    (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z))
+    {ι : Type*} [Fintype ι] {fr : ι → Π y : M, TangentSpace I y}
+    (hfr : ∀ i, CMDiff 2 (T% (fr i))) (b : OrthonormalBasis ι ℝ (TangentSpace I x))
+    (hbv : ∀ i, fr i x = b i) :
+    cov.laplacianBilin (fun y ↦ (f y • metricForm I y : E →L[ℝ] E →L[ℝ] ℝ)) Y Z x
+      = cov.laplacianFun f x * ⟪Y x, Z x⟫ := by
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  have hfr1 : ∀ i, MDiffAt (T% (fr i)) x := fun i ↦ (hfr i).mdifferentiable h2 x
+  rw [cov.laplacianBilin_eq_sum_frame (isMDiffBilinAt_fun_smul_metricForm (I := I) (hf x))
+      (cov.isMDiffCovBilinAt_fun_smul_metricForm hmet hf hdf
+        (hY.mdifferentiable h2) (hZ.mdifferentiable h2)) hY hZ hfr b hbv,
+    cov.laplacianFun_eq_sum_frame hdf hfr1 b hbv, Finset.sum_mul]
+  exact Finset.sum_congr rfl fun i _ ↦
+    cov.cov2Bilin_fun_smul_metricForm hmet hf hdf (hfr1 i) (hfr1 i) hY hZ
+
+end FunSmul
 
 end CovariantDerivative

@@ -4932,6 +4932,50 @@ Perelman's monotone functionals are what rule it out.
   (Lemma \ref{lem:sharp-laplacian}).
 \end{lemma}
 
+\begin{lemma}[A function times the metric]
+  \label{lem:fun-times-metric}
+  \lean{CovariantDerivative.covBilin_fun_smul,
+        CovariantDerivative.covBilin_fun_smul_metricForm,
+        CovariantDerivative.covBilin_fun_smul_metricForm_eq,
+        CovariantDerivative.isMDiffBilinAt_fun_smul_metricForm,
+        CovariantDerivative.isMDiffCovBilinAt_fun_smul_metricForm,
+        CovariantDerivative.cov2Bilin_fun_smul_metricForm,
+        CovariantDerivative.laplacianBilin_fun_smul_metricForm}
+  \leanok
+  \uses{lem:metric-parallel, def:one-form-divergence}
+  For a bilinear form field $h$ and a function $f$,
+  \[
+    \nab(f\,h) = df \otimes h + f\,\nab h .
+  \]
+  For a metric connection and $h = \g$ this collapses at every order:
+  \[
+    \nab(f\,\g) = df\otimes\g,\qquad
+    \nab^2(f\,\g) = \nab^2 f\otimes\g,\qquad
+    \Delta_\g(f\,\g) = (\Delta f)\,\g .
+  \]
+
+  \textbf{Proved} (\texttt{MetricParallel.lean}). The repo had only the \emph{constant} case,
+  which is all a rescaling $-2\Ric$ needs; a term like $R\cdot\g$ needs a varying scalar. The
+  general rule is the ordinary Leibniz rule: the two corrections $\nab h$ subtracts each pick
+  up the factor $f$, and what the leading derivative contributes beyond $f\,\nab h$ is the
+  tensor $df\otimes h$.
+
+  At $h = \g$ the first statement has no $\nab\g$ term at all
+  (Lemma \ref{lem:metric-parallel}). For the second, the leading term splits by the product
+  rule and metric compatibility turns the derivative of $\langle Y,Z\rangle$ into the two
+  corrections in $Y$ and $Z$; those cancel against the ones $\nab^2$ subtracts, and what is
+  left is exactly $\big[\,W(df(X)) - df(\nab_W X)\,\big]\langle Y,Z\rangle$, the Hessian of
+  $f$ times $\g$. The trace is then free: both Laplacians are read off the same frame --- the
+  left by frame-independence of $\Delta_\g h$, the right by that of $\Delta f$, which is
+  itself free because $\nab^2 f$ \emph{is} $\nab$ of the one-form $df$
+  (Definition \ref{def:one-form-divergence}) --- so it is the second statement termwise.
+
+  The two differentiability criteria are what the trace consumes: $f\,\g$ is differentiable
+  against differentiable fields because $f$ and $\langle\cdot,\cdot\rangle$ are, and
+  $\nab(f\,\g) = df\otimes\g$ is differentiable in the base point exactly when $df$ is a
+  differentiable one-form --- the same hypothesis $\Delta f$ already carries.
+\end{lemma}
+
 \begin{lemma}[Index raising commutes with $\nab$, $\nab^2$ and $\Delta$]
   \label{lem:sharp-laplacian}
   \lean{CovariantDerivative.inner_endCov_eq_covBilin,
