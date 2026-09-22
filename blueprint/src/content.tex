@@ -3850,6 +3850,54 @@ Perelman's monotone functionals are what rule it out.
   reason.
 \end{lemma}
 
+\begin{lemma}[Existence of $D/dt$ on a general bundle]
+  \label{lem:bundle-cov-along-curve-exists}
+  \lean{CovariantDerivative.repr_basisAt_eq_section,
+    CovariantDerivative.sum_repr_smul_localFrame_section,
+    CovariantDerivative.canonFrameSection,
+    CovariantDerivative.contMDiff_canonFrameSection,
+    CovariantDerivative.canonFrameSection_apply_self,
+    CovariantDerivative.coeffAlongSection,
+    CovariantDerivative.covAlongSection,
+    CovariantDerivative.sum_coeffAlongSection_smul_canonFrameSection,
+    CovariantDerivative.differentiableAt_coeffAlongSection,
+    CovariantDerivative.isCovDerivAlongSection_covAlongSection,
+    CovariantDerivative.exists_isCovDerivAlongSection,
+    CovariantDerivative.eq_covAlongSection,
+    CovariantDerivative.IsParallelAlongSection,
+    CovariantDerivative.isParallelAlongSection_iff_forall,
+    CovariantDerivative.covAlongSection_eq_covAlong,
+    CovariantDerivative.isParallelAlongSection_iff_isParallelAlong}
+  \leanok
+  \uses{lem:bundle-cov-along-curve, lem:cov-along-curve-exists,
+    lem:global-extension}
+  An operator satisfying the three axioms exists for a section of an arbitrary
+  vector bundle $V$ along a curve, on the set where $\gamma$ is differentiable.
+  Hence $D/dt$ is well defined there, and a section of $V$ is \emph{parallel}
+  along $\gamma$ when it vanishes.
+
+  \textbf{Proved} (\texttt{BundleCovariantAlongCurve.lean}). The construction is
+  the one on $T\M$ read in a trivialisation of $V$: differentiate the fibre
+  coordinates of $\sigma$ and add the connection's own contribution on the
+  frame. Additivity and the Leibniz rule are then the corresponding facts about
+  ordinary derivatives, because a trivialisation is fibrewise linear; the third
+  axiom is the only one with content, and it is the ambient connection's Leibniz
+  rule applied to the local-frame expansion of a global section.
+
+  \emph{Existence is what stops the definition being vacuous.} Quantified over
+  operators satisfying the axioms, a vanishing condition on an \emph{empty}
+  class of operators is trivially true. So
+  \texttt{isParallelAlongSection\_iff\_forall} is proved in both directions:
+  forward by uniqueness (Lemma \ref{lem:bundle-cov-along-curve}), backward by
+  existence, and it is the backward direction that carries the content.
+
+  The tangent-bundle bridge is not asserted by construction either: both
+  operators satisfy the axioms and uniqueness identifies them
+  (\texttt{covAlongSection\_eq\_covAlong}), which is what checks that the
+  general construction computes the operator of Lemma
+  \ref{lem:cov-along-curve-exists} and not merely something of the same type.
+\end{lemma}
+
 \begin{lemma}[Existence of $D/dt$]
   \label{lem:cov-along-curve-exists}
   \lean{CovariantDerivative.canonFrame,

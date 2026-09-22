@@ -21,6 +21,7 @@ the same adjustment `GlobalExtension.lean` documents, for the same reason.
 Argument order follows `CovariantDerivative`: `cov σ y (X y)` is `(∇_X σ) y` on paper.
 -/
 import RicciFlowBlueprint.CovariantAlongCurve
+import RicciFlowBlueprint.BundleNormalSection
 
 open Bundle
 open scoped Manifold ContDiff Topology
@@ -63,12 +64,12 @@ structure IsCovDerivAlongSection
     (ht : t ∈ s := by trivial) :
     D (f • σ) t = f t • D σ t + deriv f t • σ t
   restrict {W : Π y : M, V y} {t : ℝ}
-    (hW : MDifferentiableAt I (I.prod 𝓘(ℝ, F)) (fun y ↦ (⟨y, W y⟩ : TotalSpace F V)) (γ t))
+    (hW : MDiffAt (T% W) (γ t))
     (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t) (ht : t ∈ s := by trivial) :
     D (fun u ↦ W (γ u)) t = cov W (γ t) (velocity γ t)
 
-omit [IsManifold I ω M] [∀ x : M, IsTopologicalAddGroup (V x)]
-  [∀ x : M, ContinuousSMul ℝ (V x)] [ContMDiffVectorBundle 1 F V I] in
+omit [IsManifold I ω M] [∀ x : M, IsTopologicalAddGroup (V x)] [∀ x : M, ContinuousSMul ℝ (V x)]
+  [ContMDiffVectorBundle 1 F V I] in
 /-- The zero section along a differentiable curve is differentiable. -/
 theorem MDiffAlongSectionAt.zero_section {γ : ℝ → M} {t : ℝ}
     (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t) :
@@ -151,8 +152,7 @@ differentiable; and the frame is globalised by `exists_contMDiff_eventuallyEq_of
 
 variable {σ τ : Π t : ℝ, V (γ t)} {t : ℝ}
 
-omit [IsManifold I ω M] [∀ x : M, IsTopologicalAddGroup (V x)]
-  [∀ x : M, ContinuousSMul ℝ (V x)] in
+omit [IsManifold I ω M] [∀ x : M, IsTopologicalAddGroup (V x)] [∀ x : M, ContinuousSMul ℝ (V x)] in
 /-- **Differentiability along `γ` is differentiability of the fibre coordinate** in any
 trivialisation of `V` around `γ t`. -/
 theorem mdiffAlongSectionAt_iff_of_mem
@@ -163,19 +163,18 @@ theorem mdiffAlongSectionAt_iff_of_mem
     ← mdifferentiableAt_iff_differentiableAt]
   exact and_iff_right hγ
 
-omit [IsManifold I ω M] [∀ x : M, IsTopologicalAddGroup (V x)]
-  [∀ x : M, ContinuousSMul ℝ (V x)] [VectorBundle ℝ F V] [ContMDiffVectorBundle 1 F V I] in
-omit [∀ x : M, AddCommGroup (V x)] [∀ x : M, Module ℝ (V x)] in
+omit [IsManifold I ω M] [∀ x : M, IsTopologicalAddGroup (V x)] [∀ x : M, ContinuousSMul ℝ (V x)]
+  [VectorBundle ℝ F V] [ContMDiffVectorBundle 1 F V I] [∀ x : M, AddCommGroup (V x)]
+  [∀ x : M, Module ℝ (V x)] in
 /-- The restriction of a globally `C¹` section to a differentiable curve is differentiable
 along it. -/
 theorem MDiffAlongSectionAt.of_section {W : Π y : M, V y}
-    (hW : ContMDiff I (I.prod 𝓘(ℝ, F)) 1 (fun y ↦ (⟨y, W y⟩ : TotalSpace F V)))
+    (hW : CMDiff (1 : ℕ∞ω) (T% W))
     (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t) :
     MDiffAlongSectionAt I F V γ (fun u ↦ W (γ u)) t :=
   (hW.mdifferentiable (by norm_num) (γ t)).comp t hγ
 
-omit [IsManifold I ω M] [∀ x : M, IsTopologicalAddGroup (V x)]
-  [∀ x : M, ContinuousSMul ℝ (V x)] in
+omit [IsManifold I ω M] [∀ x : M, IsTopologicalAddGroup (V x)] [∀ x : M, ContinuousSMul ℝ (V x)] in
 /-- Sections along `γ` add. -/
 theorem MDiffAlongSectionAt.add (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t)
     (hσ : MDiffAlongSectionAt I F V γ σ t) (hτ : MDiffAlongSectionAt I F V γ τ t) :
@@ -190,8 +189,7 @@ theorem MDiffAlongSectionAt.add (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t)
   show (e ⟨γ u, σ u + τ u⟩).2 = (e ⟨γ u, σ u⟩).2 + (e ⟨γ u, τ u⟩).2
   exact map_add (e.continuousLinearEquivAt ℝ (γ u) hu) (σ u) (τ u)
 
-omit [IsManifold I ω M] [∀ x : M, IsTopologicalAddGroup (V x)]
-  [∀ x : M, ContinuousSMul ℝ (V x)] in
+omit [IsManifold I ω M] [∀ x : M, IsTopologicalAddGroup (V x)] [∀ x : M, ContinuousSMul ℝ (V x)] in
 /-- Sections along `γ` scale by differentiable functions of the parameter. -/
 theorem MDiffAlongSectionAt.smul {f : ℝ → ℝ} (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t)
     (hf : DifferentiableAt ℝ f t) (hσ : MDiffAlongSectionAt I F V γ σ t) :
@@ -206,8 +204,7 @@ theorem MDiffAlongSectionAt.smul {f : ℝ → ℝ} (hγ : MDifferentiableAt 𝓘
   show (e ⟨γ u, f u • σ u⟩).2 = f u • (e ⟨γ u, σ u⟩).2
   exact map_smul (e.continuousLinearEquivAt ℝ (γ u) hu) (f u) (σ u)
 
-omit [IsManifold I ω M] [∀ x : M, IsTopologicalAddGroup (V x)]
-  [∀ x : M, ContinuousSMul ℝ (V x)] in
+omit [IsManifold I ω M] [∀ x : M, IsTopologicalAddGroup (V x)] [∀ x : M, ContinuousSMul ℝ (V x)] in
 /-- Finite sums of sections along `γ`, taken **fibrewise**: `Finset.sum` over the Pi type
 `Π t, V (γ t)` picks an `AddCommMonoid` only defeq to the one `Fintype.sum_apply` produces,
 and no `rw` crosses that gap. -/
@@ -245,7 +242,7 @@ Everything is read off one trivialisation of `V` around `γ t`; the conclusion i
 theorem exists_frame_expansion_section (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t)
     (hσ : MDiffAlongSectionAt I F V γ σ t) :
     ∃ (ι : Type) (_ : Fintype ι) (W : ι → Π y : M, V y) (f : ι → ℝ → ℝ),
-      (∀ i, ContMDiff I (I.prod 𝓘(ℝ, F)) 1 (fun y ↦ (⟨y, W i y⟩ : TotalSpace F V))) ∧
+      (∀ i, CMDiff (1 : ℕ∞ω) (T% (W i))) ∧
       (∀ i, DifferentiableAt ℝ (f i) t) ∧
       ∀ᶠ u in 𝓝 t, σ u = ∑ i, f i u • W i (γ u) := by
   classical
@@ -255,7 +252,7 @@ theorem exists_frame_expansion_section (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I
   have hcoord : DifferentiableAt ℝ (fun u ↦ (e ⟨γ u, σ u⟩).2) t :=
     (mdiffAlongSectionAt_iff_of_mem hγ hmem).mp hσ
   have hloc : ∀ i, ∃ ρ : Π y : M, V y,
-      ContMDiff I (I.prod 𝓘(ℝ, F)) 1 (fun y ↦ (⟨y, ρ y⟩ : TotalSpace F V)) ∧
+      CMDiff (1 : ℕ∞ω) (T% ρ) ∧
         ∀ᶠ y in 𝓝 (γ t), ρ y = e.localFrame b i y := fun i ↦
     RicciFlowBlueprint.exists_contMDiff_eventuallyEq_of_bundle (I := I) F (V := V) (n := 1)
       (e.open_baseSet.mem_nhds hmem) (e.contMDiffOn_localFrame_baseSet 1 b i)
@@ -309,7 +306,7 @@ omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] [T2Space M] [IsManifold
 theorem IsCovDerivAlongSection.eq_sum_of_expansion (h : IsCovDerivAlongSection cov γ D s)
     (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t) (hσ : MDiffAlongSectionAt I F V γ σ t) (ht : t ∈ s)
     {ι : Type*} [Fintype ι] {W : ι → Π y : M, V y} {f : ι → ℝ → ℝ}
-    (hW : ∀ i, ContMDiff I (I.prod 𝓘(ℝ, F)) 1 (fun y ↦ (⟨y, W i y⟩ : TotalSpace F V)))
+    (hW : ∀ i, CMDiff (1 : ℕ∞ω) (T% (W i)))
     (hf : ∀ i, DifferentiableAt ℝ (f i) t)
     (hexp : ∀ᶠ u in 𝓝 t, σ u = ∑ i, f i u • W i (γ u)) :
     D σ t = ∑ i, (f i t • cov (W i) (γ t) (velocity γ t) + deriv (f i) t • W i (γ t)) := by
@@ -340,6 +337,278 @@ theorem IsCovDerivAlongSection.eq_of_isCovDerivAlongSection
 end Frame
 
 
+section Existence
+
+/-! ### Existence
+
+`D/dt` is built in the trivialisation of `V` at `γ t`: differentiate the fibre coordinates of
+`σ` and add the connection's own contribution on the frame. Additivity and the Leibniz rule are
+then the corresponding facts about `deriv`; the third axiom is the only one with content, and
+it is `cov`'s Leibniz rule applied to the local-frame expansion of a global section.
+
+Existence is what stops `IsParallelAlongSection` being vacuous: quantified over operators
+satisfying the axioms, a vanishing condition on an *empty* class of operators is trivially
+true, and that is the repository's worst class of error. -/
+
+variable [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] [T2Space M]
+
+omit [IsManifold I ω M] [∀ x : M, IsTopologicalAddGroup (V x)] [∀ x : M, ContinuousSMul ℝ (V x)]
+  [ContMDiffVectorBundle 1 F V I] [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] [T2Space M] in
+/-- The fibre basis a trivialisation of `V` induces is the model basis read through it. -/
+theorem repr_basisAt_eq_section
+    {e : Trivialization F (TotalSpace.proj : TotalSpace F V → M)} [MemTrivializationAtlas e]
+    {ι : Type*} (b : Module.Basis ι ℝ F) {y : M} (hy : y ∈ e.baseSet) (v : V y) (i : ι) :
+    (e.basisAt b hy).repr v i = b.repr (e ⟨y, v⟩).2 i := by
+  simp [Trivialization.basisAt]
+
+omit [IsManifold I ω M] [∀ x : M, IsTopologicalAddGroup (V x)] [∀ x : M, ContinuousSMul ℝ (V x)]
+  [ContMDiffVectorBundle 1 F V I] [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] [T2Space M] in
+/-- **The local frame reconstructs a fibre vector** from its coordinates. -/
+theorem sum_repr_smul_localFrame_section
+    {e : Trivialization F (TotalSpace.proj : TotalSpace F V → M)} [MemTrivializationAtlas e]
+    {ι : Type*} [Fintype ι] (b : Module.Basis ι ℝ F) {y : M} (hy : y ∈ e.baseSet) (v : V y) :
+    ∑ i, b.repr (e ⟨y, v⟩).2 i • e.localFrame b i y = v := by
+  refine Eq.trans (Finset.sum_congr rfl fun i _ ↦ ?_) ((e.basisAt b hy).sum_repr v)
+  rw [e.localFrame_apply_of_mem_baseSet b hy, ← repr_basisAt_eq_section b hy v i]
+
+variable (I F V) in
+/-- **The canonical frame of `V` at `x`**: a globally `C¹` section agreeing near `x` with the
+`i`-th vector of the local frame of the preferred trivialisation. Only the germ at `x`
+matters, because that is all `cov` sees. -/
+noncomputable def canonFrameSection (x : M) (i : Fin (Module.finrank ℝ F)) : Π y : M, V y :=
+  (RicciFlowBlueprint.exists_contMDiff_eventuallyEq_of_bundle (I := I) F (V := V) (n := 1)
+    ((trivializationAt F V x).open_baseSet.mem_nhds
+      (FiberBundle.mem_baseSet_trivializationAt F V x))
+    ((trivializationAt F V x).contMDiffOn_localFrame_baseSet 1 (Module.finBasis ℝ F) i)).choose
+
+variable (I F V) in
+omit [∀ x : M, IsTopologicalAddGroup (V x)] [∀ x : M, ContinuousSMul ℝ (V x)] in
+theorem contMDiff_canonFrameSection (x : M) (i : Fin (Module.finrank ℝ F)) :
+    CMDiff (1 : ℕ∞ω) (T% (canonFrameSection I F V x i)) :=
+  (RicciFlowBlueprint.exists_contMDiff_eventuallyEq_of_bundle (I := I) F (V := V) (n := 1)
+    ((trivializationAt F V x).open_baseSet.mem_nhds
+      (FiberBundle.mem_baseSet_trivializationAt F V x))
+    ((trivializationAt F V x).contMDiffOn_localFrame_baseSet
+      1 (Module.finBasis ℝ F) i)).choose_spec.1
+
+variable (I F V) in
+omit [∀ x : M, IsTopologicalAddGroup (V x)] [∀ x : M, ContinuousSMul ℝ (V x)] in
+theorem canonFrameSection_eventuallyEq (x : M) (i : Fin (Module.finrank ℝ F)) :
+    ∀ᶠ y in 𝓝 x, canonFrameSection I F V x i y
+      = (trivializationAt F V x).localFrame (Module.finBasis ℝ F) i y :=
+  (RicciFlowBlueprint.exists_contMDiff_eventuallyEq_of_bundle (I := I) F (V := V) (n := 1)
+    ((trivializationAt F V x).open_baseSet.mem_nhds
+      (FiberBundle.mem_baseSet_trivializationAt F V x))
+    ((trivializationAt F V x).contMDiffOn_localFrame_baseSet
+      1 (Module.finBasis ℝ F) i)).choose_spec.2
+
+variable (I F V) in
+omit [∀ x : M, IsTopologicalAddGroup (V x)] [∀ x : M, ContinuousSMul ℝ (V x)] in
+theorem canonFrameSection_apply_self (x : M) (i : Fin (Module.finrank ℝ F)) :
+    canonFrameSection I F V x i x
+      = (trivializationAt F V x).basisAt (Module.finBasis ℝ F)
+          (FiberBundle.mem_baseSet_trivializationAt F V x) i := by
+  rw [(canonFrameSection_eventuallyEq I F V x i).self_of_nhds]
+  exact (trivializationAt F V x).localFrame_apply_of_mem_baseSet
+    (Module.finBasis ℝ F) (FiberBundle.mem_baseSet_trivializationAt F V x)
+
+variable (F V) in
+/-- **The fibre coordinates of a section of `V` along `γ`** in the trivialisation at `x`. -/
+noncomputable def coeffAlongSection (γ : ℝ → M) (σ : Π t : ℝ, V (γ t)) (x : M)
+    (i : Fin (Module.finrank ℝ F)) (u : ℝ) : ℝ :=
+  (Module.finBasis ℝ F).repr ((trivializationAt F V x) ⟨γ u, σ u⟩).2 i
+
+/-- **The covariant derivative of a section of `V` along `γ`.** Differentiate the fibre
+coordinates in the trivialisation at `γ t` and add the connection's contribution on the
+frame. -/
+noncomputable def covAlongSection (cov : CovariantDerivative I F V) (γ : ℝ → M)
+    (σ : Π t : ℝ, V (γ t)) (t : ℝ) : V (γ t) :=
+  ∑ i, (deriv (coeffAlongSection F V γ σ (γ t) i) t • canonFrameSection I F V (γ t) i (γ t)
+    + coeffAlongSection F V γ σ (γ t) i t
+        • cov (canonFrameSection I F V (γ t) i) (γ t) (velocity γ t))
+
+omit [∀ x : M, IsTopologicalAddGroup (V x)] [∀ x : M, ContinuousSMul ℝ (V x)] in
+/-- The coordinates reconstruct the section at the base point of the trivialisation. -/
+theorem sum_coeffAlongSection_smul_canonFrameSection (γ : ℝ → M) (σ : Π t : ℝ, V (γ t)) (t : ℝ) :
+    ∑ i, coeffAlongSection F V γ σ (γ t) i t • canonFrameSection I F V (γ t) i (γ t) = σ t := by
+  set e := trivializationAt F V (γ t) with he
+  have hmem : γ t ∈ e.baseSet := FiberBundle.mem_baseSet_trivializationAt F V (γ t)
+  refine Eq.trans (Finset.sum_congr rfl fun i _ ↦ ?_)
+    ((e.basisAt (Module.finBasis ℝ F) hmem).sum_repr (σ t))
+  rw [canonFrameSection_apply_self I F V (γ t) i, coeffAlongSection,
+    ← repr_basisAt_eq_section (Module.finBasis ℝ F) hmem (σ t) i]
+
+variable {γ : ℝ → M} {σ τ : Π t : ℝ, V (γ t)} {t : ℝ}
+
+omit [T2Space M] [IsManifold I ω M] [∀ x : M, IsTopologicalAddGroup (V x)]
+  [∀ x : M, ContinuousSMul ℝ (V x)] [FiniteDimensional ℝ E] in
+/-- The coordinates of a section along `γ` are differentiable exactly when it is. -/
+theorem differentiableAt_coeffAlongSection (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t)
+    (hσ : MDiffAlongSectionAt I F V γ σ t) (i : Fin (Module.finrank ℝ F)) :
+    DifferentiableAt ℝ (coeffAlongSection F V γ σ (γ t) i) t := by
+  have hc : DifferentiableAt ℝ
+      (fun u ↦ ((trivializationAt F V (γ t)) ⟨γ u, σ u⟩).2) t :=
+    (mdiffAlongSectionAt_iff_of_mem hγ (FiberBundle.mem_baseSet_trivializationAt F V (γ t))).mp hσ
+  exact (((Module.finBasis ℝ F).coord i).toContinuousLinearMap.differentiableAt).comp t hc
+
+omit [ContMDiffVectorBundle 1 F V I] [T2Space M] [IsManifold I ω M]
+  [∀ x : M, IsTopologicalAddGroup (V x)] [∀ x : M, ContinuousSMul ℝ (V x)]
+  [FiniteDimensional ℝ E] in
+/-- The coordinates are additive in the section, near `t`. -/
+theorem coeffAlongSection_add_eventuallyEq (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t)
+    (i : Fin (Module.finrank ℝ F)) :
+    coeffAlongSection F V γ (σ + τ) (γ t) i
+      =ᶠ[𝓝 t] coeffAlongSection F V γ σ (γ t) i + coeffAlongSection F V γ τ (γ t) i := by
+  set e := trivializationAt F V (γ t) with he
+  have hmem : γ t ∈ e.baseSet := FiberBundle.mem_baseSet_trivializationAt F V (γ t)
+  filter_upwards [hγ.continuousAt (e.open_baseSet.mem_nhds hmem)] with u hu
+  show (Module.finBasis ℝ F).repr (e ⟨γ u, σ u + τ u⟩).2 i
+      = (Module.finBasis ℝ F).repr (e ⟨γ u, σ u⟩).2 i
+        + (Module.finBasis ℝ F).repr (e ⟨γ u, τ u⟩).2 i
+  have hlin : (e ⟨γ u, σ u + τ u⟩).2 = (e ⟨γ u, σ u⟩).2 + (e ⟨γ u, τ u⟩).2 :=
+    map_add (e.continuousLinearEquivAt ℝ (γ u) hu) (σ u) (τ u)
+  rw [hlin, map_add]
+  rfl
+
+omit [ContMDiffVectorBundle 1 F V I] [T2Space M] [IsManifold I ω M]
+  [∀ x : M, IsTopologicalAddGroup (V x)] [∀ x : M, ContinuousSMul ℝ (V x)]
+  [FiniteDimensional ℝ E] in
+/-- The coordinates scale in the section, near `t`. -/
+theorem coeffAlongSection_smul_eventuallyEq (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t) (f : ℝ → ℝ)
+    (i : Fin (Module.finrank ℝ F)) :
+    coeffAlongSection F V γ (f • σ) (γ t) i
+      =ᶠ[𝓝 t] f * coeffAlongSection F V γ σ (γ t) i := by
+  set e := trivializationAt F V (γ t) with he
+  have hmem : γ t ∈ e.baseSet := FiberBundle.mem_baseSet_trivializationAt F V (γ t)
+  filter_upwards [hγ.continuousAt (e.open_baseSet.mem_nhds hmem)] with u hu
+  show (Module.finBasis ℝ F).repr (e ⟨γ u, f u • σ u⟩).2 i
+      = f u * (Module.finBasis ℝ F).repr (e ⟨γ u, σ u⟩).2 i
+  have hlin : (e ⟨γ u, f u • σ u⟩).2 = f u • (e ⟨γ u, σ u⟩).2 :=
+    map_smul (e.continuousLinearEquivAt ℝ (γ u) hu) (f u) (σ u)
+  rw [hlin, map_smul]
+  rfl
+
+-- BENCH: bundle-cov-along-curve-exists
+/-- **`covAlongSection` satisfies the axioms**, on the set where `γ` is differentiable. With
+`eq_of_isCovDerivAlongSection` this makes it *the* covariant derivative of a section of `V`
+along `γ`. -/
+theorem isCovDerivAlongSection_covAlongSection (cov : CovariantDerivative I F V) (γ : ℝ → M) :
+    IsCovDerivAlongSection cov γ (covAlongSection cov γ)
+      {t | MDifferentiableAt 𝓘(ℝ, ℝ) I γ t} where
+  add {σ τ t} hσ hτ ht := by
+    have hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t := ht
+    have hdσ := differentiableAt_coeffAlongSection hγ hσ
+    have hdτ := differentiableAt_coeffAlongSection hγ hτ
+    simp only [covAlongSection, ← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    rw [(coeffAlongSection_add_eventuallyEq hγ i).deriv_eq,
+      deriv_add (hdσ i) (hdτ i), (coeffAlongSection_add_eventuallyEq hγ i).eq_of_nhds]
+    show (deriv (coeffAlongSection F V γ σ (γ t) i) t
+            + deriv (coeffAlongSection F V γ τ (γ t) i) t)
+          • canonFrameSection I F V (γ t) i (γ t)
+        + (coeffAlongSection F V γ σ (γ t) i t + coeffAlongSection F V γ τ (γ t) i t)
+          • cov (canonFrameSection I F V (γ t) i) (γ t) (velocity γ t) = _
+    rw [add_smul, add_smul]
+    abel
+  leibniz {σ f t} hσ hf ht := by
+    have hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t := ht
+    have hdσ := differentiableAt_coeffAlongSection hγ hσ
+    rw [← sum_coeffAlongSection_smul_canonFrameSection (I := I) (F := F) (V := V) γ σ t]
+    simp only [covAlongSection, Finset.smul_sum, ← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    rw [(coeffAlongSection_smul_eventuallyEq hγ f i).deriv_eq,
+      deriv_mul hf (hdσ i), (coeffAlongSection_smul_eventuallyEq hγ f i).eq_of_nhds]
+    show (deriv f t * coeffAlongSection F V γ σ (γ t) i t
+            + f t * deriv (coeffAlongSection F V γ σ (γ t) i) t)
+          • canonFrameSection I F V (γ t) i (γ t)
+        + (f t * coeffAlongSection F V γ σ (γ t) i t)
+          • cov (canonFrameSection I F V (γ t) i) (γ t) (velocity γ t) = _
+    show _ = f t • (deriv (coeffAlongSection F V γ σ (γ t) i) t
+          • canonFrameSection I F V (γ t) i (γ t)
+        + coeffAlongSection F V γ σ (γ t) i t
+          • cov (canonFrameSection I F V (γ t) i) (γ t) (velocity γ t))
+        + deriv f t • coeffAlongSection F V γ σ (γ t) i t
+          • canonFrameSection I F V (γ t) i (γ t)
+    rw [smul_add, add_smul, smul_smul, smul_smul, smul_smul]
+    abel
+  restrict {Z t} hZ hγ ht := by
+    set e := trivializationAt F V (γ t) with he
+    set b := Module.finBasis ℝ F with hb
+    have hmem : γ t ∈ e.baseSet := FiberBundle.mem_baseSet_trivializationAt F V (γ t)
+    set a : Fin (Module.finrank ℝ F) → M → ℝ := fun i y ↦ b.repr (e ⟨y, Z y⟩).2 i with ha
+    have hco : MDifferentiableAt I 𝓘(ℝ, F) (fun y ↦ (e ⟨y, Z y⟩).2) (γ t) :=
+      ((e.mdifferentiableAt_totalSpace_iff I (T% Z) (e.mem_source.mpr hmem)).mp hZ).2
+    have hac : ∀ i, MDifferentiableAt I 𝓘(ℝ, ℝ) (a i) (γ t) := fun i ↦
+      ((((b.coord i).toContinuousLinearMap.contMDiff (n := 1)).mdifferentiable
+        (by norm_num) _).comp (γ t) hco)
+    have hcanon : ∀ i, MDiffAt (T% (canonFrameSection I F V (γ t) i)) (γ t) := fun i ↦
+      (contMDiff_canonFrameSection I F V (γ t) i).mdifferentiable (by norm_num) (γ t)
+    have hZexp : ∀ᶠ y in 𝓝 (γ t), Z y = ∑ i, a i y • canonFrameSection I F V (γ t) i y := by
+      filter_upwards [e.open_baseSet.mem_nhds hmem,
+        Filter.eventually_all.mpr fun i ↦ canonFrameSection_eventuallyEq I F V (γ t) i]
+        with y hy hfr
+      rw [← sum_repr_smul_localFrame_section b hy (Z y)]
+      exact Finset.sum_congr rfl fun i _ ↦ by rw [hfr i]
+    have hsum : MDiffAt (T% (fun y ↦ ∑ i, a i y • canonFrameSection I F V (γ t) i y)) (γ t) :=
+      MDifferentiableAt.sum_section fun i _ ↦ (hac i).smul_section (hcanon i)
+    have hcovZ : cov Z (γ t) (velocity γ t)
+        = ∑ i, (a i (γ t) • cov (canonFrameSection I F V (γ t) i) (γ t) (velocity γ t)
+            + mvfderiv I (a i) (γ t) (velocity γ t) • canonFrameSection I F V (γ t) i (γ t)) := by
+      rw [cov.isCovariantDerivativeOn.congr_of_eventuallyEq hZ hsum Filter.univ_mem hZexp]
+      exact RicciFlowBlueprint.cov_sum_smul_section_apply_of_bundle cov Finset.univ (fun i _ ↦ hac i)
+        (fun i _ ↦ hcanon i) _
+    have hcoeff : ∀ i, coeffAlongSection F V γ (fun u ↦ Z (γ u)) (γ t) i = fun u ↦ a i (γ u) :=
+      fun _ ↦ rfl
+    simp only [covAlongSection, hcoeff]
+    rw [hcovZ]
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    rw [deriv_comp_curve (hac i) hγ]
+    abel
+
+-- BENCH: bundle-cov-along-curve-exists-unique
+/-- **The covariant derivative of a section of `V` along a curve exists**, on the set where
+`γ` is differentiable; by `eq_of_isCovDerivAlongSection` it is unique there. -/
+theorem exists_isCovDerivAlongSection (cov : CovariantDerivative I F V) (γ : ℝ → M) :
+    ∃ D : (Π t : ℝ, V (γ t)) → Π t : ℝ, V (γ t),
+      IsCovDerivAlongSection cov γ D {t | MDifferentiableAt 𝓘(ℝ, ℝ) I γ t} :=
+  ⟨covAlongSection cov γ, isCovDerivAlongSection_covAlongSection cov γ⟩
+
+/-- Any operator satisfying the axioms **is** `covAlongSection` on sections differentiable
+along `γ`. -/
+theorem eq_covAlongSection {cov : CovariantDerivative I F V}
+    {D : (Π t : ℝ, V (γ t)) → Π t : ℝ, V (γ t)} {s : Set ℝ}
+    (h : IsCovDerivAlongSection cov γ D s) (hs : s ⊆ {t | MDifferentiableAt 𝓘(ℝ, ℝ) I γ t})
+    (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t) (hσ : MDiffAlongSectionAt I F V γ σ t) (ht : t ∈ s) :
+    D σ t = covAlongSection cov γ σ t :=
+  h.eq_of_isCovDerivAlongSection ((isCovDerivAlongSection_covAlongSection cov γ).mono hs)
+    hγ hσ ht
+
+variable (I F V) in
+/-- **A parallel section of `V` along `γ`**, `D/dt σ = 0` on `s`. Defined off
+`covAlongSection`; `isParallelAlongSection_iff_forall` shows this is the same as vanishing
+under *every* operator satisfying the axioms. -/
+def IsParallelAlongSection (cov : CovariantDerivative I F V) (γ : ℝ → M)
+    (σ : Π t : ℝ, V (γ t)) (s : Set ℝ) : Prop :=
+  ∀ t ∈ s, covAlongSection cov γ σ t = 0
+
+/-- **The quantified form is not vacuous.** Forward is uniqueness, backward is existence ---
+and it is the backward direction that has content: without
+`isCovDerivAlongSection_covAlongSection` the right-hand side would quantify over a class of
+operators nothing is known to inhabit, and would be trivially true. -/
+theorem isParallelAlongSection_iff_forall {cov : CovariantDerivative I F V}
+    (hγ : ∀ t ∈ s, MDifferentiableAt 𝓘(ℝ, ℝ) I γ t)
+    (hσ : ∀ t ∈ s, MDiffAlongSectionAt I F V γ σ t) :
+    IsParallelAlongSection I F V cov γ σ s
+      ↔ ∀ D : (Π t : ℝ, V (γ t)) → Π t : ℝ, V (γ t),
+          IsCovDerivAlongSection cov γ D s → ∀ t ∈ s, D σ t = 0 := by
+  refine ⟨fun h D hD t ht ↦ ?_, fun h t ht ↦ ?_⟩
+  · rw [hD.eq_of_isCovDerivAlongSection
+      ((isCovDerivAlongSection_covAlongSection cov γ).mono hγ) (hγ t ht) (hσ t ht) ht]
+    exact h t ht
+  · exact h _ ((isCovDerivAlongSection_covAlongSection cov γ).mono hγ) t ht
+
+end Existence
+
 section Tangent
 
 /-! ### The tangent-bundle case
@@ -368,6 +637,33 @@ theorem isCovDerivAlongSection_iff_isCovDerivAlong
       fun hW hγ ht ↦ h.restrict hW hγ ht⟩,
     fun h ↦ ⟨fun hσ hτ ht ↦ h.add hσ hτ ht, fun hσ hf ht ↦ h.leibniz hσ hf ht,
       fun hW hγ ht ↦ h.restrict hW hγ ht⟩⟩
+
+
+variable [FiniteDimensional ℝ E] [T2Space M]
+
+/-- **`covAlongSection` at `V = TM` is `covAlong`.** Not asserted by construction: both
+satisfy the three axioms, and uniqueness identifies them. This is what checks that the
+general construction computes the tangent-bundle operator and not merely something of the
+same type. -/
+theorem covAlongSection_eq_covAlong
+    (cov : CovariantDerivative I E (fun y : M ↦ TangentSpace I y)) {γ : ℝ → M}
+    {σ : Π t : ℝ, TangentSpace I (γ t)} {t : ℝ}
+    (hγ : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t) (hσ : MDiffAlongAt γ σ t) :
+    covAlongSection cov γ σ t = covAlong cov γ σ t :=
+  (eq_covAlongSection
+    ((isCovDerivAlongSection_iff_isCovDerivAlong I cov γ (covAlong cov γ) _).mpr
+      (isCovDerivAlong_covAlong cov γ)) subset_rfl hγ hσ hγ).symm
+
+/-- **The two notions of a parallel section agree** at `V = TM`. -/
+theorem isParallelAlongSection_iff_isParallelAlong
+    (cov : CovariantDerivative I E (fun y : M ↦ TangentSpace I y)) {γ : ℝ → M}
+    {σ : Π t : ℝ, TangentSpace I (γ t)} {s : Set ℝ}
+    (hγ : ∀ t ∈ s, MDifferentiableAt 𝓘(ℝ, ℝ) I γ t) (hσ : ∀ t ∈ s, MDiffAlongAt γ σ t) :
+    IsParallelAlongSection I E (fun y : M ↦ TangentSpace I y) cov γ σ s
+      ↔ IsParallelAlong cov γ σ s := by
+  constructor <;> intro h t ht
+  · rw [← covAlongSection_eq_covAlong cov (hγ t ht) (hσ t ht)]; exact h t ht
+  · rw [covAlongSection_eq_covAlong cov (hγ t ht) (hσ t ht)]; exact h t ht
 
 end Tangent
 
