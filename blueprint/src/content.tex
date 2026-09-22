@@ -3802,6 +3802,54 @@ Perelman's monotone functionals are what rule it out.
   linear.
 \end{lemma}
 
+\begin{lemma}[$D/dt$ for a section of a general bundle]
+  \label{lem:bundle-cov-along-curve}
+  \lean{CovariantDerivative.MDiffAlongSectionAt,
+    CovariantDerivative.IsCovDerivAlongSection,
+    CovariantDerivative.IsCovDerivAlongSection.zero,
+    CovariantDerivative.IsCovDerivAlongSection.congr_of_eventuallyEq,
+    CovariantDerivative.mdiffAlongSectionAt_iff_of_mem,
+    CovariantDerivative.MDiffAlongSectionAt.of_section,
+    CovariantDerivative.MDiffAlongSectionAt.add,
+    CovariantDerivative.MDiffAlongSectionAt.smul,
+    CovariantDerivative.MDiffAlongSectionAt.sum,
+    CovariantDerivative.exists_frame_expansion_section,
+    CovariantDerivative.IsCovDerivAlongSection.sum,
+    CovariantDerivative.IsCovDerivAlongSection.eq_sum_of_expansion,
+    CovariantDerivative.IsCovDerivAlongSection.eq_of_isCovDerivAlongSection,
+    CovariantDerivative.mdiffAlongSectionAt_eq_mdiffAlongAt,
+    CovariantDerivative.isCovDerivAlongSection_iff_isCovDerivAlong}
+  \leanok
+  \uses{def:cov-along-curve, lem:cov-along-curve-unique, lem:global-extension,
+    lem:bundle-touching-point}
+  The same three axioms cut out a unique $D/dt$ for a section of an
+  \emph{arbitrary} vector bundle $V$ along a curve in $\M$, and it is local.
+
+  \textbf{Proved} (\texttt{BundleCovariantAlongCurve.lean}).
+  \emph{Nothing in the construction is about the tangent bundle.} The
+  \emph{direction} stays there --- $\gamma'(t)$ is a tangent vector and
+  $\nab\sigma(y)$ is a map out of $T_y\M$ --- but the section being
+  differentiated, and the fibres it takes values in, are arbitrary. So this is
+  the port the Hessian and the rough Laplacian were given
+  (Lemma \ref{lem:bundle-hessian}), under the same discipline: no fibre
+  norm is bound, only the standard general-bundle binders, and the
+  tangent-bundle statements come back unchanged.
+
+  \emph{Why it is wanted.} The touching-point half of the maximum principle on
+  a bundle (Lemma \ref{lem:bundle-touching-point}) tests a section against a
+  direction lying in a \emph{single} fibre. The cross-fibre half compares
+  different fibres, and the comparison is made by carrying the direction along
+  a curve --- in the fibres of the bundle the tested object is a section of,
+  not of $T\M$. That is what $D/dt$ on a general bundle is for, and until now
+  the repository had it only on $T\M$.
+
+  One thing changes shape. $\prod_t V(\gamma(t))$ is a \emph{dependent}
+  product, so Mathlib's \texttt{EventuallyEq} does not typecheck on it and
+  every germ hypothesis is a bare ``eventually, $\sigma(u) = \tau(u)$'' --- the
+  same adjustment Lemma \ref{lem:global-extension} documents, for the same
+  reason.
+\end{lemma}
+
 \begin{lemma}[Existence of $D/dt$]
   \label{lem:cov-along-curve-exists}
   \lean{CovariantDerivative.canonFrame,

@@ -60,6 +60,7 @@ import RicciFlowBlueprint.BundleHessian
 import RicciFlowBlueprint.BundleBochner
 import RicciFlowBlueprint.BundleNormalSection
 import RicciFlowBlueprint.BundleMaximumPrinciple
+import RicciFlowBlueprint.BundleCovariantAlongCurve
 import RicciFlowBlueprint.ParallelTransport
 import RicciFlowBlueprint.TransportIsometry
 import RicciFlowBlueprint.ParallelTransportGlobal
