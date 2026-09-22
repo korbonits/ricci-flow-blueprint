@@ -3898,6 +3898,61 @@ Perelman's monotone functionals are what rule it out.
   \ref{lem:cov-along-curve-exists} and not merely something of the same type.
 \end{lemma}
 
+\begin{lemma}[The Leibniz rule for $D/dt$ on a Hom bundle]
+  \label{lem:hom-bundle-along-curve}
+  \lean{CovariantDerivative.clm_sum_smul_apply_sum,
+    CovariantDerivative.clm_expansion_add,
+    CovariantDerivative.homCov_apply_vector,
+    CovariantDerivative.covAlongSection_hom_apply,
+    CovariantDerivative.isParallelAlongSection_hom,
+    CovariantDerivative.covAlongSection_hom_apply_eq_zero}
+  \leanok
+  \uses{lem:bundle-cov-along-curve-exists, lem:hom-bundle-connection,
+    lem:transport-isometry}
+  For a morphism field $A$ along $\gamma$ and a section $\sigma$ of $V_1$ along
+  $\gamma$,
+  \[
+    \tfrac{D}{dt}(A\sigma)
+      = \Big(\tfrac{D}{dt}A\Big)(\sigma) + A\Big(\tfrac{D}{dt}\sigma\Big).
+  \]
+  Hence a parallel morphism field carries parallel sections to parallel
+  sections.
+
+  \textbf{Proved} (\texttt{HomBundleAlongCurve.lean}). \emph{No metric is used
+  anywhere}, unlike the pairing rule of Lemma \ref{lem:transport-isometry},
+  where metric compatibility is what differentiates $\langle A_i, B_j\rangle$.
+  Here the derivative of $B_i(W_j)$ along the curve \emph{is} the definition of
+  $\nab A$ rearranged.
+
+  Both are expanded in local frames --- not the same frame, and neither
+  parallel. The product $A\sigma$ is then a combination of the \emph{global}
+  sections $y \mapsto B_i(y)\,W_j(y)$ of $V_2$ with coefficients $f_i g_j$, so
+  $D/dt$ of it is computed by the expansion lemma of
+  Lemma \ref{lem:bundle-cov-along-curve-exists}. The product rule supplies the
+  $f_i'$ and $g_j'$ terms, which are exactly the coordinate parts of the two
+  derivatives on the right, and the connection on the Hom bundle supplies
+  \[
+    \nab_{\gamma'}(B_i W_j)
+      = (\nab_{\gamma'}B_i)(W_j) + B_i(\nab_{\gamma'}W_j),
+  \]
+  which is exactly the connection parts. Nothing is left over, which is why the
+  frames carry no hypotheses.
+
+  \emph{Why it is wanted.} The cross-fibre half of the maximum principle
+  carries the tested direction between fibres of the bundle the tested object
+  is a section of. In dimension three that bundle is $\operatorname{End}(T\M)$, and
+  Lemma \ref{lem:ivey-parallel} shows Hamilton's pinching set is preserved by
+  \emph{every} fibre isometry, hence by parallel transport of $T\M$. What was
+  missing is that conjugating by transport of $T\M$ \emph{is} parallel
+  transport of $\operatorname{End}(T\M)$, and this rule is what says so.
+
+  The converse in full --- a morphism field killing every parallel section is
+  itself parallel --- needs a family of parallel sections spanning each fibre.
+  What is proved here is the one-section half
+  (\texttt{covAlongSection\_hom\_apply\_eq\_zero}); supplying the family is
+  what a metric buys, and it comes next.
+\end{lemma}
+
 \begin{lemma}[Existence of $D/dt$]
   \label{lem:cov-along-curve-exists}
   \lean{CovariantDerivative.canonFrame,
