@@ -297,4 +297,83 @@ theorem laplacianBilin_fun_smul_metricForm
 
 end FunSmul
 
+
+section FormLinear
+
+/-! ### `Δ_g` is linear in the form
+
+`cov2Bilin_smul_form` and `cov2Bilin_add_form` traced. Both are termwise: the trace is a
+finite sum over one fixed family, so nothing has to be said about frames. This is what lets
+`scal · g − 2 Ric` be split into a piece the metric calculus above handles and a piece the
+Ricci calculus already handles. -/
+
+variable {h h' : M → E →L[ℝ] E →L[ℝ] ℝ}
+
+omit [CompleteSpace E] [IsContMDiffRiemannianBundle I 1 E (fun (x : M) ↦ TangentSpace I x)]
+  [ContMDiffCovariantDerivative cov 1] in
+/-- **`Δ_g` is homogeneous in the form.** -/
+theorem laplacianBilin_smul_form (c : ℝ) (h : M → E →L[ℝ] E →L[ℝ] ℝ)
+    {Y Z : Π y : M, TangentSpace I y} {x : M}
+    (hh : ∀ (U V : Π y : M, TangentSpace I y) (y : M), MDiffAt (fun z ↦ h z (U z) (V z)) y)
+    (hcb : cov.IsMDiffCovBilinAt h Y Z x) :
+    cov.laplacianBilin (fun y ↦ (c • h y : E →L[ℝ] E →L[ℝ] ℝ)) Y Z x
+      = c * cov.laplacianBilin h Y Z x := by
+  have : FiniteDimensional ℝ (TangentSpace I x) := VectorBundle.finiteDimensional ℝ E _ x
+  show ∑ i, _ = c * ∑ i, _
+  rw [Finset.mul_sum]
+  refine Finset.sum_congr rfl fun i _ ↦ ?_
+  exact cov.cov2Bilin_smul_form c h hh
+    (hcb _ ((RicciFlowBlueprint.exists_contMDiff_two_extension
+      (stdOrthonormalBasis ℝ (TangentSpace I x) i)).choose_spec.1.of_le (by norm_num)))
+
+omit [CompleteSpace E] [IsContMDiffRiemannianBundle I 1 E (fun (x : M) ↦ TangentSpace I x)] in
+/-- **`Δ_g` is additive in the form.** The hypothesis is the conditional `IsMDiffBilinAt`,
+not differentiability against arbitrary fields: at `f · g` the latter is false, and `f · g` is
+exactly the summand this is wanted for. -/
+theorem laplacianBilin_add_form (h h' : M → E →L[ℝ] E →L[ℝ] ℝ)
+    {Y Z : Π y : M, TangentSpace I y} {x : M}
+    (hb : ∀ y, IsMDiffBilinAt (I := I) h y) (hb' : ∀ y, IsMDiffBilinAt (I := I) h' y)
+    (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z))
+    (hcb : cov.IsMDiffCovBilinAt h Y Z x) (hcb' : cov.IsMDiffCovBilinAt h' Y Z x) :
+    cov.laplacianBilin (fun y ↦ (h y + h' y : E →L[ℝ] E →L[ℝ] ℝ)) Y Z x
+      = cov.laplacianBilin h Y Z x + cov.laplacianBilin h' Y Z x := by
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  have : FiniteDimensional ℝ (TangentSpace I x) := VectorBundle.finiteDimensional ℝ E _ x
+  show ∑ i, _ = (∑ i, _) + ∑ i, _
+  rw [← Finset.sum_add_distrib]
+  refine Finset.sum_congr rfl fun i _ ↦ ?_
+  have hext := (RicciFlowBlueprint.exists_contMDiff_two_extension
+    (stdOrthonormalBasis ℝ (TangentSpace I x) i)).choose_spec.1
+  exact cov.cov2Bilin_add_form h h' hb hb' (hext.mdifferentiable h2 x) hY hZ
+    (hcb _ (hext.of_le (by norm_num))) (hcb' _ (hext.of_le (by norm_num)))
+
+omit [CompleteSpace E] in
+-- BENCH: metric-parallel-fun-plus-form
+/-- **`Δ_g(f·g + h) = (Δf)·g + Δ_g h`.** The form the dimension-three curvature operator with
+its indices down is consumed in: `scal · g − 2 Ric` is `f · g` plus a constant multiple of a
+form whose Laplacian is already known, and the first summand's Laplacian is a *scalar*
+Laplacian times the metric. -/
+theorem laplacianBilin_fun_smul_metricForm_add
+    (hmet : cov.IsMetricCompatible (M := M) (V := TangentSpace I)) {f : M → ℝ}
+    (h : M → E →L[ℝ] E →L[ℝ] ℝ) {Y Z : Π y : M, TangentSpace I y} {x : M}
+    (hf : ∀ y, MDiffAt f y)
+    (hdf : IsMDiffOneFormAt (I := I)
+      (fun y ↦ (mvfderiv I f y : TangentSpace I y →L[ℝ] ℝ)) x)
+    (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z))
+    (hb : ∀ y, IsMDiffBilinAt (I := I) h y) (hcb : cov.IsMDiffCovBilinAt h Y Z x)
+    {ι : Type*} [Fintype ι] {fr : ι → Π y : M, TangentSpace I y}
+    (hfr : ∀ i, CMDiff 2 (T% (fr i))) (b : OrthonormalBasis ι ℝ (TangentSpace I x))
+    (hbv : ∀ i, fr i x = b i) :
+    cov.laplacianBilin
+        (fun y ↦ ((f y • metricForm I y : E →L[ℝ] E →L[ℝ] ℝ) + h y : E →L[ℝ] E →L[ℝ] ℝ)) Y Z x
+      = cov.laplacianFun f x * ⟪Y x, Z x⟫ + cov.laplacianBilin h Y Z x := by
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  rw [cov.laplacianBilin_add_form _ h
+      (fun y ↦ isMDiffBilinAt_fun_smul_metricForm (I := I) (hf y)) hb hY hZ
+      (cov.isMDiffCovBilinAt_fun_smul_metricForm hmet hf hdf
+        (hY.mdifferentiable h2) (hZ.mdifferentiable h2)) hcb,
+    cov.laplacianBilin_fun_smul_metricForm hmet hf hdf hY hZ hfr b hbv]
+
+end FormLinear
+
 end CovariantDerivative

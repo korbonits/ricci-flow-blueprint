@@ -720,6 +720,46 @@ theorem cov2Bilin_smul_form (c : ℝ) (h : M → E →L[ℝ] E →L[ℝ] ℝ)
   rw [hd]
   ring
 
+omit [CompleteSpace E] [FiniteDimensional ℝ E] in
+/-- **`∇²h` is additive in `h`.** The twin of `cov2Bilin_smul_form`, by the same four-term
+split. Unlike the rescaling, this one cannot ask for `h(U,V)` to be differentiable for
+*arbitrary* fields: at `h = f · g` that is false, and `f · g` is exactly what the
+dimension-three curvature operator's first summand is. So the hypothesis is the conditional
+`IsMDiffBilinAt`, and the fields it is applied to --- `Y`, `Z` and their covariant
+derivatives --- carry the regularity that makes it usable. -/
+theorem cov2Bilin_add_form (h h' : M → E →L[ℝ] E →L[ℝ] ℝ)
+    {W X Y Z : Π y : M, TangentSpace I y} {x : M}
+    (hb : ∀ y, IsMDiffBilinAt (I := I) h y) (hb' : ∀ y, IsMDiffBilinAt (I := I) h' y)
+    (hW : MDiffAt (T% W) x) (hY : CMDiff 2 (T% Y)) (hZ : CMDiff 2 (T% Z))
+    (hcb : MDiffAt (fun y ↦ cov.covBilin h X Y Z y) x)
+    (hcb' : MDiffAt (fun y ↦ cov.covBilin h' X Y Z y) x) :
+    cov.cov2Bilin (fun y ↦ (h y + h' y : E →L[ℝ] E →L[ℝ] ℝ)) W X Y Z x
+      = cov.cov2Bilin h W X Y Z x + cov.cov2Bilin h' W X Y Z x := by
+  have h2 : (2 : ℕ∞ω) ≠ 0 := by norm_num
+  have hYm : ∀ y, MDiffAt (T% Y) y := hY.mdifferentiable h2
+  have hZm : ∀ y, MDiffAt (T% Z) y := hZ.mdifferentiable h2
+  have hDY : MDiffAt (T% (fun z ↦ cov Y z (W z))) x := cov.mdiffAt_cov_apply hY hW
+  have hDZ : MDiffAt (T% (fun z ↦ cov Z z (W z))) x := cov.mdiffAt_cov_apply hZ hW
+  have hsplit : ∀ (P Q R : Π y : M, TangentSpace I y) (y : M),
+      MDiffAt (T% Q) y → MDiffAt (T% R) y →
+      cov.covBilin (fun z ↦ (h z + h' z : E →L[ℝ] E →L[ℝ] ℝ)) P Q R y
+        = cov.covBilin h P Q R y + cov.covBilin h' P Q R y := fun P Q R y hQ hR ↦
+    cov.covBilin_add_form h h' (hb y Q R hQ hR) (hb' y Q R hQ hR)
+  have hlin : (fun y ↦ cov.covBilin (fun z ↦ (h z + h' z : E →L[ℝ] E →L[ℝ] ℝ)) X Y Z y)
+      = fun y ↦ cov.covBilin h X Y Z y + cov.covBilin h' X Y Z y :=
+    funext fun y ↦ hsplit X Y Z y (hYm y) (hZm y)
+  have hd : mvfderiv I (fun y ↦ cov.covBilin h X Y Z y + cov.covBilin h' X Y Z y) x (W x)
+      = mvfderiv I (fun y ↦ cov.covBilin h X Y Z y) x (W x)
+        + mvfderiv I (fun y ↦ cov.covBilin h' X Y Z y) x (W x) := by
+    rw [mvfderiv_fun_add hcb hcb']
+    rfl
+  rw [cov2Bilin, hlin, hd,
+    hsplit (fun y ↦ cov X y (W y)) Y Z x (hYm x) (hZm x),
+    hsplit X (fun z ↦ cov Y z (W z)) Z x hDY (hZm x),
+    hsplit X Y (fun z ↦ cov Z z (W z)) x (hYm x) hDZ]
+  unfold cov2Bilin
+  ring
+
 end Symmetric
 
 

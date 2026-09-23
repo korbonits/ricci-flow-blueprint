@@ -311,6 +311,31 @@ theorem covBilin_smul_form (c : ℝ) (h : M → E →L[ℝ] E →L[ℝ] ℝ)
   rw [hd, e₁, e₂]
   ring
 
+omit [CompleteSpace E] [FiniteDimensional ℝ E] in
+/-- **`∇h` is additive in `h`.** The twin of `covBilin_smul_form`; together they say `∇` is
+linear in the form it differentiates, which is what splitting `scal · g − 2 Ric` needs. -/
+theorem covBilin_add_form (h h' : M → E →L[ℝ] E →L[ℝ] ℝ)
+    {X Y Z : Π y : M, TangentSpace I y} {x : M}
+    (hh : MDiffAt (fun y ↦ h y (Y y) (Z y)) x)
+    (hh' : MDiffAt (fun y ↦ h' y (Y y) (Z y)) x) :
+    cov.covBilin (fun y ↦ (h y + h' y : E →L[ℝ] E →L[ℝ] ℝ)) X Y Z x
+      = cov.covBilin h X Y Z x + cov.covBilin h' X Y Z x := by
+  have hfun : (fun y ↦ (h y + h' y : E →L[ℝ] E →L[ℝ] ℝ) (Y y) (Z y))
+      = fun y ↦ h y (Y y) (Z y) + h' y (Y y) (Z y) := by
+    funext y; rfl
+  have hd : mvfderiv I (fun y ↦ h y (Y y) (Z y) + h' y (Y y) (Z y)) x (X x)
+      = mvfderiv I (fun y ↦ h y (Y y) (Z y)) x (X x)
+        + mvfderiv I (fun y ↦ h' y (Y y) (Z y)) x (X x) := by
+    rw [mvfderiv_fun_add hh hh']
+    rfl
+  have e₁ : (h x + h' x : E →L[ℝ] E →L[ℝ] ℝ) (cov Y x (X x)) (Z x)
+      = h x (cov Y x (X x)) (Z x) + h' x (cov Y x (X x)) (Z x) := rfl
+  have e₂ : (h x + h' x : E →L[ℝ] E →L[ℝ] ℝ) (Y x) (cov Z x (X x))
+      = h x (Y x) (cov Z x (X x)) + h' x (Y x) (cov Z x (X x)) := rfl
+  simp only [covBilin, hfun]
+  rw [hd, e₁, e₂]
+  ring
+
 end Tensor
 
 section Trace

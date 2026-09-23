@@ -3953,6 +3953,53 @@ Perelman's monotone functionals are what rule it out.
   what a metric buys, and it comes next.
 \end{lemma}
 
+\begin{lemma}[The dimension-three curvature operator with indices down]
+  \label{lem:curvature-form-three}
+  \lean{CovariantDerivative.covBilin_add_form,
+    CovariantDerivative.cov2Bilin_add_form,
+    CovariantDerivative.laplacianBilin_smul_form,
+    CovariantDerivative.laplacianBilin_add_form,
+    CovariantDerivative.laplacianBilin_fun_smul_metricForm_add,
+    CovariantDerivative.curvatureFormThree,
+    CovariantDerivative.curvatureFormThree_apply,
+    CovariantDerivative.isMDiffBilinAt_neg_two_ricciForm,
+    CovariantDerivative.isMDiffCovBilinAt_neg_two_ricciForm,
+    CovariantDerivative.laplacianBilin_curvatureFormThree}
+  \leanok
+  \uses{lem:metric-parallel, lem:fun-times-metric, lem:curvature-operator-three,
+    lem:ricci-section}
+  Write $\Riem_3^\flat = \scal\cdot\g - 2\Ric$. Then
+  \[
+    \Delta_\g\big(\scal\cdot\g - 2\Ric\big)
+      = (\Delta \scal)\cdot\g - 2\,\Delta_\g \Ric .
+  \]
+
+  \textbf{Proved} (\texttt{CurvatureFormThree.lean}). The endomorphism
+  $\Riem_3 = \scal\cdot\mathrm{Id} - 2\Ric^\sharp$ carries the metric
+  \emph{twice} --- once in $\scal$ and once in the index raising --- and the
+  index raising is where a moving fibre metric bites
+  (Lemma \ref{lem:sharp-laplacian}). The $(0,2)$ form has no index raising at
+  all, and everything its spatial calculus needs is in place: $\Ric$ already had
+  one, and Lemmas \ref{lem:metric-parallel} and \ref{lem:fun-times-metric}
+  supply the rest.
+
+  Both summands are then handled by the metric calculus. For the scalar one,
+  $\nab\g = 0$ collapses $\nab^2(f\cdot\g)$ to $\nab^2 f\otimes\g$, whose trace
+  is $(\Delta f)\cdot\g$ --- and that trace is free, because $\nab^2 f$
+  \emph{is} $\nab$ of the one-form $df$, so both sides come off the same frame.
+  For the Ricci one, $\Delta_\g$ is linear in the form it traces.
+
+  That linearity is new. The rescaling was already there; the \emph{additivity}
+  had to be stated with a conditional differentiability hypothesis rather than
+  differentiability against arbitrary fields, because at $f\cdot\g$ the latter
+  is false --- and $f\cdot\g$ is exactly the summand it is wanted for.
+
+  \emph{What this does not do.} The time derivative is a separate matter.
+  $\Riem_3^\flat$ still depends on $g_t$ through $\scal$ and through $\g$
+  itself, so $\partial_t$ of it produces a $\partial_t \g$ term; under the flow
+  that term is $-2\Ric$, hence algebraic, but assembling it is the next step.
+\end{lemma}
+
 \begin{lemma}[Existence of $D/dt$]
   \label{lem:cov-along-curve-exists}
   \lean{CovariantDerivative.canonFrame,

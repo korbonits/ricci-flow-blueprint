@@ -62,6 +62,7 @@ import RicciFlowBlueprint.BundleNormalSection
 import RicciFlowBlueprint.BundleMaximumPrinciple
 import RicciFlowBlueprint.BundleCovariantAlongCurve
 import RicciFlowBlueprint.HomBundleAlongCurve
+import RicciFlowBlueprint.CurvatureFormThree
 import RicciFlowBlueprint.ParallelTransport
 import RicciFlowBlueprint.TransportIsometry
 import RicciFlowBlueprint.ParallelTransportGlobal
