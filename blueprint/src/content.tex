@@ -2878,7 +2878,13 @@ target actually requires.
     RicciFlowBlueprint.isBddFamily_augOp,
     RicciFlowBlueprint.contDiff_dysonSum,
     RicciFlowBlueprint.isBddFamily_const,
-    RicciFlowBlueprint.contDiff_one_dysonSum_of_isBddFamily}
+    RicciFlowBlueprint.contDiff_one_dysonSum_of_isBddFamily,
+    RicciFlowBlueprint.IsBddFamily.add,
+    RicciFlowBlueprint.IsBddFamily.bilin,
+    RicciFlowBlueprint.IsBddFamily.comp_op,
+    RicciFlowBlueprint.isBddFamily_of_contDiff,
+    RicciFlowBlueprint.isBddFamily_of_hasCompactSupport,
+    RicciFlowBlueprint.contDiffOn_dysonSum}
   \leanok
   \uses{thm:linear-ode-augmented}
   Call $f : H \times \R \to W$ a \emph{bounded $C^{k+1}$ family} when it is continuous and
@@ -2921,10 +2927,31 @@ target actually requires.
   non-empty at every level; and at $k=1$ the theorem reproduces the conclusion of Theorem
   \ref{thm:linear-ode-augmented} from the same data.
 
+  \textbf{The class is an algebra, and it is checkable.} Beyond the two closure properties the
+  induction needs, a bounded $C^k$ family stays one under addition and under a \emph{bounded
+  bilinear map} --- the Leibniz induction, and the only place a product rule appears at all,
+  each summand of the derivative being this same statement one level down at a different
+  bilinear map. And a $C^k$ map with bounded iterated derivatives \emph{is} a bounded $C^k$
+  family (constant in $t$), which is what ties the class to Mathlib's \texttt{ContDiff}; in
+  particular a compactly supported $C^k$ map is one, so bump functions are available.
+
+  \textbf{A scalar family is not expressible at a general universe}, and the reason is worth
+  recording rather than rediscovering: the recursion is $W \mapsto \mathcal{L}(H,W)$, stable
+  only when $W$ and $H$ share a universe, and $\R$ sits in $\mathrm{Type}\,0$. Nothing is lost:
+  multiplication by a bump $\chi$ is $(x,s) \mapsto (\chi(x)\cdot 1)(A(x,s))$, whose left factor
+  is operator-valued and so stays in the right universe.
+
+  \textbf{The conclusion localizes.} $\Phi(\cdot,t)$ depends on the parameter only through
+  $A(x,\cdot)$, so a globally bounded family agreeing with $A$ on a set gives the same $\Phi$
+  there, and $\Phi$ is $C^k$ on that set.
+
   \emph{What this does not do.} Uhlenbeck's trick needs the parameter to range over a
   \emph{manifold}, and the bounds here are global in the parameter, so chart-and-bundle transfer
-  with globally bounded extensions off each chart remains --- at every $k$. The ODE-theoretic
-  half of that gap is now closed; the geometric half is not.
+  remains --- at every $k$. Concretely what is left on the ODE side is a \emph{hypothesis
+  shape}, not a theorem: building the globally bounded comparison family for a genuinely
+  $t$-dependent $A$ wants a $C^k$ hypothesis uniform in $t$, and the cleanest form of that is
+  not settled here. That is much smaller than the ``no $C^k$ parameter theory at all'' this line
+  started from, but it is not nothing.
 \end{theorem}
 
 

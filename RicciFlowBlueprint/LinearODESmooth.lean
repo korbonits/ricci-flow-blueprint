@@ -153,6 +153,121 @@ theorem IsBddFamily.prodMk : ∀ (k : ℕ) {W₁ W₂ : Type u} [NormedAddCommGr
         rw [prodCLM_apply]
       rwa [key] at h
 
+omit [NormedAddCommGroup H] [NormedSpace ℝ H] in
+theorem IsBddCts.bilin {V₁ V₂ V₃ : Type u} [NormedAddCommGroup V₁] [NormedSpace ℝ V₁]
+    [NormedAddCommGroup V₂] [NormedSpace ℝ V₂] [NormedAddCommGroup V₃] [NormedSpace ℝ V₃]
+    (B : V₁ →L[ℝ] V₂ →L[ℝ] V₃) {f : H → ℝ → V₁} {g : H → ℝ → V₂} (hf : IsBddCts f)
+    (hg : IsBddCts g) : IsBddCts fun x s ↦ B (f x s) (g x s) where
+  cts := fun x ↦ (B.continuous.comp (hf.cts x)).clm_apply (hg.cts x)
+  bdd := by
+    obtain ⟨C, hC⟩ := hf.bdd
+    obtain ⟨D, hD⟩ := hg.bdd
+    refine ⟨‖B‖ * C * D, fun x s ↦ ?_⟩
+    have h1 := B.le_opNorm₂ (f x s) (g x s)
+    have hC0 : 0 ≤ C := le_trans (norm_nonneg _) (hC x s)
+    have hstep1 : ‖B‖ * ‖f x s‖ * ‖g x s‖ ≤ ‖B‖ * C * ‖g x s‖ :=
+      mul_le_mul_of_nonneg_right
+        (mul_le_mul_of_nonneg_left (hC x s) (norm_nonneg B)) (norm_nonneg _)
+    have hstep2 : ‖B‖ * C * ‖g x s‖ ≤ ‖B‖ * C * D :=
+      mul_le_mul_of_nonneg_left (hD x s) (mul_nonneg (norm_nonneg B) hC0)
+    linarith
+
+/-- Addition: `comp_clm` at the addition map, applied to the pair.  Nothing new. -/
+theorem IsBddFamily.add (k : ℕ) {W : Type u} [NormedAddCommGroup W] [NormedSpace ℝ W]
+    {f g : H → ℝ → W} (hf : IsBddFamily k f) (hg : IsBddFamily k g) :
+    IsBddFamily k fun x s ↦ f x s + g x s :=
+  IsBddFamily.comp_clm k (fst ℝ W W + snd ℝ W W) (IsBddFamily.prodMk k hf hg)
+
+/-- **Stability under a bounded bilinear map** --- the Leibniz induction, and the only place in
+the file where a product rule appears at all.
+
+The derivative family of `B(f,g)` is `B.precompR (f, g') + B.precompL (f', g)`, and each summand
+is *this same lemma one level down at a different bilinear map* --- so, exactly as for
+`comp_clm`, nothing is differentiated by hand at any level.  The two factors of a summand sit at
+different levels, which is what `le_succ` is for. -/
+theorem IsBddFamily.bilin : ∀ (k : ℕ) {V₁ V₂ V₃ : Type u} [NormedAddCommGroup V₁]
+    [NormedSpace ℝ V₁] [NormedAddCommGroup V₂] [NormedSpace ℝ V₂] [NormedAddCommGroup V₃]
+    [NormedSpace ℝ V₃] (B : V₁ →L[ℝ] V₂ →L[ℝ] V₃) {f : H → ℝ → V₁} {g : H → ℝ → V₂},
+    IsBddFamily k f → IsBddFamily k g → IsBddFamily k fun x s ↦ B (f x s) (g x s) := by
+  intro k
+  induction k with
+  | zero =>
+      intro V₁ V₂ V₃ _ _ _ _ _ _ B f g hf hg
+      exact IsBddCts.bilin B hf hg
+  | succ k ih =>
+      intro V₁ V₂ V₃ _ _ _ _ _ _ B f g hf hg
+      have hfk : IsBddFamily k f := IsBddFamily.le_succ k hf
+      have hgk : IsBddFamily k g := IsBddFamily.le_succ k hg
+      obtain ⟨h0, f', hdf, hf'⟩ := hf
+      obtain ⟨g0, g', hdg, hg'⟩ := hg
+      refine ⟨IsBddCts.bilin B h0 g0,
+        fun x s ↦ (B (f x s)).comp (g' x s) + (B.comp (f' x s)).flip (g x s),
+        fun x s ↦ (B.hasFDerivAt.comp x (hdf x s)).clm_apply (hdg x s), ?_⟩
+      have hres := IsBddFamily.add k (ih (B.precompR H) hfk hg') (ih (B.precompL H) hf' hgk)
+      have heq : (fun x s ↦ B.precompR H (f x s) (g' x s) + B.precompL H (f' x s) (g x s))
+          = fun x s ↦ (B (f x s)).comp (g' x s) + (B.comp (f' x s)).flip (g x s) := by
+        funext x s
+        ext h'
+        simp [ContinuousLinearMap.precompR, ContinuousLinearMap.precompL]
+      rwa [heq] at hres
+
+/-- **Instantiation, and the falsification check for `bilin`**: composition of two operator
+families.  This is the shape the augmented field itself is built from, and unlike a *scalar*
+family it is expressible here --- see the universe note below.
+
+**A scalar family is NOT expressible at a general universe**, and the reason is worth recording
+rather than rediscovering: `IsBddFamily` recurses `W ↦ (H →L[ℝ] W)`, which is stable only if `W`
+and `H` share a universe, and `ℝ : Type 0`.  Nothing is lost: multiplication by a bump `χ` is
+`fun x s ↦ (χ x • 1) (A x s)`, whose left factor is valued in `(W →L[ℝ] W) : Type u`, so the
+scalar never has to carry a family of its own. -/
+theorem IsBddFamily.comp_op (k : ℕ) {W : Type u} [NormedAddCommGroup W] [NormedSpace ℝ W]
+    {f g : H → ℝ → (W →L[ℝ] W)} (hf : IsBddFamily k f) (hg : IsBddFamily k g) :
+    IsBddFamily k fun x s ↦ (f x s).comp (g x s) :=
+  IsBddFamily.bilin k (compL ℝ W W W) hf hg
+
+/-- **A `C^k` map with bounded iterated derivatives is a bounded `C^k` family**, constant in
+`t`.  This is what connects `IsBddFamily` to Mathlib's `ContDiff`, and so what makes the class
+checkable in practice rather than only closed under operations.
+
+The induction is the definition of `ContDiff` unwound one step at a time: the derivative family
+is `fderiv ℝ g`, which is `C^{k-1}` by `contDiff_succ_iff_fderiv`, and whose iterated
+derivatives are those of `g` shifted by one (`norm_iteratedFDeriv_fderiv`). -/
+theorem isBddFamily_of_contDiff : ∀ (k : ℕ) {W : Type u} [NormedAddCommGroup W]
+    [NormedSpace ℝ W] (g : H → W), ContDiff ℝ k g →
+    (∀ j ≤ k, ∃ C : ℝ, ∀ x, ‖iteratedFDeriv ℝ j g x‖ ≤ C) →
+    IsBddFamily k fun (x : H) (_ : ℝ) ↦ g x := by
+  intro k
+  induction k with
+  | zero =>
+      intro W _ _ g _ hb
+      obtain ⟨C, hC⟩ := hb 0 le_rfl
+      exact ⟨fun _ ↦ continuous_const, C, fun x _ ↦ by
+        have h := hC x; rwa [norm_iteratedFDeriv_zero] at h⟩
+  | succ k ih =>
+      intro W _ _ g hg hb
+      obtain ⟨C, hC⟩ := hb 0 (Nat.zero_le _)
+      have hcast : ((k + 1 : ℕ) : WithTop ℕ∞) = (k : WithTop ℕ∞) + 1 := by push_cast; ring
+      rw [hcast] at hg
+      obtain ⟨hdiff, -, hfd⟩ := contDiff_succ_iff_fderiv.1 hg
+      refine ⟨⟨fun _ ↦ continuous_const, C, fun x _ ↦ by
+          have h := hC x; rwa [norm_iteratedFDeriv_zero] at h⟩,
+        fun x _ ↦ fderiv ℝ g x, fun x _ ↦ (hdiff x).hasFDerivAt, ?_⟩
+      refine ih (fderiv ℝ g) hfd ?_
+      intro j hj
+      obtain ⟨D, hD⟩ := hb (j + 1) (by omega)
+      exact ⟨D, fun x ↦ by rw [norm_iteratedFDeriv_fderiv]; exact hD x⟩
+
+
+/-- **A compactly supported `C^k` map is a bounded `C^k` family**: its iterated derivatives are
+continuous with compact support, hence bounded.  This is what makes a bump function usable as an
+`IsBddFamily`, and so what a chart-local argument needs. -/
+theorem isBddFamily_of_hasCompactSupport (k : ℕ) {W : Type u} [NormedAddCommGroup W]
+    [NormedSpace ℝ W] (g : H → W) (hg : ContDiff ℝ k g) (hsupp : HasCompactSupport g) :
+    IsBddFamily k fun (x : H) (_ : ℝ) ↦ g x := by
+  refine isBddFamily_of_contDiff k g hg fun j hj ↦ ?_
+  exact (hsupp.iteratedFDeriv j).exists_bound_of_continuous
+    (hg.continuous_iteratedFDeriv (by exact_mod_cast hj))
+
 end BddFamily
 
 section Smooth
@@ -240,6 +355,24 @@ out.  The two developments reach the same conclusion from the same data. -/
 theorem contDiff_one_dysonSum_of_isBddFamily {A : H → ℝ → (F →L[ℝ] F)}
     (hA : IsBddFamily 2 A) (t : ℝ) : ContDiff ℝ 1 fun y ↦ dysonSum (A y) t := by
   simpa using contDiff_dysonSum 1 A hA t
+
+/-- **The conclusion localizes.**
+
+`Φ(·,t)` depends on the parameter only through `A(x,·)`, so two families agreeing pointwise on a
+set give the same `Φ` there.  This is the statement a chart-local argument consumes: the
+hypotheses above are global in the parameter and a chart is not, so one supplies a globally
+bounded `B` agreeing with `A` where it matters --- a bump product, with
+`isBddFamily_of_hasCompactSupport` for the bump --- and reads off `C^k` there.
+
+**What is still missing on this line, stated precisely.** Building that `B` for a genuinely
+`t`-dependent `A` needs a `C^k` hypothesis on `A` that is *uniform in `t`*, and the cleanest
+form of that hypothesis is not settled here. So the remaining ODE-side gap is a hypothesis
+shape, not a theorem --- much smaller than the "no `C^k` parameter theory at all" this line
+started from, but not nothing. -/
+theorem contDiffOn_dysonSum (k : ℕ) {U : Set H} {A B : H → ℝ → (F →L[ℝ] F)}
+    (hB : IsBddFamily (k + 1) B) (hAB : ∀ x ∈ U, A x = B x) (t : ℝ) :
+    ContDiffOn ℝ k (fun y ↦ dysonSum (A y) t) U :=
+  (contDiff_dysonSum k B hB t).contDiffOn.congr fun y hy ↦ by rw [hAB y hy]
 
 end Smooth
 
