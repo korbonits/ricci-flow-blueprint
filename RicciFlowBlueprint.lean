@@ -68,6 +68,7 @@ import RicciFlowBlueprint.CurvatureFormThree
 import RicciFlowBlueprint.ParallelTransport
 import RicciFlowBlueprint.TransportIsometry
 import RicciFlowBlueprint.ParallelTransportGlobal
+import RicciFlowBlueprint.ParallelFrame
 import RicciFlowBlueprint.HomBundle
 import RicciFlowBlueprint.HomBundleSmooth
 import RicciFlowBlueprint.CurvatureThree

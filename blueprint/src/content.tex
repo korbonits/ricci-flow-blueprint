@@ -5668,15 +5668,57 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   set and not of some other one.
 \end{lemma}
 
+\begin{lemma}[A parallel orthonormal frame along a curve]
+  \label{lem:parallel-frame}
+  \lean{CovariantDerivative.inner_eq_of_isParallelAlong_global,
+    CovariantDerivative.exists_parallel_orthonormal_frame_along,
+    CovariantDerivative.exists_parallel_orthonormalBasis_along,
+    CovariantDerivative.inner_eq_of_isParallelAlong_frame,
+    CovariantDerivative.exists_parallelTransportIsometry_frame}
+  \leanok
+  \uses{lem:transport-global, lem:transport-isometry}
+  Let $\nab$ be metric and $\gamma$ differentiable on a preconnected open $s$. Transporting an
+  orthonormal basis of $T_{\gamma(t_0)}\M$ along $\gamma$ gives a family that is orthonormal in
+  \emph{every} fibre, and so an orthonormal basis of each $T_{\gamma(u)}\M$; the transport
+  isometry of Lemma \ref{lem:transport-global} is precisely the map carrying the one basis to
+  the other.
+
+  \textbf{Proved} (\texttt{ParallelFrame.lean}).
+
+  \textbf{Nothing new is transported.} The frame is Lemma \ref{lem:transport-global} applied
+  once per basis vector, and orthonormality is the constancy of the pairing of two parallel
+  sections, which carries no frame hypotheses and so was global already. The one adjustment is
+  that the constancy is stated on a closed interval based at its left endpoint and is wanted on
+  a preconnected open set based at an arbitrary time --- two cases of order-connectedness, not
+  a new argument. The \emph{same} constancy serves for the diagonal and the off-diagonal
+  pairings, so orthonormality is preserved as one condition rather than a norm statement and an
+  angle statement proved separately.
+
+  \textbf{Why this is the next brick on the cross-fibre maximum principle.} The touching-point
+  half is done (Lemma \ref{lem:bundle-touching-point}); what remains compares
+  $\mathrm{dist}(u(t,x),\mathcal{K}_x)$ between \emph{different} fibres. A parallel orthonormal
+  frame makes that a statement about a \emph{fixed} inner product space: it trivialises $T\M$
+  isometrically along the curve, hence $\operatorname{End}(T\M)$ isometrically for the
+  Hilbert--Schmidt metric, and Lemma \ref{lem:ivey-parallel} carries the pinching set across.
+  So along each curve the comparison reduces to the trivial-bundle case that Theorem
+  \ref{thm:max-tensor} already handles. In frame coordinates a parallel section is a fixed
+  vector, which is the sense in which the trivialisation is isometric.
+
+  \emph{What this does not do.} It does not build parallel transport on
+  $\operatorname{End}(T\M)$ as a bundle in its own right, and it does not carry out the
+  first-touching-time argument. It supplies the frame those need.
+\end{lemma}
+
 \begin{lemma}[The pinching set is a parallel subbundle]
   \label{lem:ivey-parallel}
   \lean{RicciFlowBlueprint.endoConj,
         RicciFlowBlueprint.lambdaMin_conj,
         RicciFlowBlueprint.Pinching.traceEndo_conj,
         RicciFlowBlueprint.Pinching.mem_iveyEndoSet_conj_iff,
-        RicciFlowBlueprint.exists_parallelTransport_mem_iveyEndoSet_iff}
+        RicciFlowBlueprint.exists_parallelTransport_mem_iveyEndoSet_iff,
+        RicciFlowBlueprint.exists_parallelTransport_frame_mem_iveyEndoSet_iff}
   \leanok
-  \uses{lem:ivey-endo, lem:transport-global}
+  \uses{lem:ivey-endo, lem:transport-global, lem:parallel-frame}
   The pinching set is invariant under conjugation by any linear isometry of fibres, and
   therefore --- parallel transport for a metric connection being an isometry --- under
   parallel transport along any curve.
@@ -5697,6 +5739,12 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   hypothesis the maximum principle wants --- the naturality lemma knows nothing about a
   connection, and the transport theorem knows nothing about the set --- and a general lemma
   that is never instantiated is a liability.
+
+  \textbf{And the isometry is identified}
+  (\texttt{exists\_parallelTransport\_frame\_mem\_iveyEndoSet\_iff}): it is the change of
+  orthonormal frame of Lemma \ref{lem:parallel-frame}. That is what makes the frame's purpose a
+  checked claim --- in the transported frame both the inner product and the set are the same in
+  every fibre.
 \end{lemma}
 
 \begin{lemma}[Hamilton--Ivey for the curvature ODE]

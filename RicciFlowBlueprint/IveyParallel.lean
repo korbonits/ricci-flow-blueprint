@@ -19,6 +19,7 @@ Argument order follows `CovariantDerivative`: `cov σ x (X x)` is `(∇_X σ) x`
 -/
 import RicciFlowBlueprint.IveyEndo
 import RicciFlowBlueprint.ParallelTransportGlobal
+import RicciFlowBlueprint.ParallelFrame
 
 open Bundle Set CovariantDerivative
 open scoped Manifold ContDiff Topology RealInnerProductSpace
@@ -66,5 +67,43 @@ theorem exists_parallelTransport_mem_iveyEndoSet_iff
   obtain ⟨P, hP⟩ :=
     exists_parallelTransportIsometry_global cov hmet hs hconn hγ hγv ht₀ ht
   exact ⟨P, hP, fun A ↦ Pinching.mem_iveyEndoSet_conj_iff P A⟩
+
+-- BENCH: ivey-parallel-frame
+/-- **The transport carrying the pinching set is a change of orthonormal frame.**
+
+`exists_parallelTransport_mem_iveyEndoSet_iff` says the set is preserved by an isometry
+produced abstractly. This says what that isometry *is*: it takes the chosen orthonormal basis
+of the starting fibre to the parallel-transported orthonormal basis of the target fibre
+(`ParallelFrame.lean`).
+
+**That is what makes the frame's purpose a checked claim rather than an asserted one.** The
+cross-fibre half of the maximum principle compares `dist(u(t,x), K_x)` between different
+fibres; in the transported frame both the inner product and the set are the *same* in every
+fibre, so along each curve the comparison is a statement about a fixed inner product space
+with a fixed convex set --- the situation `TensorMaximumPrinciple.lean` already handles. -/
+theorem exists_parallelTransport_frame_mem_iveyEndoSet_iff
+    (hmet : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    (hs : IsOpen s) (hconn : IsPreconnected s)
+    (hγ : ∀ w ∈ s, MDifferentiableAt 𝓘(ℝ, ℝ) I γ w)
+    (hγv : ∀ w ∈ s, MDiffAlongAt γ (velocity (I := I) γ) w)
+    {t₀ : ℝ} (ht₀ : t₀ ∈ s) {t : ℝ} (ht : t ∈ s)
+    [Nontrivial (TangentSpace I (γ t₀))] [FiniteDimensional ℝ (TangentSpace I (γ t₀))]
+    [Nontrivial (TangentSpace I (γ t))] [FiniteDimensional ℝ (TangentSpace I (γ t))]
+    {ι : Type*} [Fintype ι] [Nonempty ι]
+    (b : OrthonormalBasis ι ℝ (TangentSpace I (γ t₀))) :
+    ∃ (fr : ι → Π u : ℝ, TangentSpace I (γ u))
+      (P : TangentSpace I (γ t₀) ≃ₗᵢ[ℝ] TangentSpace I (γ t)),
+      (∀ i, fr i t₀ = b i) ∧
+      (∀ i, IsParallelAlong cov γ (fr i) s) ∧
+      (∃ bt : OrthonormalBasis ι ℝ (TangentSpace I (γ t)), ∀ i, bt i = fr i t) ∧
+      (∀ i, P (b i) = fr i t) ∧
+      (∀ V : Π u : ℝ, TangentSpace I (γ u), (∀ u ∈ s, MDiffAlongAt γ V u) →
+          IsParallelAlong cov γ V s → V t = P (V t₀)) ∧
+      ∀ A : TangentSpace I (γ t₀) →L[ℝ] TangentSpace I (γ t₀),
+        (endoConj P A ∈ Pinching.iveyEndoSet (TangentSpace I (γ t))
+          ↔ A ∈ Pinching.iveyEndoSet (TangentSpace I (γ t₀))) := by
+  obtain ⟨fr, P, hfr0, _hfrd, hfrp, hbt, hPfr, hP⟩ :=
+    CovariantDerivative.exists_parallelTransportIsometry_frame cov hmet hs hconn hγ hγv ht₀ ht b
+  exact ⟨fr, P, hfr0, hfrp, hbt, hPfr, hP, fun A ↦ Pinching.mem_iveyEndoSet_conj_iff P A⟩
 
 end RicciFlowBlueprint
