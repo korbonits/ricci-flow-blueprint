@@ -2802,7 +2802,9 @@ target actually requires.
   $\mathcal{L}(F) \times \mathcal{L}(H,\mathcal{L}(F))$, whose operator is bounded, continuous
   in $t$, and one derivative less regular in the parameter than $A$. So $C^k$ follows from the
   $C^1$ theorem applied to the augmented system, by induction on $k$, with no second-order
-  differentiation under the integral sign anywhere. That induction is not yet carried out.
+  differentiation under the integral sign anywhere. That system is built in Theorem
+  \ref{thm:linear-ode-augmented} and the induction is carried out in Theorem
+  \ref{thm:linear-ode-smooth}.
 \end{theorem}
 
 \begin{theorem}[Linear ODEs: the augmented system, and second-order dependence]
@@ -2860,15 +2862,71 @@ target actually requires.
   continuous. This is the first statement putting the fundamental solution in a $C^k$ class at
   all.
 
-  \emph{What this does not do.} The induction to general $k$ is not carried out, and the
-  obstruction is a Lean one worth recording: the induction replaces $F$ by $G$ at each step, and
-  $G$ lives in universe $\max(u_F, u_H)$, so a naive induction would have to produce statements
-  in a \emph{growing} universe, which \texttt{Nat.rec} cannot do. Constraining $F$ and $H$ to
-  one universe fixes it and costs nothing at the application site, but it reshapes every
-  statement in the induction. Separately, Uhlenbeck's trick needs the parameter to range over a
+  \emph{Scope.} The induction to general $k$ is Theorem \ref{thm:linear-ode-smooth}, which
+  iterates this construction. Separately, Uhlenbeck's trick needs the parameter to range over a
   \emph{manifold}, not a normed space, so chart and bundle transfer remain after the ODE theory
-  is in place.
+  is in place --- at every $k$.
 \end{theorem}
+
+\begin{theorem}[Linear ODEs: $C^k$ dependence on a parameter, for every $k$]
+  \label{thm:linear-ode-smooth}
+  \lean{RicciFlowBlueprint.IsBddCts,
+    RicciFlowBlueprint.IsBddFamily,
+    RicciFlowBlueprint.IsBddFamily.comp_clm,
+    RicciFlowBlueprint.prodCLM,
+    RicciFlowBlueprint.IsBddFamily.prodMk,
+    RicciFlowBlueprint.isBddFamily_augOp,
+    RicciFlowBlueprint.contDiff_dysonSum,
+    RicciFlowBlueprint.isBddFamily_const,
+    RicciFlowBlueprint.contDiff_one_dysonSum_of_isBddFamily}
+  \leanok
+  \uses{thm:linear-ode-augmented}
+  Call $f : H \times \R \to W$ a \emph{bounded $C^{k+1}$ family} when it is continuous and
+  bounded in $t$ uniformly in the parameter, and has a parameter derivative family
+  $D_xf : H \times \R \to \mathcal{L}(H,W)$ that is a bounded $C^k$ family. If $A$ is a bounded
+  $C^{k+1}$ family, then
+  \[
+    x \;\longmapsto\; \Phi(x,t) \quad\text{is } C^k .
+  \]
+
+  \textbf{Proved} (\texttt{LinearODESmooth.lean}), for every $k$. This is the induction
+  Theorem \ref{thm:linear-ode-parameter} projected and Theorem
+  \ref{thm:linear-ode-augmented} set up.
+
+  \textbf{The hypothesis class is itself recursive, and that is what makes the induction
+  cheap.} Two closure properties carry the whole file: a bounded $C^k$ family stays one under
+  \emph{post-composition with a fixed continuous linear map}, and under \emph{pairing}. The
+  induction step for the first is \emph{the same lemma at a different map} --- the derivative
+  family of $L \circ f$ is $(\mathrm{compL}\,L)\circ f'$ --- so nothing is differentiated by
+  hand at any level; the second reduces to the first through the bundled pairing map
+  $\mathrm{prodCLM}$, built from $\mathrm{inl}$ and $\mathrm{inr}$ so that linearity and
+  continuity hold by construction. With those two, the augmented coefficient of Theorem
+  \ref{thm:linear-ode-augmented} is a bounded $C^k$ family \emph{for free}, being
+  $\mathrm{augCLM}$ applied to the pair $(A, D_xA)$.
+
+  \textbf{The step.} $\Phi$ is $C^{k+1}$ iff it is differentiable with $C^k$ derivative; its
+  derivative \emph{is} the Dyson sum of the augmented system read through a fixed continuous
+  linear map, by the identification of Theorem \ref{thm:linear-ode-augmented}; and that Dyson
+  sum is $C^k$ by the induction hypothesis applied at $F := G$. \textbf{No new analysis appears
+  at any level} --- every derivative in sight traces back to the single $C^1$ theorem.
+
+  \textbf{Why the statement is universe-monomorphic.} The induction replaces $F$ by
+  $G = \mathcal{L}(F) \times \mathcal{L}(H,\mathcal{L}(F))$, which lives in universe
+  $\max(u_F,u_H)$; iterating in general universes would ask \texttt{Nat.rec} for statements in a
+  \emph{growing} universe, which it cannot produce. Putting $F$ and $H$ in one universe makes
+  $G$ stay put, and costs nothing at the application site, where the spaces are concrete.
+
+  \textbf{Two checks, because an uninstantiated general theorem asserts nothing.} A family not
+  depending on the parameter is a bounded $C^k$ family for every $k$, so the hypothesis class is
+  non-empty at every level; and at $k=1$ the theorem reproduces the conclusion of Theorem
+  \ref{thm:linear-ode-augmented} from the same data.
+
+  \emph{What this does not do.} Uhlenbeck's trick needs the parameter to range over a
+  \emph{manifold}, and the bounds here are global in the parameter, so chart-and-bundle transfer
+  with globally bounded extensions off each chart remains --- at every $k$. The ODE-theoretic
+  half of that gap is now closed; the geometric half is not.
+\end{theorem}
+
 
 
 \begin{theorem}[Evolution of the curvature tensor]

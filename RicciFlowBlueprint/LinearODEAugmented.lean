@@ -23,13 +23,12 @@ Two things are proved:
 * `hasFDerivAt_dysonDerivSum` — `D_xΦ` is itself differentiable in `x`, i.e. **`Φ` is twice
   differentiable in the parameter**, which is the `k = 2` case the roadmap is gated on.
 
-**What is NOT here.** The induction to general `k` is not done. The obstruction is not
-mathematical but a Lean one, and it is worth recording precisely: the induction replaces `F` by
-`G` at each step, and `G` lives in universe `max u_F u_H`, so a naive induction would have to
-produce statements in a *growing* universe, which `Nat.rec` cannot do. The fix is to constrain
-`F` and `H` to one universe (`max u u = u`), which is legitimate and costs nothing at the
-application site, but it changes the shape of every statement in the induction and is a separate
-piece of work.
+**The induction to general `k` is in `LinearODESmooth.lean`**, which iterates exactly this
+construction. The one obstruction worth recording is a Lean one, not a mathematical one: the
+induction replaces `F` by `G` at each step, and `G` lives in universe `max u_F u_H`, so a naive
+induction would have to produce statements in a *growing* universe, which `Nat.rec` cannot do.
+Constraining `F` and `H` to one universe (`max u u = u`) fixes it and costs nothing at the
+application site.
 -/
 import RicciFlowBlueprint.LinearODE
 
