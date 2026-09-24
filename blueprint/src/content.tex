@@ -2805,6 +2805,72 @@ target actually requires.
   differentiation under the integral sign anywhere. That induction is not yet carried out.
 \end{theorem}
 
+\begin{theorem}[Linear ODEs: the augmented system, and second-order dependence]
+  \label{thm:linear-ode-augmented}
+  \lean{RicciFlowBlueprint.augField,
+    RicciFlowBlueprint.augCLM,
+    RicciFlowBlueprint.augOp,
+    RicciFlowBlueprint.dysonSum_augOp_apply,
+    RicciFlowBlueprint.augOpDeriv,
+    RicciFlowBlueprint.hasFDerivAt_augOp,
+    RicciFlowBlueprint.augRead,
+    RicciFlowBlueprint.hasFDerivAt_dysonDerivSum,
+    RicciFlowBlueprint.differentiable_dysonDerivSum,
+    RicciFlowBlueprint.contDiff_one_dysonSum}
+  \leanok
+  \uses{thm:linear-ode-parameter}
+  In the setting of Theorem \ref{thm:linear-ode-parameter}, suppose further that
+  $x \mapsto D_xA(x,s)$ is differentiable with $\|D_x^2A(x,s)\| \le C''$ uniformly, and that
+  $D_x^2A(x,\cdot)$ is continuous. Then
+  \[
+    x \;\longmapsto\; D_x\Phi(x,t) \quad\text{is differentiable,}
+  \]
+  so $\Phi(\cdot,t)$ is twice differentiable in the parameter; and $\Phi(\cdot,t)$ is $C^1$.
+
+  \textbf{Proved} (\texttt{LinearODEAugmented.lean}). This is the $k=2$ case that
+  Theorem \ref{thm:linear-ode-parameter} left as the next step.
+
+  \textbf{The whole content is one identification.} On
+  $G := \mathcal{L}(F) \times \mathcal{L}(H,\mathcal{L}(F))$ put
+  \[
+    \mathcal{A}(x,s)(u,v) \;=\; \big(A(x,s)\circ u,\;\; A(x,s)\circ v
+      + (\,\cdot\circ u\,)\circ D_xA(x,s)\big),
+  \]
+  a bounded operator family, continuous in $s$, block-triangular. Then
+  \[
+    \Phi_{\mathcal{A}}(x,t)\,(1,0) \;=\; \big(\Phi(x,t),\; D_x\Phi(x,t)\big),
+  \]
+  because both sides solve $\dot w = \mathcal{A}(x,t)w$ --- the left by Theorem
+  \ref{thm:linear-ode}, the right by that theorem and the variational equation paired --- and
+  both are $(1,0)$ at $t=0$; uniqueness for a linear equation with bounded coefficient does the
+  rest. So $D_x\Phi$ is exhibited as a Dyson sum \emph{in its own right}, read through a fixed
+  continuous linear map, and every theorem about Dyson sums applies to it.
+
+  \textbf{The design point is that $\mathcal{A}$ is a continuous LINEAR function of the pair
+  $(A, D_xA)$.} Differentiating it in the parameter is then the chain rule through a fixed
+  continuous linear map --- one line --- rather than a product rule reproved by hand, and that
+  is what lets Theorem \ref{thm:linear-ode-parameter} apply to the augmented system with no new
+  differentiation under the integral sign. Linearity and continuity in $(u,v)$ hold by
+  construction, the field being assembled from $\mathrm{compL}$, $\mathrm{prod}$, $\mathrm{fst}$
+  and $\mathrm{snd}$; no bilinear constructor and no operator-norm estimate appears.
+
+  \textbf{$C^1$ comes free from the second derivative.} Theorem
+  \ref{thm:linear-ode-parameter} gives differentiability and says nothing about how $D_x\Phi$
+  varies; the continuity that $C^1$ asks for is exactly that $D_x\Phi$ is differentiable, hence
+  continuous. This is the first statement putting the fundamental solution in a $C^k$ class at
+  all.
+
+  \emph{What this does not do.} The induction to general $k$ is not carried out, and the
+  obstruction is a Lean one worth recording: the induction replaces $F$ by $G$ at each step, and
+  $G$ lives in universe $\max(u_F, u_H)$, so a naive induction would have to produce statements
+  in a \emph{growing} universe, which \texttt{Nat.rec} cannot do. Constraining $F$ and $H$ to
+  one universe fixes it and costs nothing at the application site, but it reshapes every
+  statement in the induction. Separately, Uhlenbeck's trick needs the parameter to range over a
+  \emph{manifold}, not a normed space, so chart and bundle transfer remain after the ODE theory
+  is in place.
+\end{theorem}
+
+
 \begin{theorem}[Evolution of the curvature tensor]
   \label{thm:evolution-rm}
   \lean{RicciFlowBlueprint.inner_derivCurvature_eq_curvatureLaplacian_add_of_isRicciFlowAt,
