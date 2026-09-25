@@ -347,7 +347,35 @@ Now `thm:hamilton-ivey` at the head of `chap:kappa`, with a
    there: `BundleMaximumPrinciple.lean`'s touching-point lemma is proved for a
    **normal** extension (`∇N(x₀) = 0`, `ΔN(x₀) = 0`), while Hamilton's
    cross-fibre argument turns a maximum of the distance into a maximum of
-   `⟪N,u⟫` using a **parallel** extension. **`homCov` is now known `C¹`** (`HomBundleSmooth.lean`), which
+   `⟪N,u⟫` using a **parallel** extension.
+   **Design for the first-touching-time argument, worked out 2026-09-25 — and
+   the conclusion is that NEITHER `exp` NOR Gram–Schmidt is needed.** At a
+   first touching time `t₀` and a spatial max `x₀` of
+   `f(x) = infDist(u t₀ x, K x)`, let `n = u − p` be the outward normal at the
+   nearest point. The support inequality
+   `⟪w,v⟫ − h_K(w) ≤ ‖w‖·infDist(v,K)` turns a max of `f` into a max of
+   `x ↦ ⟪N(x), u x⟫` — but only if `‖N‖ ≤ 1` **and** `h_{K_x}(N(x))` is
+   constant, i.e. only if `N(x)` is an **isometric image** of `n`, not merely a
+   normal section. Over a *neighbourhood* that needs radial parallel transport
+   (hence `exp`, hence the ODE-regularity gap) or a **normal orthonormal
+   frame** (hence differentiating Gram–Schmidt); both are expensive, and
+   normalising a normal section — which does keep it normal, since
+   `∇N(x₀) = 0` forces `d‖N‖(x₀) = 0` and `Δ(‖N‖²)(x₀) = 0` — fixes `‖N‖` but
+   **not** the support function. **The way round is `OneFormAlongCurve.lean`'s
+   observation one level up**: `Δ` at a point is a sum of `n` ordinary second
+   derivatives **along `n` geodesics, one curve at a time**, and along a
+   *single* curve parallel transport is `ParallelTransport.lean` (a linear
+   equation, no dependence-on-initial-conditions theory), it is an **isometry**
+   (`TransportIsometry.lean`, so `‖N‖ ≡ 1` is free) and it **carries `K`**
+   (`IveyParallel.lean`, so `h_{K}(N)` is constant for free). So the two
+   obstructions that force a frame over a neighbourhood both evaporate along a
+   curve. **The `t`-derivative needs no transport at all**: at the fixed point
+   `x₀` the set `K_{x₀}` does not move in `t`. Bricks in order: the pairing
+   Leibniz rule along a curve for a **general** bundle (the `TM` version is in
+   `TransportIsometry.lean`); `d²/ds²⟪N, u∘γ⟫ = ⟪N, ∇²_{γ',γ'}u⟫` for `N`
+   parallel along a geodesic; the sum over an orthonormal basis of directions
+   through `laplacianSection_eq_sum_frame`; then the ε-perturbation and the
+   first-touching-time argument itself. **`homCov` is now known `C¹`** (`HomBundleSmooth.lean`), which
    the `∇²`/`Δ` layer needs and which nothing had proved; it was found by
    attempting the composition rather than by inspection.
 2. ~~**The manifold trace lemma** `X(tr_g B) = tr_g(∇_X B)`~~ — **done**,
