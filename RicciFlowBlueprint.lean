@@ -107,3 +107,4 @@ import RicciFlowBlueprint.CurvatureOperatorFlow
 import RicciFlowBlueprint.CurvatureOperatorEvolution
 import RicciFlowBlueprint.IveyParallelEnd
 import RicciFlowBlueprint.IveyTouching
+import RicciFlowBlueprint.HamiltonIveyThree

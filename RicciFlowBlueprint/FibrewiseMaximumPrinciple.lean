@@ -42,7 +42,7 @@ local-on-balls forms below are one line from this. -/
 theorem mem_of_infDist_max_of_le {u ut : ℝ → Π x : M, V x} {F : Π x : M, V x → V x}
     {K : Π x : M, Set (V x)} {L : ℝ≥0} {T : ℝ}
     (hKcl : ∀ x, IsClosed (K x)) (hKc : ∀ x, Convex ℝ (K x)) (hKne : ∀ x, (K x).Nonempty)
-    (hdc : Continuous fun p : ℝ × M ↦ infDist (u p.1 p.2) (K p.2))
+    (hdc : ContinuousOn (fun p : ℝ × M ↦ infDist (u p.1 p.2) (K p.2)) (Icc 0 T ×ˢ univ))
     (hut : ∀ t ∈ Icc 0 T, ∀ x, HasDerivAt (fun s ↦ u s x) (ut t x) t)
     (hF : ∀ t ∈ Icc 0 T, ∀ x₀ : M, ∀ p ∈ K x₀,
       ‖u t x₀ - p‖ = infDist (u t x₀) (K x₀) →
@@ -56,6 +56,17 @@ theorem mem_of_infDist_max_of_le {u ut : ℝ → Π x : M, V x} {F : Π x : M, V
       (∀ q ∈ K x, (⟪n, q - p⟫ : ℝ) ≤ 0) → (⟪n, F x p⟫ : ℝ) ≤ 0)
     (h0 : ∀ x, u 0 x ∈ K x) :
     ∀ t ∈ Icc 0 T, ∀ x, u t x ∈ K x := by
+  rcases lt_or_ge T 0 with hT | hT
+  · intro t ht
+    exact absurd (ht.1.trans ht.2) (not_le.2 hT)
+  -- the distance, clamped in time: continuous on all of `ℝ × M`, and equal to it on `[0,T]`
+  set Fd : ℝ × M → ℝ := fun p ↦ infDist (u (projIcc 0 T hT p.1) p.2) (K p.2) with hFd_def
+  have hFd : Continuous Fd :=
+    hdc.comp_continuous
+      ((continuous_subtype_val.comp (continuous_projIcc (h := hT))).prodMap continuous_id)
+      fun p ↦ ⟨Subtype.mem (projIcc 0 T hT p.1), mem_univ _⟩
+  have hFd_eq : ∀ t ∈ Icc 0 T, ∀ x, Fd (t, x) = infDist (u t x) (K x) := fun t ht x ↦ by
+    simp only [hFd_def, projIcc_of_mem hT ht]
   set c : ℝ := 2 * L + 1 with hc
   have hcpos : 0 < c := by positivity
   have key : ∀ ε > 0, ∀ t ∈ Icc 0 T, ∀ x, infDist (u t x) (K x) < ε * Real.exp (c * t) := by
@@ -67,11 +78,19 @@ theorem mem_of_infDist_max_of_le {u ut : ℝ → Π x : M, V x} {F : Π x : M, V
     have hSne : S.Nonempty := by
       obtain ⟨t, ht, x, hx⟩ := hcon
       exact ⟨t, ht, x, by linarith⟩
-    have hScl : IsClosed S :=
-      isClosed_touching
-        (f := fun p : ℝ × M ↦ ε * Real.exp (c * p.1) - infDist (u p.1 p.2) (K p.2))
+    have hScl : IsClosed S := by
+      have hSeq : S = {t ∈ Icc (0:ℝ) T | ∃ x, ε * Real.exp (c * t) - Fd (t, x) ≤ 0} := by
+        ext t
+        constructor
+        · rintro ⟨ht, x, hx⟩
+          exact ⟨ht, x, by rw [hFd_eq t ht x]; exact hx⟩
+        · rintro ⟨ht, x, hx⟩
+          exact ⟨ht, x, by rw [← hFd_eq t ht x]; exact hx⟩
+      rw [hSeq]
+      exact isClosed_touching
+        (f := fun p : ℝ × M ↦ ε * Real.exp (c * p.1) - Fd p)
         ((continuous_const.mul (Real.continuous_exp.comp
-          (continuous_const.mul continuous_fst))).sub hdc) T
+          (continuous_const.mul continuous_fst))).sub hFd) T
     have hSbdd : BddBelow S := ⟨0, fun t ht ↦ ht.1.1⟩
     set t₀ := sInf S with ht₀
     have ht₀S : t₀ ∈ S := hScl.csInf_mem hSne hSbdd
@@ -97,14 +116,16 @@ theorem mem_of_infDist_max_of_le {u ut : ℝ → Π x : M, V x} {F : Π x : M, V
     have hglob : ∀ x, infDist (u t₀ x) (K x) ≤ E := by
       intro x
       have hcont : ContinuousWithinAt
-          (fun t ↦ ε * Real.exp (c * t) - infDist (u t x) (K x)) (Iio t₀) t₀ :=
+          (fun t ↦ ε * Real.exp (c * t) - Fd (t, x)) (Iio t₀) t₀ :=
         ((continuous_const.mul (Real.continuous_exp.comp (continuous_const.mul
-          continuous_id))).sub (hdc.comp (continuous_id.prodMk continuous_const)))
+          continuous_id))).sub (hFd.comp (continuous_id.prodMk continuous_const)))
           |>.continuousAt.continuousWithinAt
-      have hev : ∀ᶠ t in 𝓝[<] t₀, 0 ≤ ε * Real.exp (c * t) - infDist (u t x) (K x) := by
+      have hev : ∀ᶠ t in 𝓝[<] t₀, 0 ≤ ε * Real.exp (c * t) - Fd (t, x) := by
         filter_upwards [mem_of_superset (Ioo_mem_nhdsLT ht₀pos) Ioo_subset_Ico_self] with t ht
+        rw [hFd_eq t ⟨ht.1, ht.2.le.trans ht₀I.2⟩ x]
         linarith [hnot t ht x]
       have hlim := ge_of_tendsto hcont.tendsto hev
+      rw [hFd_eq t₀ ht₀I x] at hlim
       linarith
     have heq : infDist (u t₀ x₀) (K x₀) = E := le_antisymm (hglob x₀) hx₀'
     obtain ⟨p, hp, hnorm, hn⟩ :=
@@ -199,7 +220,7 @@ theorem mem_of_infDist_max {u ut : ℝ → Π x : M, V x} {F : Π x : M, V x →
       (∀ q ∈ K x, (⟪n, q - p⟫ : ℝ) ≤ 0) → (⟪n, F x p⟫ : ℝ) ≤ 0)
     (h0 : ∀ x, u 0 x ∈ K x) :
     ∀ t ∈ Icc 0 T, ∀ x, u t x ∈ K x :=
-  mem_of_infDist_max_of_le hKcl hKc hKne hdc hut
+  mem_of_infDist_max_of_le hKcl hKc hKne hdc.continuousOn hut
     (fun _ _ x₀ p _ _ ↦ by
       simpa only [dist_eq_norm] using (hF x₀).dist_le_mul _ p) hmax hKinv h0
 
@@ -211,7 +232,7 @@ polynomial reaction --- Hamilton's --- needs **no truncation**. -/
 theorem mem_of_infDist_max_local {u ut : ℝ → Π x : M, V x} {F : Π x : M, V x → V x}
     {K : Π x : M, Set (V x)} {L : ℝ≥0} {T B : ℝ}
     (hKcl : ∀ x, IsClosed (K x)) (hKc : ∀ x, Convex ℝ (K x)) (hK0 : ∀ x, (0 : V x) ∈ K x)
-    (hdc : Continuous fun p : ℝ × M ↦ infDist (u p.1 p.2) (K p.2))
+    (hdc : ContinuousOn (fun p : ℝ × M ↦ infDist (u p.1 p.2) (K p.2)) (Icc 0 T ×ˢ univ))
     (hut : ∀ t ∈ Icc 0 T, ∀ x, HasDerivAt (fun s ↦ u s x) (ut t x) t)
     (hu : ∀ t ∈ Icc 0 T, ∀ x, ‖u t x‖ ≤ B)
     (hF : ∀ x, LipschitzOnWith L (F x) (closedBall 0 (2 * B)))
