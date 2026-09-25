@@ -96,3 +96,4 @@ import RicciFlowBlueprint.FibrewiseMaximumPrinciple
 import RicciFlowBlueprint.BundleMaximumPrincipleCross
 import RicciFlowBlueprint.UhlenbeckPointwise
 import RicciFlowBlueprint.UhlenbeckFlow
+import RicciFlowBlueprint.CurvatureCommutatorPointwise

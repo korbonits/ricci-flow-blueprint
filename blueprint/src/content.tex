@@ -3005,6 +3005,32 @@ target actually requires.
   Lemma \ref{lem:uhlenbeck-pointwise}: $\Rm_3$ is a polynomial in the Uhlenbeck coefficient.
 \end{lemma}
 
+\begin{lemma}[The curvature commutator at a point]
+  \label{lem:curvature-commutator-pointwise}
+  \lean{RicciFlowBlueprint.sum_smul_of_additive,
+    CovariantDerivative.curvatureTensorAt_expand_fst,
+    CovariantDerivative.curvatureTensorAt_expand_snd,
+    CovariantDerivative.curvatureTensorAt_expand_thd,
+    CovariantDerivative.inner_curvatureCommutator_eq_sum}
+  \leanok
+  \uses{lem:curvature-tensor-at}
+  In an orthonormal basis $(e_m)$ at $x$, the right-hand side of the Ricci identity for
+  $\Rm$ is a polynomial in the components of the $(0,4)$ tensor:
+  \[
+    \langle C(X,Y;A,B,C), w\rangle = \sum_m \big[\Rm(X,Y,e_m,w)\Rm(A,B,C,e_m)
+      - \Rm(X,Y,A,e_m)\Rm(e_m,B,C,w) - \Rm(X,Y,B,e_m)\Rm(A,e_m,C,w)
+      - \Rm(X,Y,C,e_m)\Rm(A,B,e_m,w)\big].
+  \]
+
+  \textbf{Proved} (\texttt{CurvatureCommutatorPointwise.lean}). The commutator is stated on
+  fields with the curvature applied to curvature \emph{sections}, which is what the Ricci
+  identity produces and is useless for algebra at a point. Each term is one manoeuvre: evaluate
+  the outer curvature on the inner curvature section (which is $C^2$ because the fields are
+  $C^4$), then expand the inner value in the basis in whichever slot it occupies. No vector sum
+  is ever rewritten: the slot's linear functional is pushed through the basis expansion by a
+  lemma stated over a bare module.
+\end{lemma}
+
 
 
 \begin{theorem}[Evolution of the curvature tensor]
