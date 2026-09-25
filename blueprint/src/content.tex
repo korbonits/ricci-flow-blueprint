@@ -5912,6 +5912,38 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   transported once, through the standard basis of $\mathbb{R}^3$.
 \end{lemma}
 
+\begin{lemma}[The pinching set is a parallel family, and the touching step in matrices]
+  \label{lem:ivey-touching}
+  \lean{RicciFlowBlueprint.parallel_end_eq_endoConj,
+    RicciFlowBlueprint.mem_symmIvey_conj_iff,
+    RicciFlowBlueprint.toMat_surjective,
+    RicciFlowBlueprint.isParallelSet_symmIvey,
+    RicciFlowBlueprint.hasParallelTransport_endTangent,
+    RicciFlowBlueprint.pinchedEnd,
+    RicciFlowBlueprint.inner_toMat_endTangent,
+    RicciFlowBlueprint.isometry_toMat_endTangent,
+    RicciFlowBlueprint.infDist_toMat_pinchedMat,
+    RicciFlowBlueprint.inner_toMat_laplacian_curvatureOperator_nonpos}
+  \leanok
+  \uses{lem:ivey-matrix-model, lem:end-transport, lem:bundle-distance-max,
+    lem:curvature-operator-three}
+  Every parallel endomorphism field along a curve is conjugation by the parallel transport
+  isometry of $T\M$, so the self-adjoint pinching set is a parallel family in
+  $\operatorname{End}(T\M)$, which admits parallel transport. For an orthonormal basis $e$ of
+  $T_x\M$, $\mathrm{mat}_e$ is an isometry from the Hilbert--Schmidt fibre onto the matrix space
+  carrying the pinching set onto $\mathcal{K}_{\mathrm{mat}}$. Consequently, for bases $e_x$
+  chosen arbitrarily, at a spatial maximum of $x\mapsto\mathrm{dist}(\mathrm{mat}_{e_x}\mathrm{Rm}_3,
+  \mathcal{K}_{\mathrm{mat}})$ and a nearest point $p$,
+  $\langle \mathrm{mat}\,\mathrm{Rm}_3 - p, \mathrm{mat}\,\Delta\mathrm{Rm}_3\rangle \le 0$.
+
+  \textbf{Proved} (\texttt{IveyParallelEnd.lean}, \texttt{IveyTouching.lean}).
+
+  \textbf{No uniqueness theorem on the Hom bundle is needed}: a parallel $N$ carries parallel
+  vector fields to parallel vector fields, and those are determined by their initial values, so
+  $N(t)v = P\,N(t_0)\,P^{-1}v$. \textbf{The choice of $e_x$ is invisible}, the distance to the
+  set being frame-independent, which is why the bases need no continuity in $x$.
+\end{lemma}
+
 \begin{lemma}[Hamilton's pinching condition on the curvature operator]
   \label{lem:curvature-operator-pinched}
   \lean{CovariantDerivative.isSymmetric_curvatureOperator,

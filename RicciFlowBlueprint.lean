@@ -105,3 +105,5 @@ import RicciFlowBlueprint.CurvatureOperatorLaplacian
 import RicciFlowBlueprint.IveyMatrixModel
 import RicciFlowBlueprint.CurvatureOperatorFlow
 import RicciFlowBlueprint.CurvatureOperatorEvolution
+import RicciFlowBlueprint.IveyParallelEnd
+import RicciFlowBlueprint.IveyTouching
