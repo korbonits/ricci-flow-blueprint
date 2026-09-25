@@ -5668,6 +5668,46 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   set and not of some other one.
 \end{lemma}
 
+\begin{lemma}[The pairing Leibniz rule along a curve, on a general bundle]
+  \label{lem:bundle-transport-leibniz}
+  \lean{CovariantDerivative.mvfderiv_inner_eq_apply_section,
+    CovariantDerivative.hasDerivAt_inner_along_section,
+    CovariantDerivative.inner_eq_of_isParallelAlongSection,
+    CovariantDerivative.inner_eq_of_isParallelAlongSection_global,
+    CovariantDerivative.norm_eq_of_isParallelAlongSection_global,
+    CovariantDerivative.hasDerivAt_inner_along_of_section}
+  \leanok
+  \uses{lem:transport-isometry, lem:bundle-cov-along-curve}
+  For a metric connection on an arbitrary vector bundle carrying a fibre metric,
+  $\frac{d}{dt}\langle \sigma,\tau\rangle
+   = \langle D_t\sigma,\tau\rangle + \langle \sigma,D_t\tau\rangle$
+  along a differentiable curve. Hence the pairing of two parallel sections is constant, and
+  parallel transport preserves lengths.
+
+  \textbf{Proved} (\texttt{BundleTransportIsometry.lean}).
+
+  \textbf{The argument does not change at all} from the tangent-bundle case: the
+  \emph{direction} stays in $T\M$, while the sections differentiated and the fibres they take
+  values in are arbitrary. Both sections are expanded in local frames --- not the same frame,
+  and neither orthonormal nor parallel --- the product rule supplies the coordinate parts of
+  $D_t$ and metric compatibility the connection parts, and nothing is left over. The two
+  algebraic identities are reused unchanged from the tangent-bundle file: they are stated over
+  a bare inner product space precisely so that they apply to any fibre.
+
+  \emph{Why it is wanted.} The cross-fibre half of the bundle maximum principle turns a
+  spatial maximum of $\mathrm{dist}(u(t,x),\mathcal{K}_x)$ into one of $\langle N,u\rangle$,
+  and that needs $N$ to be an \emph{isometric} image of the outward normal. Over a
+  neighbourhood only radial transport or a normal orthonormal frame supplies one, both
+  expensive; along a \emph{single curve} it is free, transport being an isometry (so $\|N\|$
+  is constant) and carrying the pinching set (Lemma \ref{lem:ivey-parallel}, so the support
+  function is constant). Since $\Delta$ at a point is a sum of ordinary second derivatives
+  along finitely many geodesics, one curve at a time, that is all the argument needs.
+
+  The tangent-bundle statement is derived from the general one, which is the falsification
+  check; the bridge is not definitional, $D_t$ on a section and $D_t$ on the tangent bundle
+  being identified by \emph{uniqueness}.
+\end{lemma}
+
 \begin{lemma}[A parallel orthonormal frame along a curve]
   \label{lem:parallel-frame}
   \lean{CovariantDerivative.inner_eq_of_isParallelAlong_global,

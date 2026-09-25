@@ -88,3 +88,4 @@ import RicciFlowBlueprint.CurvatureOperatorPinched
 import RicciFlowBlueprint.IveyParallel
 import RicciFlowBlueprint.MetricParallel
 import RicciFlowBlueprint.EndTransport
+import RicciFlowBlueprint.BundleTransportIsometry
