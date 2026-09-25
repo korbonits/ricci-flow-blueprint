@@ -5719,9 +5719,13 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
         RicciFlowBlueprint.mdiffAlongSectionAt_endoAlong,
         RicciFlowBlueprint.isParallelAlong_endoAlong_frame,
         RicciFlowBlueprint.isParallelAlongSection_endoAlong,
-        RicciFlowBlueprint.exists_isParallelAlongSection_end}
+        RicciFlowBlueprint.exists_isParallelAlongSection_end,
+        RicciFlowBlueprint.conj_expansion_aux,
+        RicciFlowBlueprint.endoAlong_eq_endoConj,
+        RicciFlowBlueprint.exists_isParallelAlongSection_end_mem_iveyEndoSet}
   \leanok
-  \uses{lem:parallel-frame, lem:hom-bundle-along-curve, lem:hom-bundle-smooth}
+  \uses{lem:parallel-frame, lem:hom-bundle-along-curve, lem:hom-bundle-smooth,
+    lem:ivey-parallel}
   Let $\nab$ be metric and $\gamma$ differentiable on a preconnected open $s \ni t_0$. For
   every $A_0 \in \operatorname{End}(T_{\gamma(t_0)}\M)$ there is a field
   $A(u) \in \operatorname{End}(T_{\gamma(u)}\M)$, differentiable along $\gamma$, parallel
@@ -5750,6 +5754,13 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   $C^n$ replaced by differentiability along the curve. It transposes, because the coordinate of
   a $\operatorname{Hom}$ section is literally the target trivialisation's coordinate of
   $u \mapsto A(u)(e_1^{-1}(\gamma(u))w)$, so no coordinate change survives.
+
+  \textbf{The purpose is a checked claim, not an asserted one.} The transported field
+  \emph{is} the conjugate of $A_0$ by the transport isometry of Lemma
+  \ref{lem:parallel-frame}, so Lemma \ref{lem:ivey-parallel} --- which says the pinching set
+  is invariant under conjugation by any fibre isometry --- applies to it on the nose: the
+  parallel field lies in $\mathcal{K}$ at one time exactly when it does at another. Without
+  that identification the two results would be about different objects.
 
   \emph{What this does not do.} It does not carry out the first-touching-time argument; it
   supplies the transport that argument compares fibres with.

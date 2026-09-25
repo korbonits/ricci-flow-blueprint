@@ -35,6 +35,7 @@ coordinate of `u ↦ A u (e₁.symmL (γ u) w)`, so no coordinate change survive
 import RicciFlowBlueprint.ParallelFrame
 import RicciFlowBlueprint.HomBundleAlongCurve
 import RicciFlowBlueprint.HomBundleSmooth
+import RicciFlowBlueprint.IveyParallel
 
 open Bundle Filter Set ContinuousLinearMap CovariantDerivative
 open scoped Manifold ContDiff Topology RealInnerProductSpace
@@ -438,6 +439,56 @@ theorem isParallelAlongSection_endoAlong
   refine Finset.sum_eq_zero fun k _ ↦ ?_
   rw [map_smul, hbw k, hzero k, smul_zero]
 
+/-- The conjugate of an endomorphism by a linear isometry, expanded in an orthonormal basis of
+the source. **Stated over abstract spaces on purpose**: every step is `map_sum`/`map_smul` on a
+`Finset.sum`, which will not `rw` on a `TangentSpace`-typed sum (it picks `E`'s own
+`AddCommMonoid`), so the computation is done here and applied with `exact`. -/
+theorem conj_expansion_aux {F G : Type*} [NormedAddCommGroup F] [InnerProductSpace ℝ F]
+    [NormedAddCommGroup G] [InnerProductSpace ℝ G] {κ : Type*} [Fintype κ]
+    (b : OrthonormalBasis κ ℝ F) (A₀ : F →L[ℝ] F) (P : F ≃ₗᵢ[ℝ] G) (v : G) :
+    P (A₀ (P.symm v)) = ∑ i, ∑ j, ((⟪b i, A₀ (b j)⟫ : ℝ) * (⟪P (b j), v⟫ : ℝ)) • P (b i) := by
+  have hsym : P.symm v = ∑ j, (⟪P (b j), v⟫ : ℝ) • b j := by
+    conv_lhs => rw [← b.sum_repr' (P.symm v)]
+    refine Finset.sum_congr rfl fun j _ ↦ ?_
+    rw [← P.inner_map_map (b j) (P.symm v), P.apply_symm_apply]
+  have h1 : A₀ (∑ j, (⟪P (b j), v⟫ : ℝ) • b j) = ∑ j, (⟪P (b j), v⟫ : ℝ) • A₀ (b j) := by
+    rw [map_sum]; exact Finset.sum_congr rfl fun j _ ↦ map_smul _ _ _
+  have h2 : P (∑ j, (⟪P (b j), v⟫ : ℝ) • A₀ (b j))
+      = ∑ j, (⟪P (b j), v⟫ : ℝ) • P (A₀ (b j)) := by
+    rw [map_sum]; exact Finset.sum_congr rfl fun j _ ↦ map_smul _ _ _
+  have h3 : ∀ j, P (A₀ (b j)) = ∑ i, (⟪b i, A₀ (b j)⟫ : ℝ) • P (b i) := fun j ↦ by
+    conv_lhs => rw [← b.sum_repr' (A₀ (b j))]
+    rw [map_sum]; exact Finset.sum_congr rfl fun i _ ↦ map_smul _ _ _
+  calc P (A₀ (P.symm v))
+      = ∑ j, (⟪P (b j), v⟫ : ℝ) • P (A₀ (b j)) := by rw [hsym, h1, h2]
+    _ = ∑ j, ∑ i, ((⟪b i, A₀ (b j)⟫ : ℝ) * (⟪P (b j), v⟫ : ℝ)) • P (b i) := by
+        refine Finset.sum_congr rfl fun j _ ↦ ?_
+        rw [h3 j, Finset.smul_sum]
+        exact Finset.sum_congr rfl fun i _ ↦ by rw [smul_smul, mul_comm]
+    _ = ∑ i, ∑ j, ((⟪b i, A₀ (b j)⟫ : ℝ) * (⟪P (b j), v⟫ : ℝ)) • P (b i) := Finset.sum_comm
+
+omit [FiniteDimensional ℝ E] [CompleteSpace E] [IsManifold I ω M] [T2Space M]
+  [VectorBundle ℝ E (fun (x : M) ↦ TangentSpace I x)]
+  [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
+  [ContMDiffVectorBundle 2 E (fun (x : M) ↦ TangentSpace I x) I]
+  [ContMDiffCovariantDerivative cov 1]
+  [IsContMDiffRiemannianBundle I 1 E (fun (x : M) ↦ TangentSpace I x)] in
+/-- **The transported endomorphism IS conjugation by the transport isometry.**
+
+This is the identification that ties this file to `IveyParallel.lean`: there the pinching set
+is shown invariant under conjugation by *any* fibre isometry, hence under parallel transport,
+and here the parallel `End(TM)` field is shown to be exactly that conjugate. Without it the
+two results would be about different objects. -/
+theorem endoAlong_eq_endoConj (b : OrthonormalBasis ι ℝ (TangentSpace I (γ t₀)))
+    (A₀ : TangentSpace I (γ t₀) →L[ℝ] TangentSpace I (γ t₀))
+    {fr : ι → Π u : ℝ, TangentSpace I (γ u)} {u : ℝ}
+    (P : TangentSpace I (γ t₀) ≃ₗᵢ[ℝ] TangentSpace I (γ u)) (hP : ∀ i, P (b i) = fr i u) :
+    endoAlong b A₀ fr u = endoConj P A₀ := by
+  refine ContinuousLinearMap.ext fun v ↦ ?_
+  rw [endoAlong_apply', endoConj_apply,
+    conj_expansion_aux (F := TangentSpace I (γ t₀)) (G := TangentSpace I (γ u)) b A₀ P v]
+  exact Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ by rw [hP i, hP j]
+
 /-- **Parallel transport on `End(TM)`.** For every endomorphism of one fibre there is a
 parallel morphism field along the curve through it.
 
@@ -464,6 +515,42 @@ theorem exists_isParallelAlongSection_end
   exact ⟨endoAlong b A₀ fr, endoAlong_self b A₀ hfr0,
     fun w hw ↦ mdiffAlongSectionAt_endoAlong cov hmet b A₀ (hγ w hw) fun i ↦ hfrd i w hw,
     isParallelAlongSection_endoAlong cov hmet hs hγ b A₀ hfrd hfrp hbu⟩
+
+/-- **Hamilton's pinching set travels with the transported endomorphism.**
+
+The composition the whole `End(TM)` line was for, and the falsification check on it: the
+parallel field of `exists_isParallelAlongSection_end` lies in the pinching set at one time
+exactly when it does at another. `IveyParallel.lean` proves the set invariant under
+conjugation by an *abstract* fibre isometry; `endoAlong_eq_endoConj` says the parallel field
+is exactly that conjugate, so the two statements are about the same object. -/
+theorem exists_isParallelAlongSection_end_mem_iveyEndoSet
+    (hmet : cov.IsMetricCompatible (M := M) (V := TangentSpace I))
+    (hs : IsOpen s) (hconn : IsPreconnected s)
+    (hγ : ∀ u ∈ s, MDifferentiableAt 𝓘(ℝ, ℝ) I γ u)
+    (hγv : ∀ u ∈ s, MDiffAlongAt γ (velocity (I := I) γ) u)
+    (ht₀ : t₀ ∈ s) {t : ℝ} (ht : t ∈ s) [Nonempty ι]
+    [Nontrivial (TangentSpace I (γ t₀))] [FiniteDimensional ℝ (TangentSpace I (γ t₀))]
+    [Nontrivial (TangentSpace I (γ t))] [FiniteDimensional ℝ (TangentSpace I (γ t))]
+    (b : OrthonormalBasis ι ℝ (TangentSpace I (γ t₀)))
+    (A₀ : TangentSpace I (γ t₀) →L[ℝ] TangentSpace I (γ t₀)) :
+    ∃ A : Π u : ℝ, TangentSpace I (γ u) →L[ℝ] TangentSpace I (γ u),
+      A t₀ = A₀ ∧
+      (∀ u ∈ s, MDiffAlongSectionAt I (E →L[ℝ] E)
+        (fun y : M ↦ TangentSpace I y →L[ℝ] TangentSpace I y) γ A u) ∧
+      IsParallelAlongSection I (E →L[ℝ] E)
+        (fun y : M ↦ TangentSpace I y →L[ℝ] TangentSpace I y) (homCov cov cov) γ A s ∧
+      (A t ∈ Pinching.iveyEndoSet (TangentSpace I (γ t))
+        ↔ A₀ ∈ Pinching.iveyEndoSet (TangentSpace I (γ t₀))) := by
+  obtain ⟨fr, hfr0, hfrd, hfrp, hbu⟩ :=
+    exists_parallel_orthonormalBasis_along cov hmet hs hconn hγ hγv ht₀ b
+  obtain ⟨P, hP⟩ := exists_parallelTransportIsometry_global cov hmet hs hconn hγ hγv ht₀ ht
+  have hPb : ∀ i, P (b i) = fr i t := fun i ↦ by
+    rw [← hfr0 i, ← hP (fr i) (hfrd i) (hfrp i)]
+  refine ⟨endoAlong b A₀ fr, endoAlong_self b A₀ hfr0,
+    fun w hw ↦ mdiffAlongSectionAt_endoAlong cov hmet b A₀ (hγ w hw) fun i ↦ hfrd i w hw,
+    isParallelAlongSection_endoAlong cov hmet hs hγ b A₀ hfrd hfrp hbu, ?_⟩
+  rw [endoAlong_eq_endoConj b A₀ P hPb]
+  exact Pinching.mem_iveyEndoSet_conj_iff P A₀
 
 end Transport
 
