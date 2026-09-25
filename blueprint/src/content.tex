@@ -3100,6 +3100,32 @@ target actually requires.
   criteria for the sum are added. Neither torsion-freeness nor dimension three is used.
 \end{lemma}
 
+\begin{lemma}[The evolution of the dimension-three curvature operator, pointwise]
+  \label{lem:curvature-operator-evolution}
+  \lean{RicciFlowBlueprint.Pinching.eq_add_hamiltonReaction_of_eigenbasis,
+    RicciFlowBlueprint.exists_orthonormal_frame_through,
+    CovariantDerivative.exists_ricci_eigenbasis,
+    CovariantDerivative.ricciSharp_apply_eigenbasis,
+    CovariantDerivative.eq_laplacianSection_add_hamiltonReaction}
+  \leanok
+  \uses{lem:curvature-operator-time-derivative, lem:ricci-reaction-three,
+    lem:curvature-operator-laplacian, lem:ivey-reaction}
+  At a point of a three-manifold with a metric torsion-free connection, let
+  $D = s'\cdot 1 - 2(2\,\Ric^{\sharp 2} + R'^\sharp)$ with $s' = \Delta\scal + 2|\Ric|^2$ and
+  $R'$ the right-hand side of the Ricci evolution equation, read off a frame through a Ricci
+  eigenbasis. Then $D = \Delta\mathrm{Rm}_3 + Q(\mathrm{Rm}_3)$, with $\Delta$ the connection
+  Laplacian on $\operatorname{End}(T\M)$ and $Q$ Hamilton's reaction.
+
+  \textbf{Proved} (\texttt{CurvatureOperatorFlow.lean}, \texttt{CurvatureOperatorEvolution.lean}).
+
+  \textbf{The algebra.} In a Ricci eigenbasis the Laplacian terms cancel exactly and what
+  remains is diagonal: $2|\Ric|^2 - 4r_k^2 - 2(2\sum_i K_{ik}r_i - 2r_k^2) = 2|\Ric|^2 - 4\sum_i
+  K_{ik} r_i$. With $\lambda_k = R - 2r_k$ this is $\lambda_k^2 + \lambda_i\lambda_j$, the
+  eigenvalue of $Q(\mathrm{Rm}_3)$ on $b_k$. \textbf{The geometry} supplies a Ricci eigenbasis
+  (an eigenbasis of $\mathrm{Rm}_3$) and a frame of globally $C^4$ fields, orthonormal near the
+  point, through it --- a constant orthogonal rotation of any orthonormal frame.
+\end{lemma}
+
 
 
 \begin{theorem}[Evolution of the curvature tensor]
