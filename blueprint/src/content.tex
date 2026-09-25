@@ -3081,6 +3081,22 @@ target actually requires.
   formalised.
 \end{lemma}
 
+\begin{lemma}[The connection Laplacian of $\Rm_3$ on $\operatorname{End}(T\M)$]
+  \label{lem:curvature-operator-laplacian}
+  \lean{CovariantDerivative.inner_laplacianSection_curvatureOperator_eq}
+  \leanok
+  \uses{lem:curvature-operator-section}
+  $\langle (\Delta \Rm_3)v, w\rangle = (\Delta\operatorname{scal})\langle v,w\rangle
+   - 2(\Delta_g\Ric)(v,w)$, with $\Delta$ the connection Laplacian of $\Rm_3$ as a section of
+  $\operatorname{End}(T\M)$ --- what the bundle maximum principle sees.
+
+  \textbf{Proved} (\texttt{CurvatureOperatorLaplacian.lean}). Two bridges compose: the
+  Laplacian of an endomorphism field is the Laplacian of the bilinear form it raises, and the
+  Laplacian of $\Rm_3^\flat = \operatorname{scal}\,g - 2\Ric$ is computed from $\nabla g = 0$.
+  Only the interface $\langle \Rm_3 v, w\rangle = \Rm_3^\flat(v,w)$ and the differentiability
+  criteria for the sum are added. Neither torsion-freeness nor dimension three is used.
+\end{lemma}
+
 
 
 \begin{theorem}[Evolution of the curvature tensor]

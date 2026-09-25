@@ -101,3 +101,4 @@ import RicciFlowBlueprint.CurvatureThreeTable
 import RicciFlowBlueprint.RicciReactionThree
 import RicciFlowBlueprint.IveyReaction
 import RicciFlowBlueprint.IveyReactionEndo
+import RicciFlowBlueprint.CurvatureOperatorLaplacian
