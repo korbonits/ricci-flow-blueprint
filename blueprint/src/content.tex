@@ -5713,7 +5713,10 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   \lean{CovariantDerivative.mdiffAt_cov_section,
     CovariantDerivative.hasDerivAt_inner_parallel_section,
     CovariantDerivative.hasDerivAt_inner_parallel_section_second,
-    CovariantDerivative.hasDerivAt_inner_parallel_section_hessian}
+    CovariantDerivative.hasDerivAt_inner_parallel_section_hessian,
+    CovariantDerivative.inner_sum_fibre,
+    CovariantDerivative.inner_laplacianSection_nonpos_of_geodesic_max,
+    RicciFlowBlueprint.deriv2_nonpos_of_isLocalMax}
   \leanok
   \uses{lem:bundle-transport-leibniz, lem:hom-bundle-along-curve, lem:bundle-hessian}
   For $N$ parallel along a geodesic $\gamma$ and $u$ a $C^2$ section of $V$ with a metric
@@ -5737,11 +5740,23 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   that bridge is definitional and all that is added is a field taking the velocity's value at
   the point.
 
-  \emph{Why it is wanted.} This is the second derivative the one-curve-at-a-time form of the
-  cross-fibre maximum principle differentiates: $\Delta$ at a point is a sum of ordinary
-  second derivatives along finitely many geodesics, and along a single curve the tested
-  direction can be carried by parallel transport, which is an isometry and carries the
-  pinching set.
+  \textbf{The payoff, in the same file.} $\Delta$ at a point is the trace of $\nabla^2$ over
+  an orthonormal frame and each diagonal entry is a second derivative along a geodesic in that
+  direction, so $n$ geodesics through $x_0$, each carrying the tested direction $n$ by
+  parallel transport, deliver $\langle n, \Delta u(x_0)\rangle \le 0$ from $n$ ordinary
+  one-dimensional second-derivative tests
+  (\texttt{inner\_laplacianSection\_nonpos\_of\_geodesic\_max}). The direction never leaves
+  its own fibre in the statement, the parallel sections being an artefact of the proof --- the
+  same shape as Lemma \ref{lem:bundle-touching-point}, but reached along curves rather than
+  through a normal section, so that $\|N\|$ and any transport-invariant constraint on $N$ are
+  \emph{constant} rather than merely critical at $x_0$. That is what the cross-fibre
+  comparison needs and what a normal section cannot give. The initial condition is one
+  equation in the total space, which packages $\gamma_i(0) = x_0$ and $N_i(0) = n$ with no
+  dependent-type cast.
+
+  \emph{Nothing varies the curve}, which is why none of this touches the missing
+  dependence-on-initial-conditions theory: each geodesic is fixed, and along a fixed curve
+  parallel transport is a linear equation.
 \end{lemma}
 
 \begin{lemma}[A parallel orthonormal frame along a curve]

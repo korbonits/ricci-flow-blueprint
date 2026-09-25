@@ -66,6 +66,15 @@ theorem deriv2_nonneg_of_isLocalMin {g g' : ℝ → ℝ} {g'' t₀ : ℝ}
     · exact h
   linarith
 
+/-- **Second-derivative test on the line, at a maximum.** A maximum of `g` is a minimum of
+`-g` and both derivatives are odd, so nothing is reproved. -/
+theorem deriv2_nonpos_of_isLocalMax {g g' : ℝ → ℝ} {g'' t₀ : ℝ}
+    (hg : ∀ᶠ t in 𝓝 t₀, HasDerivAt g (g' t) t) (hg' : HasDerivAt g' g'' t₀)
+    (hmax : IsLocalMax g t₀) : g'' ≤ 0 := by
+  have h := deriv2_nonneg_of_isLocalMin (g := fun t ↦ -g t) (g' := fun t ↦ -g' t)
+    (by filter_upwards [hg] with t ht using ht.neg) hg'.neg hmax.neg
+  linarith
+
 /-- **Second-derivative test in a normed space**, along a direction: for `f` twice
 continuously differentiable at a local minimum `x₀`, `D²f(x₀)(v, v) ≥ 0`. -/
 theorem fderiv2_nonneg_of_isLocalMin {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
