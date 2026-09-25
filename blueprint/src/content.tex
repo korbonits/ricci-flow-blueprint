@@ -3031,6 +3031,56 @@ target actually requires.
   lemma stated over a bare module.
 \end{lemma}
 
+\begin{lemma}[The Riemann tensor in dimension three, component by component]
+  \label{lem:curvature-three-table}
+  \lean{CovariantDerivative.fin3_eq_or_eq,
+    CovariantDerivative.curvatureTensorAt_shared_eq_ricciAt,
+    CovariantDerivative.curvatureTensorAt_three_table}
+  \leanok
+  \uses{lem:curvature-three}
+  In an orthonormal basis of $T_x\M$, $\dim\M = 3$, that diagonalises $\Ric$,
+  \[
+    \Rm(e_i,e_j,e_k,e_l) = K_{ij}\,[i=l \wedge j=k] - K_{ij}\,[i=k \wedge j=l],
+  \]
+  with $K_{ij}$ the sectional curvature of $e_i\wedge e_j$. All $81$ components are determined
+  by three numbers.
+
+  \textbf{Proved} (\texttt{CurvatureThreeTable.lean}), \emph{still without the Weyl tensor}.
+  A component with $i=j$ or $k=l$ vanishes by antisymmetry; if $\{i,j\}=\{k,l\}$ it is
+  $\pm K_{ij}$; otherwise the two index pairs share exactly one index --- there are only three
+  --- which antisymmetry moves to the canonical shape $\Rm(e_c,e_a,e_{a'},e_c)$, and that is
+  $\Ric(e_a,e_{a'}) = 0$, the trace identity having a single surviving summand.
+\end{lemma}
+
+\begin{lemma}[The reaction term of $\partial_t\Ric$ in dimension three]
+  \label{lem:ricci-reaction-three}
+  \lean{CovariantDerivative.ricciForm_curvature_left,
+    CovariantDerivative.ricciForm_curvature_right,
+    CovariantDerivative.secAt,
+    CovariantDerivative.secAt_comm,
+    CovariantDerivative.secAt_self,
+    CovariantDerivative.curvatureTensorAt_eq_secAt,
+    CovariantDerivative.ricciAt_eq_secAt,
+    CovariantDerivative.ricciReaction_three}
+  \leanok
+  \uses{lem:curvature-three-table, lem:curvature-commutator-pointwise}
+  On a Ricci eigenbasis in dimension three, the four quadratic terms of the evolution of
+  $\Ric$ --- two traced curvature commutators and two $\Ric$-against-$\Rm$ contractions ---
+  sum to $[k=l]\,\big(2\sum_i K_{ik} r_i - 2 r_k^2\big)$, with $r_i = \sum_n K_{in}$: the
+  Lichnerowicz reaction $2\Rm*\Ric - 2\Ric^2$, diagonal in the eigenbasis.
+
+  \textbf{Proved} (\texttt{RicciReactionThree.lean}). The commutators are evaluated at a point
+  by Lemma \ref{lem:curvature-commutator-pointwise}, the contractions by expanding the curvature
+  vector in the basis; every component of $\Rm$ is then read off Lemma
+  \ref{lem:curvature-three-table} and every component of $\Ric$ off the eigenbasis, and a
+  finite sum over three indices remains. The sectional curvatures are carried through an opaque
+  definition so that the table can be used as a rewrite rule without rewriting its own
+  right-hand side. Together with the moving index raising of Lemma
+  \ref{lem:curvature-operator-time-derivative}, this is what makes the reaction of
+  $\partial_t\Rm_3$ Hamilton's $\lambda^2 + \mu\nu$ --- checked symbolically before it was
+  formalised.
+\end{lemma}
+
 
 
 \begin{theorem}[Evolution of the curvature tensor]

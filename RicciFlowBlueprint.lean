@@ -97,3 +97,5 @@ import RicciFlowBlueprint.BundleMaximumPrincipleCross
 import RicciFlowBlueprint.UhlenbeckPointwise
 import RicciFlowBlueprint.UhlenbeckFlow
 import RicciFlowBlueprint.CurvatureCommutatorPointwise
+import RicciFlowBlueprint.CurvatureThreeTable
+import RicciFlowBlueprint.RicciReactionThree
