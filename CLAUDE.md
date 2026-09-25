@@ -347,7 +347,36 @@ Now `thm:hamilton-ivey` at the head of `chap:kappa`, with a
    the **cross-fibre** half of the maximum principle (`BundleMaximumPrinciple.lean`
    has the touching-point half, and **the touching-point half is now actually
    applied to `Rm₃`** — `CurvatureOperatorMaxPrinciple.lean`); and the moving
-   fibre metric. **The transport half of the cross-fibre piece is now DONE**:
+   fibre metric. **Architecture for the final assembly, fixed 2026-09-26 — work
+   in the UHLENBECK FRAME'S MATRIX, in a FIXED Euclidean space.** The remaining
+   risk was type-class, not mathematics: the fibre metric must be fixed in `t`
+   (Uhlenbeck), while the touching-point step runs at one time `t` with `letI`
+   of `g_t`, so two metrics would be in scope at once. The way out: pick at
+   each `x` a `g₀(x)`-orthonormal basis `e` of `E`, let `ι` be the pointwise
+   Uhlenbeck map (`UhlenbeckPointwise.lean`), and set
+   `u(t,x)ᵢⱼ = G_t(Rm₃ ι eᵢ, ι eⱼ)` — the matrix of `Rm₃` in the Uhlenbeck
+   frame, a point of the **fixed** space `EuclideanSpace ℝ (Fin 3 × Fin 3)`
+   whose Euclidean inner product is Hilbert–Schmidt (Parseval). Then (i) the
+   fibre is constant, so the fibrewise principle runs with no bundle metric at
+   all; (ii) `∂ₜu = matrix(∂ₜRm₃)` because the Uhlenbeck commutator vanishes
+   (`curvatureOperatorE_comm`) and the `∂ₜG` term cancels `A`'s two terms;
+   (iii) `matrix(Q(Rm₃)) = Q(u)`, `Q` a polynomial; (iv) `dist(u,K)` is
+   frame-independent (`K` conjugation-invariant), so spatial maxima of it are
+   spatial maxima of `dist_{g_t}(Rm₃, K)`, where `BundleDistanceMax.lean` runs
+   at the single time `t` under one `letI`. **`0 ∈ K`** (tr 0 = 0 ≥ −3,
+   `iveyG 0 = −e² ≤ 0`), so nearest points satisfy `‖p‖ ≤ 2‖u‖` and a
+   **local** Lipschitz bound on `Q` suffices — no truncation. Remaining
+   bricks, in order: the matrix model (`toMat`, isometry onto the Euclidean
+   space, `K` transported); a local-Lipschitz variant of
+   `FibrewiseMaximumPrinciple.lean`; `Q` Lipschitz on a ball; the Uhlenbeck
+   frame's matrix derivative; the flow gluing `∂ₜRm₃ = ΔRm₃ + Q(Rm₃)`
+   (`RicciEvolution` + `ricciReaction_three` + `ScalarFlow` + `UhlenbeckFlow`
+   + `CurvatureOperatorLaplacian`, entries in a Ricci eigenbasis); the `hmax`
+   transfer; the assembly. **Done on this line**: `UhlenbeckPointwise`,
+   `UhlenbeckFlow`, `CurvatureCommutatorPointwise`, `CurvatureThreeTable`,
+   `RicciReactionThree`, `IveyReaction`, `IveyReactionEndo` (Nagumo),
+   `CurvatureOperatorLaplacian`. **The transport half of the cross-fibre piece
+   is now DONE**:
    a parallel orthonormal frame along a curve (`ParallelFrame.lean`), the
    pinching set carried by every fibre isometry hence by transport
    (`IveyParallel.lean`), and **parallel transport of an ENDOMORPHISM**
