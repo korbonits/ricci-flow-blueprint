@@ -89,3 +89,4 @@ import RicciFlowBlueprint.IveyParallel
 import RicciFlowBlueprint.MetricParallel
 import RicciFlowBlueprint.EndTransport
 import RicciFlowBlueprint.BundleTransportIsometry
+import RicciFlowBlueprint.GeodesicSecondDerivative

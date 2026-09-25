@@ -5708,6 +5708,42 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   being identified by \emph{uniqueness}.
 \end{lemma}
 
+\begin{lemma}[The second derivative along a geodesic]
+  \label{lem:geodesic-second-derivative}
+  \lean{CovariantDerivative.mdiffAt_cov_section,
+    CovariantDerivative.hasDerivAt_inner_parallel_section,
+    CovariantDerivative.hasDerivAt_inner_parallel_section_second,
+    CovariantDerivative.hasDerivAt_inner_parallel_section_hessian}
+  \leanok
+  \uses{lem:bundle-transport-leibniz, lem:hom-bundle-along-curve, lem:bundle-hessian}
+  For $N$ parallel along a geodesic $\gamma$ and $u$ a $C^2$ section of $V$ with a metric
+  connection,
+  $\frac{d}{ds}\langle N, u\circ\gamma\rangle = \langle N, \nabla_{\gamma'}u\rangle$ and
+  $\frac{d^2}{ds^2}\langle N, u\circ\gamma\rangle
+   = \langle N, \nabla^2_{\gamma',\gamma'}u\rangle$.
+
+  \textbf{Proved} (\texttt{GeodesicSecondDerivative.lean}).
+
+  \textbf{The second one looks like it needs a global field agreeing with $\gamma'$ along the
+  curve, and it does not.} Such a field need not exist, the curve need not being embedded. The
+  way round is that $\nabla u$ is itself a global section of $\operatorname{Hom}(T\M,V)$ ---
+  which is exactly what the smoothness class of the connection asserts. So $D_s$ of its
+  restriction to $\gamma$ is the induced connection in the direction $\gamma'$, by the
+  restriction axiom, and the Leibniz rule of Lemma \ref{lem:hom-bundle-along-curve},
+  $D_s(A\sigma) = (D_sA)\sigma + A(D_s\sigma)$ at $A = (\nabla u)\circ\gamma$ and
+  $\sigma = \gamma'$, \emph{kills the correction because $D_s\gamma' = 0$ on a geodesic}.
+  Finally the induced connection applied to $\nabla u$ \emph{is} the Hessian:
+  $\nabla_X(A\sigma) - A(\nabla_X\sigma)$ is $\nabla^2$'s definition at $A = \nabla u$, so
+  that bridge is definitional and all that is added is a field taking the velocity's value at
+  the point.
+
+  \emph{Why it is wanted.} This is the second derivative the one-curve-at-a-time form of the
+  cross-fibre maximum principle differentiates: $\Delta$ at a point is a sum of ordinary
+  second derivatives along finitely many geodesics, and along a single curve the tested
+  direction can be carried by parallel transport, which is an isometry and carries the
+  pinching set.
+\end{lemma}
+
 \begin{lemma}[A parallel orthonormal frame along a curve]
   \label{lem:parallel-frame}
   \lean{CovariantDerivative.inner_eq_of_isParallelAlong_global,
