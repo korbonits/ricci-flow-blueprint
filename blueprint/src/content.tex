@@ -5610,6 +5610,53 @@ before any of them can be recognised one has to know they have non-negative
 curvature. In dimension three that is not automatic --- it is the
 Hamilton--Ivey estimate, and it was missing from this chart entirely.
 
+\begin{theorem}[Hamilton--Ivey pinching is preserved by the Ricci flow]
+  \label{thm:hamilton-ivey-preserved}
+  \lean{RicciFlowBlueprint.curvatureMat,
+    RicciFlowBlueprint.curvatureOperatorE_apply_eq,
+    RicciFlowBlueprint.orthoFrame,
+    RicciFlowBlueprint.pinchDist,
+    RicciFlowBlueprint.curvNorm,
+    RicciFlowBlueprint.exists_curvatureMat_eq_toMat,
+    RicciFlowBlueprint.infDist_curvatureMat_congr,
+    RicciFlowBlueprint.norm_curvatureMat_congr,
+    RicciFlowBlueprint.curvatureMat_mem_pinchedMat_iff,
+    RicciFlowBlueprint.inner_curvatureMat_deriv_le_reaction,
+    RicciFlowBlueprint.curvatureOperator_mem_iveyEndoSet_of_isRicciFlow}
+  \leanok
+  \uses{thm:curvature-operator-evolution-flow, lem:ivey-touching, lem:ivey-matrix-model,
+    thm:max-fibrewise, lem:uhlenbeck-pointwise, lem:ivey-reaction}
+  Let $\g(t)$, $t\in[0,T]$, be a Ricci flow on a compact boundaryless three-manifold, regular
+  enough for the evolution equations of $\scal$ and $\Ric$ to hold at every $(t,x)$, with the
+  Hilbert--Schmidt distance of the curvature operator $\mathrm{Rm}_3$ to Hamilton's pinching set
+  continuous on $[0,T]\times\M$ and $\mathrm{Rm}_3$ bounded. If $\mathrm{Rm}_3(\g(0))$ lies in
+  the pinching set at every point, then $\mathrm{Rm}_3(\g(t))$ does for every $t\in[0,T]$.
+
+  \textbf{Proved} (\texttt{HamiltonIveyThree.lean}), with no \texttt{sorry} and no axiom beyond
+  the three standard ones.
+
+  \textbf{The proof.} Run Theorem~\ref{thm:max-fibrewise}, in its local-Lipschitz form, on
+  $u(t,x) = \mathrm{mat}_{e(t,x)}\mathrm{Rm}_3$, the matrix of the curvature operator in the
+  Uhlenbeck frame $e(t,x) = \iota(t,x)e_0(x)$. This lives in the fixed Euclidean space of
+  $3\times 3$ matrices, so no bundle metric is ever an instance while another is in scope. The
+  frame stays orthonormal for $\g(t)$ (Lemma~\ref{lem:uhlenbeck-pointwise}), and in it
+  $\partial_t u = \mathrm{mat}(\partial_t\mathrm{Rm}_3)$ because the Uhlenbeck commutator vanishes.
+  $\partial_t\mathrm{Rm}_3 = \Delta\mathrm{Rm}_3 + Q(\mathrm{Rm}_3)$
+  (Theorem~\ref{thm:curvature-operator-evolution-flow}) and $\mathrm{mat}\,Q = Q_{\mathrm{mat}}\,
+  \mathrm{mat}$. At a spatial maximum of the distance the Laplacian term pairs nonpositively with
+  the outward normal (Lemma~\ref{lem:ivey-touching}), the frames being invisible. $Q_{\mathrm{mat}}$
+  obeys Nagumo's condition and is Lipschitz on balls, and $0 \in \mathcal{K}_{\mathrm{mat}}$, so
+  no truncation is needed.
+
+  \textbf{What the hypotheses are.} Existence and regularity of the flow are assumed, not proved:
+  the time derivatives are two-sided at every $t\in[0,T]$, the evolution-equation regularity is
+  assumed pointwise, and continuity of the distance and boundedness of $\mathrm{Rm}_3$ are assumed
+  rather than derived from joint smoothness in $(t,x)$. \textbf{What it does not state} is the
+  time-dependent sharpening $\log(1+t)$ of Theorem~\ref{thm:hamilton-ivey}. Unwinding membership
+  in the set through Lemma~\ref{lem:ivey-endo} gives the $t$-independent form
+  $\scal \ge |\nu|(\log|\nu| - 3)$ wherever $\nu < 0$.
+\end{theorem}
+
 \begin{theorem}[Hamilton--Ivey pinching]
   \label{thm:hamilton-ivey}
   \uses{thm:max-tensor, lem:evolution-rm, lem:ivey-ode}
