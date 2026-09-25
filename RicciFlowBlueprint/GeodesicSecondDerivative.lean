@@ -29,6 +29,7 @@ import RicciFlowBlueprint.BundleTransportIsometry
 import RicciFlowBlueprint.HomBundleAlongCurve
 import RicciFlowBlueprint.BundleHessian
 import RicciFlowBlueprint.SecondDerivativeTest
+import RicciFlowBlueprint.Exponential
 
 open Bundle Filter Set RicciFlowBlueprint
 open scoped Manifold ContDiff Topology RealInnerProductSpace
@@ -160,6 +161,37 @@ theorem inner_sum_fibre {W : Type*} [NormedAddCommGroup W] [InnerProductSpace �
     {κ : Type*} [Fintype κ] (w : W) (z : κ → W) :
     (⟪w, ∑ i, z i⟫ : ℝ) = ∑ i, ⟪w, z i⟫ := by rw [inner_sum]
 
+omit [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] in
+/-- **One direction.** The second-derivative test along a single geodesic, transported into the
+fibre over `x₀`.
+
+The initial condition is **one equation in the total space**, which packages `γ 0 = x₀` and
+`N 0 = n` with no dependent-type cast; `congrArg` along a map *out of* the total space is then
+what carries the conclusion to the fibre over `x₀`. -/
+theorem inner_hessianSection_nonpos_of_max (hmet : cov.IsMetricCompatible)
+    (hu : CMDiff 2 (T% u)) {x₀ : M} {n : V x₀} {X : Π y : M, TangentSpace I y}
+    {γ : ℝ → M} {N : Π s : ℝ, V (γ s)}
+    (hγ : ∀ᶠ s in 𝓝 0, MDifferentiableAt 𝓘(ℝ, ℝ) I γ s)
+    (hN : ∀ᶠ s in 𝓝 0, MDiffAlongSectionAt I F V γ N s)
+    (hNp : ∀ᶠ s in 𝓝 0, covAlongSection cov γ N s = 0)
+    (hγv : MDiffAlongAt γ (velocity (I := I) γ) 0)
+    (hgeo : covAlong covT γ (velocity (I := I) γ) 0 = 0)
+    (hXd : MDiffAt (T% X) (γ 0)) (hvel : X (γ 0) = velocity (I := I) γ 0)
+    (hinit : (⟨γ 0, N 0⟩ : TotalSpace F V) = ⟨x₀, n⟩)
+    (hmax : IsLocalMax (fun s ↦ (⟪N s, u (γ s)⟫ : ℝ)) 0) :
+    (⟪n, cov.hessianSection covT X X u x₀⟫ : ℝ) ≤ 0 := by
+  have h1 : ∀ᶠ s in 𝓝 0, HasDerivAt (fun r ↦ (⟪N r, u (γ r)⟫ : ℝ))
+      (⟪N s, cov u (γ s) (velocity (I := I) γ s)⟫) s := by
+    filter_upwards [hγ, hN, hNp] with s h1 h2 h3
+    exact hasDerivAt_inner_parallel_section cov hmet hu h1 h2 h3
+  have h2 := hasDerivAt_inner_parallel_section_hessian cov covT hmet hu
+    hγ.self_of_nhds hγv hgeo hN.self_of_nhds hNp.self_of_nhds hXd hvel
+  have hd2 : (⟪N 0, cov.hessianSection covT X X u (γ 0)⟫ : ℝ) ≤ 0 :=
+    deriv2_nonpos_of_isLocalMax h1 h2 hmax
+  have h := congrArg (fun p : TotalSpace F V ↦
+    (⟪p.2, cov.hessianSection covT X X u p.proj⟫ : ℝ)) hinit
+  exact h ▸ hd2
+
 /-- **The touching-point step, one curve at a time.**
 
 If through `x₀` there are geodesics in the directions of an orthonormal basis, each carrying
@@ -171,11 +203,7 @@ about `n`, the parallel sections being an artefact of the proof --- the same sha
 `BundleMaximumPrinciple.lean`'s touching-point lemma, but reached along curves rather than
 through a normal section, so that `‖N‖` and any transport-invariant constraint on `N` are
 *constant* rather than merely critical at `x₀`. That is what the cross-fibre comparison needs
-and what a normal section cannot give.
-
-The initial condition is **one equation in the total space**, which packages `γ i 0 = x₀` and
-`N i 0 = n` with no dependent-type cast; `congrArg` along a map out of the total space is then
-what transports the conclusion to the fibre over `x₀`. -/
+and what a normal section cannot give. -/
 theorem inner_laplacianSection_nonpos_of_geodesic_max (hmet : cov.IsMetricCompatible)
     (hu : CMDiff 2 (T% u)) {x₀ : M} {n : V x₀}
     {ι : Type*} [Fintype ι] {fr : ι → Π y : M, TangentSpace I y}
@@ -192,25 +220,103 @@ theorem inner_laplacianSection_nonpos_of_geodesic_max (hmet : cov.IsMetricCompat
     (hmax : ∀ i, IsLocalMax (fun s ↦ (⟪N i s, u (γ i s)⟫ : ℝ)) 0) :
     (⟪n, cov.laplacianSection covT hu x₀⟫ : ℝ) ≤ 0 := by
   have hproj : ∀ i, γ i 0 = x₀ := fun i ↦ congrArg TotalSpace.proj (hinit i)
-  have hd2 : ∀ i,
-      (⟪N i 0, cov.hessianSection covT (fr i) (fr i) u (γ i 0)⟫ : ℝ) ≤ 0 := by
-    intro i
-    have h1 : ∀ᶠ s in 𝓝 0, HasDerivAt (fun r ↦ (⟪N i r, u (γ i r)⟫ : ℝ))
-        (⟪N i s, cov u (γ i s) (velocity (I := I) (γ i) s)⟫) s := by
-      filter_upwards [hγ i, hN i, hNp i] with s h1 h2 h3
-      exact hasDerivAt_inner_parallel_section cov hmet hu h1 h2 h3
-    have h2 := hasDerivAt_inner_parallel_section_hessian cov covT hmet hu
-      (hγ i).self_of_nhds (hγv i) (hgeo i) (hN i).self_of_nhds (hNp i).self_of_nhds
-      ((hproj i) ▸ hfr i) (hvel i)
-    exact deriv2_nonpos_of_isLocalMax h1 h2 (hmax i)
-  have hkey : ∀ i, (⟪n, cov.hessianSection covT (fr i) (fr i) u x₀⟫ : ℝ) ≤ 0 := fun i ↦ by
-    have h := congrArg (fun p : TotalSpace F V ↦
-      (⟪p.2, cov.hessianSection covT (fr i) (fr i) u p.proj⟫ : ℝ)) (hinit i)
-    exact h ▸ hd2 i
   rw [cov.laplacianSection_eq_sum_frame covT hu hfr b hb,
     inner_sum_fibre (W := V x₀) n (fun i ↦ cov.hessianSection covT (fr i) (fr i) u x₀)]
-  exact Finset.sum_nonpos fun i _ ↦ hkey i
+  refine Finset.sum_nonpos fun i _ ↦ ?_
+  exact inner_hessianSection_nonpos_of_max cov covT hmet hu (hγ i) (hN i) (hNp i) (hγv i)
+    (hgeo i) ((hproj i) ▸ hfr i) (hvel i) (hinit i) (hmax i)
 
 end Laplacian
+
+section Packaged
+
+/-! ### Supplying the curves
+
+The geodesics come from `Exponential.lean`; the parallel sections come from an abstract
+hypothesis, because parallel transport is built in this repo on the tangent bundle
+(`ParallelTransportGlobal.lean`) and on `End(TM)` (`EndTransport.lean`) but not yet for an
+arbitrary bundle. Carrying it as a predicate is what lets the argument be stated once and
+used at both.
+
+**The initial conditions are equations in the TOTAL SPACE throughout**, which is what keeps
+the whole section free of dependent-type casts: `IsGeodesicRun.init` already has that shape,
+and `HasParallelTransport` is written to match it. -/
+
+variable (I F V) in
+/-- **The bundle admits parallel transport along curves.** Stated with the initial condition
+as one equation in the total space, so that a use site with a curve through a *named* point
+needs no cast --- the same device as `IsGeodesicRun.init`. -/
+def HasParallelTransport : Prop :=
+  ∀ (γ : ℝ → M) (s : Set ℝ), IsOpen s → IsPreconnected s →
+    (∀ u ∈ s, MDifferentiableAt 𝓘(ℝ, ℝ) I γ u) →
+    (∀ u ∈ s, MDiffAlongAt γ (velocity (I := I) γ) u) →
+    ∀ t₀ ∈ s, ∀ (x : M) (n : V x), γ t₀ = x →
+      ∃ N : Π u : ℝ, V (γ u),
+        (⟨γ t₀, N t₀⟩ : TotalSpace F V) = ⟨x, n⟩ ∧
+        (∀ u ∈ s, MDiffAlongSectionAt I F V γ N u) ∧
+        IsParallelAlongSection I F V cov γ N s
+
+variable [I.Boundaryless] [ContMDiffCovariantDerivative covT 1]
+
+omit [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)] in
+/-- **One direction, with the curve supplied.**
+
+The hypothesis is now about *every* geodesic run through `x₀` in the direction `X x₀` and
+every parallel section through `n` along it --- which is what a consumer can actually prove,
+the maximum coming from a function on `M` rather than from a chosen curve. -/
+theorem inner_hessianSection_nonpos_of_forall_max (hmet : cov.IsMetricCompatible)
+    (hpar : HasParallelTransport I F V cov) (hu : CMDiff 2 (T% u)) {x₀ : M} {n : V x₀}
+    {X : Π y : M, TangentSpace I y} (hXd : MDiffAt (T% X) x₀)
+    (hmax : ∀ (γ : ℝ → M) (sset : Set ℝ) (N : Π r : ℝ, V (γ r)),
+      IsGeodesicRun covT γ sset x₀ (X x₀) →
+      (⟨γ 0, N 0⟩ : TotalSpace F V) = ⟨x₀, n⟩ →
+      (∀ r ∈ sset, MDiffAlongSectionAt I F V γ N r) →
+      IsParallelAlongSection I F V cov γ N sset →
+      IsLocalMax (fun r ↦ (⟪N r, u (γ r)⟫ : ℝ)) 0) :
+    (⟪n, cov.hessianSection covT X X u x₀⟫ : ℝ) ≤ 0 := by
+  obtain ⟨ε, hε, c, hrun⟩ := exists_isGeodesicRun covT (k := 1) le_rfl x₀ (X x₀)
+  have hp : c 0 = x₀ := congrArg TotalSpace.proj hrun.init
+  subst hp
+  obtain ⟨N, hN0, hNd, hNp⟩ := hpar c (Set.Ioo (-ε) ε) hrun.isOpen hrun.isPreconnected
+    hrun.mdiff hrun.mdiffAlong 0 hrun.mem_zero (c 0) n rfl
+  have hmem : ∀ᶠ r in 𝓝 0, r ∈ Set.Ioo (-ε) ε := hrun.isOpen.mem_nhds hrun.mem_zero
+  have hvel : X (c 0) = velocity (I := I) c 0 := by
+    have h := hrun.init
+    simp only [TotalSpace.mk.injEq, heq_eq_eq, true_and] at h
+    exact h.symm
+  exact inner_hessianSection_nonpos_of_max cov covT hmet hu
+    (hmem.mono fun r hr ↦ hrun.mdiff r hr) (hmem.mono fun r hr ↦ hNd r hr)
+    (hmem.mono fun r hr ↦ hNp r hr) (hrun.mdiffAlong 0 hrun.mem_zero)
+    (hrun.geodesic 0 hrun.mem_zero) hXd hvel hN0
+    (hmax c (Set.Ioo (-ε) ε) N hrun hN0 hNd hNp)
+
+/-- **The touching-point step with the curves supplied.**
+
+For every direction, every geodesic through `x₀` in that direction and every parallel section
+through `n` along it, a local maximum of `s ↦ ⟪N, u∘γ⟫` at `0` forces
+`⟪n, Δu(x₀)⟫ ≤ 0`.
+
+This is the form a cross-fibre comparison consumes: the maximum comes from a function on `M`
+--- the distance to a parallel family of closed convex sets --- and so is available along
+*every* such curve, while the curves themselves are produced here. -/
+theorem inner_laplacianSection_nonpos_of_forall_geodesic_max (hmet : cov.IsMetricCompatible)
+    (hpar : HasParallelTransport I F V cov) (hu : CMDiff 2 (T% u)) {x₀ : M} {n : V x₀}
+    {ι : Type*} [Fintype ι] (b : OrthonormalBasis ι ℝ (TangentSpace I x₀))
+    (hmax : ∀ (v : TangentSpace I x₀) (γ : ℝ → M) (sset : Set ℝ) (N : Π r : ℝ, V (γ r)),
+      IsGeodesicRun covT γ sset x₀ v →
+      (⟨γ 0, N 0⟩ : TotalSpace F V) = ⟨x₀, n⟩ →
+      (∀ r ∈ sset, MDiffAlongSectionAt I F V γ N r) →
+      IsParallelAlongSection I F V cov γ N sset →
+      IsLocalMax (fun r ↦ (⟪N r, u (γ r)⟫ : ℝ)) 0) :
+    (⟪n, cov.laplacianSection covT hu x₀⟫ : ℝ) ≤ 0 := by
+  choose fr hfrC hfrx using fun i ↦ exists_contMDiff_extension (I := I) (n := 1) (b i)
+  have hfr : ∀ i, MDiffAt (T% (fr i)) x₀ := fun i ↦ (hfrC i).mdifferentiable one_ne_zero x₀
+  rw [cov.laplacianSection_eq_sum_frame covT hu hfr b hfrx,
+    inner_sum_fibre (W := V x₀) n (fun i ↦ cov.hessianSection covT (fr i) (fr i) u x₀)]
+  refine Finset.sum_nonpos fun i _ ↦ ?_
+  exact inner_hessianSection_nonpos_of_forall_max cov covT hmet hpar hu (hfr i)
+    (fun γ sset N hrun ↦ hmax (fr i x₀) γ sset N hrun)
+
+end Packaged
 
 end CovariantDerivative

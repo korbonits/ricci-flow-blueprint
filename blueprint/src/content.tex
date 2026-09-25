@@ -5715,7 +5715,12 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
     CovariantDerivative.hasDerivAt_inner_parallel_section_second,
     CovariantDerivative.hasDerivAt_inner_parallel_section_hessian,
     CovariantDerivative.inner_sum_fibre,
+    CovariantDerivative.inner_hessianSection_nonpos_of_max,
     CovariantDerivative.inner_laplacianSection_nonpos_of_geodesic_max,
+    CovariantDerivative.HasParallelTransport,
+    CovariantDerivative.inner_hessianSection_nonpos_of_forall_max,
+    CovariantDerivative.inner_laplacianSection_nonpos_of_forall_geodesic_max,
+    CovariantDerivative.hasParallelTransport_tangent,
     RicciFlowBlueprint.deriv2_nonpos_of_isLocalMax}
   \leanok
   \uses{lem:bundle-transport-leibniz, lem:hom-bundle-along-curve, lem:bundle-hessian}
@@ -5753,6 +5758,18 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   comparison needs and what a normal section cannot give. The initial condition is one
   equation in the total space, which packages $\gamma_i(0) = x_0$ and $N_i(0) = n$ with no
   dependent-type cast.
+
+  \textbf{The curves are supplied, not assumed.} The geodesics come from the exponential
+  machinery and the parallel sections from the predicate
+  \texttt{HasParallelTransport}, carried abstractly because transport is built here on $T\M$
+  and on $\operatorname{End}(T\M)$ but not yet for an arbitrary bundle; the tangent bundle
+  discharges it (\texttt{hasParallelTransport\_tangent}), which is what keeps the predicate
+  from asserting nothing, and \emph{no metric compatibility is needed} for that --- transport
+  exists for any connection, and is an isometry only for a metric one. The packaged form
+  \texttt{inner\_laplacian\-Section\_nonpos\_of\_forall\_geodesic\_max} then asks for the
+  maximum along \emph{every} geodesic run and every parallel section through $n$, which is
+  what a consumer can prove: the maximum comes from a function on $\M$, the distance to a
+  parallel family of closed convex sets, and so is available along every such curve.
 
   \emph{Nothing varies the curve}, which is why none of this touches the missing
   dependence-on-initial-conditions theory: each geodesic is fixed, and along a fixed curve
