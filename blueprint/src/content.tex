@@ -5768,6 +5768,42 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   $\sum_i \langle b_i,v\rangle^2 = \langle v,v\rangle$.
 \end{lemma}
 
+\begin{lemma}[Hamilton's reaction preserves the pinching set, from every point of it]
+  \label{lem:ivey-reaction}
+  \lean{RicciFlowBlueprint.Pinching.IsCurvatureODE.isIveyPinched_of_isIveyPinched,
+    RicciFlowBlueprint.Pinching.curvatureField,
+    RicciFlowBlueprint.Pinching.contDiff_curvatureField,
+    RicciFlowBlueprint.Pinching.exists_isCurvatureODE,
+    RicciFlowBlueprint.Pinching.rankOne,
+    RicciFlowBlueprint.Pinching.clm_ext_orthonormalBasis,
+    RicciFlowBlueprint.Pinching.hamiltonReaction,
+    RicciFlowBlueprint.Pinching.traceEndo_of_diag,
+    RicciFlowBlueprint.Pinching.hamiltonReaction_apply_basis,
+    RicciFlowBlueprint.Pinching.inner_rankOne_comm,
+    RicciFlowBlueprint.Pinching.hsForm_hamiltonReaction_nonpos}
+  \leanok
+  \uses{lem:ivey-endo, lem:ivey-convex, lem:pinching-ode, thm:max-tensor}
+  Let $Q(R) = 2R^2 - (\operatorname{tr} R)\,R + \sigma_2(R)\cdot 1$ on a three-dimensional
+  inner product space --- Hamilton's reaction $R^2 + R^\#$, by Cayley--Hamilton. At every
+  self-adjoint $p$ in the pinching set, $Q(p)$ points into the self-adjoint part of the set:
+  $\langle n, Q(p)\rangle_{HS} \le 0$ for every Hilbert--Schmidt outward normal $n$.
+
+  \textbf{Proved} (\texttt{IveyReaction.lean}, \texttt{IveyReactionEndo.lean}).
+
+  \textbf{Invariance was proved only from normalised data, and Nagumo's condition needs it from
+  every boundary point.} The Grönwall argument of Lemma \ref{lem:pinching-ode} used
+  $\nu \ge -1$ for one thing: to put the initial triple in $\mathcal{K}$. Taking membership in
+  $\mathcal{K}$ as the hypothesis, every other step is unchanged. Local existence is
+  Picard--Lindelöf for the polynomial field.
+
+  \textbf{The curve.} Diagonalise $p$ (the eigenvalues come sorted), run Hamilton's ODE on the
+  eigenvalues, and put the solution back on the same eigenbasis. On each eigenvector $Q$ acts by
+  the ODE's right-hand side, $\lambda_i^2 + \lambda_j\lambda_k$, so the curve leaves $p$ with
+  velocity $Q(p)$; it stays in the set because the ODE preserves the ordering and the pinching.
+  The Hilbert--Schmidt form is carried as a value, never as an instance on $\operatorname{End}$,
+  which already has the operator norm.
+\end{lemma}
+
 \begin{lemma}[Hamilton's pinching condition on the curvature operator]
   \label{lem:curvature-operator-pinched}
   \lean{CovariantDerivative.isSymmetric_curvatureOperator,

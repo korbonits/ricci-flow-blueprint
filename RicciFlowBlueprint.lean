@@ -99,3 +99,5 @@ import RicciFlowBlueprint.UhlenbeckFlow
 import RicciFlowBlueprint.CurvatureCommutatorPointwise
 import RicciFlowBlueprint.CurvatureThreeTable
 import RicciFlowBlueprint.RicciReactionThree
+import RicciFlowBlueprint.IveyReaction
+import RicciFlowBlueprint.IveyReactionEndo
