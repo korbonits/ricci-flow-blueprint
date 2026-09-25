@@ -2962,7 +2962,8 @@ target actually requires.
     RicciFlowBlueprint.Uhlenbeck.hasDerivAt_inverse_of_isInvertible,
     RicciFlowBlueprint.Uhlenbeck.isInvertible_dysonSum,
     RicciFlowBlueprint.Uhlenbeck.hasDerivAt_conj,
-    RicciFlowBlueprint.Uhlenbeck.metric_conj_symm}
+    RicciFlowBlueprint.Uhlenbeck.metric_conj_symm,
+    RicciFlowBlueprint.Uhlenbeck.hasDerivAt_metric_dysonSum_conj}
   \leanok
   \uses{thm:linear-ode-parameter}
   At a point, let $G_t$ be a family of symmetric bilinear forms with
@@ -2970,7 +2971,9 @@ target actually requires.
   $\iota$ of $\partial_t\iota = A\circ\iota$, $\iota_0 = 1$, satisfies
   $G_t(\iota v,\iota w) = G_0(v,w)$; the conjugate $\iota^{-1}R\,\iota$ of a
   $G_t$-symmetric operator is $G_0$-symmetric, and
-  $\partial_t(\iota^{-1}R\,\iota) = \iota^{-1}(\dot R + RA - AR)\iota$.
+  $\partial_t(\iota^{-1}R\,\iota) = \iota^{-1}(\dot R + RA - AR)\iota$. If $R$ commutes with
+  $A$, then $\partial_t G_t(R\,\iota v, \iota w) = G_t(\dot R\,\iota v, \iota w)$: in the
+  Uhlenbeck frame the matrix of $R$ evolves by the matrix of $\dot R$ alone.
 
   \textbf{Proved} (\texttt{UhlenbeckPointwise.lean}).
 
@@ -5820,6 +5823,45 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   which already has the operator norm.
 \end{lemma}
 
+\begin{lemma}[The pinching set and the reaction in a fixed matrix space]
+  \label{lem:ivey-matrix-model}
+  \lean{RicciFlowBlueprint.Pinching.toMat,
+    RicciFlowBlueprint.Pinching.inner_toMat,
+    RicciFlowBlueprint.Pinching.toMat_injective,
+    RicciFlowBlueprint.Pinching.toMat_eq_std,
+    RicciFlowBlueprint.Pinching.hamiltonReaction_endoConj,
+    RicciFlowBlueprint.Pinching.pinchedMat,
+    RicciFlowBlueprint.Pinching.toMat_mem_pinchedMat_iff,
+    RicciFlowBlueprint.Pinching.convex_pinchedMat,
+    RicciFlowBlueprint.Pinching.isClosed_pinchedMat,
+    RicciFlowBlueprint.Pinching.zero_mem_pinchedMat,
+    RicciFlowBlueprint.Pinching.fromMat,
+    RicciFlowBlueprint.Pinching.reactionMat,
+    RicciFlowBlueprint.Pinching.toMat_hamiltonReaction,
+    RicciFlowBlueprint.Pinching.inner_reactionMat_nonpos,
+    RicciFlowBlueprint.Pinching.exists_lipschitzOnWith_reactionMat}
+  \leanok
+  \uses{lem:ivey-reaction, lem:ivey-endo}
+  For an orthonormal basis $e$ of a three-dimensional inner product space $W$ let
+  $\mathrm{mat}_e(A)_{ij} = \langle A e_i, e_j\rangle$, a point of the Euclidean space of
+  $3\times 3$ matrices. Then $\langle \mathrm{mat}_e A, \mathrm{mat}_e B\rangle$ is the
+  Hilbert--Schmidt form; the set $\mathcal{K}_{\mathrm{mat}}$ of matrices of self-adjoint pinched
+  operators on $\mathbb{R}^3$ is closed, convex and contains $0$, and
+  $\mathrm{mat}_e A \in \mathcal{K}_{\mathrm{mat}}$ if and only if $A$ is self-adjoint and pinched,
+  \emph{in every orthonormal basis of every such $W$}; the reaction read in matrices satisfies
+  $\mathrm{mat}_e(Q(A)) = Q_{\mathrm{mat}}(\mathrm{mat}_e A)$, obeys Nagumo's condition on
+  $\mathcal{K}_{\mathrm{mat}}$, and is Lipschitz on every ball.
+
+  \textbf{Proved} (\texttt{IveyMatrixModel.lean}).
+
+  \textbf{Why a fixed matrix space.} The maximum principle is run on the matrix of
+  $\mathrm{Rm}_3$ in the Uhlenbeck frame. That space is chosen so that no bundle metric is ever an
+  instance while another is in scope: its inner product is Euclidean, and on matrices in an
+  orthonormal basis that \emph{is} Hilbert--Schmidt (Parseval). A frame change is conjugation
+  by an isometry, which preserves the set and commutes with the reaction, so everything is
+  transported once, through the standard basis of $\mathbb{R}^3$.
+\end{lemma}
+
 \begin{lemma}[Hamilton's pinching condition on the curvature operator]
   \label{lem:curvature-operator-pinched}
   \lean{CovariantDerivative.isSymmetric_curvatureOperator,
@@ -5995,7 +6037,9 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
 
 \begin{theorem}[The tensor maximum principle on a family of fibres]
   \label{thm:max-fibrewise}
-  \lean{RicciFlowBlueprint.MaximumPrinciple.mem_of_infDist_max}
+  \lean{RicciFlowBlueprint.MaximumPrinciple.mem_of_infDist_max,
+    RicciFlowBlueprint.MaximumPrinciple.mem_of_infDist_max_of_le,
+    RicciFlowBlueprint.MaximumPrinciple.mem_of_infDist_max_local}
   \leanok
   \uses{thm:max-tensor}
   Let $\M$ be a compact space and $V_x$ a family of complete real inner product spaces,
@@ -6008,6 +6052,12 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   $u(t,\cdot) \in \mathcal{K}$ for $t \in [0,T]$.
 
   \textbf{Proved} (\texttt{FibrewiseMaximumPrinciple.lean}).
+
+  \textbf{A local Lipschitz bound suffices when $0 \in \mathcal{K}_x$.} The Lipschitz comparison
+  is used once, between $u(t_0,x_0)$ and its nearest point $p$. If $0 \in \mathcal{K}_{x_0}$ then
+  $\|u - p\| = \mathrm{dist}(u,\mathcal{K}) \le \|u\|$, so $\|p\| \le 2\|u\|$, and when
+  $\|u\| \le B$ a Lipschitz bound for $F_x$ on the ball of radius $2B$ is enough. A polynomial
+  reaction such as Hamilton's then needs no truncation.
 
   \textbf{The change from Theorem \ref{thm:max-tensor} is smaller than it looks and makes the
   proof shorter.} The first-touching-time argument never compares $u(t,x)$ with $u(t,x_0)$

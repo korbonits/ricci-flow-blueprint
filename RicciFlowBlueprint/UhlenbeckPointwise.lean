@@ -178,6 +178,33 @@ theorem metric_conj_symm (hAc : Continuous A) (hC : ∀ s, ‖A s‖ ≤ C)
           ((dysonEquiv hAc hC t).symm (R (dysonSum A t w))) := (hback _ _).symm
     _ = G 0 v ((dysonEquiv hAc hC t).symm (R (dysonSum A t w))) := by rw [hself]
 
+-- BENCH: uhlenbeck-frame-derivative
+/-- **In the Uhlenbeck frame, an operator commuting with `A` evolves by its own derivative
+only.** `∂ₜ G(R ιv, ιw) = G(Ṙ ιv, ιw)` when `R` commutes with `A = B♯`: the metric's derivative
+contributes `−2B(Rιv,ιw)` and the two ODE terms contribute `G(RAιv,ιw) + G(Rιv,Aιw)`, each
+equal to `B(Rιv,ιw)` once `RA = AR` and the forms are symmetric. **Pointwise in `t`**, so no
+interval, no inverse and no endpoint bookkeeping: it is the isometry computation with `R`
+inserted, and in dimension three `R = Rm₃` commutes with `Ric♯` (`curvatureOperatorE_comm`). -/
+theorem hasDerivAt_metric_dysonSum_conj (hAc : Continuous A) (hC : ∀ s, ‖A s‖ ≤ C) {t : ℝ}
+    (hG : HasDerivAt G ((-2 : ℝ) • B t) t)
+    (hGA : ∀ v w, G t (A t v) w = B t v w)
+    (hGsymm : ∀ v w, G t v w = G t w v) (hBsymm : ∀ v w, B t v w = B t w v)
+    {R : ℝ → E →L[ℝ] E} {R' : E →L[ℝ] E} (hR : HasDerivAt R R' t)
+    (hRA : R t ∘L A t = A t ∘L R t) (v w : E) :
+    HasDerivAt (fun s ↦ G s (R s (dysonSum A s v)) (dysonSum A s w))
+      (G t (R' (dysonSum A t v)) (dysonSum A t w)) t := by
+  have hv := hasDerivAt_dysonSum_apply hAc hC v t
+  have hw := hasDerivAt_dysonSum_apply hAc hC w t
+  have hRv := hR.clm_apply hv
+  have h := (hG.clm_apply hRv).clm_apply hw
+  refine h.congr_deriv ?_
+  have hc : R t (A t (dysonSum A t v)) = A t (R t (dysonSum A t v)) :=
+    congrArg (fun L ↦ L (dysonSum A t v)) hRA
+  simp only [add_apply, smul_apply, smul_eq_mul, map_add, hc]
+  rw [hGA, hGsymm (R t (dysonSum A t v)) (A t (dysonSum A t w)), hGA,
+    hBsymm (dysonSum A t w)]
+  ring
+
 end Uhlenbeck
 
 end RicciFlowBlueprint

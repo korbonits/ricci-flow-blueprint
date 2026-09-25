@@ -36,29 +36,17 @@ variable {M : Type*} [TopologicalSpace M] [CompactSpace M]
   {V : M → Type*} [∀ x, NormedAddCommGroup (V x)] [∀ x, InnerProductSpace ℝ (V x)]
   [∀ x, CompleteSpace (V x)]
 
--- BENCH: max-principle-fibrewise
-/-- **The tensor maximum principle on a family of fibres.**
-
-`K x ⊆ V x` closed, convex and nonempty in each fibre, `u : ℝ → Π x, V x` with a time
-derivative `ut` on `[0,T]`, the distance to the family jointly continuous, and `F x` Lipschitz
-with a constant uniform in `x`. Suppose
-
-* (`hmax`) wherever `x ↦ dist(u t x, K x)` is maximal, the outward normal `n = u t x₀ − p` at
-  the nearest point --- which comes with the supporting half-space property, so a consumer
-  need not re-derive it --- satisfies `⟪n, ∂ₜu⟫ ≤ ⟪n, F (u)⟫`;
-* (`hKinv`) each `K x` is preserved by the ODE `v' = F x v`, in Nagumo's form.
-
-If `u 0 x ∈ K x` for all `x`, then `u t x ∈ K x` for all `t ∈ [0,T]`.
-
-**Joint continuity of the distance is a hypothesis and has to be**: `u` is a section of a
-family, so there is no continuity statement about `u` itself to derive it from --- that is
-precisely the cross-fibre content, and on a bundle it comes from a local trivialisation. -/
-theorem mem_of_infDist_max {u ut : ℝ → Π x : M, V x} {F : Π x : M, V x → V x}
+/-- **The fibrewise principle with the Lipschitz comparison asked only where it is used**: between
+`u t x₀` and its nearest point in `K x₀`, at a point of maximal distance. Both the global and the
+local-on-balls forms below are one line from this. -/
+theorem mem_of_infDist_max_of_le {u ut : ℝ → Π x : M, V x} {F : Π x : M, V x → V x}
     {K : Π x : M, Set (V x)} {L : ℝ≥0} {T : ℝ}
     (hKcl : ∀ x, IsClosed (K x)) (hKc : ∀ x, Convex ℝ (K x)) (hKne : ∀ x, (K x).Nonempty)
     (hdc : Continuous fun p : ℝ × M ↦ infDist (u p.1 p.2) (K p.2))
     (hut : ∀ t ∈ Icc 0 T, ∀ x, HasDerivAt (fun s ↦ u s x) (ut t x) t)
-    (hF : ∀ x, LipschitzWith L (F x))
+    (hF : ∀ t ∈ Icc 0 T, ∀ x₀ : M, ∀ p ∈ K x₀,
+      ‖u t x₀ - p‖ = infDist (u t x₀) (K x₀) →
+      ‖F x₀ (u t x₀) - F x₀ p‖ ≤ L * ‖u t x₀ - p‖)
     (hmax : ∀ t ∈ Icc 0 T, ∀ x₀ : M, ∀ p ∈ K x₀,
       ‖u t x₀ - p‖ = infDist (u t x₀) (K x₀) →
       (∀ q ∈ K x₀, (⟪u t x₀ - p, q - p⟫ : ℝ) ≤ 0) →
@@ -156,8 +144,8 @@ theorem mem_of_infDist_max {u ut : ℝ → Π x : M, V x} {F : Π x : M, V x →
         nlinarith
       · rw [hat]; ring
     have h2 : (⟪n, F x₀ (u t₀ x₀)⟫ : ℝ) ≤ ⟪n, F x₀ p⟫ + E * (L * E) := by
-      have hd := (hF x₀).dist_le_mul (u t₀ x₀) p
-      rw [dist_eq_norm, dist_eq_norm, ← hn_def, hnE] at hd
+      have hd := hF t₀ ht₀I x₀ p hp hnorm
+      rw [← hn_def, hnE] at hd
       have h := real_inner_le_norm n (F x₀ (u t₀ x₀) - F x₀ p)
       rw [inner_sub_right, hnE] at h
       nlinarith [hEpos]
@@ -177,6 +165,79 @@ theorem mem_of_infDist_max {u ut : ℝ → Π x : M, V x} {F : Π x : M, V x →
   have h := key (η / Real.exp (c * t)) (by positivity) t ht x
   rw [div_mul_cancel₀ η hexp.ne'] at h
   linarith
+
+
+-- BENCH: max-principle-fibrewise
+/-- **The tensor maximum principle on a family of fibres.**
+
+`K x ⊆ V x` closed, convex and nonempty in each fibre, `u : ℝ → Π x, V x` with a time
+derivative `ut` on `[0,T]`, the distance to the family jointly continuous, and `F x` Lipschitz
+with a constant uniform in `x`. Suppose
+
+* (`hmax`) wherever `x ↦ dist(u t x, K x)` is maximal, the outward normal `n = u t x₀ − p` at
+  the nearest point --- which comes with the supporting half-space property, so a consumer
+  need not re-derive it --- satisfies `⟪n, ∂ₜu⟫ ≤ ⟪n, F (u)⟫`;
+* (`hKinv`) each `K x` is preserved by the ODE `v' = F x v`, in Nagumo's form.
+
+If `u 0 x ∈ K x` for all `x`, then `u t x ∈ K x` for all `t ∈ [0,T]`.
+
+**Joint continuity of the distance is a hypothesis and has to be**: `u` is a section of a
+family, so there is no continuity statement about `u` itself to derive it from --- that is
+precisely the cross-fibre content, and on a bundle it comes from a local trivialisation. -/
+theorem mem_of_infDist_max {u ut : ℝ → Π x : M, V x} {F : Π x : M, V x → V x}
+    {K : Π x : M, Set (V x)} {L : ℝ≥0} {T : ℝ}
+    (hKcl : ∀ x, IsClosed (K x)) (hKc : ∀ x, Convex ℝ (K x)) (hKne : ∀ x, (K x).Nonempty)
+    (hdc : Continuous fun p : ℝ × M ↦ infDist (u p.1 p.2) (K p.2))
+    (hut : ∀ t ∈ Icc 0 T, ∀ x, HasDerivAt (fun s ↦ u s x) (ut t x) t)
+    (hF : ∀ x, LipschitzWith L (F x))
+    (hmax : ∀ t ∈ Icc 0 T, ∀ x₀ : M, ∀ p ∈ K x₀,
+      ‖u t x₀ - p‖ = infDist (u t x₀) (K x₀) →
+      (∀ q ∈ K x₀, (⟪u t x₀ - p, q - p⟫ : ℝ) ≤ 0) →
+      (∀ x, infDist (u t x) (K x) ≤ infDist (u t x₀) (K x₀)) →
+      (⟪u t x₀ - p, ut t x₀⟫ : ℝ) ≤ ⟪u t x₀ - p, F x₀ (u t x₀)⟫)
+    (hKinv : ∀ x : M, ∀ p ∈ K x, ∀ n : V x,
+      (∀ q ∈ K x, (⟪n, q - p⟫ : ℝ) ≤ 0) → (⟪n, F x p⟫ : ℝ) ≤ 0)
+    (h0 : ∀ x, u 0 x ∈ K x) :
+    ∀ t ∈ Icc 0 T, ∀ x, u t x ∈ K x :=
+  mem_of_infDist_max_of_le hKcl hKc hKne hdc hut
+    (fun _ _ x₀ p _ _ ↦ by
+      simpa only [dist_eq_norm] using (hF x₀).dist_le_mul _ p) hmax hKinv h0
+
+-- BENCH: max-principle-fibrewise-local
+/-- **The fibrewise principle with a LOCALLY Lipschitz reaction.** When `0 ∈ K x` and `u` stays
+in the ball of radius `B`, a nearest point `p` satisfies `‖p‖ ≤ 2B`: `‖u − p‖ = dist(u,K) ≤ ‖u‖`.
+So a Lipschitz bound for `F x` on the ball of radius `2B` is all the comparison ever uses, and a
+polynomial reaction --- Hamilton's --- needs **no truncation**. -/
+theorem mem_of_infDist_max_local {u ut : ℝ → Π x : M, V x} {F : Π x : M, V x → V x}
+    {K : Π x : M, Set (V x)} {L : ℝ≥0} {T B : ℝ}
+    (hKcl : ∀ x, IsClosed (K x)) (hKc : ∀ x, Convex ℝ (K x)) (hK0 : ∀ x, (0 : V x) ∈ K x)
+    (hdc : Continuous fun p : ℝ × M ↦ infDist (u p.1 p.2) (K p.2))
+    (hut : ∀ t ∈ Icc 0 T, ∀ x, HasDerivAt (fun s ↦ u s x) (ut t x) t)
+    (hu : ∀ t ∈ Icc 0 T, ∀ x, ‖u t x‖ ≤ B)
+    (hF : ∀ x, LipschitzOnWith L (F x) (closedBall 0 (2 * B)))
+    (hmax : ∀ t ∈ Icc 0 T, ∀ x₀ : M, ∀ p ∈ K x₀,
+      ‖u t x₀ - p‖ = infDist (u t x₀) (K x₀) →
+      (∀ q ∈ K x₀, (⟪u t x₀ - p, q - p⟫ : ℝ) ≤ 0) →
+      (∀ x, infDist (u t x) (K x) ≤ infDist (u t x₀) (K x₀)) →
+      (⟪u t x₀ - p, ut t x₀⟫ : ℝ) ≤ ⟪u t x₀ - p, F x₀ (u t x₀)⟫)
+    (hKinv : ∀ x : M, ∀ p ∈ K x, ∀ n : V x,
+      (∀ q ∈ K x, (⟪n, q - p⟫ : ℝ) ≤ 0) → (⟪n, F x p⟫ : ℝ) ≤ 0)
+    (h0 : ∀ x, u 0 x ∈ K x) :
+    ∀ t ∈ Icc 0 T, ∀ x, u t x ∈ K x := by
+  refine mem_of_infDist_max_of_le (L := L) hKcl hKc (fun x ↦ ⟨0, hK0 x⟩) hdc hut
+    (fun t ht x₀ p _ hnorm ↦ ?_) hmax hKinv h0
+  have hub := hu t ht x₀
+  have hd0 : ‖u t x₀ - p‖ ≤ ‖u t x₀‖ := by
+    rw [hnorm]
+    simpa only [dist_zero_right] using infDist_le_dist_of_mem (x := u t x₀) (hK0 x₀)
+  have hp : ‖p‖ ≤ 2 * B := by
+    have : ‖p‖ ≤ ‖u t x₀‖ + ‖u t x₀ - p‖ := by
+      calc ‖p‖ = ‖u t x₀ - (u t x₀ - p)‖ := by rw [sub_sub_cancel]
+        _ ≤ ‖u t x₀‖ + ‖u t x₀ - p‖ := norm_sub_le _ _
+    linarith
+  have hu2 : ‖u t x₀‖ ≤ 2 * B := by linarith [norm_nonneg (u t x₀)]
+  have h := (hF x₀).dist_le_mul (u t x₀) (by simpa using hu2) p (by simpa using hp)
+  simpa only [dist_eq_norm] using h
 
 end MaximumPrinciple
 
