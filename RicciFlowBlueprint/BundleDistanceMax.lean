@@ -169,6 +169,7 @@ variable [ContMDiffCovariantDerivative cov 1]
   (covT : CovariantDerivative I E (fun (x : M) ↦ TangentSpace I x))
   [ContMDiffCovariantDerivative covT 1]
 
+omit [∀ (x : M), CompleteSpace (V x)] in
 /-- **The cross-fibre touching-point step.**
 
 Where the distance to a parallel family of closed convex sets is maximal over `M`, the
@@ -184,6 +185,23 @@ linear equation, is an isometry, and carries `K`.
 
 The direction is an artefact-free existential: `p` is the nearest point, which exists because
 the fibres are complete and `K x₀` is closed, convex and nonempty. -/
+theorem inner_laplacianSection_nonpos_of_infDist_le (hmet : cov.IsMetricCompatible)
+    (hpar : HasParallelTransport I F V cov) {K : Π x : M, Set (V x)}
+    (hKne : ∀ x, (K x).Nonempty)
+    (hK : IsParallelSet I F V cov K) {w : Π y : M, V y} (hw : CMDiff 2 (T% w)) {x₀ : M}
+    (hmaxf : ∀ x, infDist (w x) (K x) ≤ infDist (w x₀) (K x₀))
+    {p : V x₀} (hpmin : ‖w x₀ - p‖ = infDist (w x₀) (K x₀))
+    (hhalf : ∀ q ∈ K x₀, (⟪w x₀ - p, q - p⟫ : ℝ) ≤ 0)
+    {ι : Type*} [Fintype ι] (b : OrthonormalBasis ι ℝ (TangentSpace I x₀)) :
+    (⟪w x₀ - p, cov.laplacianSection covT hw x₀⟫ : ℝ) ≤ 0 := by
+  refine inner_laplacianSection_nonpos_of_forall_geodesic_max cov covT hmet hpar hw b ?_
+  intro v γ sset N hrun hN0 hNd hNp
+  exact isLocalMax_inner_of_infDist_le cov hmet hpar hKne hK hmaxf hpmin hhalf
+    hrun.isOpen hrun.isPreconnected hrun.mem_zero hrun.mdiff hrun.mdiffAlong
+    (congrArg TotalSpace.proj hrun.init) hNd hNp hN0
+
+/-- The same with the nearest point constructed rather than given: it exists because the
+fibres are complete and `K x₀` is closed, convex and nonempty. -/
 theorem exists_nearest_inner_laplacianSection_nonpos (hmet : cov.IsMetricCompatible)
     (hpar : HasParallelTransport I F V cov) {K : Π x : M, Set (V x)}
     (hKcl : ∀ x, IsClosed (K x)) (hKcv : ∀ x, Convex ℝ (K x)) (hKne : ∀ x, (K x).Nonempty)
@@ -194,12 +212,9 @@ theorem exists_nearest_inner_laplacianSection_nonpos (hmet : cov.IsMetricCompati
       (⟪w x₀ - p, cov.laplacianSection covT hw x₀⟫ : ℝ) ≤ 0 := by
   obtain ⟨p, hp, hpmin, hhalf⟩ :=
     exists_nearest_point (V := V x₀) (hKcl x₀) (hKcv x₀) (hKne x₀) (w x₀)
-  refine ⟨p, hp, hpmin, ?_⟩
-  refine inner_laplacianSection_nonpos_of_forall_geodesic_max cov covT hmet hpar hw b ?_
-  intro v γ sset N hrun hN0 hNd hNp
-  exact isLocalMax_inner_of_infDist_le cov hmet hpar hKne hK hmaxf hpmin hhalf
-    hrun.isOpen hrun.isPreconnected hrun.mem_zero hrun.mdiff hrun.mdiffAlong
-    (congrArg TotalSpace.proj hrun.init) hNd hNp hN0
+  exact ⟨p, hp, hpmin,
+    inner_laplacianSection_nonpos_of_infDist_le cov covT hmet hpar hKne hK hw hmaxf hpmin
+      hhalf b⟩
 
 end TouchingPoint
 

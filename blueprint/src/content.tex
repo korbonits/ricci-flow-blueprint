@@ -5814,6 +5814,63 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   over $\gamma(r)$ is the one at $x_0$ transported term by term.
 \end{lemma}
 
+\begin{theorem}[The tensor maximum principle on a family of fibres]
+  \label{thm:max-fibrewise}
+  \lean{RicciFlowBlueprint.MaximumPrinciple.mem_of_infDist_max}
+  \leanok
+  \uses{thm:max-tensor}
+  Let $\M$ be a compact space and $V_x$ a family of complete real inner product spaces,
+  $\mathcal{K}_x \subseteq V_x$ closed, convex and nonempty, $u$ a section family with time
+  derivative $u_t$ on $[0,T]$, the distance $(t,x)\mapsto \mathrm{dist}(u(t,x),\mathcal{K}_x)$
+  jointly continuous, and $F_x$ Lipschitz with a constant uniform in $x$. If at every spatial
+  maximum of the distance the outward normal $n$ at the nearest point satisfies
+  $\langle n, u_t\rangle \le \langle n, F(u)\rangle$, and each $\mathcal{K}_x$ is preserved by
+  $v' = F_x(v)$ in Nagumo's form, then $u(0,\cdot) \in \mathcal{K}$ implies
+  $u(t,\cdot) \in \mathcal{K}$ for $t \in [0,T]$.
+
+  \textbf{Proved} (\texttt{FibrewiseMaximumPrinciple.lean}).
+
+  \textbf{The change from Theorem \ref{thm:max-tensor} is smaller than it looks and makes the
+  proof shorter.} The first-touching-time argument never compares $u(t,x)$ with $u(t,x_0)$
+  directly; it compares their distances to $\mathcal{K}$, which are real numbers. Where the
+  fixed-space version has to turn the distance maximum into a pairing maximum, here the
+  pairing maximum \emph{is} the hypothesis, and those steps disappear. Everything else happens
+  in the single fibre over $x_0$.
+
+  \emph{Joint continuity of the distance is a hypothesis and has to be}: $u$ is a section of a
+  family, so there is no continuity statement about $u$ itself to derive it from. That is
+  precisely the cross-fibre content, and on a bundle it comes from a local trivialisation.
+  There is no geometry in the statement: no manifold, no bundle, no connection.
+\end{theorem}
+
+\begin{theorem}[The tensor maximum principle on a bundle]
+  \label{thm:max-bundle}
+  \lean{CovariantDerivative.mem_of_laplacianSection_of_isParallelSet}
+  \leanok
+  \uses{thm:max-fibrewise, lem:bundle-distance-max}
+  Let $\M$ be closed, $V$ a Riemannian bundle with a metric connection admitting parallel
+  transport, $\mathcal{K}$ a parallel family of closed convex sets preserved by the reaction,
+  and $\partial_t u = \Delta u + F(u)$ on $[0,T]$. If $u(0,x) \in \mathcal{K}_x$ for every $x$,
+  then $u(t,x) \in \mathcal{K}_x$ for every $t \in [0,T]$.
+
+  \textbf{Proved} (\texttt{BundleMaximumPrincipleCross.lean}).
+
+  \textbf{The whole content of the composition is one line}: at a spatial maximum of the
+  distance, $\langle n, \partial_t u\rangle = \langle n, \Delta u\rangle + \langle n,
+  F(u)\rangle \le \langle n, F(u)\rangle$, because Lemma \ref{lem:bundle-distance-max} makes
+  the Laplacian term nonpositive.
+
+  \textbf{What this closes.} Theorem \ref{thm:max-tensor} and its manifold form run on a
+  \emph{trivial} bundle --- the tested direction is literally the same vector at every point.
+  Lemma \ref{lem:bundle-touching-point} did the touching-point half for a direction in one
+  fibre, with the maximum of $\langle N,u\rangle$ assumed. What was missing was the
+  cross-fibre comparison.
+
+  \emph{What it still does not do}: the fibre metric is fixed in $t$. Under the Ricci flow the
+  Hilbert--Schmidt metric on $\operatorname{End}(T\M)$ moves with $g_t$, and that is
+  Uhlenbeck's trick (or Hamilton 1982 \S 9) --- a different bill.
+\end{theorem}
+
 \begin{lemma}[A parallel orthonormal frame along a curve]
   \label{lem:parallel-frame}
   \lean{CovariantDerivative.inner_eq_of_isParallelAlong_global,

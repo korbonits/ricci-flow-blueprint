@@ -92,3 +92,5 @@ import RicciFlowBlueprint.BundleTransportIsometry
 import RicciFlowBlueprint.GeodesicSecondDerivative
 import RicciFlowBlueprint.ParallelTransportInstances
 import RicciFlowBlueprint.BundleDistanceMax
+import RicciFlowBlueprint.FibrewiseMaximumPrinciple
+import RicciFlowBlueprint.BundleMaximumPrincipleCross
