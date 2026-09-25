@@ -2954,6 +2954,57 @@ target actually requires.
   started from, but it is not nothing.
 \end{theorem}
 
+\begin{lemma}[Uhlenbeck's trick, pointwise]
+  \label{lem:uhlenbeck-pointwise}
+  \lean{RicciFlowBlueprint.Uhlenbeck.hasDerivAt_metric_dysonSum,
+    RicciFlowBlueprint.Uhlenbeck.metric_dysonSum_eq,
+    RicciFlowBlueprint.Uhlenbeck.metric_dysonEquiv_symm_eq,
+    RicciFlowBlueprint.Uhlenbeck.hasDerivAt_inverse_of_isInvertible,
+    RicciFlowBlueprint.Uhlenbeck.isInvertible_dysonSum,
+    RicciFlowBlueprint.Uhlenbeck.hasDerivAt_conj,
+    RicciFlowBlueprint.Uhlenbeck.metric_conj_symm}
+  \leanok
+  \uses{thm:linear-ode-parameter}
+  At a point, let $G_t$ be a family of symmetric bilinear forms with
+  $\partial_t G = -2B$, $B_t$ symmetric, and $A_t$ the $G_t$-sharp of $B_t$. The solution
+  $\iota$ of $\partial_t\iota = A\circ\iota$, $\iota_0 = 1$, satisfies
+  $G_t(\iota v,\iota w) = G_0(v,w)$; the conjugate $\iota^{-1}R\,\iota$ of a
+  $G_t$-symmetric operator is $G_0$-symmetric, and
+  $\partial_t(\iota^{-1}R\,\iota) = \iota^{-1}(\dot R + RA - AR)\iota$.
+
+  \textbf{Proved} (\texttt{UhlenbeckPointwise.lean}).
+
+  \textbf{The ODE is pointwise in $x$, and that is what makes it cheap.} $T_x\M$ does not
+  depend on $t$ --- only its inner product does --- so at each point the equation is linear in
+  the fixed space $\operatorname{End}(T_x\M)$ and the Dyson series solves it on the whole
+  interval. \emph{No dependence on the point is needed for the pinching estimate}: the
+  touching-point step runs at one time on the curvature itself, and the time-derivative step
+  runs in the single fibre over the touching point. So the chart-and-bundle transfer of
+  parameter dependence that Theorem \ref{thm:linear-ode-smooth} leaves open is off the critical
+  path. The isometry is one derivative: $-2B + B + B = 0$.
+\end{lemma}
+
+\begin{lemma}[The time derivative of the dimension-three curvature operator]
+  \label{lem:curvature-operator-time-derivative}
+  \lean{RicciFlowBlueprint.curvatureOperatorE,
+    RicciFlowBlueprint.curvatureOperatorE_comm,
+    RicciFlowBlueprint.hasDerivAt_sharpE,
+    RicciFlowBlueprint.hasDerivAt_curvatureOperatorE_of_flow}
+  \leanok
+  \uses{lem:uhlenbeck-pointwise, lem:curvature-operator-three}
+  Under $\partial_t g = -2\Ric$,
+  $\partial_t \Rm_3 = (\partial_t \operatorname{scal})\cdot 1
+     - 2\big(2\,\Ric^\sharp\circ\Ric^\sharp + (\partial_t\Ric)^\sharp\big)$,
+  and $\Rm_3$ commutes with $\Ric^\sharp$.
+
+  \textbf{Proved} (\texttt{UhlenbeckFlow.lean}). $\Rm_3 = \operatorname{scal}\cdot 1 -
+  2\Ric^\sharp$ carries the metric twice, once in $\operatorname{scal}$ and $\Ric$ and once in
+  the index raising; the spatial calculus freezes it, the time derivative cannot. The
+  $\Ric^\sharp\circ\Ric^\sharp$ term is the whole contribution of the moving $\sharp$, quadratic
+  in the curvature, and joins the reaction. The commutation is what kills the commutator in
+  Lemma \ref{lem:uhlenbeck-pointwise}: $\Rm_3$ is a polynomial in the Uhlenbeck coefficient.
+\end{lemma}
+
 
 
 \begin{theorem}[Evolution of the curvature tensor]

@@ -94,3 +94,5 @@ import RicciFlowBlueprint.ParallelTransportInstances
 import RicciFlowBlueprint.BundleDistanceMax
 import RicciFlowBlueprint.FibrewiseMaximumPrinciple
 import RicciFlowBlueprint.BundleMaximumPrincipleCross
+import RicciFlowBlueprint.UhlenbeckPointwise
+import RicciFlowBlueprint.UhlenbeckFlow
