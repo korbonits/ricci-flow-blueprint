@@ -3126,6 +3126,30 @@ target actually requires.
   point, through it --- a constant orthogonal rotation of any orthonormal frame.
 \end{lemma}
 
+\begin{theorem}[The evolution of the dimension-three curvature operator under the Ricci flow]
+  \label{thm:curvature-operator-evolution-flow}
+  \lean{RicciFlowBlueprint.sharpE_apply_eq_sharp,
+    RicciFlowBlueprint.exists_hasDerivAt_curvatureOperatorE_eq_of_isRicciFlowAt}
+  \leanok
+  \uses{lem:curvature-operator-evolution, lem:curvature-operator-time-derivative,
+    lem:evolution-ric, thm:evolution-scal}
+  Let $g_t$ be a Ricci flow on a three-manifold, regular enough for the scalar and Ricci
+  evolution equations to hold at $(t_0,x)$. Then $t \mapsto \mathrm{Rm}_3(g_t)(x)$, as an
+  endomorphism of $T_x\M$, has a time derivative $D$ at $t_0$, and against $g_{t_0}$,
+  \[ g_{t_0}(Dv, w) = \langle (\Delta \mathrm{Rm}_3 + Q(\mathrm{Rm}_3))v, w\rangle, \]
+  with $\Delta$ the connection Laplacian of $\mathrm{Rm}_3$ on $\operatorname{End}(T\M)$ for the
+  Levi-Civita connection of $g_{t_0}$, and $Q$ Hamilton's reaction.
+
+  \textbf{Proved} (\texttt{CurvatureOperatorEvolution.lean}).
+
+  The metric moves in both $\scal$ and the index raising; the $\Ric^{\sharp 2}$ term in
+  Lemma \ref{lem:curvature-operator-time-derivative} is exactly what the moving $\sharp$ costs,
+  and it is absorbed into $Q$. The proof composes the scalar and Ricci evolution equations with
+  Lemma \ref{lem:curvature-operator-evolution} at a Ricci eigenbasis and a frame through it;
+  the only bridge is that the sharp of the metric carried as a value is the Riesz sharp of the
+  instance it induces.
+\end{theorem}
+
 
 
 \begin{theorem}[Evolution of the curvature tensor]
