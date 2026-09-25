@@ -5776,6 +5776,44 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   parallel transport is a linear equation.
 \end{lemma}
 
+\begin{lemma}[The cross-fibre touching-point step]
+  \label{lem:bundle-distance-max}
+  \lean{CovariantDerivative.IsParallelSet,
+    CovariantDerivative.inner_sub_nonpos_of_isParallelSet,
+    CovariantDerivative.isLocalMax_inner_of_infDist_le,
+    CovariantDerivative.exists_nearest_inner_laplacianSection_nonpos}
+  \leanok
+  \uses{lem:geodesic-second-derivative, lem:bundle-transport-leibniz, lem:ivey-parallel,
+    thm:max-tensor}
+  Let $\mathcal{K}_x \subseteq V_x$ be closed, convex and nonempty in each fibre and preserved
+  by parallel transport. Where $x \mapsto \mathrm{dist}(w(x),\mathcal{K}_x)$ is maximal over
+  $\M$, the nearest point $p$ exists and the outward normal $n = w(x_0)-p$ satisfies
+  $\langle n, \Delta w(x_0)\rangle \le 0$.
+
+  \textbf{Proved} (\texttt{BundleDistanceMax.lean}).
+
+  \textbf{This is the half of the bundle maximum principle that Lemma
+  \ref{lem:bundle-touching-point} does not do.} There the tested direction is a vector of one
+  fibre and the maximum is assumed of $\langle N,u\rangle$ already; here it is assumed of the
+  \emph{distance}, which is what a first-touching-time argument actually produces, and turning
+  one into the other is exactly what needs the direction carried between fibres.
+
+  \textbf{It is carried one curve at a time.} Along a fixed curve, transport is a linear
+  equation, is an isometry --- so $\|N\|$ is constant --- and carries $\mathcal{K}$, so the
+  support of $\mathcal{K}$ in the direction $N$ is constant too. Neither holds for an
+  extension over a \emph{neighbourhood} without radial transport or a normal orthonormal
+  frame. The bound is
+  \[
+    \langle N(r), w(\gamma(r))\rangle
+      = \langle N(r), w(\gamma(r)) - Q(r)\rangle + \langle N(r), Q(r)\rangle
+      \le \|n\|\,\mathrm{dist}(w(\gamma(r)),\mathcal{K}_{\gamma(r)}) + \langle n,p\rangle,
+  \]
+  at most $\|n\|^2 + \langle n,p\rangle = \langle n, w(x_0)\rangle$, with equality at $r=0$.
+  \emph{No support function is needed as a definition}: the supporting half-space inequality
+  of Theorem \ref{thm:max-tensor} is what is used, and the half-space property in the fibre
+  over $\gamma(r)$ is the one at $x_0$ transported term by term.
+\end{lemma}
+
 \begin{lemma}[A parallel orthonormal frame along a curve]
   \label{lem:parallel-frame}
   \lean{CovariantDerivative.inner_eq_of_isParallelAlong_global,
