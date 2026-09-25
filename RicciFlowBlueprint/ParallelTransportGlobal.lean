@@ -370,6 +370,32 @@ theorem isParallelAlong_const_smul (hγ : ∀ w ∈ s, MDifferentiableAt 𝓘(�
     hP₁ u hu, deriv_const]
   simp
 
+omit [CompleteSpace E] [ContMDiffVectorBundle 2 E (fun (x : M) ↦ TangentSpace I x) I]
+  [ContMDiffCovariantDerivative cov 1] in
+/-- **A finite sum of parallel sections is parallel.** No induction is needed here: `D/dt` is
+already known additive over finite sums (`IsCovDerivAlong.sum`), so this is one rewrite. -/
+theorem isParallelAlong_sum (hγ : ∀ w ∈ s, MDifferentiableAt 𝓘(ℝ, ℝ) I γ w)
+    {κ : Type*} (a : Finset κ) {Vs : κ → Π u : ℝ, TangentSpace I (γ u)}
+    (hV : ∀ i ∈ a, ∀ w ∈ s, MDiffAlongAt γ (Vs i) w)
+    (hP : ∀ i ∈ a, IsParallelAlong cov γ (Vs i) s) :
+    IsParallelAlong cov γ (fun u ↦ ∑ i ∈ a, Vs i u) s := fun u hu ↦ by
+  rw [(isCovDerivAlong_covAlong cov γ).sum (hγ u hu) (hγ u hu) a fun i hi ↦ hV i hi u hu]
+  exact Finset.sum_eq_zero fun i hi ↦ hP i hi u hu
+
+omit [CompleteSpace E] [ContMDiffVectorBundle 2 E (fun (x : M) ↦ TangentSpace I x) I]
+  [ContMDiffCovariantDerivative cov 1] in
+/-- **A constant-coefficient combination of parallel sections is parallel.** This is the form a
+parallel *frame* is consumed in: a vector with fixed coordinates in a parallel frame is
+itself parallel. -/
+theorem isParallelAlong_sum_smul (hγ : ∀ w ∈ s, MDifferentiableAt 𝓘(ℝ, ℝ) I γ w)
+    {κ : Type*} (a : Finset κ) (c : κ → ℝ) {Vs : κ → Π u : ℝ, TangentSpace I (γ u)}
+    (hV : ∀ i ∈ a, ∀ w ∈ s, MDiffAlongAt γ (Vs i) w)
+    (hP : ∀ i ∈ a, IsParallelAlong cov γ (Vs i) s) :
+    IsParallelAlong cov γ (fun u ↦ ∑ i ∈ a, c i • Vs i u) s :=
+  isParallelAlong_sum cov (Vs := fun i u ↦ c i • Vs i u) hγ a
+    (fun i hi w hw ↦ MDiffAlongAt.smul (hγ w hw) (differentiableAt_const (c i)) (hV i hi w hw))
+    (fun i hi ↦ isParallelAlong_const_smul cov hγ (c i) (hV i hi) (hP i hi))
+
 section Isometry
 
 variable [RiemannianBundle (fun (x : M) ↦ TangentSpace I x)]

@@ -5705,8 +5705,54 @@ Hamilton--Ivey estimate, and it was missing from this chart entirely.
   vector, which is the sense in which the trivialisation is isometric.
 
   \emph{What this does not do.} It does not build parallel transport on
-  $\operatorname{End}(T\M)$ as a bundle in its own right, and it does not carry out the
-  first-touching-time argument. It supplies the frame those need.
+  $\operatorname{End}(T\M)$ as a bundle in its own right --- that is Lemma
+  \ref{lem:end-transport} --- and it does not carry out the first-touching-time argument. It
+  supplies the frame those need.
+\end{lemma}
+
+\begin{lemma}[Parallel transport on $\operatorname{End}(T\M)$]
+  \label{lem:end-transport}
+  \lean{RicciFlowBlueprint.endoAlong,
+        RicciFlowBlueprint.endoAlong_self,
+        RicciFlowBlueprint.endoAlong_apply_frame,
+        RicciFlowBlueprint.mdiffAlongSectionAt_hom_of_symmL,
+        RicciFlowBlueprint.mdiffAlongSectionAt_endoAlong,
+        RicciFlowBlueprint.isParallelAlong_endoAlong_frame,
+        RicciFlowBlueprint.isParallelAlongSection_endoAlong,
+        RicciFlowBlueprint.exists_isParallelAlongSection_end}
+  \leanok
+  \uses{lem:parallel-frame, lem:hom-bundle-along-curve, lem:hom-bundle-smooth}
+  Let $\nab$ be metric and $\gamma$ differentiable on a preconnected open $s \ni t_0$. For
+  every $A_0 \in \operatorname{End}(T_{\gamma(t_0)}\M)$ there is a field
+  $A(u) \in \operatorname{End}(T_{\gamma(u)}\M)$, differentiable along $\gamma$, parallel
+  for the induced connection on $\operatorname{Hom}(T\M,T\M)$, with $A(t_0) = A_0$.
+
+  \textbf{Proved} (\texttt{EndTransport.lean}).
+
+  \textbf{An orthonormal frame is what makes this cheap.} Against a general transported frame,
+  writing an endomorphism in frame coordinates needs the inverse of the frame matrix, which then
+  has to be differentiated. Against an orthonormal one the coordinates are
+  $m_{ij} = \langle b_i, A_0 b_j\rangle$ and the field is the fixed combination
+  $A(u) = \sum_{ij} m_{ij}\,\langle \mathrm{fr}_j(u),\cdot\rangle\,\mathrm{fr}_i(u)$
+  of rank-one operators built from the frame. No inversion appears anywhere.
+
+  \textbf{Parallelism costs no transport computation.} The value of $A$ on $\mathrm{fr}_k$ is a
+  \emph{constant} combination of the frame, hence parallel; the Leibniz rule of Lemma
+  \ref{lem:hom-bundle-along-curve} then gives $(D/dt\,A)(\mathrm{fr}_k(u)) = 0$ for every
+  $k$, and the frame is a basis of the fibre. That lemma names the missing half of its own
+  converse as ``a family of parallel sections spanning each fibre''; this is it, and the metric
+  is what supplies it.
+
+  \textbf{The one genuinely new brick is a differentiability criterion.} A section of
+  $\operatorname{Hom}(W_1,W_2)$ is regular as soon as its values on the source trivialisation's
+  local frame are; Lemma \ref{lem:hom-bundle-smooth} has the pointwise form, and a
+  \emph{constructed} morphism field along a curve needs the same statement with
+  $C^n$ replaced by differentiability along the curve. It transposes, because the coordinate of
+  a $\operatorname{Hom}$ section is literally the target trivialisation's coordinate of
+  $u \mapsto A(u)(e_1^{-1}(\gamma(u))w)$, so no coordinate change survives.
+
+  \emph{What this does not do.} It does not carry out the first-touching-time argument; it
+  supplies the transport that argument compares fibres with.
 \end{lemma}
 
 \begin{lemma}[The pinching set is a parallel subbundle]
