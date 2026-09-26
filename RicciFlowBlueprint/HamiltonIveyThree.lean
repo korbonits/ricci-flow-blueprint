@@ -21,7 +21,7 @@ import RicciFlowBlueprint.FibrewiseMaximumPrinciple
 import RicciFlowBlueprint.ScalarPreservation
 
 open Bundle Metric Module Set
-open scoped Manifold ContDiff RealInnerProductSpace
+open scoped Manifold ContDiff RealInnerProductSpace Topology
 
 namespace RicciFlowBlueprint
 
@@ -60,6 +60,51 @@ theorem curvatureOperatorE_apply_eq
 variable
   {g : ℝ → ContMDiffRiemannianMetric I 2 E (fun (x : M) ↦ TangentSpace I x)}
   {h : M → E →L[ℝ] E →L[ℝ] ℝ} {t₀ : ℝ}
+
+/-- **A bounded time derivative makes a curve Lipschitz on `[0,T]`.** -/
+theorem norm_sub_le_of_hasDerivAt_Icc {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
+    {u ut : ℝ → F} {T C : ℝ} (hut : ∀ t ∈ Icc 0 T, HasDerivAt u (ut t) t)
+    (hb : ∀ t ∈ Icc 0 T, ‖ut t‖ ≤ C) :
+    ∀ s ∈ Icc 0 T, ∀ t ∈ Icc 0 T, ‖u t - u s‖ ≤ C * |t - s| := by
+  have key : ∀ s ∈ Icc 0 T, ∀ t ∈ Icc 0 T, s ≤ t → ‖u t - u s‖ ≤ C * |t - s| := by
+    intro s hs t ht hst
+    have hsub : Icc s t ⊆ Icc 0 T := Icc_subset_Icc hs.1 ht.2
+    have h := norm_image_sub_le_of_norm_deriv_le_segment' (f := u) (f' := ut) (C := C)
+      (fun r hr ↦ (hut r (hsub hr)).hasDerivWithinAt)
+      (fun r hr ↦ hb r (hsub (Ico_subset_Icc_self hr))) t ⟨hst, le_rfl⟩
+    rwa [abs_of_nonneg (sub_nonneg.2 hst)]
+  intro s hs t ht
+  rcases le_total s t with hst | hts
+  · exact key s hs t ht hst
+  · rw [norm_sub_rev, abs_sub_comm]
+    exact key t ht s hs hts
+
+/-- **Continuity in `x` at each time plus a Lipschitz bound in `t` uniform in `x` gives joint
+continuity on `[0,T] × M`.** -/
+theorem continuousOn_of_continuous_of_lipschitz_time {M : Type*} [TopologicalSpace M]
+    {F : ℝ → M → ℝ} {T B : ℝ} (hx : ∀ t ∈ Icc 0 T, Continuous (F t))
+    (ht : ∀ x, ∀ s ∈ Icc 0 T, ∀ t ∈ Icc 0 T, |F t x - F s x| ≤ B * |t - s|) :
+    ContinuousOn (fun p : ℝ × M ↦ F p.1 p.2) (Icc 0 T ×ˢ univ) := by
+  rintro ⟨t₀, x₀⟩ ⟨ht₀, -⟩
+  have h1 : Filter.Tendsto (fun p : ℝ × M ↦ F t₀ p.2) (𝓝[Icc 0 T ×ˢ univ] (t₀, x₀))
+      (𝓝 (F t₀ x₀)) :=
+    ((hx t₀ ht₀).continuousAt.comp continuous_snd.continuousAt).tendsto.mono_left
+      nhdsWithin_le_nhds
+  have h2 : Filter.Tendsto (fun p : ℝ × M ↦ F p.1 p.2 - F t₀ p.2)
+      (𝓝[Icc 0 T ×ˢ univ] (t₀, x₀)) (𝓝 0) := by
+    have hc : Filter.Tendsto (fun p : ℝ × M ↦ B * |p.1 - t₀|) (𝓝[Icc 0 T ×ˢ univ] (t₀, x₀))
+        (𝓝 0) := by
+      have hcont : Continuous (fun p : ℝ × M ↦ B * |p.1 - t₀|) :=
+        continuous_const.mul ((continuous_fst.sub continuous_const).abs)
+      have h := (hcont.tendsto (t₀, x₀)).mono_left (nhdsWithin_le_nhds (s := Icc 0 T ×ˢ univ))
+      simpa using h
+    refine squeeze_zero_norm' ?_ hc
+    filter_upwards [self_mem_nhdsWithin] with p hp
+    rw [Real.norm_eq_abs]
+    exact ht p.2 t₀ ht₀ p.1 hp.1
+  have hsum := h1.add h2
+  rw [add_zero] at hsum
+  exact hsum.congr fun p ↦ by ring
 
 /-- A matrix-valued function is differentiable when its entries are. -/
 theorem hasDerivAt_toLp_mat {φ : ℝ → Fin 3 × Fin 3 → ℝ} {φ' : Fin 3 × Fin 3 → ℝ} {t : ℝ}
@@ -184,6 +229,72 @@ variable [ContMDiffVectorBundle 1 E (fun (x : M) ↦ TangentSpace I x) I]
   [ContMDiffVectorBundle 2 E (fun (x : M) ↦ TangentSpace I x) I]
   [ContMDiffVectorBundle 3 E (fun (x : M) ↦ TangentSpace I x) I]
   [ContMDiffVectorBundle 4 E (fun (x : M) ↦ TangentSpace I x) I]
+
+-- BENCH: pinch-dist-continuous
+/-- **At a fixed time the pinching distance and the norm of `Rm₃` are continuous on `M`.**
+Near any point they are read in a smooth local orthonormal frame, where the matrix entries are
+inner products of smooth sections --- `Rm₃` applied to a frame vector, paired with a frame
+vector --- and the frame is invisible (`infDist_curvatureMat_congr`, `norm_curvatureMat_congr`). -/
+theorem continuous_pinchDist_curvNorm [∀ x : M, Nontrivial (TangentSpace I x)]
+    (hdim : finrank ℝ E = 3)
+    (g₀ : ContMDiffRiemannianMetric I 2 E (fun (x : M) ↦ TangentSpace I x))
+    (hrb3 : letI : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨g₀.toRiemannianMetric⟩
+      IsContMDiffRiemannianBundle I 3 E (fun (x : M) ↦ TangentSpace I x))
+    (hrb4 : letI : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨g₀.toRiemannianMetric⟩
+      IsContMDiffRiemannianBundle I 4 E (fun (x : M) ↦ TangentSpace I x))
+    (hlc2 : letI : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨g₀.toRiemannianMetric⟩
+      CovariantDerivative.ContMDiffCovariantDerivative (leviCivitaOfMetric g₀) 2)
+    (hlc3 : letI : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨g₀.toRiemannianMetric⟩
+      CovariantDerivative.ContMDiffCovariantDerivative (leviCivitaOfMetric g₀) 3) :
+    Continuous (fun x ↦ pinchDist g₀ x) ∧ Continuous (fun x ↦ curvNorm g₀ x) := by
+  let _ : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨g₀.toRiemannianMetric⟩
+  let _ : IsContMDiffRiemannianBundle I 3 E (fun (x : M) ↦ TangentSpace I x) := hrb3
+  let _ : IsContMDiffRiemannianBundle I 4 E (fun (x : M) ↦ TangentSpace I x) := hrb4
+  let _ : CovariantDerivative.ContMDiffCovariantDerivative (leviCivitaOfMetric g₀) 1 :=
+    contMDiffCovariantDerivative_leviCivitaOfMetric_one g₀
+  let _ : CovariantDerivative.ContMDiffCovariantDerivative (leviCivitaOfMetric g₀) 2 := hlc2
+  let _ : CovariantDerivative.ContMDiffCovariantDerivative (leviCivitaOfMetric g₀) 3 := hlc3
+  -- continuity at each point, through a local orthonormal frame
+  have key : ∀ x₀ : M, ∃ m : M → Mat3, ContinuousAt m x₀ ∧
+      ∀ᶠ y in 𝓝 x₀, pinchDist g₀ y = infDist (m y) pinchedMat ∧ curvNorm g₀ y = ‖m y‖ := by
+    intro x₀
+    obtain ⟨U, Fr, hU, hxU, hFr, hon⟩ := exists_orthonormal_frame_on_open (I := I) (n := 2) x₀
+    set fr : M → Fin 3 → E := fun y i ↦ Fr (Fin.cast hdim.symm i) y with hfrdef
+    have hfro : ∀ y ∈ U, ∀ i j,
+        innerE g₀ y (fr y i) (fr y j) = if i = j then 1 else 0 := by
+      intro y hy i j
+      obtain ⟨b, hb⟩ := hon y hy
+      have h := orthonormal_iff_ite.mp b.orthonormal (Fin.cast hdim.symm i) (Fin.cast hdim.symm j)
+      rw [← hb, ← hb] at h
+      simp only [Fin.cast_inj] at h
+      exact h
+    refine ⟨fun y ↦ curvatureMat g₀ y (fr y), ?_, ?_⟩
+    · refine (PiLp.continuous_toLp 2 _).continuousAt.comp (continuousAt_pi.2 fun ij ↦ ?_)
+      have hsec : MDiffAt (T% (fun y ↦ (leviCivitaOfMetric g₀).curvatureOperator y
+          (Fr (Fin.cast hdim.symm ij.1) y))) x₀ :=
+        (ContMDiffAt.clm_bundle_apply ((leviCivitaOfMetric g₀).contMDiff_curvatureOperator x₀)
+          (hFr _ x₀)).mdifferentiableAt (by norm_num)
+      have hfrm : MDiffAt (T% (Fr (Fin.cast hdim.symm ij.2))) x₀ :=
+        (hFr _ x₀).mdifferentiableAt (by norm_num)
+      refine (MDifferentiableAt.inner_bundle' hsec hfrm).continuousAt.congr ?_
+      refine Filter.Eventually.of_forall fun y ↦ ?_
+      show _ = innerE g₀ y (curvatureOperatorE g₀ y (fr y ij.1)) (fr y ij.2)
+      rw [curvatureOperatorE_apply_eq]
+      rfl
+    · filter_upwards [hU.mem_nhds hxU] with y hy
+      exact ⟨infDist_curvatureMat_congr g₀ y hdim (orthoFrame_spec g₀ y hdim) (hfro y hy),
+        norm_curvatureMat_congr g₀ y hdim (orthoFrame_spec g₀ y hdim) (hfro y hy)⟩
+  choose m hm hmeq using key
+  refine ⟨continuous_iff_continuousAt.2 fun x₀ ↦ ?_, continuous_iff_continuousAt.2 fun x₀ ↦ ?_⟩
+  · have h1 : ContinuousAt (fun y ↦ infDist (m x₀ y) pinchedMat) x₀ :=
+      (continuous_infDist_pt pinchedMat).continuousAt.comp (hm x₀)
+    refine h1.congr ?_
+    filter_upwards [hmeq x₀] with y hy
+    exact hy.1.symm
+  · have h1 : ContinuousAt (fun y ↦ ‖m x₀ y‖) x₀ := continuous_norm.continuousAt.comp (hm x₀)
+    refine h1.congr ?_
+    filter_upwards [hmeq x₀] with y hy
+    exact hy.2.symm
 
 -- BENCH: hamilton-ivey-touching-time
 /-- **The touching step of Hamilton–Ivey at one time, for any family of orthonormal frames.**
@@ -330,10 +441,16 @@ theorem inner_curvatureMat_deriv_le_reaction [I.Boundaryless] (hdim : finrank �
 
 For a Ricci flow `g_t`, `t ∈ [0,T]`, on a compact boundaryless three-manifold, regular enough for
 the evolution equations of `scal` and `Ric` to hold (the hypotheses of
-`exists_hasDerivAt_curvatureOperatorE_eq_of_isRicciFlowAt` at every time), with the
-Hilbert--Schmidt distance of `Rm₃` to the pinching set continuous on `[0,T] × M` and `Rm₃`
-bounded: if the curvature operator is in Hamilton's pinching set at `t = 0`, it is at every
-`t ∈ [0,T]`. -/
+`exists_hasDerivAt_curvatureOperatorE_eq_of_isRicciFlowAt` at every time), and with the time
+derivative of `Rm₃` bounded on `[0,T] × M`: if the curvature operator is in Hamilton's pinching
+set at `t = 0`, it is at every `t ∈ [0,T]`.
+
+**The one joint-in-`(t,x)` input is the bound on `∂ₜRm₃`** (`hDbound`) --- the metric is a
+family `g : ℝ → ContMDiffRiemannianMetric`, which encodes no joint regularity at all, so some
+such input is unavoidable. From it the proof *derives* what the maximum principle consumes:
+continuity of the pinching distance on `[0,T] × M` (continuous in `x` at each time, by
+`continuous_pinchDist_curvNorm`, and Lipschitz in `t` uniformly in `x`) and a bound on `Rm₃`
+(compactness at `t = 0`, then Lipschitz in `t`). -/
 theorem curvatureOperator_mem_iveyEndoSet_of_isRicciFlow [CompactSpace M] [I.Boundaryless]
     (hdim : finrank ℝ E = 3) [∀ x : M, Nontrivial (TangentSpace I x)] {T : ℝ}
     {h : ℝ → M → E →L[ℝ] E →L[ℝ] ℝ}
@@ -397,8 +514,9 @@ theorem curvatureOperator_mem_iveyEndoSet_of_isRicciFlow [CompactSpace M] [I.Bou
       ∀ x, CovariantDerivative.IsMDiffOneFormAt (I := I)
         ((leviCivitaOfMetric (g t)).divBilinOneForm
           (fun y ↦ (leviCivitaOfMetric (g t)).ricciForm y) (fun y U V _ _ ↦ hRic t ht U V y)) x)
-    (hdc : ContinuousOn (fun p : ℝ × M ↦ pinchDist (g p.1) p.2) (Icc 0 T ×ˢ univ))
-    (hbound : ∃ B, ∀ t ∈ Icc 0 T, ∀ x, curvNorm (g t) x ≤ B)
+    (hDbound : ∃ C, ∀ t ∈ Icc 0 T, ∀ x : M, ∀ v w : E,
+      innerE (g t) x v v = 1 → innerE (g t) x w w = 1 →
+      |innerE (g t) x (deriv (fun s ↦ curvatureOperatorE (g s) x) t v) w| ≤ C)
     (h0 : ∀ x : M,
       letI : RiemannianBundle (fun (x : M) ↦ TangentSpace I x) := ⟨(g 0).toRiemannianMetric⟩
       letI : CovariantDerivative.ContMDiffCovariantDerivative (leviCivitaOfMetric (g 0)) 1 :=
@@ -475,14 +593,60 @@ theorem curvatureOperator_mem_iveyEndoSet_of_isRicciFlow [CompactSpace M] [I.Bou
       (B := fun s ↦ ricciFormOfMetric (g s) x) (hAc x) (hC x) (hG x t ht) (hGA x t ht)
       (hGsymm x t) (hBsymm x t) (hD t ht x) hRA (e₀ x ij.1) (e₀ x ij.2)
   -- the fibrewise maximum principle in the fixed space `Mat3`
-  obtain ⟨Bd, hBd⟩ := hbound
+  -- the time derivative of `u` is bounded: its entries pair `∂ₜRm₃` against unit vectors
+  obtain ⟨C, hCb⟩ := hDbound
+  set Cp := max C 0 with hCp
+  have hutb : ∀ t ∈ Icc 0 T, ∀ x, ‖ut t x‖ ≤ 3 * Cp := fun t ht x ↦ by
+    have hunit : ∀ i, innerE (g t) x (fr t x i) (fr t x i) = 1 := fun i ↦ by
+      rw [hfr t ht x i i]; simp
+    have hent : ∀ ij : Fin 3 × Fin 3,
+        ‖innerE (g t) x (D t x (fr t x ij.1)) (fr t x ij.2)‖ ^ 2 ≤ Cp ^ 2 := fun ij ↦ by
+      have h := hCb t ht x _ _ (hunit ij.1) (hunit ij.2)
+      rw [Real.norm_eq_abs]
+      exact pow_le_pow_left₀ (abs_nonneg _) (h.trans (le_max_left _ _)) 2
+    have hsum : ∑ ij : Fin 3 × Fin 3,
+        ‖innerE (g t) x (D t x (fr t x ij.1)) (fr t x ij.2)‖ ^ 2 ≤ (3 * Cp) ^ 2 := by
+      refine (Finset.sum_le_sum fun ij _ ↦ hent ij).trans (le_of_eq ?_)
+      simp only [Finset.sum_const, Finset.card_univ, Fintype.card_prod, Fintype.card_fin,
+        nsmul_eq_mul]
+      push_cast
+      ring
+    rw [hutdef, EuclideanSpace.norm_eq]
+    exact (Real.sqrt_le_sqrt hsum).trans
+      (le_of_eq (Real.sqrt_sq (by positivity)))
+  have hlip : ∀ x, ∀ s ∈ Icc 0 T, ∀ t ∈ Icc 0 T, ‖u t x - u s x‖ ≤ 3 * Cp * |t - s| :=
+    fun x ↦ norm_sub_le_of_hasDerivAt_Icc (fun t ht ↦ hut t ht x) (fun t ht ↦ hutb t ht x)
+  -- at each time the distance and the norm are continuous in space
+  have hcont : ∀ t ∈ Icc 0 T,
+      Continuous (fun x ↦ pinchDist (g t) x) ∧ Continuous (fun x ↦ curvNorm (g t) x) :=
+    fun t ht ↦ continuous_pinchDist_curvNorm hdim (g t) (hrb3 t ht) (hrb4 t ht) (hlc2 t ht)
+      (hlc3 t ht)
+  have hdc' : ContinuousOn (fun p : ℝ × M ↦ infDist (u p.1 p.2) pinchedMat) (Icc 0 T ×ˢ univ) := by
+    refine continuousOn_of_continuous_of_lipschitz_time
+      (F := fun t x ↦ infDist (u t x) pinchedMat) (B := 3 * Cp) (fun t ht ↦ ?_) ?_
+    · refine (hcont t ht).1.congr fun x ↦ ?_
+      exact (infDist_curvatureMat_congr (g t) x hdim (hfr t ht x)
+        (orthoFrame_spec (g t) x hdim)).symm
+    · intro x s hs t ht
+      have h := (lipschitz_infDist_pt pinchedMat).dist_le_mul (u t x) (u s x)
+      rw [Real.dist_eq, NNReal.coe_one, one_mul, dist_eq_norm] at h
+      exact h.trans (hlip x s hs t ht)
+  -- and `Rm₃` stays bounded: bounded at `t = 0` by compactness, Lipschitz in `t`
+  have h0T : (0 : ℝ) ∈ Icc 0 T := ⟨le_rfl, hT⟩
+  obtain ⟨C0, hC0⟩ := isCompact_univ.exists_bound_of_continuousOn (hcont 0 h0T).2.continuousOn
+  set Bd := C0 + 3 * Cp * T with hBddef
   obtain ⟨Lc, hLc⟩ := exists_lipschitzOnWith_reactionMat (2 * Bd)
-  have hdc' : ContinuousOn (fun p : ℝ × M ↦ infDist (u p.1 p.2) pinchedMat) (Icc 0 T ×ˢ univ) :=
-    hdc.congr fun p hp ↦ infDist_curvatureMat_congr (g p.1) p.2 hdim (hfr p.1 hp.1 p.2)
-      (orthoFrame_spec (g p.1) p.2 hdim)
   have hu : ∀ t ∈ Icc 0 T, ∀ x, ‖u t x‖ ≤ Bd := fun t ht x ↦ by
-    rw [hudef, norm_curvatureMat_congr (g t) x hdim (hfr t ht x) (orthoFrame_spec (g t) x hdim)]
-    exact hBd t ht x
+    have h0 : ‖u 0 x‖ = curvNorm (g 0) x :=
+      norm_curvatureMat_congr (g 0) x hdim (hfr 0 h0T x) (orthoFrame_spec (g 0) x hdim)
+    have hc0 : curvNorm (g 0) x ≤ C0 := (le_abs_self _).trans
+      (by simpa only [Real.norm_eq_abs] using hC0 x (mem_univ x))
+    have hl := hlip x 0 h0T t ht
+    rw [sub_zero, abs_of_nonneg ht.1] at hl
+    have hCp0 : 0 ≤ Cp := le_max_right _ _
+    calc ‖u t x‖ ≤ ‖u 0 x‖ + ‖u t x - u 0 x‖ := norm_le_norm_add_norm_sub' _ _
+      _ ≤ C0 + 3 * Cp * T := by
+        rw [h0]; nlinarith [ht.2]
   have hmax : ∀ t ∈ Icc 0 T, ∀ x₀ : M, ∀ p ∈ pinchedMat,
       ‖u t x₀ - p‖ = infDist (u t x₀) pinchedMat →
       (∀ q ∈ pinchedMat, (⟪u t x₀ - p, q - p⟫ : ℝ) ≤ 0) →
